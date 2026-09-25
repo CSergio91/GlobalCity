@@ -18,6 +18,7 @@ Cada skill define con máxima rigurosidad técnica, matemática, regulatoria y d
 | **6. Marco Legal, Fiscal y Pasarelas** | [`prop-firm-legal-regulatory-and-payments`](./prop-firm-legal-regulatory-and-payments/SKILL.md) | Dicotomía legal educación vs intermediación, estructura societaria dual, análisis forense CFTC vs MFF, contratos B2B con W-8BEN/W-9 y mitigación de contracargos Visa VAMP / Mastercard ECP. |
 | **7. Arbitraje Cripto Sintético** | [`crypto-synthetic-arbitrage-engine`](./crypto-synthetic-arbitrage-engine/SKILL.md) | Arbitraje simultáneo en sub-100ms con cuentas prefondeadas, cálculo de profundidad VWAP L2, despacho concurrente asíncrono, rollback automático y modelo Gas Tank. |
 | **8. Estrategia de Producto Bifásico** | [`biphasic-saas-to-propfirm-strategy`](./biphasic-saas-to-propfirm-strategy/SKILL.md) | Lanzamiento en Fase 1 mediante Terminal SaaS B2C no custodial para monetizar desde el día 1, construyendo el 85% del stack tecnológico antes de abrir el módulo Prop Firm. |
+| **9. Sistema de Diseño & Landing Page** | [`global-city-design-system-and-landing-spec`](./global-city-design-system-and-landing-spec/SKILL.md) | Dirección estética oscura premium, acentos rose-mauve/copper, tipografía Plus Jakarta Sans / JetBrains Mono, iconografía Bootstrap/Lucide, copywriting no genérico y arquitectura bento-grid. |
 
 ---
 
