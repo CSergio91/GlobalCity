@@ -16,6 +16,7 @@ import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { RouterProvider, useAppRouter } from './context/RouterContext';
 import { AuthModal } from './components/auth/AuthModal';
+import { LoginPage } from './components/auth/LoginPage';
 
 function MainAppContent() {
   const { currentPath, navigate } = useAppRouter();
@@ -23,6 +24,7 @@ function MainAppContent() {
   const { t } = useLanguage();
   const { isAuthenticated } = useAuth();
 
+  const isLoginRoute = currentPath === '/login';
   const isTerminalRoute = 
     currentPath === '/terminal' || 
     currentPath === '/operaciones' || 
@@ -30,7 +32,7 @@ function MainAppContent() {
 
   const handleOpenTerminal = () => {
     if (!isAuthenticated) {
-      setIsAuthModalOpen(true);
+      navigate('/login');
     } else {
       navigate('/operaciones');
     }
@@ -42,7 +44,7 @@ function MainAppContent() {
   };
 
   const handleNavigateSection = (sectionId: string) => {
-    if (isTerminalRoute) {
+    if (isTerminalRoute || isLoginRoute) {
       navigate('/');
       setTimeout(() => {
         const el = document.getElementById(sectionId);
@@ -54,13 +56,18 @@ function MainAppContent() {
     }
   };
 
+  // If on /login route, render the full-screen split LoginPage
+  if (isLoginRoute) {
+    return <LoginPage />;
+  }
+
   // If on /operaciones, /terminal or /operations route, render the Trading & Operations Terminal
   if (isTerminalRoute) {
     return (
       <>
         <DemoTerminal 
           onBackToLanding={() => navigate('/')} 
-          onOpenAuth={() => setIsAuthModalOpen(true)}
+          onOpenAuth={() => navigate('/login')}
         />
         <AuthModal 
           isOpen={isAuthModalOpen} 
