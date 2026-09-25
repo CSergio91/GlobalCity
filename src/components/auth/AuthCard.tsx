@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Send, 
   Lock, 
@@ -44,8 +44,33 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
   const [feedback, setFeedback] = useState<AuthResult | null>(null);
   const [authSessionNonce, setAuthSessionNonce] = useState('');
   const [detectedTelegramUser, setDetectedTelegramUser] = useState<any>(null);
+  
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isVideoEnded, setIsVideoEnded] = useState(false);
 
   const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'globalcity_auth_bot';
+
+  // Autoplay seguro garantizando muted a nivel DOM para navegadores estrictos
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.defaultMuted = true;
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(() => {});
+    }
+  }, []);
+
+  const handleVideoEnded = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    e.currentTarget.pause();
+    setIsVideoEnded(true);
+  };
+
+  const handleReplayVideo = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {});
+      setIsVideoEnded(false);
+    }
+  };
 
   // Detección inmediata en caché / backend de la última autorización del bot
   useEffect(() => {
@@ -234,7 +259,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
         </div>
 
         {/* Cabecera / Identidad Minimalista (Sin textos gigantes) */}
-        <div className="relative z-10">
+        <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BrandLogo size="sm" />
             <span className="text-[10px] font-mono tracking-wider px-2 py-0.5 rounded-md bg-white/10 text-slate-300 border border-white/10">
@@ -242,58 +267,65 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
             </span>
           </div>
 
-          <div className="mt-2 md:mt-4">
-            <h1 className="text-lg md:text-xl font-black text-white tracking-tight leading-snug">
-              Bienvenido a <br className="hidden md:inline" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F472B6] to-[#818CF8]">
-                Global City
-              </span>
-            </h1>
-            <p className="text-[11px] text-slate-300 font-light mt-0.5 md:mt-1 hidden sm:block">
-              Arbitraje multi-venue & ejecución algorítmica.
-            </p>
-          </div>
+          <span className="text-[9px] font-mono tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            VIDEO LOGO
+          </span>
         </div>
 
-        {/* Presentación en Video del Logo Oficial (AutoPlay, Muted, se congela al final) */}
-        <div className="relative z-10 hidden md:flex items-center justify-center my-auto py-2">
+        {/* Presentación en Video del Logo Oficial (Visible en Móvil Y Desktop) */}
+        <div className="relative z-10 flex flex-col items-center justify-center my-auto py-2">
           <div 
-            onClick={(e) => {
-              const video = e.currentTarget.querySelector('video');
-              if (video) {
-                video.currentTime = 0;
-                video.play();
-              }
-            }}
+            onClick={handleReplayVideo}
             className="relative group cursor-pointer" 
-            title="Toca para reproducir de nuevo"
+            title="Toca para reproducir de nuevo el video"
           >
-            <div className="absolute -inset-1.5 bg-gradient-to-r from-[#F472B6]/40 via-[#EC4899]/30 to-[#818CF8]/40 rounded-2xl blur-md opacity-60 group-hover:opacity-100 transition-opacity" />
-            <div className="relative w-24 h-24 lg:w-28 lg:h-28 rounded-2xl bg-black/50 border border-white/20 backdrop-blur-md overflow-hidden flex items-center justify-center shadow-xl">
+            <div className="absolute -inset-2 bg-gradient-to-r from-[#F472B6]/40 via-[#EC4899]/30 to-[#818CF8]/40 rounded-2xl blur-lg opacity-60 group-hover:opacity-100 transition-opacity" />
+            <div className="relative w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-2xl bg-black/60 border border-white/20 backdrop-blur-md overflow-hidden flex items-center justify-center shadow-2xl">
               <video
+                ref={videoRef}
                 src={presentationVideo}
                 autoPlay
                 muted
                 playsInline
-                preload="metadata"
-                onEnded={(e) => {
-                  // Se detiene al final del video para que no se repita continuamente
-                  e.currentTarget.pause();
-                }}
-                className="w-full h-full object-contain pointer-events-none"
+                preload="auto"
+                onEnded={handleVideoEnded}
+                className="w-full h-full object-contain"
               />
+              
+              {/* Overlay de repetición cuando termina el video */}
+              {isVideoEnded && (
+                <div className="absolute bottom-2 inset-x-2 flex justify-center pointer-events-none">
+                  <span className="px-2.5 py-0.5 rounded-full bg-black/80 border border-white/20 text-[10px] font-mono text-slate-200 flex items-center gap-1 shadow-lg backdrop-blur-md animate-in fade-in">
+                    <span>↻ Toca para ver de nuevo</span>
+                  </span>
+                </div>
+              )}
             </div>
+          </div>
+
+          <div className="mt-2 text-center">
+            <h1 className="text-base sm:text-lg font-black text-white tracking-tight leading-snug">
+              Bienvenido a <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F472B6] to-[#818CF8]">Global City</span>
+            </h1>
+            <p className="text-[11px] text-slate-300 font-light mt-0.5">
+              Arbitraje multi-venue & ejecución institucional.
+            </p>
           </div>
         </div>
 
         {/* Chips de Seguridad Compactos */}
-        <div className="relative z-10 hidden md:flex items-center gap-2 text-[10px] font-mono text-slate-400">
+        <div className="relative z-10 flex items-center justify-center gap-2 text-[10px] font-mono text-slate-400">
           <span className="flex items-center gap-1">
             <Zap className="w-3 h-3 text-[#F472B6]" /> &lt;12ms
           </span>
           <span>·</span>
           <span className="flex items-center gap-1">
             <ShieldCheck className="w-3 h-3 text-emerald-400" /> Non-Custodial
+          </span>
+          <span>·</span>
+          <span className="flex items-center gap-1">
+            <Bot className="w-3 h-3 text-[#38BDF8]" /> Telegram Sync
           </span>
         </div>
       </div>
