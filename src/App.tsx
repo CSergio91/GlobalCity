@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { MultiVenueHub } from './components/MultiVenueHub';
@@ -16,47 +17,31 @@ import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
 
-function MainApp() {
-  const [view, setView] = useState<'landing' | 'terminal'>('landing');
+function LandingPage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const { t } = useLanguage();
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const handleOpenTerminal = () => {
     if (!isAuthenticated) {
       setIsAuthModalOpen(true);
     } else {
-      setView('terminal');
+      navigate('/terminal');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handleAuthSuccess = () => {
     setIsAuthModalOpen(false);
-    setView('terminal');
+    navigate('/terminal');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleBackToLanding = () => {
-    setView('landing');
-  };
-
   const handleNavigateSection = (sectionId: string) => {
-    if (view === 'terminal') {
-      setView('landing');
-      setTimeout(() => {
-        const el = document.getElementById(sectionId);
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    } else {
-      const el = document.getElementById(sectionId);
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    }
+    const el = document.getElementById(sectionId);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
-
-  if (view === 'terminal') {
-    return <DemoTerminal onBackToLanding={handleBackToLanding} />;
-  }
 
   return (
     <div className="min-h-screen bg-[#06070B] text-slate-100 flex flex-col selection:bg-[#EC4899]/30 selection:text-white relative">
@@ -67,69 +52,84 @@ function MainApp() {
       {/* Dynamic Immersive Navbar with Candlestick Pair Language Selector */}
       <Navbar 
         onOpenTerminal={handleOpenTerminal} 
-        onNavigateSection={handleNavigateSection}
+        onNavigateSection={handleNavigateSection} 
       />
 
       <main className="flex-1">
         
         {/* Section 1: Hero Command Deck with Parallax City Skyline Background */}
-        <Hero 
-          onOpenTerminal={handleOpenTerminal}
-          onExploreModules={() => handleNavigateSection('horizontal-showcase')}
-        />
+        <section id="hero">
+          <Hero onOpenTerminal={handleOpenTerminal} />
+        </section>
 
-        {/* Section 2: Unified Multi-Venue Portfolio & Live Streaming Quotes */}
-        <MultiVenueHub onOpenTerminal={handleOpenTerminal} />
+        {/* Section 2: Multi-Venue Liquidity Node & Connectivity Plane */}
+        <section id="multi-venue">
+          <MultiVenueHub />
+        </section>
 
-        {/* Section 3: Horizontal Panoramic Scroll Showcase (Ecosystem Modules) */}
-        <HorizontalShowcase onOpenTerminal={handleOpenTerminal} />
+        {/* Section 3: Horizontal Interactive Showcase (Sticky Drag Scroller) */}
+        <section id="horizontal-showcase">
+          <HorizontalShowcase />
+        </section>
 
-        {/* Section 4: Quantitative Live L2 VWAP Arbitrage Calculator */}
-        <div id="arbitrage">
+        {/* Section 4: Real-time Multi-Exchange Synthetic Arbitrage Engine */}
+        <section id="arbitrage">
           <ArbitrageCalculator />
-        </div>
+        </section>
 
-        {/* Section 5: Cross Copy Trading: Crypto to Forex CFDs & CME Futures */}
-        <CrossCopyTrading />
+        {/* Section 5: Automated Portfolio Rebalancing */}
+        <section id="rebalance">
+          <AutoRebalancing />
+        </section>
 
-        {/* Section 6: Smart Auto-Rebalancing Engine & Gas Tank */}
-        <AutoRebalancing />
+        {/* Section 6: Cross-Broker Synchronized Copy Trading */}
+        <section id="copy-trading">
+          <CrossCopyTrading />
+        </section>
 
-        {/* Section 7: Mobile Telegram Bot Control & Emergency Telemetry */}
-        <TelegramOperations />
+        {/* Section 7: Telegram Webhook Automated Operations */}
+        <section id="telegram">
+          <TelegramOperations />
+        </section>
 
-        {/* Section 8: High-Conversion Panoramic CTA */}
-        <section className="min-h-[75vh] sm:min-h-[85vh] w-full flex flex-col justify-center py-20 sm:py-32 bg-gradient-to-b from-[#07080D] via-[#0D101A] to-[#05060A] border-t border-white/10 relative overflow-hidden text-center select-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[500px] bg-gradient-to-r from-[#60A5FA]/15 via-[#F472B6]/20 to-[#FBBF24]/15 blur-[120px] pointer-events-none opacity-70" />
+        {/* Section 8: Final Call to Action */}
+        <section className="py-24 sm:py-32 px-4 sm:px-6 relative overflow-hidden bg-gradient-to-b from-[#06070B] via-[#0E1019] to-[#06070B] border-t border-white/5">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(236,72,153,0.12),transparent_70%)] pointer-events-none" />
 
-          <ScrollReveal direction="up" delay={100} className="max-w-5xl mx-auto px-4 sm:px-10 relative z-10">
-            <h2 className="text-3xl sm:text-5xl lg:text-7xl font-black text-white tracking-tight leading-[1.08] sm:leading-[1.05] text-balance text-shadow-hero">
-              {t.cta.titleStart}{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA]">
-                {t.cta.titleEnd}
+          <ScrollReveal direction="up" delay={50}>
+            <div className="max-w-4xl mx-auto text-center relative z-10 space-y-6 sm:space-y-8">
+              <span className="text-xs uppercase tracking-widest text-[#F472B6] font-mono-nums font-bold">
+                {t.cta.badge}
               </span>
-            </h2>
 
-            <p className="mt-6 sm:mt-8 text-base sm:text-lg lg:text-xl text-slate-200 max-w-3xl mx-auto font-light leading-relaxed text-balance text-shadow-subtle text-illuminate">
-              {t.cta.subtitle}
-            </p>
+              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight text-shadow-hero">
+                {t.cta.titleStart}{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F472B6] via-[#EC4899] to-[#818CF8]">
+                  {t.cta.titleEnd}
+                </span>
+              </h2>
 
-            <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 w-full max-w-md sm:max-w-none mx-auto">
-              <button
-                onClick={handleOpenTerminal}
-                className="btn-liquid w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-[#F472B6] via-[#EC4899] to-[#818CF8] hover:brightness-110 rounded-2xl shadow-[0_10px_40px_rgba(236,72,153,0.45)] flex items-center justify-center gap-3 cursor-pointer border border-white/30"
-              >
-                <Terminal className="w-5 h-5 text-white" />
-                <span>{t.cta.accessTerminalBtn}</span>
-                <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1.5 transition-transform" />
-              </button>
+              <p className="text-sm sm:text-base lg:text-lg text-slate-300 max-w-2xl mx-auto font-light leading-relaxed">
+                {t.cta.subtitle}
+              </p>
 
-              <button
-                onClick={() => handleNavigateSection('multi-venue')}
-                className="btn-liquid w-full sm:w-auto px-8 sm:px-9 py-4 sm:py-5 text-xs sm:text-sm font-semibold text-white bg-black/40 hover:bg-black/60 rounded-2xl cursor-pointer border border-white/20 backdrop-blur-xl"
-              >
-                <span>{t.cta.exploreGatewaysBtn}</span>
-              </button>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+                <button
+                  onClick={handleOpenTerminal}
+                  className="btn-liquid w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-[#F472B6] via-[#EC4899] to-[#818CF8] hover:brightness-110 rounded-2xl shadow-xl shadow-[#EC4899]/30 flex items-center justify-center gap-2 cursor-pointer border border-white/20 group"
+                >
+                  <Terminal className="w-5 h-5 text-white" />
+                  <span>{t.cta.accessTerminalBtn}</span>
+                  <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1.5 transition-transform" />
+                </button>
+
+                <button
+                  onClick={() => handleNavigateSection('multi-venue')}
+                  className="btn-liquid w-full sm:w-auto px-8 sm:px-9 py-4 sm:py-5 text-xs sm:text-sm font-semibold text-white bg-black/40 hover:bg-black/60 rounded-2xl cursor-pointer border border-white/20 backdrop-blur-xl"
+                >
+                  <span>{t.cta.exploreGatewaysBtn}</span>
+                </button>
+              </div>
             </div>
           </ScrollReveal>
         </section>
@@ -150,11 +150,24 @@ function MainApp() {
   );
 }
 
+function TerminalPage() {
+  const navigate = useNavigate();
+  return <DemoTerminal onBackToLanding={() => navigate('/')} />;
+}
+
 export default function App() {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <MainApp />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/terminal" element={<TerminalPage />} />
+            <Route path="/operaciones" element={<Navigate to="/terminal" replace />} />
+            <Route path="/operations" element={<Navigate to="/terminal" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
       </AuthProvider>
     </LanguageProvider>
   );

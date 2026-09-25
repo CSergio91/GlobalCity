@@ -82,15 +82,20 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding }) =
             </span>
           </div>
 
-          {/* User Profile Badge */}
-          {user && (
-            <div className="flex items-center gap-2 pl-3 border-l border-white/10">
-              <div className="w-7 h-7 rounded-lg bg-[#229ED9]/20 border border-[#229ED9]/40 flex items-center justify-center text-[#229ED9]">
+          {/* User Profile Badge (Always visible on all screen sizes) */}
+          {user ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#229ED9]/15 border border-[#229ED9]/30">
+              <div className="w-7 h-7 rounded-lg bg-[#229ED9]/30 flex items-center justify-center text-[#229ED9] shrink-0">
                 <Send className="w-3.5 h-3.5" />
               </div>
-              <div className="hidden lg:block text-left">
-                <div className="font-mono text-white font-bold text-[11px] leading-tight">{user.username}</div>
-                <div className="text-[9px] text-emerald-400 font-mono">CONECTADO</div>
+              <div className="flex flex-col text-left">
+                <div className="font-bold text-white text-xs leading-none">
+                  {user.firstName || user.username}
+                </div>
+                <div className="text-[10px] font-mono text-[#38BDF8] leading-tight flex items-center gap-1 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>{user.username}</span>
+                </div>
               </div>
               <button
                 onClick={() => {
@@ -98,10 +103,15 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding }) =
                   onBackToLanding();
                 }}
                 title="Cerrar Sesión"
-                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                className="ml-1.5 p-1 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] font-mono text-amber-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+              <span>SESIÓN INVITADO</span>
             </div>
           )}
 
