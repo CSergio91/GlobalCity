@@ -1,116 +1,127 @@
 import React from 'react';
 import { 
-  Copy, 
   ArrowRight, 
   CheckCircle2, 
-  TrendingUp, 
-  Layers, 
   Zap, 
   ShieldCheck,
-  RefreshCw
+  Cpu
 } from 'lucide-react';
 
 export const CrossCopyTrading: React.FC = () => {
   return (
-    <section id="copy-trading" className="py-24 bg-[#07080C] relative">
-      <div className="w-full px-4 sm:px-8 lg:px-12 max-w-7xl mx-auto">
+    <section id="copy-trading" className="min-h-screen w-full flex flex-col justify-center py-24 bg-[#05060A] relative select-none">
+      {/* Background Subtle Gradient Grid */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(224,109,138,0.06),transparent_60%)] pointer-events-none" />
+
+      <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-20 max-w-[1440px] mx-auto relative z-10">
         
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider text-[#E06D8A] mb-2">
-            <Copy className="w-4 h-4 text-[#E06D8A]" />
-            <span>Replicación Bidireccional Cross-Asset</span>
+        {/* Section Header */}
+        <div className="mb-16">
+          <div className="flex items-center gap-3 text-xs tracking-[0.2em] uppercase font-mono text-[#E06D8A] mb-3">
+            <span className="w-6 h-[1.5px] bg-[#E06D8A]" />
+            <span>REPLICACIÓN UNIVERSAL CROSS-ASSET</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
-            Copy Trading Puente: Cripto a CFDs y Futuros
-          </h2>
-          <p className="mt-4 text-sm sm:text-base text-slate-300">
-            Replica señales u operaciones maestras de Bybit o TradingView de forma automática hacia terminales MetaTrader 5, cTrader o cuentas de futuros con normalización matemática de lotaje.
-          </p>
+
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+            <div>
+              <h2 className="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.05] text-balance">
+                Copy Trading Puente.{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E06D8A] via-[#ED7D9A] to-[#D4AF37]">
+                  De Criptoactivos a CFDs y Futuros.
+                </span>
+              </h2>
+              <p className="mt-4 text-base sm:text-xl text-slate-300 max-w-3xl font-light leading-relaxed">
+                Replica operaciones maestras disparadas en exchanges de criptomonedas directamente hacia cuentas de cTrader, MetaTrader 5 o futuros regulados, con normalización instantánea de lotaje y apalancamiento.
+              </p>
+            </div>
+
+            <div className="border-l-2 border-[#E06D8A] pl-6 py-2 shrink-0">
+              <div className="text-xs uppercase font-mono tracking-widest text-slate-400">Velocidad de Replicación</div>
+              <div className="text-3xl sm:text-5xl font-black font-mono-nums text-white mt-1">
+                &lt; 12 <span className="text-sm font-light text-slate-400 font-sans">ms</span>
+              </div>
+              <div className="text-xs font-mono text-[#E06D8A] mt-1">PROTOCOLO PROTOBUF TLS & FIX</div>
+            </div>
+          </div>
         </div>
 
-        {/* Visual Pipeline Flow */}
-        <div className="glass-panel p-8 sm:p-12 rounded-3xl border border-white/10 mb-12">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+        {/* Master Pipeline Diagram (No generic cards, architectural interconnected flow) */}
+        <div className="bg-[#090B12]/90 backdrop-blur-xl rounded-3xl p-8 sm:p-12 border border-white/10 shadow-2xl">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center relative">
             
-            {/* Step 1: Master Signal */}
-            <div className="bg-[#131520] p-6 rounded-2xl border border-white/10 flex flex-col justify-between h-full">
+            {/* Stage 1: Master Signal Source */}
+            <div className="p-6 sm:p-8 rounded-2xl bg-white/[0.02] border border-white/10 flex flex-col justify-between h-full">
               <div>
-                <span className="text-xs font-mono-nums text-[#2DD4BF] font-semibold">01 · ORIGEN MAESTRO</span>
-                <h4 className="text-lg font-bold text-white mt-1">Disparo de Orden Master</h4>
-                <p className="text-xs text-slate-400 mt-2">
-                  Un trade manual, webhook de TradingView o bot cuantitativo abre <strong className="text-white">BUY 5 BTC</strong> en Bybit v5.
+                <div className="text-xs font-mono uppercase text-[#2DD4BF] font-bold tracking-wider mb-2">
+                  01 // ORIGEN MAESTRO
+                </div>
+                <h4 className="text-xl font-bold text-white tracking-tight">Disparo de Orden Master</h4>
+                <p className="text-xs text-slate-300 mt-2 font-light leading-relaxed">
+                  Un trade manual, webhook de TradingView o bot algorítmico abre posición en Bybit v5 o Hyperliquid L1.
                 </p>
               </div>
-              <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between text-xs text-slate-300 font-mono-nums">
-                <span>Bybit Perp</span>
-                <span className="text-emerald-400 font-bold">+5.00 BTC</span>
+
+              <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-mono">
+                <span className="text-slate-400">Bybit Perpetual</span>
+                <span className="text-[#10B981] font-bold">+2.50 BTC / Long</span>
               </div>
             </div>
 
-            {/* Step 2: The Core Bridge Engine */}
-            <div className="bg-gradient-to-br from-[#1C1F2E] to-[#141624] p-6 rounded-2xl border border-[#E06D8A]/40 flex flex-col justify-between h-full shadow-2xl relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#E06D8A] text-slate-950 text-[10px] font-extrabold uppercase">
-                Motor de Normalización
-              </div>
+            {/* Stage 2: Core Normalization Engine */}
+            <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-b from-[#D4AF37]/15 to-[#E06D8A]/10 border border-[#D4AF37]/40 flex flex-col justify-between h-full shadow-[0_0_35px_rgba(212,175,55,0.15)] relative">
               <div>
-                <span className="text-xs font-mono-nums text-[#E06D8A] font-semibold">02 · PROCESAMIENTO CANÓNICO</span>
-                <h4 className="text-lg font-bold text-white mt-1">SymbolMapper & Lot Sizer</h4>
-                <p className="text-xs text-slate-300 mt-2">
-                  El motor traduce <code className="text-[#2DD4BF]">BTC/USDT</code> al símbolo exacto del broker (<code className="text-[#2DD4BF]">BTCUSD.pro</code>) y calcula el ratio de apalancamiento exacto.
+                <div className="text-xs font-mono uppercase text-[#D4AF37] font-bold tracking-wider mb-2 flex items-center gap-2">
+                  <Cpu className="w-3.5 h-3.5" />
+                  <span>02 // NORMALIZACIÓN CANÓNICA</span>
+                </div>
+                <h4 className="text-xl font-bold text-white tracking-tight">SymbolMapper & Lot Calibrator</h4>
+                <p className="text-xs text-slate-200 mt-2 font-light leading-relaxed">
+                  Traduce el símbolo universal <code className="text-[#F3E5AB]">BTC/USDT</code> al identificador de cada broker (<code className="text-[#F3E5AB]">BTCUSD.pro</code>) y calcula el tamaño de lote proporcional a la equidad de cada cuenta esclava.
                 </p>
               </div>
-              <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-300 font-mono-nums">
-                <span>Tiempo de Conversión</span>
-                <span className="text-[#2DD4BF] font-bold">12 milisegundos</span>
+
+              <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-mono">
+                <span className="text-slate-300">Tiempo de cómputo:</span>
+                <span className="text-[#D4AF37] font-bold">1.2 milisegundos</span>
               </div>
             </div>
 
-            {/* Step 3: Destination Replicas */}
-            <div className="bg-[#131520] p-6 rounded-2xl border border-white/10 flex flex-col justify-between h-full">
+            {/* Stage 3: Multi-Broker Concurrent Execution */}
+            <div className="p-6 sm:p-8 rounded-2xl bg-white/[0.02] border border-white/10 flex flex-col justify-between h-full">
               <div>
-                <span className="text-xs font-mono-nums text-purple-400 font-semibold">03 · DESTINOS MÚLTIPLES</span>
-                <h4 className="text-lg font-bold text-white mt-1">Ejecución en Espejo</h4>
-                <p className="text-xs text-slate-400 mt-2">
-                  La orden se ejecuta simultáneamente en cTrader, MT5 y tu cuenta de futuros ajustada al saldo respectivo de cada broker.
+                <div className="text-xs font-mono uppercase text-[#E06D8A] font-bold tracking-wider mb-2">
+                  03 // DESPACHO MULTI-SEDE
+                </div>
+                <h4 className="text-xl font-bold text-white tracking-tight">Ejecución en Destino</h4>
+                <p className="text-xs text-slate-300 mt-2 font-light leading-relaxed">
+                  Las órdenes se despachan simultáneamente hacia las terminales configuradas sin descalce ni latencia perceptible.
                 </p>
               </div>
-              <div className="mt-6 pt-4 border-t border-white/5 space-y-1 text-xs text-slate-300 font-mono-nums">
+
+              <div className="mt-8 pt-4 border-t border-white/10 space-y-2 text-xs font-mono">
                 <div className="flex justify-between">
-                  <span>cTrader Broker:</span>
-                  <span className="text-emerald-400 font-bold">BUY 1.25 Lotes</span>
+                  <span className="text-slate-400">cTrader (Open API):</span>
+                  <span className="text-[#10B981] font-bold">+25.0 Lots</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>MT5 Terminal:</span>
-                  <span className="text-emerald-400 font-bold">BUY 0.85 Lotes</span>
+                  <span className="text-slate-400">MetaTrader 5 (Gateway):</span>
+                  <span className="text-[#10B981] font-bold">+25.0 Lots</span>
                 </div>
               </div>
             </div>
 
           </div>
-        </div>
 
-        {/* Feature Guarantees */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="glass-panel p-6 rounded-2xl border border-white/10">
-            <h4 className="text-base font-bold text-white mb-2">Protección de Slippage Máximo</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Si el precio en el broker destino ha sufrido un deslizamiento superior al límite configurado (ej. 0.05%), la copia se descarta automáticamente para proteger tu capital.
-            </p>
+          {/* Bottom Security Guarantee */}
+          <div className="mt-10 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#10B981]" />
+              <span>Protección Stop-Loss Integrada: Las órdenes esclavas heredan automáticamente el SL/TP de la orden maestra.</span>
+            </div>
+            <span className="font-mono text-slate-300">Algoritmo auditado para evitar sobre-apalancamiento</span>
           </div>
 
-          <div className="glass-panel p-6 rounded-2xl border border-white/10">
-            <h4 className="text-base font-bold text-white mb-2">Modo Inverso (Reverse Copy)</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Configura cuentas en modo contra-tendencia o cobertura automática: cuando tu cuenta master compra, la cuenta secundaria vende para neutralizar exposición delta.
-            </p>
-          </div>
-
-          <div className="glass-panel p-6 rounded-2xl border border-white/10">
-            <h4 className="text-base font-bold text-white mb-2">Multiplicador Proporcional</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Calcula automáticamente el tamaño de posición en función de la equidad disponible de cada cuenta, evitando sobre-apalancamientos en cuentas pequeñas.
-            </p>
-          </div>
         </div>
 
       </div>

@@ -56,10 +56,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
           className="flex items-center gap-3 cursor-pointer group"
         >
           <BrandLogo size="md" subtitle="MULTI-VENUE CONNECTOR" />
-          <span className="hidden sm:inline-flex text-[10px] font-mono-nums px-2.5 py-0.5 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#F3E5AB] font-semibold items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse"></span>
-            CORE v2.4
-          </span>
         </div>
 
         {/* Zone 2: Navigation Links (Pure typography, no boxed pills) */}

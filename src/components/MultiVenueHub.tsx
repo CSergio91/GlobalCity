@@ -2,22 +2,20 @@ import React, { useState } from 'react';
 import { 
   MULTI_ASSET_MARKET_TICKS, 
   INITIAL_CONNECTED_ACCOUNTS,
-  ConnectedAccount,
   LiveMarketTick 
 } from '../data/mockData';
 import { 
-  Radio, 
   TrendingUp, 
   TrendingDown, 
   Cpu, 
-  ShieldCheck, 
-  RefreshCw,
-  Layers,
-  ArrowUpRight
+  ArrowUpRight,
+  Terminal,
+  Activity
 } from 'lucide-react';
 
 export const MultiVenueHub: React.FC<{ onOpenTerminal: () => void }> = ({ onOpenTerminal }) => {
   const [activeCategory, setActiveCategory] = useState<'all' | 'crypto' | 'forex' | 'futures'>('all');
+  const [selectedVenue, setSelectedVenue] = useState<string>("Bybit");
 
   const filteredTicks = activeCategory === 'all' 
     ? MULTI_ASSET_MARKET_TICKS 
@@ -25,161 +23,182 @@ export const MultiVenueHub: React.FC<{ onOpenTerminal: () => void }> = ({ onOpen
 
   const totalAggregatedEquity = INITIAL_CONNECTED_ACCOUNTS.reduce((acc, c) => acc + c.balanceUsd, 0);
 
+  const venues = [
+    { name: "Bybit", protocol: "API v5 Direct WebSocket", latency: "2.1 ms", type: "CEX Cripto", status: "Connected", depth: "$14.2M" },
+    { name: "OKX", protocol: "Non-Disclosed DMA FIX", latency: "1.9 ms", type: "CEX Cripto", status: "Connected", depth: "$11.8M" },
+    { name: "cTrader", protocol: "Open API Protobuf TLS", latency: "4.3 ms", type: "Forex & CFDs", status: "Connected", depth: "$45.0M" },
+    { name: "MetaTrader 5", protocol: "Windows Native Gateway", latency: "5.1 ms", type: "Forex & Commodities", status: "Connected", depth: "$32.5M" },
+    { name: "Hyperliquid", protocol: "L1 High Throughput", latency: "0.8 ms", type: "DEX Perps", status: "Connected", depth: "$8.4M" },
+    { name: "CME Group", protocol: "QuickFIX 4.4 Financial", latency: "3.7 ms", type: "Futuros Regulados", status: "Connected", depth: "$90.0M" }
+  ];
+
   return (
-    <section id="multi-venue" className="py-24 bg-[#08090C] relative">
-      <div className="w-full px-4 sm:px-8 lg:px-12 max-w-7xl mx-auto">
+    <section id="multi-venue" className="min-h-screen w-full flex flex-col justify-center py-24 bg-[#07080D] relative select-none">
+      {/* Background Subtle Gradient Grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none" />
+
+      <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-20 max-w-[1440px] mx-auto relative z-10">
         
-        {/* Section Header */}
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-16">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#2DD4BF] mb-2">
-              <span className="w-2 h-2 rounded-full bg-[#2DD4BF]" />
-              <span>Conectividad de Grado Institucional</span>
-            </div>
-            <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-              Todos tus Exchanges y Brokers en un Solo Panel
-            </h2>
-            <p className="mt-3 text-sm sm:text-base text-slate-300">
-              Visualiza saldos consolidados, libros de órdenes Nivel 2 y latencias en tiempo real sin salir de Global City.
-            </p>
+        {/* Section Header: Monumental & Clean */}
+        <div className="mb-14">
+          <div className="flex items-center gap-3 text-xs tracking-[0.2em] uppercase font-mono text-[#D4AF37] mb-3">
+            <span className="w-6 h-[1.5px] bg-[#D4AF37]" />
+            <span>ARQUITECTURA DE ENRUTAMIENTO SMART</span>
           </div>
 
-          {/* Aggregated Stat Pill */}
-          <div className="glass-panel p-5 rounded-2xl border border-white/10 flex items-center gap-6 shrink-0">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
             <div>
-              <div className="text-[11px] text-slate-400 font-medium">Equidad Consolidada Agregada</div>
-              <div className="text-2xl font-extrabold font-mono-nums text-white mt-0.5">
-                ${totalAggregatedEquity.toLocaleString()} <span className="text-xs text-slate-400 font-normal">USD</span>
-              </div>
+              <h2 className="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.05] text-balance">
+                Un Único Mando.{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#FFF3B0] to-[#E06D8A]">
+                  Todas las Sedes del Mundo.
+                </span>
+              </h2>
+              <p className="mt-4 text-base sm:text-xl text-slate-300 max-w-3xl font-light leading-relaxed">
+                Consolida liquidez, libros de órdenes Nivel 2 y ejecución simultánea entre los mayores centros de negociación sin fragmentar tu tesorería ni dispersar tus garantías.
+              </p>
             </div>
-            <div className="h-10 w-[1px] bg-white/10" />
-            <div>
-              <div className="text-[11px] text-emerald-400 font-medium">Estado Conectores</div>
-              <div className="text-xs font-mono-nums font-bold text-white flex items-center gap-1.5 mt-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>6 Venues Sincronizados</span>
+
+            {/* Consolidated Equity Telemetry - Hairline layout, no boxy card */}
+            <div className="border-l-2 border-[#D4AF37] pl-6 py-2 shrink-0">
+              <div className="text-xs uppercase font-mono tracking-widest text-slate-400">Equidad Consolidada en Tiempo Real</div>
+              <div className="text-3xl sm:text-5xl font-black font-mono-nums text-white mt-1 drop-shadow-[0_0_25px_rgba(212,175,55,0.3)]">
+                ${totalAggregatedEquity.toLocaleString()} <span className="text-sm font-light text-slate-400 font-sans">USD</span>
+              </div>
+              <div className="flex items-center gap-2 mt-2 text-xs font-mono text-[#10B981]">
+                <Activity className="w-3.5 h-3.5 animate-pulse" />
+                <span>6 SEDES INTERCONECTADAS EN PARALELO</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Venues Grid (6 Protocols & Venues) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-14">
-          {INITIAL_CONNECTED_ACCOUNTS.map((venue) => (
-            <div 
-              key={venue.id}
-              className="glass-panel glass-panel-hover rounded-2xl p-5 border border-white/10 transition-all duration-300 flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold text-white">{venue.venueName}</span>
-                  <span className="text-[10px] font-mono-nums px-2 py-0.5 rounded-full bg-emerald-950/70 border border-emerald-500/30 text-emerald-400 font-semibold flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    <span>{venue.status}</span>
-                  </span>
-                </div>
-
-                <div className="text-xs text-slate-400 flex items-center gap-2">
-                  <span className="text-[#E06D8A] font-semibold">{venue.assetClass}</span>
-                  <span className="text-white/20">·</span>
-                  <span className="font-mono-nums text-slate-400">{venue.protocol}</span>
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-white/5 flex items-baseline justify-between">
-                  <div>
-                    <div className="text-[10px] text-slate-400 uppercase tracking-wider">Balance Cartera</div>
-                    <div className="text-xl font-bold font-mono-nums text-white mt-0.5">
-                      ${venue.balanceUsd.toLocaleString()}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[10px] text-slate-400 uppercase tracking-wider">Latencia Socket</div>
-                    <div className="text-xs font-mono-nums font-bold text-[#2DD4BF] mt-1">
-                      {venue.pingMs} ms
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-white/5 flex justify-between items-center text-[11px] text-slate-400">
-                <span>Margen libre: <strong className="text-slate-200 font-mono-nums">${venue.freeMarginUsd.toLocaleString()}</strong></span>
-                <span>{venue.openOrdersCount} órdenes activas</span>
+        {/* Master Control Layout: Two Integrated Panoramic Panels (No generic cards) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Left: Interactive Real-Time Quotes Feed */}
+          <div className="lg:col-span-7 bg-[#0B0D14]/90 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl">
+            {/* Filter Navigation (Clean text links, no pill buttons) */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-5 mb-6">
+              <span className="text-xs uppercase font-mono tracking-wider text-slate-400">Feed de Precios en Streaming</span>
+              
+              <div className="flex items-center gap-6 text-xs font-semibold">
+                {(['all', 'crypto', 'forex', 'futures'] as const).map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={`relative py-1 capitalize transition-colors cursor-pointer ${
+                      activeCategory === cat ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    <span>{cat === 'all' ? 'Todos los Activos' : cat}</span>
+                    {activeCategory === cat && (
+                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#D4AF37] to-[#E06D8A] rounded-full" />
+                    )}
+                  </button>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* Realtime Streaming Quotes Section with Category Tabs */}
-        <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-white/10">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <h3 className="text-xl font-bold text-white">Cotizaciones L2 en Tiempo Real</h3>
-              <p className="text-xs text-slate-400 mt-1">Sincronización simultánea de precios y spreads entre cripto, forex y futuros.</p>
-            </div>
-
-            {/* Segmented Filter Control */}
-            <div className="inline-flex p-1 rounded-xl bg-[#141622] border border-white/10 self-start sm:self-auto">
-              {(['all', 'crypto', 'forex', 'futures'] as const).map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold capitalize transition-all cursor-pointer ${
-                    activeCategory === cat 
-                      ? 'bg-[#E06D8A] text-white shadow-md' 
-                      : 'text-slate-400 hover:text-white'
-                  }`}
+            {/* Hairline Quotes Table */}
+            <div className="space-y-3">
+              {filteredTicks.map((tick) => (
+                <div 
+                  key={tick.symbol}
+                  className="p-4 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-white/15 transition-all flex items-center justify-between group cursor-pointer"
                 >
-                  {cat === 'all' ? 'Todos los Activos' : cat}
-                </button>
+                  <div className="flex items-center gap-4">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#D4AF37]/50 group-hover:bg-[#D4AF37] group-hover:scale-125 transition-all" />
+                    <div>
+                      <div className="font-bold text-white text-base tracking-tight flex items-center gap-2">
+                        <span>{tick.symbol}</span>
+                        <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest font-normal">
+                          {tick.category}
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-400 font-light mt-0.5">
+                        {tick.venues}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="font-mono-nums font-bold text-white text-base">
+                      ${tick.price.toLocaleString(undefined, { minimumFractionDigits: tick.category === 'forex' ? 4 : 2 })}
+                    </div>
+                    <div className={`text-xs font-mono font-semibold flex items-center justify-end gap-1 mt-0.5 ${
+                      tick.change24h >= 0 ? 'text-[#10B981]' : 'text-rose-400'
+                    }`}>
+                      {tick.change24h >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                      <span>{tick.change24h >= 0 ? '+' : ''}{tick.change24h}%</span>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
+
+            <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+              <span className="font-mono">Latencia de difusión WebSocket: sub-2ms</span>
+              <button 
+                onClick={onOpenTerminal}
+                className="text-white hover:text-[#D4AF37] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <span>Ejecutar Split-Order en Vivo</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-sm">
-              <thead>
-                <tr className="border-b border-white/10 text-slate-400">
-                  <th className="pb-3 px-4 font-semibold uppercase text-[11px]">Instrumento</th>
-                  <th className="pb-3 px-4 font-semibold uppercase text-[11px]">Último Precio</th>
-                  <th className="pb-3 px-4 font-semibold uppercase text-[11px]">Variación 24h</th>
-                  <th className="pb-3 px-4 font-semibold uppercase text-[11px]">Volumen 24h</th>
-                  <th className="pb-3 px-4 font-semibold uppercase text-[11px]">Venues Sincronizados</th>
-                  <th className="pb-3 px-4 text-right font-semibold uppercase text-[11px]">Acción</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5 font-mono-nums">
-                {filteredTicks.map((tick) => (
-                  <tr key={tick.symbol} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="py-4 px-4 font-bold text-white">
-                      <div className="flex items-center gap-2">
-                        <span>{tick.symbol}</span>
-                        <span className="text-[10px] text-slate-400 font-sans font-normal hidden sm:inline">({tick.name})</span>
+          {/* Right: Connected Institutional Venues Cockpit */}
+          <div className="lg:col-span-5 flex flex-col gap-6">
+            <div className="bg-[#0B0D14]/90 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+                <div>
+                  <h3 className="text-lg font-bold text-white tracking-tight">Pasarelas de Conexión Activas</h3>
+                  <p className="text-xs text-slate-400 font-light mt-0.5">Protocolos nativos sin intermediarios web</p>
+                </div>
+                <Cpu className="w-5 h-5 text-[#D4AF37]" />
+              </div>
+
+              <div className="space-y-4">
+                {venues.map((v) => (
+                  <div 
+                    key={v.name}
+                    onClick={() => setSelectedVenue(v.name)}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                      selectedVenue === v.name 
+                        ? 'bg-[#D4AF37]/10 border-[#D4AF37]/50 shadow-[0_0_20px_rgba(212,175,55,0.15)]' 
+                        : 'bg-white/[0.02] border-white/5 hover:border-white/15'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
+                        <span className="font-bold text-white text-sm">{v.name}</span>
+                        <span className="text-[10px] font-mono text-slate-400">{v.type}</span>
                       </div>
-                    </td>
-                    <td className="py-4 px-4 text-white font-bold">
-                      ${tick.price.toLocaleString(undefined, { minimumFractionDigits: tick.price < 2 ? 4 : 2 })}
-                    </td>
-                    <td className="py-4 px-4">
-                      <span className={`font-bold flex items-center gap-1 ${tick.change24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {tick.change24h >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                        <span>{tick.change24h >= 0 ? `+${tick.change24h}%` : `${tick.change24h}%`}</span>
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 text-slate-300">{tick.volume24h}</td>
-                    <td className="py-4 px-4 text-slate-400 font-sans text-xs">{tick.venues}</td>
-                    <td className="py-4 px-4 text-right">
-                      <button
-                        onClick={onOpenTerminal}
-                        className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-[#E06D8A] text-slate-200 hover:text-white text-xs font-sans font-semibold transition-all cursor-pointer"
-                      >
-                        Operar
-                      </button>
-                    </td>
-                  </tr>
+                      <span className="font-mono text-xs font-bold text-[#10B981]">{v.latency}</span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between text-xs text-slate-400 font-mono">
+                      <span>{v.protocol}</span>
+                      <span className="text-slate-300">Profundidad: {v.depth}</span>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+
+              <div className="mt-6 pt-5 border-t border-white/10">
+                <button
+                  onClick={onOpenTerminal}
+                  className="w-full py-4 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-white text-xs font-bold font-mono uppercase tracking-wider flex items-center justify-center gap-2 border border-white/10 hover:border-white/20 transition-all cursor-pointer"
+                >
+                  <Terminal className="w-4 h-4 text-[#D4AF37]" />
+                  <span>Gestionar Credenciales en Terminal</span>
+                </button>
+              </div>
+            </div>
           </div>
+
         </div>
 
       </div>
