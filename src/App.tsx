@@ -11,6 +11,7 @@ import { Footer } from './components/Footer';
 import { DemoTerminal } from './components/DemoTerminal';
 import { LiquidFollower } from './components/LiquidFollower';
 import { ScrollReveal } from './components/ScrollReveal';
+import { Terminal, ArrowRight } from 'lucide-react';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
