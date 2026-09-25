@@ -17,6 +17,7 @@ import {
   Radio
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
+import { CandlestickLanguageSelector } from './CandlestickLanguageSelector';
 import { MULTI_ASSET_MARKET_TICKS, INITIAL_CONNECTED_ACCOUNTS } from '../data/mockData';
 
 interface DemoTerminalProps {
@@ -54,27 +55,28 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding }) =
           <div className="h-5 w-[1px] bg-white/10" />
 
           <div className="flex items-center gap-3">
-            <BrandLogo size="sm" subtitle="MASTER TERMINAL" />
-            <span className="text-[10px] font-mono-nums px-2 py-0.5 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-[#F3E5AB]">
+            <BrandLogo size="sm" />
+            <span className="text-[10px] font-mono-nums px-2 py-0.5 rounded-full bg-[#EC4899]/15 border border-[#EC4899]/30 text-[#F472B6]">
               MULTI-EXCHANGE & BROKER
             </span>
           </div>
         </div>
 
-        {/* Global Account Summary */}
-        <div className="hidden sm:flex items-center gap-6 text-xs">
-          <div>
+        {/* Global Account Summary & Language Candlestick */}
+        <div className="flex items-center gap-4 sm:gap-6 text-xs">
+          <div className="hidden sm:block">
             <span className="text-slate-400">Equidad Consolidada: </span>
             <span className="text-sm font-mono-nums font-bold text-white">
               ${totalBalance.toLocaleString()} USD
             </span>
           </div>
-          <div>
-            <span className="text-slate-400">Gas Tank Saldo: </span>
+          <div className="hidden md:block">
+            <span className="text-slate-400">Gas Tank: </span>
             <span className="text-sm font-mono-nums font-bold text-emerald-400">
               142.50 USDT
             </span>
           </div>
+          <CandlestickLanguageSelector />
         </div>
       </header>
 

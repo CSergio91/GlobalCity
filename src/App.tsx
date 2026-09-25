@@ -9,10 +9,14 @@ import { CrossCopyTrading } from './components/CrossCopyTrading';
 import { TelegramOperations } from './components/TelegramOperations';
 import { Footer } from './components/Footer';
 import { DemoTerminal } from './components/DemoTerminal';
-import { ArrowRight, Terminal, Layers, Zap, Bot, RefreshCw } from 'lucide-react';
+import { LiquidFollower } from './components/LiquidFollower';
+import { ScrollReveal } from './components/ScrollReveal';
+import { ArrowRight, Terminal } from 'lucide-react';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 
-export default function App() {
+function MainApp() {
   const [view, setView] = useState<'landing' | 'terminal'>('landing');
+  const { t } = useLanguage();
 
   const handleOpenTerminal = () => {
     setView('terminal');
@@ -41,9 +45,12 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#06070B] text-slate-100 flex flex-col selection:bg-[#E06D8A]/30 selection:text-white">
+    <div className="min-h-screen bg-[#06070B] text-slate-100 flex flex-col selection:bg-[#EC4899]/30 selection:text-white relative">
       
-      {/* Dynamic Immersive Navbar with Full-Width Visual Alignment */}
+      {/* Interactive Liquid Water Follower */}
+      <LiquidFollower />
+
+      {/* Dynamic Immersive Navbar with Candlestick Pair Language Selector */}
       <Navbar 
         onOpenTerminal={handleOpenTerminal} 
         onNavigateSection={handleNavigateSection}
@@ -78,45 +85,39 @@ export default function App() {
         <TelegramOperations />
 
         {/* Section 8: High-Conversion Panoramic CTA */}
-        <section className="min-h-[85vh] w-full flex flex-col justify-center py-32 bg-gradient-to-b from-[#07080D] via-[#0D101A] to-[#05060A] border-t border-white/10 relative overflow-hidden text-center select-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[500px] bg-gradient-to-r from-[#D4AF37]/15 via-[#E06D8A]/15 to-[#2DD4BF]/10 blur-[120px] pointer-events-none opacity-60" />
+        <section className="min-h-[75vh] sm:min-h-[85vh] w-full flex flex-col justify-center py-20 sm:py-32 bg-gradient-to-b from-[#07080D] via-[#0D101A] to-[#05060A] border-t border-white/10 relative overflow-hidden text-center select-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[500px] bg-gradient-to-r from-[#60A5FA]/15 via-[#F472B6]/20 to-[#FBBF24]/15 blur-[120px] pointer-events-none opacity-70" />
 
-          <div className="max-w-5xl mx-auto px-6 sm:px-10 relative z-10">
-            <div className="flex items-center justify-center gap-3 text-xs tracking-[0.25em] uppercase font-mono text-[#D4AF37] mb-6">
-              <span className="w-8 h-[1px] bg-gradient-to-r from-transparent to-[#D4AF37]" />
-              <span>TERMINAL UNIFICADO EN VIVO</span>
-              <span className="w-8 h-[1px] bg-gradient-to-l from-transparent to-[#D4AF37]" />
-            </div>
-
-            <h2 className="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.05] text-balance">
-              Toma el Control Total de tu Operativa Global{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] via-[#FFF3B0] to-[#E06D8A]">
-                en un Solo Lugar
+          <ScrollReveal direction="up" delay={100} className="max-w-5xl mx-auto px-4 sm:px-10 relative z-10">
+            <h2 className="text-3xl sm:text-5xl lg:text-7xl font-black text-white tracking-tight leading-[1.08] sm:leading-[1.05] text-balance text-shadow-hero">
+              {t.cta.titleStart}{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA]">
+                {t.cta.titleEnd}
               </span>
             </h2>
 
-            <p className="mt-8 text-lg sm:text-xl text-slate-300 max-w-3xl mx-auto font-light leading-relaxed text-balance">
-              Conecta tus cuentas bajo protocolo no custodial estricto en Bybit, OKX, cTrader, MetaTrader 5 y CME. Ejecuta arbitraje sintético simultáneo sub-100ms y opera con total tranquilidad desde Telegram.
+            <p className="mt-6 sm:mt-8 text-base sm:text-lg lg:text-xl text-slate-200 max-w-3xl mx-auto font-light leading-relaxed text-balance text-shadow-subtle text-illuminate">
+              {t.cta.subtitle}
             </p>
 
-            <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-5">
+            <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 w-full max-w-md sm:max-w-none mx-auto">
               <button
                 onClick={handleOpenTerminal}
-                className="w-full sm:w-auto px-10 py-5 text-sm font-bold text-white bg-gradient-to-r from-[#D4AF37] via-[#E06D8A] to-[#9E3553] hover:brightness-110 transition-all rounded-2xl shadow-[0_0_35px_rgba(224,109,138,0.35)] flex items-center justify-center gap-3 cursor-pointer active:scale-95 group border border-white/20"
+                className="btn-liquid w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-[#F472B6] via-[#EC4899] to-[#818CF8] hover:brightness-110 rounded-2xl shadow-[0_10px_40px_rgba(236,72,153,0.45)] flex items-center justify-center gap-3 cursor-pointer border border-white/30"
               >
                 <Terminal className="w-5 h-5 text-white" />
-                <span>Acceder al Terminal de Trading</span>
+                <span>{t.cta.accessTerminalBtn}</span>
                 <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1.5 transition-transform" />
               </button>
 
               <button
                 onClick={() => handleNavigateSection('multi-venue')}
-                className="w-full sm:w-auto px-9 py-5 text-sm font-medium text-slate-300 hover:text-white bg-white/[0.03] hover:bg-white/[0.08] transition-all rounded-2xl cursor-pointer border border-white/10 backdrop-blur-md"
+                className="btn-liquid w-full sm:w-auto px-8 sm:px-9 py-4 sm:py-5 text-xs sm:text-sm font-semibold text-white bg-black/40 hover:bg-black/60 rounded-2xl cursor-pointer border border-white/20 backdrop-blur-xl"
               >
-                <span>Explorar Conectores y Sedes</span>
+                <span>{t.cta.exploreGatewaysBtn}</span>
               </button>
             </div>
-          </div>
+          </ScrollReveal>
         </section>
 
       </main>
@@ -125,5 +126,13 @@ export default function App() {
       <Footer />
 
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <MainApp />
+    </LanguageProvider>
   );
 }

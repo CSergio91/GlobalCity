@@ -3,16 +3,11 @@ import {
   Terminal, 
   ArrowRight, 
   Menu, 
-  X, 
-  Layers, 
-  Zap, 
-  Bot, 
-  RefreshCw, 
-  Copy,
-  TrendingUp,
-  Cpu
+  X
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
+import { CandlestickLanguageSelector } from './CandlestickLanguageSelector';
+import { useLanguage } from '../context/LanguageContext';
 
 interface NavbarProps {
   onOpenTerminal: () => void;
@@ -22,6 +17,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSection }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,12 +28,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
   }, []);
 
   const navItems = [
-    { id: "multi-venue", label: "Multi-Exchange & Brokers" },
-    { id: "arbitrage", label: "Arbitraje Sintético" },
-    { id: "horizontal-showcase", label: "Módulos & Telegram" },
-    { id: "rebalance", label: "Rebalanceo" },
-    { id: "copy-trading", label: "Copy Trading Cruzado" },
-    { id: "calculator", label: "Calculadora VWAP" }
+    { id: "multi-venue", label: t.nav.multiVenue },
+    { id: "arbitrage", label: t.nav.arbitrage },
+    { id: "horizontal-showcase", label: t.nav.modules },
+    { id: "rebalance", label: t.nav.rebalance },
+    { id: "copy-trading", label: t.nav.copyTrading },
+    { id: "calculator", label: t.nav.calculator }
   ];
 
   return (
@@ -55,11 +51,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
           onClick={() => onNavigateSection("hero")}
           className="flex items-center gap-3 cursor-pointer group"
         >
-          <BrandLogo size="md" subtitle="MULTI-VENUE CONNECTOR" />
+          <BrandLogo size="md" />
         </div>
 
-        {/* Zone 2: Navigation Links (Pure typography, no boxed pills) */}
-        <nav className="hidden xl:flex items-center gap-8 text-sm font-medium text-slate-300">
+        {/* Zone 2: Navigation Links */}
+        <nav className="hidden xl:flex items-center gap-7 text-sm font-medium text-slate-300">
           {navItems.map((item) => (
             <button
               key={item.id}
@@ -67,35 +63,34 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
               className="relative py-1 hover:text-white transition-colors cursor-pointer group"
             >
               <span>{item.label}</span>
-              <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-gradient-to-r from-[#E06D8A] to-[#2DD4BF] group-hover:w-full transition-all duration-300 rounded-full" />
+              <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-gradient-to-r from-[#F472B6] to-[#60A5FA] group-hover:w-full transition-all duration-300 rounded-full" />
             </button>
           ))}
         </nav>
 
-        {/* Zone 3: Direct Action */}
-        <div className="hidden sm:flex items-center gap-4">
-          <div className="hidden 2xl:flex items-center gap-2 text-xs font-mono-nums text-slate-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>6 Conectores Activos</span>
-          </div>
+        {/* Zone 3: Candlestick Language Selector & Direct Action */}
+        <div className="hidden sm:flex items-center gap-3.5">
+          <CandlestickLanguageSelector />
 
           <button
             onClick={onOpenTerminal}
-            className="px-6 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#E06D8A] to-[#C95370] hover:from-[#ED7D9A] hover:to-[#E06D8A] transition-all rounded-xl shadow-lg shadow-[#E06D8A]/25 flex items-center gap-2.5 cursor-pointer active:scale-95 group border border-white/10"
+            className="btn-liquid px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#F472B6] via-[#EC4899] to-[#818CF8] hover:brightness-110 rounded-xl shadow-lg shadow-[#EC4899]/30 flex items-center gap-2 cursor-pointer border border-white/20"
           >
             <Terminal className="w-4 h-4 text-white group-hover:rotate-12 transition-transform" />
-            <span>Abrir Terminal Unificado</span>
+            <span>{t.nav.openTerminal}</span>
             <ArrowRight className="w-3.5 h-3.5 text-white/80 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
 
-        {/* Mobile Toggle */}
-        <div className="xl:hidden flex items-center gap-3">
+        {/* Mobile Toggle & Selector */}
+        <div className="xl:hidden flex items-center gap-2.5">
+          <CandlestickLanguageSelector />
+
           <button
             onClick={onOpenTerminal}
-            className="px-3.5 py-2 text-xs font-bold text-white bg-[#E06D8A] rounded-lg"
+            className="px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#F472B6] to-[#818CF8] rounded-xl shadow"
           >
-            Terminal
+            {t.nav.terminalBtn}
           </button>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -109,7 +104,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="xl:hidden bg-[#0C0E14]/95 backdrop-blur-2xl border-b border-white/10 px-6 py-5 flex flex-col gap-4">
+        <div className="xl:hidden bg-[#0C0E14]/95 backdrop-blur-2xl border-b border-white/10 px-6 py-5 flex flex-col gap-4 animate-reveal">
           {navItems.map((item) => (
             <button
               key={item.id}
@@ -117,7 +112,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
                 onNavigateSection(item.id);
                 setMobileMenuOpen(false);
               }}
-              className="text-left text-sm py-1.5 font-medium text-slate-300 hover:text-[#E06D8A] transition-colors"
+              className="text-left text-sm py-1.5 font-medium text-slate-300 hover:text-[#F472B6] transition-colors"
             >
               {item.label}
             </button>
@@ -127,9 +122,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
               setMobileMenuOpen(false);
               onOpenTerminal();
             }}
-            className="w-full py-3 text-center text-xs font-bold text-white bg-[#E06D8A] rounded-xl mt-2"
+            className="w-full py-3 text-center text-xs font-bold text-white bg-gradient-to-r from-[#F472B6] to-[#818CF8] rounded-xl mt-2 shadow-lg"
           >
-            Acceder al Terminal de Trading
+            {t.nav.openTerminal}
           </button>
         </div>
       )}
