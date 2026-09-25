@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, TelegramUserPayload } from '../types/auth';
+import { authService } from '../services/authService';
 
 interface AuthContextType {
   user: UserProfile | null;
   isAuthenticated: boolean;
   loginWithTelegram: (payload: TelegramUserPayload) => void;
   loginWithCustomTelegram: (username: string, telegramId?: string) => void;
+  syncWithTelegram: () => Promise<UserProfile | null>;
   loginAsDemo: () => void;
   logout: () => void;
 }
@@ -23,6 +25,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return null;
     }
   });
+
+  // Si no hay usuario en localStorage al iniciar, intentar detectar si el usuario ya inició sesión con el bot
+  useEffect(() => {
+    if (!user) {
+      authService.getLatestTelegramAuthUser().then((detected) => {
+        if (detected) {
+          const newUser: UserProfile = {
+            id: `tg_${detected.id}`,
+            username: detected.username ? `@${detected.username.replace('@', '')}` : `@tg_${detected.id}`,
+            firstName: detected.first_name || 'Trader',
+            lastName: detected.last_name,
+            photoUrl: detected.photo_url,
+            authProvider: 'telegram',
+            telegramId: detected.id,
+            role: 'institutional_trader',
+            createdAt: new Date().toISOString(),
+            twoFactorEnabled: true,
+          };
+          setUser(newUser);
+          authService.saveSession(newUser);
+        }
+      }).catch(() => {});
+    }
+  }, []);
 
   useEffect(() => {
     try {
@@ -83,6 +109,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(demoUser);
   };
 
+  const syncWithTelegram = async (): Promise<UserProfile | null> => {
+    try {
+      const detected = await authService.getLatestTelegramAuthUser();
+      if (detected) {
+        const newUser: UserProfile = {
+          id: `tg_${detected.id}`,
+          username: detected.username ? `@${detected.username.replace('@', '')}` : `@tg_${detected.id}`,
+          firstName: detected.first_name || 'Trader',
+          lastName: detected.last_name,
+          photoUrl: detected.photo_url,
+          authProvider: 'telegram',
+          telegramId: detected.id,
+          role: 'institutional_trader',
+          createdAt: new Date().toISOString(),
+          twoFactorEnabled: true,
+        };
+        setUser(newUser);
+        authService.saveSession(newUser);
+        return newUser;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
   const logout = () => {
     setUser(null);
   };
@@ -94,6 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user,
         loginWithTelegram,
         loginWithCustomTelegram,
+        syncWithTelegram,
         loginAsDemo,
         logout,
       }}

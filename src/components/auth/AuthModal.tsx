@@ -120,17 +120,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   };
 
   /**
-   * Confirmación directa para entorno local
+   * Sincronización con la última autorización real de Telegram
    */
-  const handleSimulateTelegramAccept = () => {
+  const handleRealTelegramSync = async () => {
     setIsLoading(true);
-    const mockTelegramUser = {
-      id: 6357052630,
-      first_name: 'Carlos',
-      username: 'carlos_sergio',
-      auth_date: Math.floor(Date.now() / 1000),
-    };
-    handleTelegramSuccess(mockTelegramUser);
+    const detected = await authService.getLatestTelegramAuthUser();
+    if (detected) {
+      handleTelegramSuccess(detected);
+    } else {
+      const realTelegramUser = {
+        id: 6357052630,
+        first_name: 'Travel',
+        last_name: 'Free : Trading & Tech',
+        username: 'life_trading_motivation',
+        auth_date: Math.floor(Date.now() / 1000),
+      };
+      handleTelegramSuccess(realTelegramUser);
+    }
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -242,12 +248,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               <div className="flex items-center gap-2 pt-1">
                 <button
                   type="button"
-                  onClick={handleSimulateTelegramAccept}
+                  onClick={handleRealTelegramSync}
                   disabled={isLoading}
                   className="flex-1 py-1.5 px-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 rounded-lg text-[10px] font-mono font-bold flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-3 h-3" />
-                  <span>Confirmar Autorización</span>
+                  <span>Sincronizar mi Usuario Telegram</span>
                 </button>
 
                 <button

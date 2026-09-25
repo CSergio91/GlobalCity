@@ -46,34 +46,73 @@ export const authService = {
   },
 
   /**
-   * Sondea la API de Telegram para detectar cuando el usuario pulsa START en el bot
+   * Obtiene la última autorización de Telegram enviada al bot
    */
-  async checkTelegramBotUpdates(authNonce: string): Promise<TelegramUserPayload | null> {
+  async getLatestTelegramAuthUser(): Promise<TelegramUserPayload | null> {
     const token = "YOUR_TELEGRAM_BOT_TOKEN_REMOVED";
     try {
-      const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=-10`);
+      const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=-20`);
       const data = await res.json();
       if (!data.ok || !data.result) return null;
 
-      // Buscar si el usuario envió /start recientemente
+      // Buscar el último mensaje de un usuario real que haya iniciado el bot con /start
+      for (let i = data.result.length - 1; i >= 0; i--) {
+        const update = data.result[i];
+        const msg = update.message;
+        if (msg && msg.from && !msg.from.is_bot) {
+          const text = msg.text || '';
+          if (text.startsWith('/start') || text.startsWith('/')) {
+            const from = msg.from;
+            return {
+              id: from.id,
+              first_name: from.first_name,
+              last_name: from.last_name,
+              username: from.username,
+              photo_url: undefined,
+              auth_date: msg.date
+            };
+          }
+        }
+      }
+      return null;
+    } catch (err) {
+      console.error('Error fetching latest telegram auth user:', err);
+      return null;
+    }
+  },
+
+  /**
+   * Sondea la API de Telegram para detectar cuando el usuario pulsa START en el bot
+   */
+  async checkTelegramBotUpdates(authNonce?: string): Promise<TelegramUserPayload | null> {
+    const token = "YOUR_TELEGRAM_BOT_TOKEN_REMOVED";
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=-20`);
+      const data = await res.json();
+      if (!data.ok || !data.result) return null;
+
+      // Buscar si el usuario envió /start
       for (let i = data.result.length - 1; i >= 0; i--) {
         const update = data.result[i];
         const text = update.message?.text || '';
         const msgDate = update.message?.date || 0;
         const nowSec = Math.floor(Date.now() / 1000);
 
-        // Si el mensaje es reciente (últimos 3 minutos) y es un comando /start
-        if (text.startsWith('/start') && (nowSec - msgDate < 180) && update.message?.from) {
+        // Si coincide con el nonce específico O es un /start en las últimas 24h
+        const matchesNonce = authNonce && text.includes(authNonce);
+        const isRecentStart = text.startsWith('/start') && (nowSec - msgDate < 86400);
+
+        if ((matchesNonce || isRecentStart) && update.message?.from) {
           const from = update.message.from;
           
-          // Enviar confirmación automática al chat de Telegram del usuario
+          // Enviar confirmación automática al chat de Telegram del usuario si no es repetido
           try {
             await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 chat_id: from.id,
-                text: `🎯 *TAKE PROFIT: Autenticación Exitosa*\n\n¡Hola ${from.first_name || ''}! Has autorizado el acceso a *Global City Trading Platform* con éxito.\n\nPuedes volver a la ventana de tu navegador para acceder al Terminal.`,
+                text: `🎯 *TAKE PROFIT: Autenticación Exitosa*\n\n¡Hola ${from.first_name || ''}! Has autorizado el acceso a *Global City Trading Platform* con éxito.\n\nPuedes volver a la ventana de tu navegador para acceder a la Sala de Operaciones (/operaciones).`,
                 parse_mode: 'Markdown'
               })
             });

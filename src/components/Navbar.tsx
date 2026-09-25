@@ -85,7 +85,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
               <div className="w-5 h-5 rounded-md bg-[#229ED9]/30 flex items-center justify-center text-[#229ED9] group-hover:scale-105 transition-transform">
                 <Send className="w-3 h-3" />
               </div>
-              <span className="text-xs font-mono font-bold text-slate-200">{user.username}</span>
+              <div className="flex flex-col text-left">
+                <span className="text-xs font-bold text-white leading-none">{user.firstName || user.username}</span>
+                <span className="text-[10px] font-mono text-[#38BDF8] leading-tight">{user.username}</span>
+              </div>
             </button>
           )}
 

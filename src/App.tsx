@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { MultiVenueHub } from './components/MultiVenueHub';
@@ -15,34 +14,64 @@ import { ScrollReveal } from './components/ScrollReveal';
 import { Terminal, ArrowRight } from 'lucide-react';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { RouterProvider, useAppRouter } from './context/RouterContext';
 import { AuthModal } from './components/auth/AuthModal';
 
-function LandingPage() {
+function MainAppContent() {
+  const { currentPath, navigate } = useAppRouter();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const { t } = useLanguage();
   const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
+
+  const isTerminalRoute = 
+    currentPath === '/terminal' || 
+    currentPath === '/operaciones' || 
+    currentPath === '/operations';
 
   const handleOpenTerminal = () => {
     if (!isAuthenticated) {
       setIsAuthModalOpen(true);
     } else {
-      navigate('/terminal');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      navigate('/operaciones');
     }
   };
 
   const handleAuthSuccess = () => {
     setIsAuthModalOpen(false);
-    navigate('/terminal');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigate('/operaciones');
   };
 
   const handleNavigateSection = (sectionId: string) => {
-    const el = document.getElementById(sectionId);
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
+    if (isTerminalRoute) {
+      navigate('/');
+      setTimeout(() => {
+        const el = document.getElementById(sectionId);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } else {
+      const el = document.getElementById(sectionId);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
+  // If on /operaciones, /terminal or /operations route, render the Trading & Operations Terminal
+  if (isTerminalRoute) {
+    return (
+      <>
+        <DemoTerminal 
+          onBackToLanding={() => navigate('/')} 
+          onOpenAuth={() => setIsAuthModalOpen(true)}
+        />
+        <AuthModal 
+          isOpen={isAuthModalOpen} 
+          onClose={() => setIsAuthModalOpen(false)} 
+          onSuccess={handleAuthSuccess} 
+        />
+      </>
+    );
+  }
+
+  // Otherwise, render the Landing Page
   return (
     <div className="min-h-screen bg-[#06070B] text-slate-100 flex flex-col selection:bg-[#EC4899]/30 selection:text-white relative">
       
@@ -150,24 +179,13 @@ function LandingPage() {
   );
 }
 
-function TerminalPage() {
-  const navigate = useNavigate();
-  return <DemoTerminal onBackToLanding={() => navigate('/')} />;
-}
-
 export default function App() {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/terminal" element={<TerminalPage />} />
-            <Route path="/operaciones" element={<Navigate to="/terminal" replace />} />
-            <Route path="/operations" element={<Navigate to="/terminal" replace />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
+        <RouterProvider>
+          <MainAppContent />
+        </RouterProvider>
       </AuthProvider>
     </LanguageProvider>
   );
