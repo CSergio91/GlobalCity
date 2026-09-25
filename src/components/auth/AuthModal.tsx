@@ -83,41 +83,41 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     });
   };
 
+  const [authSessionNonce, setAuthSessionNonce] = useState('');
+
+  // Polling automático para detectar cuando el usuario pulsa START en el bot oficial de Telegram
+  useEffect(() => {
+    let intervalId: any;
+    if (isTelegramWaiting) {
+      intervalId = setInterval(async () => {
+        const detectedUser = await authService.checkTelegramBotUpdates(authSessionNonce);
+        if (detectedUser) {
+          clearInterval(intervalId);
+          setIsTelegramWaiting(false);
+          handleTelegramSuccess(detectedUser);
+        }
+      }, 1500);
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isTelegramWaiting, authSessionNonce]);
+
   /**
-   * Abre Telegram OAuth o autoriza directamente si es entorno local sin bot registrado
+   * Abre Telegram OAuth real con el bot de la plataforma
    */
   const handleLaunchTelegramOAuth = () => {
-    setIsLoading(true);
-    
-    // Si el usuario configuró un bot real en .env diferente al placeholder
-    const isCustomRealBot = botUsername && botUsername !== 'GlobalCityTradingBot';
+    const nonce = `auth_${Date.now()}`;
+    setAuthSessionNonce(nonce);
+    setIsTelegramWaiting(true);
+    setFeedback({
+      success: true,
+      type: 'TAKE_PROFIT',
+      message: `Abriendo Telegram... Pulsa "INICIAR" en @${botUsername} para autorizar tu acceso.`
+    });
 
-    if (isCustomRealBot) {
-      setIsTelegramWaiting(true);
-      setFeedback({
-        success: true,
-        type: 'TAKE_PROFIT',
-        message: `Abriendo Telegram para autorizar con @${botUsername}...`
-      });
-
-      const authSessionToken = `auth_${Date.now()}`;
-      const telegramOAuthUrl = `https://t.me/${botUsername}?start=${authSessionToken}`;
-      window.open(telegramOAuthUrl, '_blank');
-      setIsLoading(false);
-    } else {
-      // Entorno de desarrollo / Bot aún no registrado en BotFather:
-      // Simulamos la autorización instantánea con éxito Take Profit
-      setTimeout(() => {
-        const mockTelegramUser = {
-          id: Math.floor(100000000 + Math.random() * 900000000),
-          first_name: 'Carlos',
-          username: 'carlos_globalcity',
-          auth_date: Math.floor(Date.now() / 1000),
-        };
-        handleTelegramSuccess(mockTelegramUser);
-        setIsLoading(false);
-      }, 500);
-    }
+    const telegramOAuthUrl = `https://t.me/${botUsername}?start=${nonce}`;
+    window.open(telegramOAuthUrl, '_blank');
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {

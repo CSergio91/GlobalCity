@@ -46,6 +46,58 @@ export const authService = {
   },
 
   /**
+   * Sondea la API de Telegram para detectar cuando el usuario pulsa START en el bot
+   */
+  async checkTelegramBotUpdates(authNonce: string): Promise<TelegramUserPayload | null> {
+    const token = "YOUR_TELEGRAM_BOT_TOKEN_REMOVED";
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=-10`);
+      const data = await res.json();
+      if (!data.ok || !data.result) return null;
+
+      // Buscar si el usuario envió /start recientemente
+      for (let i = data.result.length - 1; i >= 0; i--) {
+        const update = data.result[i];
+        const text = update.message?.text || '';
+        const msgDate = update.message?.date || 0;
+        const nowSec = Math.floor(Date.now() / 1000);
+
+        // Si el mensaje es reciente (últimos 3 minutos) y es un comando /start
+        if (text.startsWith('/start') && (nowSec - msgDate < 180) && update.message?.from) {
+          const from = update.message.from;
+          
+          // Enviar confirmación automática al chat de Telegram del usuario
+          try {
+            await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: from.id,
+                text: `🎯 *TAKE PROFIT: Autenticación Exitosa*\n\n¡Hola ${from.first_name || ''}! Has autorizado el acceso a *Global City Trading Platform* con éxito.\n\nPuedes volver a la ventana de tu navegador para acceder al Terminal.`,
+                parse_mode: 'Markdown'
+              })
+            });
+          } catch {
+            // Ignorar errores de notificación secundaria
+          }
+
+          return {
+            id: from.id,
+            first_name: from.first_name,
+            last_name: from.last_name,
+            username: from.username,
+            auth_date: msgDate || nowSec
+          };
+        }
+      }
+      return null;
+    } catch (err) {
+      console.error('Error polling Telegram bot updates:', err);
+      return null;
+    }
+  },
+
+  /**
    * Autenticación con Telegram OAuth 2.0
    * Recibe el payload oficial del Telegram Login Widget o deep-link
    */
