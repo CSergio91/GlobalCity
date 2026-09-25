@@ -35,9 +35,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const [isTelegramWaiting, setIsTelegramWaiting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState<AuthResult | null>(null);
+  const [authSessionNonce, setAuthSessionNonce] = useState('');
 
   const telegramContainerRef = useRef<HTMLDivElement>(null);
-  const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'GlobalCityTradingBot';
+  const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'globalcity_auth_bot';
+
+  const handleTelegramSuccess = (telegramUser: any) => {
+    authService.loginWithTelegram(telegramUser).then((result) => {
+      setFeedback(result);
+      if (result.success && result.user) {
+        loginWithTelegram(telegramUser);
+        setTimeout(() => {
+          onSuccess();
+        }, 800);
+      }
+    });
+  };
 
   useEffect(() => {
     if (!isOpen) {
@@ -69,22 +82,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     }
   }, [isOpen, botUsername]);
 
-  if (!isOpen) return null;
-
-  const handleTelegramSuccess = (telegramUser: any) => {
-    authService.loginWithTelegram(telegramUser).then((result) => {
-      setFeedback(result);
-      if (result.success && result.user) {
-        loginWithTelegram(telegramUser);
-        setTimeout(() => {
-          onSuccess();
-        }, 800);
-      }
-    });
-  };
-
-  const [authSessionNonce, setAuthSessionNonce] = useState('');
-
   // Polling automático para detectar cuando el usuario pulsa START en el bot oficial de Telegram
   useEffect(() => {
     let intervalId: any;
@@ -103,6 +100,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     };
   }, [isTelegramWaiting, authSessionNonce]);
 
+  if (!isOpen) return null;
+
   /**
    * Abre Telegram OAuth real con el bot de la plataforma
    */
@@ -118,6 +117,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
     const telegramOAuthUrl = `https://t.me/${botUsername}?start=${nonce}`;
     window.open(telegramOAuthUrl, '_blank');
+  };
+
+  /**
+   * Confirmación directa para entorno local
+   */
+  const handleSimulateTelegramAccept = () => {
+    setIsLoading(true);
+    const mockTelegramUser = {
+      id: 6357052630,
+      first_name: 'Carlos',
+      username: 'carlos_sergio',
+      auth_date: Math.floor(Date.now() / 1000),
+    };
+    handleTelegramSuccess(mockTelegramUser);
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
