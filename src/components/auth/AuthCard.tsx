@@ -20,6 +20,7 @@ import { useAuth } from '../../context/AuthContext';
 import { authService, AuthResult } from '../../services/authService';
 import { BrandLogo } from '../BrandLogo';
 import nightSkylineBg from '../../assets/images/global_city_night_skyline.jpg';
+import presentationVideo from '../../assets/video/global_city_presentation_logo.mp4';
 
 interface AuthCardProps {
   onSuccess: () => void;
@@ -254,12 +255,33 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
           </div>
         </div>
 
-        {/* Emblema Central en Desktop (Compacto y elegante) */}
+        {/* Presentación en Video del Logo Oficial (AutoPlay, Muted, se congela al final) */}
         <div className="relative z-10 hidden md:flex items-center justify-center my-auto py-2">
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-[#F472B6]/40 to-[#818CF8]/40 rounded-full blur-sm" />
-            <div className="relative w-14 h-14 rounded-full bg-[#0E1019]/85 border border-white/20 flex items-center justify-center p-2.5 shadow-xl">
-              <BrandLogo size="sm" />
+          <div 
+            onClick={(e) => {
+              const video = e.currentTarget.querySelector('video');
+              if (video) {
+                video.currentTime = 0;
+                video.play();
+              }
+            }}
+            className="relative group cursor-pointer" 
+            title="Toca para reproducir de nuevo"
+          >
+            <div className="absolute -inset-1.5 bg-gradient-to-r from-[#F472B6]/40 via-[#EC4899]/30 to-[#818CF8]/40 rounded-2xl blur-md opacity-60 group-hover:opacity-100 transition-opacity" />
+            <div className="relative w-24 h-24 lg:w-28 lg:h-28 rounded-2xl bg-black/50 border border-white/20 backdrop-blur-md overflow-hidden flex items-center justify-center shadow-xl">
+              <video
+                src={presentationVideo}
+                autoPlay
+                muted
+                playsInline
+                preload="metadata"
+                onEnded={(e) => {
+                  // Se detiene al final del video para que no se repita continuamente
+                  e.currentTarget.pause();
+                }}
+                className="w-full h-full object-contain pointer-events-none"
+              />
             </div>
           </div>
         </div>
