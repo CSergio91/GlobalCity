@@ -125,10 +125,91 @@ La landing page se estructura como un argumento técnico y de confianza sin fisu
 
 ---
 
-## 6. Checklist de Implementación para el Agente
+## 6. Sistema de Diseño y Telemetría de Notificaciones en Telegram
+
+Telegram es el **canal troncal omnicanal** de Global City. No solo gestiona el inicio de sesión OAuth 2.0, sino que centraliza el 100% de las comunicaciones operativas, de riesgo, de seguridad y de marketing con una tasa de apertura superior al 90%.
+
+### A. Arquitectura de Hub Central Único
+- **Un Solo Bot:** Todo el ecosistema opera bajo un único bot corporativo verificado (`@nombre_bot`), evitando que el usuario deba interactuar con múltiples chats dispersos.
+- **Doble Alcance de Entrega:**
+  1. **Chat Privado (1 a 1):** Alertas transaccionales confidenciales, confirmación 2FA de órdenes de alto volumen, avisos de riesgo y resúmenes personales de cuenta.
+  2. **Canales / Grupos de Equipo:** Tablones operativos para firmas de prop trading, salas de arbitraje institucional y canales de anuncios comunitarios.
+
+### B. Especificación de Diseño y Formato de Mensajes (Telegram MarkdownV2)
+Todos los mensajes emitidos por el bot deben respetar la estética institucional de la plataforma (limpia, precisa y numérica):
+
+1. **Tipografía Numérica en Bloque:**
+   - Precios, lotajes, latencias, hashes y IDs de orden deben encapsularse obligatoriamente en formato monoespaciado (`` `código` `` o bloques `pre`) para garantizar alineación tabular.
+2. **Gramática Cromática Institucional:**
+   - 🎯 / 🟢 **TAKE PROFIT / EJECUCIÓN:** `BUY/SELL Fills`, arbitraje completado con éxito, sesiones autorizadas.
+   - ⚠️ **STOP LOSS / ADVERTENCIA:** Consumo del 75%-90% del límite diario de pérdida, incremento de latencia en un exchange.
+   - 🚨 **MARGIN CALL / RIESGO CRÍTICO:** Violación de drawdown EOD, expiración de clave API, ejecución del *Kill Switch*.
+   - 📊 **TELEMETRÍA & BALANCE:** Actualizaciones de equidad agregada, margen libre y reportes periódicos.
+   - 🚀 **PRODUCTO & MARKETING:** Anuncios de nuevos conectores, torneos de trading cuantitativo y retos de evaluación de fondeo.
+
+### C. Plantillas de Diseño de Notificaciones
+
+#### 1. Notificación de Ejecución de Orden (Trading Nivel 1)
+```text
+🟢 ORDEN EJECUTADA · BYBIT V5
+━━━━━━━━━━━━━━━━━━━━
+Instrumento: BTC/USDT Perpetuo
+Operación:   BUY (Long) · Market Fill
+Cantidad:    0.50 BTC ($42,155.10)
+Precio Fill: $84,310.20
+Latencia:    14 ms · ID #918234
+
+[ 📊 Ver en Terminal Web ]  [ ⚙️ Gestionar SL/TP ]
+```
+
+#### 2. Alerta del Risk Guardian (Riesgo Nivel 2)
+```text
+⚠️ ALERTA DE RIESGO · STOP LOSS PROTOCOL
+━━━━━━━━━━━━━━━━━━━━
+Exchange:    OKX DMA Unified
+Alerta:      Consumo del 82% del Límite Diario de Pérdida
+Pérdida Hoy: -$1,640.00 / -$2,000.00 Max
+Margen:      $33,200.00 USDT
+
+Acción recomendada: Pausar órdenes abiertas o activar Cooldown.
+[ 🛑 Activar Kill Switch ]  [ ⚡ Mantener Operativa ]
+```
+
+#### 3. Reporte Semanal de Rendimiento (Marketing & Engagement Nivel 3)
+```text
+📊 RESUMEN SEMANAL DE OPERACIONES · GLOBAL CITY
+━━━━━━━━━━━━━━━━━━━━
+Periodo:     19 Sep - 25 Sep 2026
+Win Rate:    68.4% (38 ganadoras / 18 perdedoras)
+Volumen:     $1.42M USD (Cross-Venues)
+PnL Neto:    +$4,820.50 USDT (+11.2%)
+Comisiones:  -$182.10 (35% ahorrado en rebates)
+
+[ 🚀 Iniciar Nueva Sesión ]  [ 📈 Descargar Auditoría ]
+```
+
+### D. Centro de Preferencias en la Interfaz Web (UI Spec)
+Para evitar la fatiga de notificaciones y que el usuario mutee el bot, el Terminal incluirá en su sección de Ajustes un panel de **"Preferencias de Telemetría Telegram"**:
+- `[Toggle]` Notificaciones de ejecución de órdenes (Fills y cancelaciones).
+- `[Toggle]` Alertas de diferenciales de arbitraje L2 ($\ge 0.15\%$).
+- `[Toggle]` Alertas críticas de riesgo y liquidación *(bloqueado en ACTIVO por seguridad)*.
+- `[Toggle]` Resumen dominical de rendimiento y analítica patrimonial.
+- `[Toggle]` Novedades de producto, torneos y lanzamientos.
+
+### E. Protocolo de Anti-Spam y Batching en Trading de Alta Frecuencia
+Si un algoritmo de arbitraje o fragmentación táctica emite decenas de órdenes por minuto:
+- **PROHIBIDO** saturar el chat con 50 mensajes individuales.
+- El motor agrupa (*batching*) los fills en un solo reporte de síntesis cada 30-60 segundos:
+  *Ejemplo: "⚡ Lote de Arbitraje Ejecutado: 12 órdenes procesadas con éxito. Spread neto capturado: +$142.30 USDT."*
+
+---
+
+## 7. Checklist de Implementación para el Agente
 
 - [ ] ¿Los botones e inputs tienen retroalimentación visual táctil inmediata ($\le 200\text{ms}$)?
 - [ ] ¿Se utiliza `font-mono tabular-nums` para todas las tablas de precios, feeds y porcentajes?
 - [ ] ¿El fondo incorpora el resplandor difuso rose-mauve sutil de las referencias visuales?
 - [ ] ¿Los textos son concretos, técnicos y libres de adjetivos publicitarios vacíos?
 - [ ] ¿Todos los botones y selectores cuentan con manejadores de eventos funcionales sin enlaces muertos?
+- [ ] ¿Las notificaciones de Telegram siguen la gramática cromática institucional (Take Profit, Stop Loss, Margin Call)?
+- [ ] ¿Se implementa el protocolo de batching para evitar spam en el chat de Telegram del usuario?
