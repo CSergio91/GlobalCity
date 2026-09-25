@@ -123,9 +123,30 @@ distribuido consistentemente a lo largo de varias sesiones.
 
 ---
 
-## 6. Checklist de Verificación para Agentes de IA
+## 6. Escalamiento de Alertas de Riesgo y Solvencia en Telegram
+
+El motor de gobernanza financiera utiliza el **Telegram Bot Engine** para prevención proactiva:
+
+1. **Escalamiento Preventivo de Drawdown EOD (Chat Privado):**
+   - **Nivel Amarillo (70% Drawdown consumido):**
+     `⚠️ STOP LOSS PREVENTIVO: Has alcanzado el 70% del límite de pérdida diario. Margen restante: $600 USD.`
+   - **Nivel Naranja (90% Drawdown consumido):**
+     `🚨 MARGIN CALL WARNING: Estás al 90% de la pérdida máxima permitida. Se recomienda aplanar posiciones inmediatamente.`
+   - **Nivel Rojo (100% Breached):**
+     `🔴 CUENTA DESCALIFICADA: Límite EOD alcanzado. Posiciones cerradas por Risk Guardian.`
+2. **Validación de la Regla de Consistencia del 40%:**
+   - Si un trader solicita un retiro pero una sola jornada representa $>40\%$ del profit acumulado, el bot le envía el desglose exacto de los días restantes y capital adicional a generar para desbloquear la liquidación.
+3. **Alerta Confidencial de Solvencia al Grupo de Tesorería (`Global City Funding`):**
+   - Si el Ratio de Reserva cae por debajo del umbral de seguridad ($R < 2.0$), el bot emite una alerta prioritaria al canal de administradores para pausar la admisión de nuevos retos hasta reponer colateral.
+
+---
+
+## 7. Checklist de Verificación para Agentes de IA
 
 - [ ] ¿El sistema calcula el ratio de solvencia de forma continua y alerta si desciende de 2.0?
 - [ ] ¿El motor de riesgo implementa la fórmula EOD sin penalizar el flotante intradía en las cuentas configuradas con esta modalidad?
 - [ ] ¿La regla de consistencia del 40% valida de forma determinista la distribución de beneficios antes de permitir una solicitud de retiro?
 - [ ] ¿Se detectan y rechazan operaciones de microscalping inferiores a 10 segundos?
+- [ ] ¿Se disparan alertas preventivas escalonadas (70%, 90%, 100%) a través de Telegram antes de la descalificación?
+- [ ] ¿El canal de gobernanza recibe notificaciones automáticas si el ratio de solvencia desciende de 2.0?
+

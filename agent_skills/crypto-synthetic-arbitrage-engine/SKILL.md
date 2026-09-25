@@ -171,9 +171,34 @@ Ejecución autónoma en background gobernada por parámetros predefinidos (sprea
 
 ---
 
-## 8. Checklist de Verificación para Agentes de IA
+## 8. Telemetría de Arbitraje, Alertas y Gas Tank en Telegram
+
+El motor de arbitraje sintético interactúa en tiempo real con el **Telegram Bot Engine**:
+
+1. **Radar de Spreads en Grupo de Equipo (`/spread` y Alertas Automáticas):**
+   - Cuando el motor detecta un diferencial L2 VWAP neto $\ge 0.20\%$ (descontando comisiones de ambos venues), publica una tarjeta interactiva en el grupo:
+     ```text
+     ⚡ OPORTUNIDAD DE ARBITRAJE SINTÉTICO L2
+     Instrumento: SOL/USDT · Spread Neto: +0.28%
+     Comprar: Bybit ($186.20) ──► Vender: OKX ($186.72)
+     Profundidad Disponible: 450 SOL (~$83,800 USD)
+     [ 🚀 Abrir Despacho en Terminal ]
+     ```
+2. **Alerta Crítica de Auto-Rollback (Chat Privado):**
+   - Si la pierna A se ejecuta pero la pierna B es rechazada en el exchange, el bot notifica inmediatamente el cierre de emergencia:
+     `🚨 ROLLBACK EJECUTADO: Pierna en OKX denegada por slippage. Pierna de Bybit liquidada a mercado. Desviación neta neutralizada: -$3.20 USDT.`
+3. **Monitoreo del Gas Tank:**
+   - Si el saldo de créditos del monedero virtual cae por debajo de 5 USDT, el bot emite un recordatorio:
+     `⚠️ ALERTA GAS TANK: Tu saldo de créditos es de 4.10 USDT. Recarga créditos para no interrumpir el motor de arbitraje automático.`
+
+---
+
+## 9. Checklist de Verificación para Agentes de IA
 
 - [ ] ¿El cálculo de spreads incluye **siempre** las comisiones taker de ambos venues y el slippage L2 acumulado?
 - [ ] ¿El despachador concurrente cuenta con un bloque `try/catch` que dispara el rollback de emergencia si una orden falla?
 - [ ] ¿Se prohíbe de forma absoluta solicitar permisos de `WITHDRAWAL` en las API keys del usuario para el arbitraje?
 - [ ] ¿El sistema descuenta las comisiones del monedero virtual interno (*Gas Tank*) sin tocar el colateral de los exchanges?
+- [ ] ¿El bot emite alertas de oportunidades de arbitraje neto en Telegram sin saturar (respetando filtros de umbral $\ge 0.15\%$)?
+- [ ] ¿Las incidencias de Auto-Rollback y alertas de saldo bajo de Gas Tank se envían al instante por Telegram?
+

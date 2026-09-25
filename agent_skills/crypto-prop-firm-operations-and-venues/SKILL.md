@@ -174,9 +174,31 @@ Si el objetivo de negocio requiere un lanzamiento acelerado (*Time-to-market* en
 
 ---
 
-## 7. Checklist de Verificación para Agentes de IA
+## 7. Notificaciones Operativas de Fondeo en Telegram
+
+El ciclo de provisión de cuentas y liquidación interactúa con el **Telegram Bot Engine**:
+
+1. **Provisión de Subcuenta Fondeada (Privado):**
+   - Al asignarse una subcuenta CEX o una Agent Wallet en Hyperliquid, el bot envía un mensaje cifrado temporal al trader:
+     ```text
+     🎉 ¡ENHORABUENA! SUBCUENTA DE FONDEO ASIGNADA
+     Venue: Bybit Broker API v5 · Capital Asignado: $50,000 USD
+     Regla de Consistencia: 40% Max · Drawdown EOD: 5% Max
+     [ 🚀 Abrir Terminal Fondeado ]
+     ```
+2. **Anuncio de Hito en el Grupo de Equipo (`Global City Funding`):**
+   - Cuando un aspirante supera la fase de evaluación, el bot publica un comunicado para motivar al equipo:
+     `🏆 ¡NUEVO TRADER FINANCIADO! El trader @juan_quant ha aprobado su reto con un Profit Factor de 2.1.`
+3. **Alerta de Liquidación de Emergencia (*Flatten Alert*):**
+   - Si se dispara `emergency_flatten_positions`, el bot notifica inmediatamente tanto al trader como al canal de supervisores de riesgo para auditoría forense.
+
+---
+
+## 8. Checklist de Verificación para Agentes de IA
 
 - [ ] ¿Las claves API generadas en CEX tienen desactivados de forma irrevocable los permisos de `WITHDRAWAL` y `TRANSFER`?
 - [ ] ¿Las direcciones IP de los servidores de backend están debidamente configuradas en la lista blanca (*whitelisting*) del exchange?
 - [ ] ¿En Hyperliquid se utiliza exclusivamente el patrón de *Agent Wallet* y se comprueba la inyección del *Builder Code* en el payload?
 - [ ] ¿Existe una rutina de contingencia para conmutar de venue mediante la `VenueAbstractionLayer` si un exchange impone restricciones operativas?
+- [ ] ¿Se notifican automáticamente las asignaciones de subcuentas y revocaciones de emergencia a través del bot de Telegram?
+

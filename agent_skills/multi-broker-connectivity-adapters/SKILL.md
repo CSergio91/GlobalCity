@@ -198,10 +198,26 @@ Todo adaptador debe emitir métricas periódicas cada 5 segundos al bus de obser
 
 ---
 
-## 9. Checklist de Verificación para Agentes de IA
+## 9. Telemetría y Alertas de Conectores en Telegram
+
+Cada adaptador de conectividad reporta eventos de salud e incidencias al **Telegram Bot Engine**:
+
+1. **Alertas Críticas al Grupo Operativo (Canal de Infraestructura):**
+   - **Pérdida de WebSocket / Reconexión:** Si Bybit, Binance o OKX pierden el feed L2 durante $>3\text{s}$, el bot emite una alerta `⚠️ STOP LOSS / ADVERTENCIA: WebSocket Bybit reconectando (intento 2/5)`.
+   - **Picos de Latencia (Lag Spikes):** Si la latencia media supera los $100\text{ms}$ en un venue durante $>10\text{s}$, se notifica para pausar temporalmente el arbitraje.
+   - **Expiración de Claves API:** Si una petición privada falla con `AuthenticationError`, el bot notifica al usuario en privado para que renueve sus claves en el Terminal.
+2. **Atención a Comandos de Grupo:**
+   - El bot procesa el comando `/spread [par]` consultando los adaptadores en memoria para emitir en el grupo la comparativa de precios L2 en tiempo real.
+
+---
+
+## 10. Checklist de Verificación para Agentes de IA
 
 - [ ] ¿El adaptador reconecta automáticamente tras una pérdida de socket con reintentos exponenciales?
 - [ ] ¿El `SymbolMapper` está configurado para traducir símbolos canónicos antes de tocar la API del exchange?
 - [ ] ¿Los streams de WebSockets alimentan buffers en memoria sin bloquear el bucle de eventos asíncrono?
 - [ ] ¿Las claves de API y secretos se reciben descifrados en memoria y nunca se registran en los logs de consola?
 - [ ] ¿Los mensajes FIX mantienen la persistencia de número de secuencia para evitar desincronizaciones transaccionales?
+- [ ] ¿Los adaptadores emiten alertas automáticas a Telegram ante caídas de WebSocket o picos de latencia $>100\text{ms}$?
+- [ ] ¿El bot responde a `/spread` con datos actualizados de los libros L2 sin exponer cuentas de usuario?
+

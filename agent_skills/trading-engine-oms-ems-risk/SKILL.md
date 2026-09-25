@@ -171,10 +171,35 @@ Service     (Calcula      (Actualiza     Service          (Persistencia)
 
 ---
 
-## 8. Checklist de Verificación para Agentes de IA
+## 8. Notificaciones Transaccionales y Risk Guardian en Telegram
+
+El ciclo de vida del trading se conecta de forma reactiva con el **Telegram Bot Engine**:
+
+1. **Notificación de Ejecución Inmediata (Chat Privado):**
+   - Al dispararse `OrderFilled`, el OMS publica un evento que envía un mensaje push al chat privado del usuario:
+     ```text
+     🟢 ORDEN EJECUTADA · BYBIT V5
+     Par: BTC/USDT · BUY 0.50 BTC @ $84,310.20 · ID #918234 (14ms)
+     ```
+2. **Alertas Síncronas del Pre-Trade Risk Engine:**
+   - Si una orden es denegada por violar el apalancamiento máximo o el límite diario de pérdidas (`RiskLimitTriggered`), el bot emite una alerta instantánea:
+     `🚨 MARGIN CALL / RECHAZO: Orden BUY de 2.0 BTC denegada. Motivo: Excede el margen libre disponible.`
+3. **Confirmación 2FA de Órdenes Institucionales Críticas:**
+   - Para órdenes padre que superen el umbral configurado (ej: $>50,000$ USD), el OMS coloca la orden en estado `AWAITING_2FA` y envía un mensaje a Telegram con botones interactivos:
+     `[ ✅ Confirmar Ejecución ]  [ ❌ Abortar Orden ]`
+   - La orden solo viaja al EMS cuando el usuario pulsa "Confirmar" en su app de Telegram.
+4. **Calculadora Colaborativa en Grupo:**
+   - El bot atiende el comando de grupo `/calc [riesgo%] [SL]` permitiendo a los miembros del equipo calcular el tamaño de posición institucional de forma instantánea.
+
+---
+
+## 9. Checklist de Verificación para Agentes de IA
 
 - [ ] ¿El Risk Engine se ejecuta de forma **síncrona en memoria** antes de invocar los adaptadores externos?
 - [ ] ¿El SOR calcula el coste real considerando la profundidad L2 del orderbook y las comisiones de maker/taker?
 - [ ] ¿Cada orden cuenta con un cerrojo de idempotencia en Redis con `client_order_id` antes del envío?
 - [ ] ¿El servicio de reconciliación tiene prioridad para sobreescribir el estado local ante discrepancias con el exchange?
 - [ ] ¿Se disparan eventos asíncronos limpios hacia el bus de eventos en cada transición de estado de orden?
+- [ ] ¿Los eventos `OrderFilled` y `RiskLimitTriggered` emiten alertas inmediatas al chat de Telegram del trader?
+- [ ] ¿Se soporta la confirmación 2FA interactiva en Telegram para órdenes de alto lotaje institucional?
+

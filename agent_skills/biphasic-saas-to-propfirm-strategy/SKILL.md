@@ -124,9 +124,28 @@ Homologación de Broker Program institucional, emisión programática de subcuen
 
 ---
 
-## 7. Checklist de Verificación para Agentes de IA
+## 7. Telegram como Eje Central de Retención y Transición Bifásica
+
+El Telegram Bot actúa como el **puente de fidelización y conversión con coste de adquisición (CAC) cercano a cero** entre la Fase 1 y la Fase 2:
+
+1. **Retención en Fase 1 (Terminal SaaS B2C):**
+   - El bot mantiene a los suscriptores activos mediante reportes semanales de rendimiento, alertas de arbitraje y notificaciones de ejecución.
+   - Envío de notificaciones de rebates acumulados de comisiones de exchanges:
+     `💰 REBATES DISPONIBLES: Has acumulado $142.50 USDT en comisiones devueltas por volumen operado en Bybit este mes.`
+2. **Puente de Conversión Orgánica a Fase 2 (Prop Firm):**
+   - Cuando se activa la empresa de fondeo, la base de usuarios de Telegram recibe invitaciones prioritarias a los primeros retos institucionales de evaluación con descuento exclusivo.
+   - **Coste de Adquisición Reducido:** La comunidad de traders ya confía en el terminal y el motor de riesgo porque lo usaron en Fase 1.
+3. **Gestión de Grupos y Salas de Trading Colaborativo:**
+   - Creación y soporte de grupos de trading desk (como `Global City Funding`), donde los traders interactúan con `/signal`, `/duel` y rankings gamificados, multiplicando el volumen de operaciones.
+
+---
+
+## 8. Checklist de Verificación para Agentes de IA
 
 - [ ] ¿La arquitectura de la Fase 1 utiliza exclusivamente el modelo no custodial (claves del cliente)?
 - [ ] ¿El backend valida que ninguna clave API registrada tenga activados los permisos de retiro?
 - [ ] ¿Los módulos de cálculo de métricas de riesgo están desacoplados para poder reutilizarse en la fase de evaluación de la Prop Firm?
 - [ ] ¿El flujo transaccional permite la monetización paralela por suscripción recurrente y rebates de volumen?
+- [ ] ¿Se utiliza Telegram como canal central de retención para Fase 1 y conversión a los retos de fondeo de Fase 2?
+- [ ] ¿Los grupos de equipo cuentan con comandos colaborativos y aislamiento estricto de privacidad?
+

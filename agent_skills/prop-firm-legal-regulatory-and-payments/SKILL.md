@@ -125,9 +125,37 @@ Ante cualquier intento de contracargo fraudulento (*friendly fraud*), el sistema
 
 ---
 
-## 7. Checklist de Verificación para Agentes de IA
+## 7. Notificaciones de Cumplimiento, KYC y Liquidaciones B2B en Telegram
+
+El Telegram Bot actúa como canal seguro y directo para la relación contractual y pagos mercantiles:
+
+1. **Notificación de Aprobación de KYC y Contrato B2B (Privado):**
+   - Cuando el operador supera la verificación de identidad (Sumsub/Persona) y se valida su W-8BEN/W-9:
+     ```text
+     ⚖️ CONTRATO MERCANTIL VALIDADO · GLOBAL CITY
+     Operador: Carlos Sergio · ID Fiscal Validado
+     Régimen: Prestación de Servicios de Análisis Cuantitativo B2B
+     Estado: Habilitado para liquidaciones de beneficio (Profit Split 80/20).
+     ```
+2. **Notificación de Liquidación de Beneficios (Payout):**
+   - Al ejecutarse la transferencia cripto (USDT TRC20/ERC20) o bancaria tras la solicitud de retiro aprobada:
+     ```text
+     💸 LIQUIDACIÓN B2B EMITIDA CON ÉXITO
+     Importe: $3,850.00 USDT (80% Profit Split)
+     Hash Tx: 0x7a89f...b291 (Verificado en Blockchain)
+     Factura Mercantil adjunta generada en tu perfil.
+     ```
+3. **Alerta de Seguridad Financiera (Canal de Compliance de Equipo):**
+   - Notificación de alerta temprana si una transacción con tarjeta es marcada por sospecha de contracargo, disparando la generación automática del expediente de defensa 3D Secure.
+
+---
+
+## 8. Checklist de Verificación para Agentes de IA
 
 - [ ] ¿El portal presenta los retos como licencias de software y simuladores analíticos, sin promesas de retornos garantizados?
 - [ ] ¿Se exige la firma digital del contrato mercantil B2B y el formulario W-8BEN/W-9 antes de emitir cualquier pago de beneficio?
 - [ ] ¿Los fondos de clientes están formalmente segregados de la cuenta comercializadora?
 - [ ] ¿El orquestador de pagos fuerza 3D Secure en todas las transacciones con tarjeta para cumplir los límites de Visa VAMP y Mastercard ECP?
+- [ ] ¿Se envían confirmaciones criptográficas de liquidación B2B y estado de contratos a través del bot de Telegram?
+- [ ] ¿El canal de Compliance recibe alertas instantáneas de contracargos con generación automática de pruebas forenses?
+

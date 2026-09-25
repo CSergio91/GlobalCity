@@ -399,7 +399,38 @@ trading-platform/
 
 ---
 
-## 10. Checklist de Verificación para Agentes de IA
+## 10. Puerto Canónico de Telemetría y Notificaciones Telegram (`ITelemetryNotificationPort`)
+
+Siguiendo el principio de **Arquitectura Hexagonal**, el sistema de notificaciones y telemetría de Telegram se modela como un **Puerto de Salida (Outbound Port)** en `domain/ports/telemetry_notification_port.py`, totalmente desacoplado de la API externa de Telegram:
+
+```python
+from abc import ABC, abstractmethod
+from typing import Dict, Any, Optional
+
+class ITelemetryNotificationPort(ABC):
+    @abstractmethod
+    async def send_private_alert(self, telegram_id: int, title: str, message: str, level: str) -> bool:
+        """Emite una alerta privada 1 a 1 (Take Profit, Stop Loss, Margin Call, Fills)."""
+        pass
+
+    @abstractmethod
+    async def broadcast_team_signal(self, group_chat_id: int, signal_payload: Dict[str, Any]) -> bool:
+        """Publica una tesis o evento colaborativo en el grupo de equipo sin exponer saldos privados."""
+        pass
+
+    @abstractmethod
+    async def notify_system_incident(self, group_chat_id: int, error_code: str, details: str) -> bool:
+        """Alerta de latencia alta, fallo de reconciliación o reconexión de WebSockets."""
+        pass
+```
+
+### Reglas de Dominio para Telegram
+1. **El Dominio nunca importa librerías de Telegram:** Todo residirá en `infrastructure/messaging/telegram_adapter.py`.
+2. **Aislamiento Multi-Tenant Estricto:** Toda notificación transaccional se enruta por el `telegram_id` del usuario autenticado; los canales y grupos de equipo nunca reciben datos de balance, claves API o posiciones individuales en dólares.
+
+---
+
+## 11. Checklist de Verificación para Agentes de IA
 
 Antes de marcar cualquier tarea de este núcleo como completa, el agente debe verificar:
 - [ ] ¿Hay algún `import ccxt` o `import MetaTrader5` fuera de `infrastructure/`? Si es así, **refactorizar inmediatamente**.
@@ -407,3 +438,6 @@ Antes de marcar cualquier tarea de este núcleo como completa, el agente debe ve
 - [ ] ¿Cada orden despachada incluye un `client_order_id` persistido antes de invocar la red externa?
 - [ ] ¿Todas las excepciones de conectores externos están capturadas y mapeadas a `TradingError`?
 - [ ] ¿Se garantiza la idempotencia en la capa de mensajería y APIs?
+- [ ] ¿El adaptador de Telegram implementa `ITelemetryNotificationPort` sin acoplar el dominio a APIs externas?
+- [ ] ¿Se garantiza que los mensajes grupales nunca expongan saldo en dinero real ni datos privados?
+
