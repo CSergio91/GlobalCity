@@ -14,18 +14,23 @@ import {
   Send,
   Fuel,
   Sliders,
-  Radio
+  Radio,
+  Key,
+  LogOut
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { CandlestickLanguageSelector } from './CandlestickLanguageSelector';
 import { MULTI_ASSET_MARKET_TICKS, INITIAL_CONNECTED_ACCOUNTS } from '../data/mockData';
+import { ExchangeManager } from './ExchangeManager';
+import { useAuth } from '../context/AuthContext';
 
 interface DemoTerminalProps {
   onBackToLanding: () => void;
 }
 
 export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'multiorder' | 'arbitrage' | 'copy' | 'telegram'>('overview');
+  const { user, logout } = useAuth();
+  const [activeTab, setActiveTab] = useState<'connections' | 'overview' | 'multiorder' | 'arbitrage' | 'copy' | 'telegram'>('connections');
   
   const [orderAmount, setOrderAmount] = useState<string>("1.0");
   const [selectedSymbol, setSelectedSymbol] = useState<string>("BTC/USDT");
@@ -62,8 +67,8 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding }) =
           </div>
         </div>
 
-        {/* Global Account Summary & Language Candlestick */}
-        <div className="flex items-center gap-4 sm:gap-6 text-xs">
+        {/* Global Account Summary & User Profile & Language Candlestick */}
+        <div className="flex items-center gap-3 sm:gap-5 text-xs">
           <div className="hidden sm:block">
             <span className="text-slate-400">Equidad Consolidada: </span>
             <span className="text-sm font-mono-nums font-bold text-white">
@@ -76,12 +81,53 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding }) =
               142.50 USDT
             </span>
           </div>
+
+          {/* User Profile Badge */}
+          {user && (
+            <div className="flex items-center gap-2 pl-3 border-l border-white/10">
+              <div className="w-7 h-7 rounded-lg bg-[#229ED9]/20 border border-[#229ED9]/40 flex items-center justify-center text-[#229ED9]">
+                <Send className="w-3.5 h-3.5" />
+              </div>
+              <div className="hidden lg:block text-left">
+                <div className="font-mono text-white font-bold text-[11px] leading-tight">{user.username}</div>
+                <div className="text-[9px] text-emerald-400 font-mono">CONECTADO</div>
+              </div>
+              <button
+                onClick={() => {
+                  logout();
+                  onBackToLanding();
+                }}
+                title="Cerrar Sesión"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           <CandlestickLanguageSelector />
         </div>
       </header>
 
       {/* Navigation Sub-Tabs */}
       <div className="bg-[#10121B] border-b border-white/10 px-6 flex items-center gap-3 overflow-x-auto no-scrollbar">
+        
+        {/* Tab 0: Conexiones & APIs (PRIMARY) */}
+        <button
+          onClick={() => setActiveTab('connections')}
+          className={`py-3.5 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'connections' 
+              ? 'border-[#E06D8A] text-white' 
+              : 'border-transparent text-slate-400 hover:text-white'
+          }`}
+        >
+          <Key className="w-4 h-4 text-[#E06D8A]" />
+          <span>Conexiones & APIs</span>
+          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#E06D8A]/15 text-[#F472B6]">
+            LocalStorage
+          </span>
+        </button>
+
         <button
           onClick={() => setActiveTab('overview')}
           className={`py-3.5 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
@@ -150,6 +196,13 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding }) =
           <div className="mb-6 p-4 rounded-2xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-3 animate-fade-in shadow-xl">
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
             <span className="font-medium">{notification}</span>
+          </div>
+        )}
+
+        {/* Tab 0: Exchange & Account Connections (LocalStorage) */}
+        {activeTab === 'connections' && (
+          <div className="animate-in fade-in duration-200">
+            <ExchangeManager />
           </div>
         )}
 

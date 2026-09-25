@@ -11,14 +11,27 @@ import { Footer } from './components/Footer';
 import { DemoTerminal } from './components/DemoTerminal';
 import { LiquidFollower } from './components/LiquidFollower';
 import { ScrollReveal } from './components/ScrollReveal';
-import { ArrowRight, Terminal } from 'lucide-react';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthModal } from './components/auth/AuthModal';
 
 function MainApp() {
   const [view, setView] = useState<'landing' | 'terminal'>('landing');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const { t } = useLanguage();
+  const { isAuthenticated } = useAuth();
 
   const handleOpenTerminal = () => {
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+    } else {
+      setView('terminal');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setIsAuthModalOpen(false);
     setView('terminal');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -125,6 +138,13 @@ function MainApp() {
       {/* Institutional Quiet Footer */}
       <Footer />
 
+      {/* Telegram & Institutional Auth Modal */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+        onSuccess={handleAuthSuccess} 
+      />
+
     </div>
   );
 }
@@ -132,7 +152,9 @@ function MainApp() {
 export default function App() {
   return (
     <LanguageProvider>
-      <MainApp />
+      <AuthProvider>
+        <MainApp />
+      </AuthProvider>
     </LanguageProvider>
   );
 }

@@ -3,11 +3,14 @@ import {
   Terminal, 
   ArrowRight, 
   Menu, 
-  X
+  X,
+  Send,
+  UserCheck
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { CandlestickLanguageSelector } from './CandlestickLanguageSelector';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 interface NavbarProps {
   onOpenTerminal: () => void;
@@ -18,6 +21,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { t } = useLanguage();
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -69,15 +73,28 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
         </nav>
 
         {/* Zone 3: Candlestick Language Selector & Direct Action */}
-        <div className="hidden sm:flex items-center gap-3.5">
+        <div className="hidden sm:flex items-center gap-3">
           <CandlestickLanguageSelector />
+
+          {isAuthenticated && user && (
+            <button
+              onClick={onOpenTerminal}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#229ED9]/15 border border-[#229ED9]/30 text-white hover:bg-[#229ED9]/25 transition-colors cursor-pointer group"
+              title="Sesión de Telegram Activa"
+            >
+              <div className="w-5 h-5 rounded-md bg-[#229ED9]/30 flex items-center justify-center text-[#229ED9] group-hover:scale-105 transition-transform">
+                <Send className="w-3 h-3" />
+              </div>
+              <span className="text-xs font-mono font-bold text-slate-200">{user.username}</span>
+            </button>
+          )}
 
           <button
             onClick={onOpenTerminal}
             className="btn-liquid px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#F472B6] via-[#EC4899] to-[#818CF8] hover:brightness-110 rounded-xl shadow-lg shadow-[#EC4899]/30 flex items-center gap-2 cursor-pointer border border-white/20"
           >
             <Terminal className="w-4 h-4 text-white group-hover:rotate-12 transition-transform" />
-            <span>{t.nav.openTerminal}</span>
+            <span>{isAuthenticated ? 'Ir al Terminal' : t.nav.openTerminal}</span>
             <ArrowRight className="w-3.5 h-3.5 text-white/80 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
