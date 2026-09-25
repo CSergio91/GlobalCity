@@ -1,1 +1,79 @@
 @import "tailwindcss";
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: #06070A;
+    color: #F8FAFC;
+    overflow-x: hidden;
+  }
+  
+  .font-mono-nums {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Glassmorphism & Aesthetics */
+.glass-panel {
+  background: rgba(14, 16, 23, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(22, 25, 36, 0.85);
+  border-color: rgba(224, 109, 138, 0.3);
+  box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Custom Parallax & Glowing Backdrops */
+.ambient-glow-rose {
+  background: radial-gradient(circle 900px at 50% 20%, rgba(224, 109, 138, 0.16), transparent 75%);
+}
+
+.ambient-glow-cyan {
+  background: radial-gradient(circle 700px at 80% 30%, rgba(45, 212, 191, 0.12), transparent 70%);
+}
+
+/* Custom Horizontal Scroll Bar */
+.custom-horizontal-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(224, 109, 138, 0.4) rgba(255, 255, 255, 0.05);
+}
+
+.custom-horizontal-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.custom-horizontal-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 9999px;
+}
+
+.custom-horizontal-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #E06D8A, #2DD4BF);
+  border-radius: 9999px;
+}
+
+/* Smooth reveal animation */
+@keyframes fadeInSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-reveal {
+  animation: fadeInSlideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
