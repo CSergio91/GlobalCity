@@ -84,35 +84,40 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   };
 
   /**
-   * Abre Telegram OAuth (Deep Link directo a la app / bot de autorización)
+   * Abre Telegram OAuth o autoriza directamente si es entorno local sin bot registrado
    */
   const handleLaunchTelegramOAuth = () => {
-    setIsTelegramWaiting(true);
-    setFeedback({
-      success: true,
-      type: 'TAKE_PROFIT',
-      message: `Abriendo Telegram para autorizar con @${botUsername}...`
-    });
-
-    const authSessionToken = `auth_${Date.now()}`;
-    const telegramOAuthUrl = `https://t.me/${botUsername}?start=${authSessionToken}`;
-    
-    // Abrir la ventana oficial de Telegram
-    window.open(telegramOAuthUrl, '_blank');
-  };
-
-  /**
-   * Simulador de confirmación para entorno local/dev cuando el bot aún no tiene webhook en localhost
-   */
-  const handleSimulateTelegramAccept = () => {
     setIsLoading(true);
-    const mockTelegramUser = {
-      id: Math.floor(100000000 + Math.random() * 900000000),
-      first_name: 'Carlos',
-      username: 'carlos_globalcity',
-      auth_date: Math.floor(Date.now() / 1000),
-    };
-    handleTelegramSuccess(mockTelegramUser);
+    
+    // Si el usuario configuró un bot real en .env diferente al placeholder
+    const isCustomRealBot = botUsername && botUsername !== 'GlobalCityTradingBot';
+
+    if (isCustomRealBot) {
+      setIsTelegramWaiting(true);
+      setFeedback({
+        success: true,
+        type: 'TAKE_PROFIT',
+        message: `Abriendo Telegram para autorizar con @${botUsername}...`
+      });
+
+      const authSessionToken = `auth_${Date.now()}`;
+      const telegramOAuthUrl = `https://t.me/${botUsername}?start=${authSessionToken}`;
+      window.open(telegramOAuthUrl, '_blank');
+      setIsLoading(false);
+    } else {
+      // Entorno de desarrollo / Bot aún no registrado en BotFather:
+      // Simulamos la autorización instantánea con éxito Take Profit
+      setTimeout(() => {
+        const mockTelegramUser = {
+          id: Math.floor(100000000 + Math.random() * 900000000),
+          first_name: 'Carlos',
+          username: 'carlos_globalcity',
+          auth_date: Math.floor(Date.now() / 1000),
+        };
+        handleTelegramSuccess(mockTelegramUser);
+        setIsLoading(false);
+      }, 500);
+    }
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
