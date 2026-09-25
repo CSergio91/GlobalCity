@@ -13,7 +13,7 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#06070B] text-slate-100 flex flex-col justify-between p-4 sm:p-6 lg:p-8 relative selection:bg-[#EC4899]/30 selection:text-white overflow-x-hidden">
+    <div className="min-h-screen w-full bg-[#06070B] text-slate-100 flex flex-col justify-between p-2 sm:p-6 lg:p-8 relative selection:bg-[#EC4899]/30 selection:text-white overflow-x-hidden">
       
       {/* Luces de Fondo Ambientales / Cyber Ambient Glows */}
       <div className="fixed -top-40 -left-40 w-96 h-96 bg-[#EC4899]/15 rounded-full blur-[140px] pointer-events-none" />
@@ -21,12 +21,12 @@ export const LoginPage: React.FC = () => {
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#229ED9]/08 rounded-full blur-[180px] pointer-events-none" />
 
       {/* Top Navbar minimalista de la pantalla de login */}
-      <header className="w-full max-w-5xl mx-auto flex items-center justify-between z-20 pb-4">
+      <header className="w-full max-w-4xl mx-auto flex items-center justify-between z-20 pb-2 sm:pb-4">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all text-xs font-semibold cursor-pointer border border-white/10 backdrop-blur-md group"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all text-xs font-semibold cursor-pointer border border-white/10 backdrop-blur-md group"
         >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
           <span>Volver al Inicio</span>
         </button>
 
@@ -39,7 +39,7 @@ export const LoginPage: React.FC = () => {
       </header>
 
       {/* Tarjeta Central Dual-Split */}
-      <main className="flex-1 flex items-center justify-center py-6 sm:py-10 z-20">
+      <main className="flex-1 flex items-center justify-center py-2 sm:py-6 z-20">
         <AuthCard 
           onSuccess={handleAuthSuccess}
           isModal={false}
@@ -47,8 +47,8 @@ export const LoginPage: React.FC = () => {
       </main>
 
       {/* Footer minimalista institucional */}
-      <footer className="w-full max-w-5xl mx-auto text-center text-[11px] font-mono text-slate-400 z-20 pt-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-white/5 pt-4">
+      <footer className="w-full max-w-4xl mx-auto text-center text-[10px] font-mono text-slate-400 z-20 pt-2 sm:pt-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-2 border-t border-white/5 pt-2 sm:pt-3">
           <span>Global City Trading Ecosystem &copy; 2026</span>
           <div className="flex items-center gap-4">
             <span className="text-emerald-400 flex items-center gap-1.5">

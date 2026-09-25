@@ -161,3 +161,47 @@
 .animate-reveal {
   animation: fadeInSlideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Multi-layer Organic Wave Animations (GPU accelerated - zero reflow) */
+@keyframes waveLayer1 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-4px, 6px, 0);
+  }
+}
+
+@keyframes waveLayer2 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(5px, -8px, 0);
+  }
+}
+
+@keyframes waveLayer3 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-3px, -4px, 0);
+  }
+}
+
+.animate-wave-1 {
+  animation: waveLayer1 6s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-wave-2 {
+  animation: waveLayer2 4.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-wave-3 {
+  animation: waveLayer3 7.5s ease-in-out infinite;
+  will-change: transform;
+}
+
