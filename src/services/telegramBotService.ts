@@ -4,8 +4,8 @@
  * con aislamiento multi-tenant estricto y cero filtración de saldos en chats públicos.
  */
 
-const BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN_REMOVED";
-const BOT_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
+const BOT_TOKEN = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_TELEGRAM_BOT_TOKEN) || (typeof process !== 'undefined' && process.env?.TELEGRAM_BOT_TOKEN) || '';
+const BOT_API = BOT_TOKEN ? `https://api.telegram.org/bot${BOT_TOKEN}` : '';
 
 export interface TelegramCommandResponse {
   chatId: number | string;

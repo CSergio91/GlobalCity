@@ -2,7 +2,14 @@
  * Background Worker for Telegram Bot
  * Listens for commands from private chats and the "Global City Funding" group in real-time.
  */
-const BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN_REMOVED";
+import dotenv from 'dotenv';
+dotenv.config();
+
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.VITE_TELEGRAM_BOT_TOKEN;
+if (!BOT_TOKEN) {
+  console.error("❌ ERROR: TELEGRAM_BOT_TOKEN no configurado en variables de entorno (.env).");
+  process.exit(1);
+}
 const BOT_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
 let lastUpdateId = 0;

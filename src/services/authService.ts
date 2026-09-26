@@ -49,7 +49,8 @@ export const authService = {
    * Obtiene la última autorización de Telegram enviada al bot
    */
   async getLatestTelegramAuthUser(): Promise<TelegramUserPayload | null> {
-    const token = "YOUR_TELEGRAM_BOT_TOKEN_REMOVED";
+    const token = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '';
+    if (!token) return null;
     try {
       const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=-20`);
       const data = await res.json();
@@ -85,7 +86,8 @@ export const authService = {
    * Sondea la API de Telegram para detectar cuando el usuario pulsa START en el bot
    */
   async checkTelegramBotUpdates(authNonce?: string): Promise<TelegramUserPayload | null> {
-    const token = "YOUR_TELEGRAM_BOT_TOKEN_REMOVED";
+    const token = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '';
+    if (!token) return null;
     try {
       const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=-20`);
       const data = await res.json();
