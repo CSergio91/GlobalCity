@@ -152,16 +152,16 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
       >
 
         {/* ═══════════════════════════════════════════════════════════════
-            VIDEO / LOGO PRINCIPAL (100% Responsivo: Se adapta a cualquier ancho de móvil)
-            Cero bordes visibles, se funde por completo con el fondo
+            VIDEO / LOGO PRINCIPAL (100% Ajustado a los bordes laterales)
+            Cero bordes visibles, la iluminación toca los límites de la pantalla
            ═══════════════════════════════════════════════════════════════ */}
         <motion.div 
           layout
           transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
-          className={`relative flex flex-col items-center justify-center select-none shrink-0 w-full ${
+          className={`relative flex flex-col items-center justify-center select-none shrink-0 w-full overflow-hidden sm:overflow-visible ${
             isRevealed 
-              ? 'max-w-full sm:max-w-md md:max-w-[340px] lg:max-w-[380px] max-h-[38vh] sm:max-h-[44vh] md:max-h-[68vh]' 
-              : 'max-w-full sm:max-w-md md:max-w-[480px]'
+              ? 'max-w-full sm:max-w-md md:max-w-[340px] lg:max-w-[380px] max-h-[36vh] sm:max-h-[42vh] md:max-h-[68vh]' 
+              : 'w-full max-w-full sm:max-w-md md:max-w-[480px]'
           }`}
         >
           {isRevealed ? (
@@ -172,7 +172,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
               src={lastFrameLogo}
               alt="Global City Logo"
               onContextMenu={(e) => e.preventDefault()}
-              className="w-full h-auto max-h-[38vh] sm:max-h-[44vh] md:max-h-[68vh] object-contain object-center bg-black"
+              className="w-full h-auto max-h-[36vh] sm:max-h-[42vh] md:max-h-[68vh] object-contain object-center bg-black"
             />
           ) : (
             <video
@@ -186,7 +186,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
               disablePictureInPicture
               onContextMenu={(e) => e.preventDefault()}
               onEnded={handleVideoEnded}
-              className="w-full h-auto max-h-[85vh] object-contain object-center bg-black"
+              className="w-full h-auto scale-[1.05] sm:scale-100 object-contain object-center bg-black transition-transform duration-300"
             />
           )}
 
