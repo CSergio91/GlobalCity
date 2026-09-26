@@ -11,9 +11,9 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full relative flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-black selection:bg-[#EC4899]/30 selection:text-white overflow-y-auto">
+    <div className="min-h-[100dvh] w-full relative flex items-center justify-center p-0 md:p-6 lg:p-8 bg-black selection:bg-[#EC4899]/30 selection:text-white overflow-y-auto">
       {/* Contenedor central sin bordes y perfectamente integrado */}
-      <main className="w-full max-w-4xl lg:max-w-5xl z-20 my-auto flex items-center justify-center">
+      <main className="w-full max-w-full md:max-w-4xl lg:max-w-5xl z-20 my-auto flex items-center justify-center">
         <AuthCard 
           onSuccess={handleAuthSuccess}
           isModal={false}

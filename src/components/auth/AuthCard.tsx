@@ -160,8 +160,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
           transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
           className={`relative flex flex-col items-center justify-center select-none shrink-0 ${
             isRevealed 
-              ? 'w-[260px] sm:w-[290px] md:w-[340px] lg:w-[380px] aspect-[9/16] max-h-[36vh] sm:max-h-[40vh] md:max-h-[68vh]' 
-              : 'w-full max-w-[340px] sm:max-w-[400px] md:max-w-[440px] aspect-[9/16] max-h-[84vh]'
+              ? 'w-full md:w-[340px] lg:w-[380px] aspect-[9/16] max-h-[38vh] sm:max-h-[42vh] md:max-h-[68vh]' 
+              : 'w-screen md:w-full md:max-w-[460px] aspect-[9/16] max-h-[88vh]'
           }`}
         >
           {isRevealed ? (
@@ -217,7 +217,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
               animate={{ opacity: 1, y: 0, x: 0 }}
               exit={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-xs sm:max-w-sm md:max-w-md flex flex-col items-center text-center space-y-4 mx-auto"
+              className="w-full max-w-xs sm:max-w-sm md:max-w-md flex flex-col items-center text-center space-y-4 mx-auto px-4"
             >
           
           {/* TÍTULO CON GRADIENTE SUNSET (PERFECTAMENTE CENTRADO) */}
