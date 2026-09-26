@@ -211,18 +211,21 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
       }
     });
 
-    // Create sub-pane for Volume & Moving Average
+    // Create sub-pane for Volume & Moving Average in candle pane
     try {
-      chart.createIndicator('VOL', false);
-      chart.createIndicator('MA', true);
+      chart.createIndicator({ name: 'VOL' }, false);
+      chart.createIndicator({ name: 'SMA', paneId: 'candle_pane' }, true);
     } catch (e) {
       console.warn('Indicator initialization note:', e);
     }
 
-    // Immediate resize via requestAnimationFrame
+    // Immediate resize calls to synchronize with browser layout
     const rafId = requestAnimationFrame(() => {
       chart.resize();
     });
+    const timerId = setTimeout(() => {
+      chart.resize();
+    }, 80);
 
     // Attach ResizeObserver to keep canvas sharp on resizing
     const resizeObserver = new ResizeObserver(() => {
@@ -232,6 +235,7 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
 
     return () => {
       cancelAnimationFrame(rafId);
+      clearTimeout(timerId);
       resizeObserver.disconnect();
       if (containerRef.current) {
         dispose(containerRef.current);
@@ -274,7 +278,7 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
     }
   }, [livePrice]);
 
-  // Toggle Technical Indicators in v10
+  // Toggle Technical Indicators in v10 with canonical paneId targets
   const toggleIndicator = (ind: 'ma' | 'ema' | 'boll' | 'rsi') => {
     const chart = chartInstanceRef.current;
     if (!chart) return;
@@ -284,26 +288,26 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
 
     try {
       if (ind === 'ma') {
-        if (nextState) chart.createIndicator('MA', true);
-        else chart.removeIndicator({ name: 'MA' });
+        if (nextState) chart.createIndicator({ name: 'SMA', paneId: 'candle_pane' }, true);
+        else chart.removeIndicator({ name: 'SMA', paneId: 'candle_pane' });
       } else if (ind === 'ema') {
-        if (nextState) chart.createIndicator('EMA', true);
-        else chart.removeIndicator({ name: 'EMA' });
+        if (nextState) chart.createIndicator({ name: 'EMA', paneId: 'candle_pane' }, true);
+        else chart.removeIndicator({ name: 'EMA', paneId: 'candle_pane' });
       } else if (ind === 'boll') {
-        if (nextState) chart.createIndicator('BOLL', true);
-        else chart.removeIndicator({ name: 'BOLL' });
+        if (nextState) chart.createIndicator({ name: 'BOLL', paneId: 'candle_pane' }, true);
+        else chart.removeIndicator({ name: 'BOLL', paneId: 'candle_pane' });
       } else if (ind === 'rsi') {
-        if (nextState) chart.createIndicator({ name: 'RSI', paneId: 'rsi_pane' }, false);
+        if (nextState) chart.createIndicator({ name: 'RSI' }, false);
         else chart.removeIndicator({ name: 'RSI' });
       }
     } catch {}
   };
 
   return (
-    <div className="flex flex-col w-full h-full bg-[#06070B] select-none">
+    <div className="flex flex-col w-full bg-[#06070B] select-none rounded-2xl overflow-hidden" style={{ width: '100%', height: '560px' }}>
       
       {/* Chart Control Toolbar */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-[#090A10] border-b border-white/10 text-xs">
+      <div className="flex items-center justify-between px-3 py-1.5 h-[38px] bg-[#090A10] border-b border-white/10 text-xs shrink-0">
         
         {/* Left: Timeframe Switcher Pills */}
         <div className="flex items-center gap-1">
@@ -350,8 +354,8 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
       </div>
 
       {/* Hardware Accelerated Canvas Container */}
-      <div className="flex-1 w-full min-h-[480px] relative">
-        <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: '480px' }} className={className} />
+      <div className="w-full relative flex-1" style={{ width: '100%', height: '522px' }}>
+        <div ref={containerRef} style={{ width: '100%', height: '522px' }} className="w-full h-full" />
       </div>
 
     </div>

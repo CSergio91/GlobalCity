@@ -511,13 +511,12 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
           </div>
 
           {/* Native KLineChart Hardware-Accelerated Canvas */}
-          <div className="flex-1 w-full min-h-[480px] relative">
+          <div className="w-full h-[560px] relative">
             <GlobalCityChart
               symbol={selectedSymbol}
               venueId={activeAccount?.venueId || 'binance'}
               venueName={activeAccount?.venueName || 'Binance'}
               livePrice={currentPrice}
-              className="w-full h-full min-h-[480px]"
             />
           </div>
 
