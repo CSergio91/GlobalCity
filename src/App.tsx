@@ -10,7 +10,6 @@ import { CrossCopyTrading } from './components/CrossCopyTrading';
 import { TelegramOperations } from './components/TelegramOperations';
 import { Footer } from './components/Footer';
 import { DemoTerminal } from './components/DemoTerminal';
-import { LiquidFollower } from './components/LiquidFollower';
 import { CandlestickCursor } from './components/CandlestickCursor';
 import { ScrollReveal } from './components/ScrollReveal';
 import { Terminal, ArrowRight, LogIn } from 'lucide-react';
@@ -92,9 +91,6 @@ function MainAppContent() {
       
       {/* Global Japanese Candlestick (Green + Red) Cursor */}
       <CandlestickCursor />
-
-      {/* Interactive Liquid Water Follower */}
-      <LiquidFollower />
 
       {/* Dynamic Immersive Navbar with Candlestick Pair Language Selector */}
       <Navbar 
