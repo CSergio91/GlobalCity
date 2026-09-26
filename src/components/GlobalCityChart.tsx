@@ -136,6 +136,8 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
     }
   }, []);
 
+  const subscriberCallbackRef = useRef<((bar: KLineData) => void) | null>(null);
+
   // Initialize KLineChart Canvas on DOM Mount
   useEffect(() => {
     if (!containerRef.current) return;
@@ -166,12 +168,28 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
     // Generate initial historical candles
     const intervalMinutes = activeInterval === '1m' ? 1 : activeInterval === '5m' ? 5 : activeInterval === '1h' ? 60 : activeInterval === '4h' ? 240 : activeInterval === '1D' ? 1440 : 15;
     const initialBars = generateHistoricalBars(livePrice, 100, intervalMinutes);
-    chart.applyNewData(initialBars);
 
-    // Create sub-pane for Volume
+    // KLineChart v10 native DataLoader architecture
+    chart.setDataLoader({
+      getBars: (params) => {
+        if (params.type === 'init') {
+          params.callback(initialBars, { forward: false, backward: false });
+        } else if (params.type === 'forward') {
+          params.callback([], false);
+        }
+      },
+      subscribeBar: (params) => {
+        subscriberCallbackRef.current = params.callback;
+      },
+      unsubscribeBar: () => {
+        subscriberCallbackRef.current = null;
+      }
+    });
+
+    // Create sub-pane for Volume & Moving Average
     try {
-      chart.createIndicator('VOL', false, { id: 'vol_pane', height: 70 });
-      chart.createIndicator('MA', true, { id: 'candle_pane' });
+      chart.createIndicator({ name: 'VOL', paneId: 'vol_pane' }, false);
+      chart.createIndicator('MA', true);
     } catch {}
 
     // Attach ResizeObserver to keep canvas sharp on resizing
@@ -186,6 +204,7 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
         dispose(containerRef.current);
       }
       chartInstanceRef.current = null;
+      subscriberCallbackRef.current = null;
     };
   }, [venueId, symbol]);
 
@@ -196,7 +215,7 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
     chart.setPeriod(getPeriod(activeInterval));
   }, [activeInterval, getPeriod]);
 
-  // Real-time Tick-by-Tick streaming update (Zero Polling, Canvas Hardware Accelerated)
+  // Real-time Tick-by-Tick streaming update via v10 subscriber callback
   useEffect(() => {
     const chart = chartInstanceRef.current;
     if (!chart || typeof livePrice !== 'number' || livePrice <= 0) return;
@@ -217,10 +236,12 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
       turnover: ((lastBar.volume || 10) + 1) * livePrice
     };
 
-    chart.updateData(updatedBar);
+    if (subscriberCallbackRef.current) {
+      subscriberCallbackRef.current(updatedBar);
+    }
   }, [livePrice]);
 
-  // Toggle Technical Indicators
+  // Toggle Technical Indicators in v10
   const toggleIndicator = (ind: 'ma' | 'ema' | 'boll' | 'rsi') => {
     const chart = chartInstanceRef.current;
     if (!chart) return;
@@ -230,17 +251,17 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
 
     try {
       if (ind === 'ma') {
-        if (nextState) chart.createIndicator('MA', true, { id: 'candle_pane' });
-        else chart.removeIndicator('candle_pane', 'MA');
+        if (nextState) chart.createIndicator('MA', true);
+        else chart.removeIndicator({ name: 'MA' });
       } else if (ind === 'ema') {
-        if (nextState) chart.createIndicator('EMA', true, { id: 'candle_pane' });
-        else chart.removeIndicator('candle_pane', 'EMA');
+        if (nextState) chart.createIndicator('EMA', true);
+        else chart.removeIndicator({ name: 'EMA' });
       } else if (ind === 'boll') {
-        if (nextState) chart.createIndicator('BOLL', true, { id: 'candle_pane' });
-        else chart.removeIndicator('candle_pane', 'BOLL');
+        if (nextState) chart.createIndicator('BOLL', true);
+        else chart.removeIndicator({ name: 'BOLL' });
       } else if (ind === 'rsi') {
-        if (nextState) chart.createIndicator('RSI', false, { id: 'rsi_pane', height: 80 });
-        else chart.removeIndicator('rsi_pane', 'RSI');
+        if (nextState) chart.createIndicator({ name: 'RSI', paneId: 'rsi_pane' }, false);
+        else chart.removeIndicator({ name: 'RSI' });
       }
     } catch {}
   };

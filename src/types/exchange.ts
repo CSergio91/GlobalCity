@@ -661,7 +661,7 @@ export const SUPPORTED_VENUES: VenueMetadata[] = [
     tagline: 'Pasarela europea con registro ante el Banco Central Holandés',
     category: 'regional_regulated',
     color: '#0062FF',
-    authType: 'api_keys', 
+    authType: 'api_keys',
     requiresPassphrase: false,
     supportsOAuth: false,
     supportsTestnet: false,
