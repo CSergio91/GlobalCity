@@ -130,17 +130,17 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
         </button>
       )}
 
-      {/* Contenedor Principal: Video primero, Login revelado animadamente al terminar */}
-      <div className="w-full max-w-4xl flex flex-col md:flex-row items-center justify-center gap-6 sm:gap-8 md:gap-14 transition-all duration-700 ease-out">
+      {/* Contenedor Principal: Video y Login perfectamente coordinados en dimensiones */}
+      <div className="w-full max-w-4xl flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-6 md:gap-12 transition-all duration-700 ease-out">
         
-        {/* VIDEO DE PRESENTACIÓN 9:16 (Click derecho deshabilitado) */}
+        {/* VIDEO DE PRESENTACIÓN 9:16 (En móvil se adapta de ancho y reduce altura al revelar login) */}
         <div 
           onClick={handleRevealWithoutPausing}
           onContextMenu={(e) => e.preventDefault()}
           className={`relative rounded-3xl overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.95)] shrink-0 transition-all duration-700 ease-out z-20 cursor-pointer select-none bg-black ${
             isRevealed 
-              ? 'w-[260px] sm:w-[290px] md:w-[315px] h-[460px] sm:h-[500px] md:h-[530px]' 
-              : 'w-[280px] sm:w-[330px] md:w-[350px] h-[500px] sm:h-[560px] md:h-[600px] hover:scale-[1.01]'
+              ? 'w-[280px] sm:w-[320px] md:w-[315px] h-[180px] sm:h-[220px] md:h-[530px]' 
+              : 'w-[280px] sm:w-[330px] md:w-[350px] h-[460px] sm:h-[520px] md:h-[600px] hover:scale-[1.01]'
           }`}
           title={isRevealed ? '' : 'Toca para continuar'}
         >
@@ -169,9 +169,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
           )}
         </div>
 
-        {/* PANEL DE LOGIN ANIMADO CON COLORES Y ALTO CONTRASTE */}
+        {/* PANEL DE LOGIN: Mismo ancho exacto que el video en móvil (w-[280px] sm:w-[320px]) */}
         <div 
-          className={`flex-1 max-w-sm sm:max-w-md w-full flex flex-col items-center justify-center text-center space-y-6 transition-all duration-700 ease-out z-10 relative ${
+          className={`w-[280px] sm:w-[320px] md:w-full md:max-w-md flex flex-col items-center justify-center text-center space-y-3.5 sm:space-y-5 transition-all duration-700 ease-out z-10 relative ${
             isRevealed 
               ? 'opacity-100 translate-x-0 translate-y-0 pointer-events-auto' 
               : 'opacity-0 md:-translate-x-16 translate-y-10 pointer-events-none hidden md:flex'
@@ -181,11 +181,11 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
           <div className="absolute -inset-4 bg-gradient-to-r from-[#229ED9]/15 via-[#EC4899]/10 to-[#FBBF24]/10 rounded-3xl blur-2xl pointer-events-none -z-10" />
 
           {/* TÍTULO CON GRADIENTE DE COLORES INSTITUCIONALES (Sunset Gradient) */}
-          <div className="space-y-2">
-            <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] drop-shadow-[0_0_35px_rgba(244,114,182,0.45)]">
+          <div className="space-y-1">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] drop-shadow-[0_0_35px_rgba(244,114,182,0.45)]">
               Login
             </h1>
-            <p className="text-sm sm:text-base text-slate-200 font-medium drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
+            <p className="text-xs sm:text-sm md:text-base text-slate-200 font-medium drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
               {hasExistingSession 
                 ? `Bienvenido de nuevo, ${storedUser?.firstName || 'Trader'}` 
                 : 'Acceso directo con tu cuenta de Telegram'}
@@ -193,37 +193,37 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
           </div>
 
           {/* ACCIÓN PRINCIPAL DE ACCESO CON COLORES VIBRANTES */}
-          <div className="w-full flex flex-col items-center space-y-3">
+          <div className="w-full flex flex-col items-center space-y-2.5">
             {hasExistingSession ? (
               // CASO 1: Sesión previa en localStorage -> Botón GRANDE "Ver Mi Dashboard" (Prioridad máxima)
-              <div className="w-full flex flex-col items-center space-y-3">
+              <div className="w-full flex flex-col items-center space-y-2.5">
                 <button
                   onClick={() => onSuccess()}
-                  className="w-full btn-liquid py-4 px-8 rounded-2xl bg-gradient-to-r from-[#0088CC] via-[#229ED9] to-[#00C2FF] hover:brightness-110 text-white text-base sm:text-lg font-black flex items-center justify-center gap-3 shadow-[0_10px_40px_rgba(0,136,204,0.65)] hover:shadow-cyan-400/40 transition-all cursor-pointer group"
+                  className="w-full btn-liquid py-3.5 sm:py-4 px-4 sm:px-8 rounded-2xl bg-gradient-to-r from-[#0088CC] via-[#229ED9] to-[#00C2FF] hover:brightness-110 text-white text-sm sm:text-base md:text-lg font-black flex items-center justify-center gap-2.5 shadow-[0_10px_40px_rgba(0,136,204,0.65)] hover:shadow-cyan-400/40 transition-all cursor-pointer group"
                 >
                   <span>Ver Mi Dashboard</span>
-                  <ArrowRight className="w-5 h-5 text-white group-hover:translate-x-1.5 transition-transform" />
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:translate-x-1.5 transition-transform" />
                 </button>
 
                 {/* Tarjeta de estado de sesión con acento esmeralda */}
-                <div className="flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-xs font-mono text-emerald-300 shadow-md">
+                <div className="flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[11px] sm:text-xs font-mono text-emerald-300 shadow-md">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>Sesión activa: {storedUser?.username || storedUser?.firstName}</span>
+                  <span className="truncate max-w-[200px]">Sesión: {storedUser?.username || storedUser?.firstName}</span>
                 </div>
 
                 <button
                   onClick={handleLaunchTelegramOAuth}
-                  className="text-xs text-slate-300 hover:text-white transition-colors cursor-pointer pt-2 hover:underline"
+                  className="text-[11px] sm:text-xs text-slate-300 hover:text-white transition-colors cursor-pointer pt-1 hover:underline"
                 >
                   Conectar con otra cuenta de Telegram
                 </button>
               </div>
             ) : (
               // CASO 2: Sin sesión previa -> Botón "Conectar con Telegram" con gradiente celeste neón
-              <div className="w-full flex flex-col items-center space-y-3">
+              <div className="w-full flex flex-col items-center space-y-2.5">
                 <button
                   onClick={handleLaunchTelegramOAuth}
-                  className="w-full btn-liquid py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#229ED9] to-[#0088CC] hover:brightness-110 text-white text-sm font-bold flex items-center justify-center gap-2.5 shadow-[0_8px_35px_rgba(34,158,217,0.5)] transition-all cursor-pointer group"
+                  className="w-full btn-liquid py-3 sm:py-3.5 px-4 sm:px-6 rounded-2xl bg-gradient-to-r from-[#229ED9] to-[#0088CC] hover:brightness-110 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-[0_8px_35px_rgba(34,158,217,0.5)] transition-all cursor-pointer group"
                 >
                   <Send className="w-4 h-4 fill-white group-hover:translate-x-0.5 transition-transform" />
                   <span>Conectar con Telegram</span>
@@ -233,9 +233,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
                 <button
                   onClick={handleQuickTelegramSync}
                   disabled={isLoading}
-                  className="text-xs text-slate-300 hover:text-white transition-colors cursor-pointer py-1 drop-shadow"
+                  className="text-[11px] sm:text-xs text-slate-300 hover:text-white transition-colors cursor-pointer py-1 drop-shadow"
                 >
-                  {isLoading ? 'Sincronizando...' : 'Sincronizar mi sesión verificada de Telegram'}
+                  {isLoading ? 'Sincronizando...' : 'Sincronizar mi sesión verificada'}
                 </button>
               </div>
             )}
@@ -243,7 +243,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
 
           {/* BANNER DE ESPERA SI ESTÁ AUTORIZANDO EN TELEGRAM */}
           {isTelegramWaiting && (
-            <div className="p-2.5 rounded-xl bg-[#229ED9]/25 border border-[#229ED9]/40 backdrop-blur-md text-xs text-[#38BDF8] font-medium flex items-center justify-center gap-2 animate-pulse shadow-xl w-full">
+            <div className="p-2 sm:p-2.5 rounded-xl bg-[#229ED9]/25 border border-[#229ED9]/40 backdrop-blur-md text-xs text-[#38BDF8] font-medium flex items-center justify-center gap-2 animate-pulse shadow-xl w-full">
               <div className="w-3.5 h-3.5 border-2 border-[#229ED9] border-t-transparent rounded-full animate-spin shrink-0" />
               <span>Esperando confirmación en Telegram...</span>
             </div>
@@ -251,7 +251,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
 
           {/* MENSAJE DE FEEDBACK */}
           {feedback && (
-            <div className={`p-2.5 rounded-xl text-xs flex items-center justify-center gap-2 backdrop-blur-md shadow-xl w-full border ${
+            <div className={`p-2 sm:p-2.5 rounded-xl text-xs flex items-center justify-center gap-2 backdrop-blur-md shadow-xl w-full border ${
               feedback.success 
                 ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-200' 
                 : 'bg-rose-500/20 border-rose-500/30 text-rose-200'
