@@ -96,149 +96,226 @@ export const INITIAL_MARKET_TICKS: MarketAssetTick[] = [
   }
 ];
 
+// Singleton Shared Market Feed State
+let sharedTicks: MarketAssetTick[] = INITIAL_MARKET_TICKS;
+let sharedIsConnected = false;
+const listeners = new Set<(ticks: MarketAssetTick[], isConnected: boolean) => void>();
+
+let activeWs: WebSocket | null = null;
+let reconnectTimer: any = null;
+let disconnectTimer: any = null;
+let macroInterval: any = null;
+
+function notifyListeners() {
+  for (const listener of listeners) {
+    listener(sharedTicks, sharedIsConnected);
+  }
+}
+
+// 1. Fetch live Forex rates as baseline from open exchange API
+async function fetchForexBaseline() {
+  try {
+    const res = await fetch('https://open.er-api.com/v6/latest/USD');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data && data.rates) {
+      const eurRate = data.rates.EUR ? 1 / data.rates.EUR : 1.0845;
+      const gbpRate = data.rates.GBP ? 1 / data.rates.GBP : 1.2984;
+      
+      sharedTicks = sharedTicks.map(t => {
+        if (t.symbol === 'EUR/USD') return { ...t, price: Number(eurRate.toFixed(5)) };
+        if (t.symbol === 'GBP/USD') return { ...t, price: Number(gbpRate.toFixed(5)) };
+        return t;
+      });
+      notifyListeners();
+    }
+  } catch {
+    // Fallback gracefully to default ticks
+  }
+}
+
+// 2. Connect to Binance Public WebSocket API (Multi-stream real-time tickers)
+function connectBinanceWS() {
+  if (listeners.size === 0) return;
+  if (activeWs && (activeWs.readyState === WebSocket.CONNECTING || activeWs.readyState === WebSocket.OPEN)) {
+    return;
+  }
+
+  try {
+    const streams = [
+      'btcusdt@ticker',
+      'ethusdt@ticker',
+      'solusdt@ticker',
+      'bnbusdt@ticker'
+    ].join('/');
+
+    const wsUrl = `wss://stream.binance.com:9443/stream?streams=${streams}`;
+    const ws = new WebSocket(wsUrl);
+    activeWs = ws;
+
+    ws.onopen = () => {
+      if (activeWs !== ws) return;
+      sharedIsConnected = true;
+      notifyListeners();
+    };
+
+    ws.onmessage = (event) => {
+      if (activeWs !== ws) return;
+      try {
+        const message = JSON.parse(event.data);
+        const data = message?.data;
+        if (!data || !data.s) return;
+
+        const symbolMap: Record<string, string> = {
+          'BTCUSDT': 'BTC/USDT',
+          'ETHUSDT': 'ETH/USDT',
+          'SOLUSDT': 'SOL/USDT',
+          'BNBUSDT': 'BNB/USDT',
+        };
+
+        const appSymbol = symbolMap[data.s];
+        if (!appSymbol) return;
+
+        const newPrice = parseFloat(data.c);
+        const newChange = parseFloat(data.P);
+        const volumeRaw = parseFloat(data.q);
+        const formattedVol = volumeRaw > 1e9 
+          ? `$${(volumeRaw / 1e9).toFixed(2)}B` 
+          : `$${(volumeRaw / 1e6).toFixed(1)}M`;
+
+        sharedTicks = sharedTicks.map(item => {
+          if (item.symbol !== appSymbol) return item;
+          const direction = newPrice > item.price ? 'up' : newPrice < item.price ? 'down' : 'same';
+          return {
+            ...item,
+            price: newPrice,
+            change24h: newChange,
+            volume24h: formattedVol,
+            direction,
+            lastUpdated: Date.now()
+          };
+        });
+        notifyListeners();
+      } catch {
+        // Ignore malformed tick
+      }
+    };
+
+    ws.onerror = () => {
+      if (activeWs === ws) {
+        sharedIsConnected = false;
+        notifyListeners();
+      }
+    };
+
+    ws.onclose = () => {
+      if (activeWs !== ws) return;
+      activeWs = null;
+      sharedIsConnected = false;
+      notifyListeners();
+      // Auto reconnect only if components are actively listening
+      if (listeners.size > 0) {
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        reconnectTimer = setTimeout(connectBinanceWS, 3000);
+      }
+    };
+  } catch {
+    if (listeners.size > 0) {
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      reconnectTimer = setTimeout(connectBinanceWS, 4000);
+    }
+  }
+}
+
+// Cleanly disconnect without triggering "closed before connection established" browser warning
+function disconnectBinanceWS() {
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+  if (macroInterval) {
+    clearInterval(macroInterval);
+    macroInterval = null;
+  }
+  if (activeWs) {
+    const ws = activeWs;
+    activeWs = null;
+    ws.onmessage = null;
+    ws.onerror = null;
+    ws.onclose = null;
+    if (ws.readyState === WebSocket.OPEN) {
+      try { ws.close(); } catch {}
+    } else if (ws.readyState === WebSocket.CONNECTING) {
+      // Prevent browser "WebSocket is closed before the connection is established" warning
+      ws.onopen = () => {
+        try { ws.close(); } catch {}
+      };
+    }
+  }
+  sharedIsConnected = false;
+  notifyListeners();
+}
+
 export function useLiveMarketTicks() {
-  const [ticks, setTicks] = useState<MarketAssetTick[]>(INITIAL_MARKET_TICKS);
-  const [isConnected, setIsConnected] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
-  const ticksRef = useRef<MarketAssetTick[]>(INITIAL_MARKET_TICKS);
+  const [ticks, setTicks] = useState<MarketAssetTick[]>(sharedTicks);
+  const [isConnected, setIsConnected] = useState(sharedIsConnected);
 
   useEffect(() => {
-    ticksRef.current = ticks;
-  }, [ticks]);
+    // 1. Cancel pending disconnect if a component remounts (React StrictMode / navigation)
+    if (disconnectTimer) {
+      clearTimeout(disconnectTimer);
+      disconnectTimer = null;
+    }
 
-  useEffect(() => {
-    let reconnectTimeout: any = null;
-    let isComponentMounted = true;
-
-    // 1. Fetch live Forex rates as baseline from open exchange API
-    const fetchForexBaseline = async () => {
-      try {
-        const res = await fetch('https://open.er-api.com/v6/latest/USD');
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data && data.rates) {
-          const eurRate = data.rates.EUR ? 1 / data.rates.EUR : 1.0845;
-          const gbpRate = data.rates.GBP ? 1 / data.rates.GBP : 1.2984;
-          
-          setTicks(prev => prev.map(t => {
-            if (t.symbol === 'EUR/USD') return { ...t, price: Number(eurRate.toFixed(5)) };
-            if (t.symbol === 'GBP/USD') return { ...t, price: Number(gbpRate.toFixed(5)) };
-            return t;
-          }));
-        }
-      } catch (err) {
-        // Fallback gracefully to default ticks
-      }
+    const listener = (newTicks: MarketAssetTick[], newConn: boolean) => {
+      setTicks(newTicks);
+      setIsConnected(newConn);
     };
 
-    fetchForexBaseline();
+    listeners.add(listener);
 
-    // 2. Connect to Binance Public WebSocket API (Multi-stream real-time tickers)
-    const connectBinanceWS = () => {
-      try {
-        const streams = [
-          'btcusdt@ticker',
-          'ethusdt@ticker',
-          'solusdt@ticker',
-          'bnbusdt@ticker'
-        ].join('/');
+    // 2. Start connection if this is the first active subscriber
+    if (listeners.size === 1) {
+      fetchForexBaseline();
+      connectBinanceWS();
 
-        const wsUrl = `wss://stream.binance.com:9443/stream?streams=${streams}`;
-        const ws = new WebSocket(wsUrl);
-        wsRef.current = ws;
+      if (!macroInterval) {
+        macroInterval = setInterval(() => {
+          sharedTicks = sharedTicks.map(item => {
+            if (item.category === 'crypto') return item;
 
-        ws.onopen = () => {
-          if (!isComponentMounted) return;
-          setIsConnected(true);
-        };
+            // Subtle micro-pip oscillation (1-3 pips)
+            const variancePct = (Math.random() - 0.495) * 0.0003;
+            const oldPrice = item.price;
+            const newPrice = Number((oldPrice * (1 + variancePct)).toFixed(item.category === 'forex' && !item.symbol.includes('XAU') ? 5 : 2));
+            const direction = newPrice > oldPrice ? 'up' : newPrice < oldPrice ? 'down' : 'same';
 
-        ws.onmessage = (event) => {
-          if (!isComponentMounted) return;
-          try {
-            const message = JSON.parse(event.data);
-            const data = message.data;
-            if (!data || !data.s) return;
-
-            const symbolMap: Record<string, string> = {
-              'BTCUSDT': 'BTC/USDT',
-              'ETHUSDT': 'ETH/USDT',
-              'SOLUSDT': 'SOL/USDT',
-              'BNBUSDT': 'BNB/USDT',
+            return {
+              ...item,
+              price: newPrice,
+              direction,
+              lastUpdated: Date.now()
             };
-
-            const appSymbol = symbolMap[data.s];
-            if (!appSymbol) return;
-
-            const newPrice = parseFloat(data.c);
-            const newChange = parseFloat(data.P);
-            const volumeRaw = parseFloat(data.q);
-            const formattedVol = volumeRaw > 1e9 
-              ? `$${(volumeRaw / 1e9).toFixed(2)}B` 
-              : `$${(volumeRaw / 1e6).toFixed(1)}M`;
-
-            setTicks(currentTicks => {
-              return currentTicks.map(item => {
-                if (item.symbol !== appSymbol) return item;
-                const direction = newPrice > item.price ? 'up' : newPrice < item.price ? 'down' : 'same';
-                return {
-                  ...item,
-                  price: newPrice,
-                  change24h: newChange,
-                  volume24h: formattedVol,
-                  direction,
-                  lastUpdated: Date.now()
-                };
-              });
-            });
-          } catch (e) {
-            // Ignore malformed tick
-          }
-        };
-
-        ws.onerror = () => {
-          ws.close();
-        };
-
-        ws.onclose = () => {
-          if (!isComponentMounted) return;
-          setIsConnected(false);
-          // Auto reconnect in 3 seconds
-          reconnectTimeout = setTimeout(connectBinanceWS, 3000);
-        };
-      } catch (err) {
-        reconnectTimeout = setTimeout(connectBinanceWS, 4000);
+          });
+          notifyListeners();
+        }, 2400);
       }
-    };
-
-    connectBinanceWS();
-
-    // 3. High-frequency micro-ticks for Forex & Futures to reflect institutional interbank DMA flow
-    const macroInterval = setInterval(() => {
-      setTicks(current => current.map(item => {
-        if (item.category === 'crypto') return item; // Handled directly by Binance WS
-
-        // Subtle micro-pip oscillation (1-3 pips)
-        const variancePct = (Math.random() - 0.495) * 0.0003;
-        const oldPrice = item.price;
-        const newPrice = Number((oldPrice * (1 + variancePct)).toFixed(item.category === 'forex' && !item.symbol.includes('XAU') ? 5 : 2));
-        const direction = newPrice > oldPrice ? 'up' : newPrice < oldPrice ? 'down' : 'same';
-
-        return {
-          ...item,
-          price: newPrice,
-          direction,
-          lastUpdated: Date.now()
-        };
-      }));
-    }, 2400);
+    } else {
+      // Immediate sync with current shared state
+      setTicks(sharedTicks);
+      setIsConnected(sharedIsConnected);
+    }
 
     return () => {
-      isComponentMounted = false;
-      clearInterval(macroInterval);
-      if (reconnectTimeout) clearTimeout(reconnectTimeout);
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
+      listeners.delete(listener);
+
+      // Debounce disconnect so fast unmount/remount (StrictMode / React Refresh) doesn't thrash sockets
+      if (listeners.size === 0) {
+        disconnectTimer = setTimeout(() => {
+          if (listeners.size === 0) {
+            disconnectBinanceWS();
+          }
+        }, 4000);
       }
     };
   }, []);
