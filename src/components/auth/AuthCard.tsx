@@ -18,7 +18,25 @@ interface AuthCardProps {
   isModal?: boolean;
 }
 
+// Hook responsive para coordinar animaciones entre móvil y escritorio
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(() => 
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return isMobile;
+};
+
 export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal = false }) => {
+  const isMobile = useIsMobile();
   const { user, loginWithTelegram } = useAuth();
   
   // Detección de sesión previa en localStorage
@@ -45,8 +63,13 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
     }
   }, [isRevealed]);
 
-  // Al finalizar el video o pulsar continuar, se activa el login y se muestra fijado el último fotograma
+  // Al finalizar el video o pulsar login, se pausa el video y se activa la transición fluida
   const handleVideoEnded = () => {
+    if (videoRef.current) {
+      try {
+        videoRef.current.pause();
+      } catch (_) {}
+    }
     setIsRevealed(true);
   };
 
@@ -126,7 +149,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
   return (
     <div 
       onContextMenu={(e) => e.preventDefault()}
-      className="w-full flex items-center justify-center relative select-none"
+      className="w-full h-full relative flex items-center justify-center select-none overflow-hidden"
     >
       
       {/* Botón de Cierre Superior (si se abre en modal) */}
@@ -134,90 +157,94 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
         <button 
           onClick={onClose}
           aria-label="Cerrar modal"
-          className="absolute -top-10 right-0 p-2 rounded-xl bg-black/60 hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer z-50 border-0"
+          className="absolute top-4 right-4 p-2 rounded-xl bg-black/60 hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer z-50 border-0"
         >
           ✕
         </button>
       )}
 
-      {/* Contenedor Flex Animado con Motion Layout */}
+      {/* ═══════════════════════════════════════════════════════════════
+          VIDEO / LOGO PRINCIPAL:
+          Se mueve suavemente desde su posición original hacia el lugar final y se achica
+         ═══════════════════════════════════════════════════════════════ */}
       <motion.div 
-        layout
-        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-        className={`w-full flex ${
+        animate={
           isRevealed 
-            ? 'flex-col md:flex-row items-center justify-center gap-2 sm:gap-3 md:gap-12 lg:gap-16' 
-            : 'flex-col items-center justify-center'
+            ? isMobile 
+              ? { y: -110, x: 0, scale: 0.65 } 
+              : { x: -165, y: 0, scale: 0.82 }
+            : { x: 0, y: 0, scale: 1 }
+        }
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        className={`relative flex flex-col items-center justify-center select-none shrink-0 w-full max-w-[360px] sm:max-w-md md:max-w-[420px] ${
+          isRevealed ? 'pointer-events-none' : 'pointer-events-auto'
         }`}
       >
+        <video
+          ref={videoRef}
+          src={presentationVideo}
+          poster={lastFrameLogo}
+          autoPlay
+          muted
+          playsInline
+          preload="auto"
+          controlsList="nodownload nofullscreen noremoteplayback"
+          disablePictureInPicture
+          onContextMenu={(e) => e.preventDefault()}
+          onEnded={handleVideoEnded}
+          className="w-full h-auto object-contain object-center bg-black"
+        />
+      </motion.div>
 
-        {/* ═══════════════════════════════════════════════════════════════
-            VIDEO / LOGO PRINCIPAL:
-            Al terminar: Sube suavemente y se achica sin disparar el scroll
-           ═══════════════════════════════════════════════════════════════ */}
-        <motion.div 
-          layout
-          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          className={`relative flex flex-col items-center justify-center select-none shrink-0 w-full overflow-hidden sm:overflow-visible transition-all duration-700 ${
-            isRevealed 
-              ? 'max-w-full sm:max-w-md md:max-w-[340px] lg:max-w-[380px] max-h-[22vh] sm:max-h-[26vh] md:max-h-[64vh]' 
-              : 'w-full max-w-full sm:max-w-md md:max-w-[480px]'
-          }`}
-        >
-          {isRevealed ? (
-            <motion.img
-              initial={{ opacity: 0.9 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4 }}
-              src={lastFrameLogo}
-              alt="Global City Logo"
-              onContextMenu={(e) => e.preventDefault()}
-              className="w-full h-auto max-h-[22vh] sm:max-h-[26vh] md:max-h-[64vh] object-contain object-center bg-black"
-            />
-          ) : (
-            <video
-              ref={videoRef}
-              src={presentationVideo}
-              autoPlay
-              muted
-              playsInline
-              preload="auto"
-              controlsList="nodownload nofullscreen noremoteplayback"
-              disablePictureInPicture
-              onContextMenu={(e) => e.preventDefault()}
-              onEnded={handleVideoEnded}
-              className="w-full h-auto scale-[1.05] sm:scale-100 object-contain object-center bg-black transition-transform duration-300"
-            />
-          )}
-
-          {/* Botón sutil para continuar al login antes de que termine el video */}
-          {!isRevealed && (
-            <div className="mt-4 flex justify-center z-30 pointer-events-auto">
-              <button
-                onClick={handleManualContinue}
-                className="px-5 py-2 rounded-full bg-black/90 hover:bg-black text-white/90 hover:text-white text-xs font-semibold tracking-wide flex items-center gap-1.5 transition-all shadow-2xl border border-white/20 group cursor-pointer active:scale-95"
-              >
-                <span>Continuar al Login</span>
-                <ChevronRight className="w-3.5 h-3.5 text-[#F472B6] group-hover:translate-x-0.5 transition-transform" />
-              </button>
-            </div>
-          )}
-        </motion.div>
-
-        {/* ═══════════════════════════════════════════════════════════════
-            LOGIN SIN CONTENEDOR: 
-            Sube sutilmente sin exagerar para que todo quepa en la pantalla
-           ═══════════════════════════════════════════════════════════════ */}
-        <AnimatePresence>
-          {isRevealed && (
-            <motion.div 
-              key="login-controls"
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-xs sm:max-w-sm md:max-w-md flex flex-col items-center text-center space-y-2.5 sm:space-y-3 mx-auto px-4"
+      {/* ═══════════════════════════════════════════════════════════════
+          BOTÓN LOGIN SUTIL (DURANTE LA INTRO DEL VIDEO):
+          Posicionado cómodamente en el thumb-zone (no muy abajo), con
+          los colores exactos del texto Login (Sunset gradient)
+         ═══════════════════════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {!isRevealed && (
+          <motion.div 
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8, transition: { duration: 0.2 } }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+            className="absolute bottom-8 sm:bottom-10 left-1/2 -translate-x-1/2 z-30 pointer-events-auto"
+          >
+            <button
+              onClick={handleManualContinue}
+              className="px-6 py-2 rounded-full bg-black/85 hover:bg-black text-xs sm:text-sm font-black tracking-wide flex items-center gap-1.5 transition-all shadow-[0_0_20px_rgba(244,114,182,0.35)] border border-[#F472B6]/40 hover:border-[#F472B6] group cursor-pointer active:scale-95"
             >
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA]">
+                Login
+              </span>
+              <ChevronRight className="w-3.5 h-3.5 text-[#F472B6] group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          LOGIN CONTROLS:
+          Sube suavemente y aparece sin distorsión ni estiramiento
+         ═══════════════════════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {isRevealed && (
+          <motion.div 
+            key="login-controls"
+            initial={
+              isMobile
+                ? { opacity: 0, y: 130 }
+                : { opacity: 0, x: 195, y: 0 }
+            }
+            animate={
+              isMobile
+                ? { opacity: 1, y: 105 }
+                : { opacity: 1, x: 165, y: 0 }
+            }
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
+            className="absolute w-full max-w-[280px] sm:max-w-[320px] flex flex-col items-center text-center space-y-2.5 sm:space-y-3 px-2 z-20 pointer-events-auto"
+          >
           
           {/* TÍTULO CON GRADIENTE SUNSET (PERFECTAMENTE CENTRADO) */}
           <div className="space-y-0.5 w-full flex flex-col items-center text-center">
@@ -231,14 +258,14 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
             </p>
           </div>
 
-          {/* ACCIÓN PRINCIPAL DE ACCESO (PERFECTAMENTE CENTRADA) */}
+          {/* ACCIÓN PRINCIPAL DE ACCESO (COMPACTO Y ELEGANTE, NUNCA ESTIRADO) */}
           <div className="w-full flex flex-col items-center text-center space-y-2 pt-0.5">
             {hasExistingSession ? (
               // CASO 1: Sesión previa en localStorage -> Botón GRANDE "Ver Mi Dashboard"
               <div className="w-full flex flex-col items-center text-center space-y-2">
                 <button
                   onClick={() => onSuccess()}
-                  className="w-full btn-liquid py-2.5 sm:py-3 px-5 sm:px-6 rounded-2xl bg-gradient-to-r from-[#0088CC] via-[#229ED9] to-[#00C2FF] hover:brightness-110 text-white text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-[0_10px_35px_rgba(0,136,204,0.6)] hover:shadow-cyan-400/50 transition-all cursor-pointer group active:scale-95"
+                  className="w-full btn-liquid py-2.5 sm:py-3 px-5 rounded-2xl bg-gradient-to-r from-[#0088CC] via-[#229ED9] to-[#00C2FF] hover:brightness-110 text-white text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-[0_10px_35px_rgba(0,136,204,0.6)] hover:shadow-cyan-400/50 transition-all cursor-pointer group active:scale-95"
                 >
                   <span>Ver Mi Dashboard</span>
                   <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1.5 transition-transform" />
@@ -262,7 +289,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
               <div className="w-full flex flex-col items-center text-center space-y-2">
                 <button
                   onClick={handleLaunchTelegramOAuth}
-                  className="w-full btn-liquid py-2.5 sm:py-3 px-5 sm:px-6 rounded-2xl bg-gradient-to-r from-[#229ED9] to-[#0088CC] hover:brightness-110 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-[0_10px_35px_rgba(34,158,217,0.5)] transition-all cursor-pointer group active:scale-95"
+                  className="w-full btn-liquid py-2.5 sm:py-3 px-5 rounded-2xl bg-gradient-to-r from-[#229ED9] to-[#0088CC] hover:brightness-110 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-[0_10px_35px_rgba(34,158,217,0.5)] transition-all cursor-pointer group active:scale-95"
                 >
                   <Send className="w-3.5 h-3.5 fill-white group-hover:translate-x-0.5 transition-transform" />
                   <span className="mx-auto">Conectar con Telegram</span>
@@ -303,8 +330,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
             </motion.div>
           )}
         </AnimatePresence>
-
-      </motion.div>
 
     </div>
   );
