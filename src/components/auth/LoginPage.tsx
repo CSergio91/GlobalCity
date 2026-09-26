@@ -1,8 +1,8 @@
 import React from 'react';
-import { ArrowLeft } from 'lucide-react';
 import { AuthCard } from './AuthCard';
 import { useAppRouter } from '../../context/RouterContext';
-import { BrandLogo } from '../BrandLogo';
+import { LiquidFollower } from '../LiquidFollower';
+import nightSkylineBg from '../../assets/images/global_city_night_skyline.jpg';
 
 export const LoginPage: React.FC = () => {
   const { navigate } = useAppRouter();
@@ -13,49 +13,45 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#06070B] text-slate-100 flex flex-col justify-between p-2 sm:p-6 lg:p-8 relative selection:bg-[#EC4899]/30 selection:text-white overflow-x-hidden">
+    <div 
+      className="min-h-screen w-full relative flex flex-col justify-between items-center p-3 sm:p-6 lg:p-8 selection:bg-[#EC4899]/30 selection:text-white overflow-hidden bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: `url(${nightSkylineBg})` }}
+    >
+      {/* Dynamic Interactive Liquid Follower (Efecto iluminación del ratón de la landing) */}
+      <LiquidFollower />
+
+      {/* Capas de oscuridad y viñeta para que la ciudad nocturna brille con profundidad y legibilidad */}
+      <div className="absolute inset-0 bg-[#06070B]/75 backdrop-blur-[2px] pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#06070B] via-transparent to-[#06070B]/80 pointer-events-none" />
       
-      {/* Luces de Fondo Ambientales / Cyber Ambient Glows */}
+      {/* Luces Ambientales / Cyber Ambient Glows */}
       <div className="fixed -top-40 -left-40 w-96 h-96 bg-[#EC4899]/15 rounded-full blur-[140px] pointer-events-none" />
-      <div className="fixed -bottom-40 -right-40 w-96 h-96 bg-[#818CF8]/15 rounded-full blur-[140px] pointer-events-none" />
+      <div className="fixed -bottom-40 -right-40 w-96 h-96 bg-[#229ED9]/20 rounded-full blur-[140px] pointer-events-none" />
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#229ED9]/08 rounded-full blur-[180px] pointer-events-none" />
 
-      {/* Top Navbar minimalista de la pantalla de login */}
-      <header className="w-full max-w-4xl mx-auto flex items-center justify-between z-20 pb-2 sm:pb-4">
-        <button
-          onClick={() => navigate('/')}
-          className="btn-liquid flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white transition-all text-xs font-semibold cursor-pointer border border-white/20 backdrop-blur-xl shadow-lg group"
-        >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1.5 transition-transform" />
-          <span>Volver al Inicio</span>
-        </button>
-
-        <div className="flex items-center gap-2">
-          <BrandLogo size="sm" />
-          <span className="hidden sm:inline-block text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded-full bg-[#EC4899]/15 border border-[#EC4899]/30 text-[#F472B6]">
-            TERMINAL ACCESS
-          </span>
-        </div>
-      </header>
-
-      {/* Tarjeta Central Dual-Split */}
-      <main className="flex-1 flex items-center justify-center py-2 sm:py-6 z-20">
+      {/* Tarjeta Central Glassmórfica Transparente */}
+      <main className="w-full flex-1 flex items-center justify-center z-20 py-2 sm:py-4">
         <AuthCard 
           onSuccess={handleAuthSuccess}
           isModal={false}
         />
       </main>
 
-      {/* Footer minimalista institucional */}
-      <footer className="w-full max-w-4xl mx-auto text-center text-[10px] font-mono text-slate-400 z-20 pt-2 sm:pt-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-2 border-t border-white/5 pt-2 sm:pt-3">
-          <span>Global City Trading Ecosystem &copy; 2026</span>
-          <div className="flex items-center gap-4">
-            <span className="text-emerald-400 flex items-center gap-1.5">
+      {/* Footer minimalista discreto */}
+      <footer className="w-full max-w-3xl mx-auto text-center text-[10px] font-mono text-slate-400/90 z-20 pt-2 pb-1">
+        <div className="flex items-center justify-between border-t border-white/10 pt-2 px-1">
+          <button
+            onClick={() => navigate('/')}
+            className="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer font-medium"
+          >
+            <span>← Volver al Portal Global City</span>
+          </button>
+          
+          <div className="flex items-center gap-3">
+            <span className="text-emerald-400 flex items-center gap-1.5 font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Nodos de Arbitraje En Línea
+              Bot @globalcity_auth_bot Activo
             </span>
-            <span className="text-slate-400">Soporte Telegram: @globalcity_auth_bot</span>
           </div>
         </div>
       </footer>

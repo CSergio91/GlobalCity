@@ -213,3 +213,32 @@ Si un algoritmo de arbitraje o fragmentación táctica emite decenas de órdenes
 - [ ] ¿Todos los botones y selectores cuentan con manejadores de eventos funcionales sin enlaces muertos?
 - [ ] ¿Las notificaciones de Telegram siguen la gramática cromática institucional (Take Profit, Stop Loss, Margin Call)?
 - [ ] ¿Se implementa el protocolo de batching para evitar spam en el chat de Telegram del usuario?
+
+---
+
+## 8. Micro-Interacciones Avanzadas y Autenticación Telegram-Only
+
+### A. Sistema de Iluminación Fluida de Cursor (`LiquidFollower`)
+Para dar vida orgánica a las interfaces oscuras institucionales sin recargar la GPU:
+1. **Física Lerp:** El destello del cursor sigue la posición del ratón mediante interpolación lineal fluida (`current += (target - current) * 0.12`).
+2. **Gradiente Radial Tricromático:** 
+   - Núcleo Rose/Gold: `radial-gradient(circle, rgba(224, 109, 138, 0.14) 0%, rgba(212, 175, 55, 0.08) 35%, rgba(45, 212, 191, 0.04) 65%, transparent 80%)`.
+   - Modo de mezcla: `mix-blend-mode: screen`, `filter: blur(30px)`.
+3. **Escala Reactiva al Puntero:** Al hacer hover sobre elementos interactivos (`button`, `a`, `input`, `.cursor-pointer`), el halo se expande a escala `1.4x` de forma elástica (`duration-300 ease-out`).
+4. **Presencia Global:** Tanto la Landing Page como la ruta `/login` deben montar `<LiquidFollower />` sobre el fondo nocturno panorámico (`global_city_night_skyline.jpg`) con viñeta semi-translúcida y `backdrop-blur`.
+
+### B. Arquitectura de Autenticación 100% Nativa con Telegram (Zero Friction)
+Para eliminar la fricción de contraseñas olvidadas y maximizar la conversión en una comunidad activa:
+1. **Sin Formularios Manuales:** No se solicitan correos ni contraseñas.
+2. **Detección Instantánea de Sesión:** Si el usuario ya interactuó con `@globalcity_auth_bot`, la tarjeta muestra su badge de usuario detectado (ej. `Travel`, `@life_trading_motivation`) con un botón de un solo toque: `⚡ Entrar como [Nombre]`.
+3. **Deep Link Criptográfico con Nonce:** El botón primario redirige a `https://t.me/<bot_username>?start=auth_<nonce>`, mientras un polling ultra-ligero (`1500ms`) detecta la confirmación en tiempo real.
+4. **Acceso Demo Inmediato:** Modo terminal con un solo clic para explorar libros L2 sin registro previo.
+
+### C. Divisor de Separación Orgánico en Capas de Nube (Cloud Wave Geometry)
+La división entre la presentación visual (video 9:16) y la tarjeta de acceso debe replicar exactamente la referencia de nubes multicapa:
+- **Desktop (Divisor Vertical Izquierdo):**
+  - **Capa Exterior 1 (Celeste Neón Translúcido):** `rgba(56, 189, 248, 0.35)` con lóbulos más pronunciados hacia el video.
+  - **Capa Media 2 (Azul Institucional):** `rgba(37, 99, 235, 0.55)` con retracción intermedia.
+  - **Capa Frontal 3 (Superficie del Card):** `#0C0E17` fundiéndose de forma contigua con la tarjeta.
+- **Mobile (Divisor Horizontal Superior):**
+  - Los 3 lóbulos abombados se curvan hacia arriba invadiendo la zona inferior del video (`-top-8`), asegurando una altura compacta `h-40` que elimina el scroll en pantallas móviles.
