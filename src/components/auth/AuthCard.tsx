@@ -200,18 +200,28 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          PANEL IZQUIERDO: Visual Hero Compacto con Imagen Real
+          PANEL IZQUIERDO: Video de Presentación en Formato 9:16 (Fondo)
          ───────────────────────────────────────────────────────────── */}
-      <div className="w-full md:w-[42%] relative flex flex-col justify-between p-5 sm:p-7 overflow-hidden h-40 sm:h-48 md:h-auto md:min-h-[460px] shrink-0">
-        
-        {/* Imagen de fondo real con decodificación asíncrona */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
-          style={{ backgroundImage: `url(${nightSkylineBg})` }}
+      <div 
+        onClick={handleReplayVideo}
+        className="w-full md:w-[45%] relative flex flex-col justify-between p-5 sm:p-7 overflow-hidden h-60 sm:h-72 md:h-auto md:min-h-[520px] shrink-0 bg-black cursor-pointer group"
+        title="Toca para reproducir el video de nuevo"
+      >
+        {/* Video 9:16 Nativo a Pantalla Completa (Sustituye la imagen sin distorsión) */}
+        <video
+          ref={videoRef}
+          src={presentationVideo}
+          autoPlay
+          muted
+          playsInline
+          preload="auto"
+          onEnded={handleVideoEnded}
+          className="absolute inset-0 w-full h-full object-cover object-center filter contrast-105 brightness-100"
         />
         
-        {/* Degradado cinematográfico que garantiza contraste */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#06070B] via-[#090A13]/70 to-[#06070B]/40" />
+        {/* Viñeta cinematográfica suave para garantizar contraste tipográfico */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#06070B] via-transparent to-[#06070B]/50 pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(236,72,153,0.15),transparent_70%)] pointer-events-none" />
 
         {/* ─── DIVISOR ONDULADO MULTICAPA VERTICAL (Desktop: md en adelante) ─── */}
         <div className="hidden md:block absolute right-0 top-0 bottom-0 w-12 pointer-events-none z-20">
@@ -258,75 +268,50 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
           </svg>
         </div>
 
-        {/* Cabecera / Identidad Minimalista (Sin textos gigantes) */}
+        {/* Cabecera / Identidad Minimalista Sobre el Video */}
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BrandLogo size="sm" />
-            <span className="text-[10px] font-mono tracking-wider px-2 py-0.5 rounded-md bg-white/10 text-slate-300 border border-white/10">
+            <span className="text-[10px] font-mono tracking-wider px-2 py-0.5 rounded-md bg-black/50 backdrop-blur-md text-slate-200 border border-white/20">
               TERMINAL
             </span>
           </div>
 
-          <span className="text-[9px] font-mono tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+          <span className="text-[9px] font-mono tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/25 backdrop-blur-md text-emerald-300 border border-emerald-500/40 flex items-center gap-1 shadow">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            VIDEO LOGO
+            PRESENTACIÓN
           </span>
         </div>
 
-        {/* Presentación en Video del Logo Oficial (Visible en Móvil Y Desktop) */}
-        <div className="relative z-10 flex flex-col items-center justify-center my-auto py-2">
-          <div 
-            onClick={handleReplayVideo}
-            className="relative group cursor-pointer" 
-            title="Toca para reproducir de nuevo el video"
-          >
-            <div className="absolute -inset-2 bg-gradient-to-r from-[#F472B6]/40 via-[#EC4899]/30 to-[#818CF8]/40 rounded-2xl blur-lg opacity-60 group-hover:opacity-100 transition-opacity" />
-            <div className="relative w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-2xl bg-black/60 border border-white/20 backdrop-blur-md overflow-hidden flex items-center justify-center shadow-2xl">
-              <video
-                ref={videoRef}
-                src={presentationVideo}
-                autoPlay
-                muted
-                playsInline
-                preload="auto"
-                onEnded={handleVideoEnded}
-                className="w-full h-full object-contain"
-              />
-              
-              {/* Overlay de repetición cuando termina el video */}
-              {isVideoEnded && (
-                <div className="absolute bottom-2 inset-x-2 flex justify-center pointer-events-none">
-                  <span className="px-2.5 py-0.5 rounded-full bg-black/80 border border-white/20 text-[10px] font-mono text-slate-200 flex items-center gap-1 shadow-lg backdrop-blur-md animate-in fade-in">
-                    <span>↻ Toca para ver de nuevo</span>
-                  </span>
-                </div>
-              )}
+        {/* Zona Inferior con Titular y Replay */}
+        <div className="relative z-10 space-y-2 mt-auto">
+          {isVideoEnded && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/75 border border-white/20 text-[10px] font-mono text-slate-200 backdrop-blur-md animate-in fade-in shadow-xl">
+              <span>↻ Toca para reproducir de nuevo</span>
             </div>
-          </div>
+          )}
 
-          <div className="mt-2 text-center">
-            <h1 className="text-base sm:text-lg font-black text-white tracking-tight leading-snug">
-              Bienvenido a <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F472B6] to-[#818CF8]">Global City</span>
+          <div>
+            <h1 className="text-lg sm:text-xl font-black text-white tracking-tight leading-snug drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
+              Bienvenido a <br className="hidden md:inline" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F472B6] via-[#EC4899] to-[#818CF8]">
+                Global City
+              </span>
             </h1>
-            <p className="text-[11px] text-slate-300 font-light mt-0.5">
-              Arbitraje multi-venue & ejecución institucional.
+            <p className="text-[11px] text-slate-200 font-light mt-0.5 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+              Arbitraje multi-venue & trading algorítmico.
             </p>
           </div>
-        </div>
 
-        {/* Chips de Seguridad Compactos */}
-        <div className="relative z-10 flex items-center justify-center gap-2 text-[10px] font-mono text-slate-400">
-          <span className="flex items-center gap-1">
-            <Zap className="w-3 h-3 text-[#F472B6]" /> &lt;12ms
-          </span>
-          <span>·</span>
-          <span className="flex items-center gap-1">
-            <ShieldCheck className="w-3 h-3 text-emerald-400" /> Non-Custodial
-          </span>
-          <span>·</span>
-          <span className="flex items-center gap-1">
-            <Bot className="w-3 h-3 text-[#38BDF8]" /> Telegram Sync
-          </span>
+          {/* Chips de Seguridad Compactos */}
+          <div className="flex items-center gap-2 text-[10px] font-mono text-slate-300 pt-1">
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-black/40 border border-white/10 backdrop-blur-md">
+              <Zap className="w-3 h-3 text-[#F472B6]" /> &lt;12ms
+            </span>
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-black/40 border border-white/10 backdrop-blur-md">
+              <ShieldCheck className="w-3 h-3 text-emerald-400" /> Non-Custodial
+            </span>
+          </div>
         </div>
       </div>
 
@@ -517,10 +502,10 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 px-3 bg-gradient-to-r from-[#F472B6] via-[#EC4899] to-[#818CF8] hover:brightness-110 text-white font-bold text-xs rounded-lg shadow-md shadow-[#EC4899]/20 flex items-center justify-center gap-1.5 transition-all cursor-pointer mt-1"
+              className="btn-liquid w-full py-3 px-4 bg-gradient-to-r from-[#F472B6] via-[#EC4899] to-[#818CF8] hover:brightness-110 text-white font-black text-xs sm:text-sm rounded-2xl shadow-[0_8px_30px_rgba(236,72,153,0.4)] flex items-center justify-center gap-2 transition-all cursor-pointer border border-white/30 group mt-1"
             >
               <span>{tab === 'login' ? 'Acceder al Terminal' : 'Registrar Cuenta'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1.5 transition-transform" />
             </button>
           </form>
 
@@ -540,14 +525,14 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
               <button
                 type="button"
                 onClick={handleLaunchTelegramOAuth}
-                className="w-full py-2 px-3 bg-[#229ED9] hover:bg-[#1E88E5] text-white font-semibold text-xs rounded-lg shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
+                className="btn-liquid w-full py-2.5 px-3 bg-[#229ED9] hover:bg-[#1E88E5] text-white font-bold text-xs rounded-2xl shadow-[0_6px_20px_rgba(34,158,217,0.35)] flex items-center justify-center gap-2 transition-all cursor-pointer border border-white/20 group"
               >
-                <Send className="w-3.5 h-3.5 fill-white" />
+                <Send className="w-3.5 h-3.5 fill-white group-hover:scale-110 transition-transform" />
                 <span>Autorizar con Telegram (@{botUsername})</span>
                 <ExternalLink className="w-3 h-3 text-white/70" />
               </button>
             ) : (
-              <div className="p-2.5 rounded-lg bg-[#141724] border border-[#229ED9]/40 space-y-1.5">
+              <div className="p-2.5 rounded-xl bg-[#141724] border border-[#229ED9]/40 space-y-1.5">
                 <div className="flex items-center justify-between text-xs text-white">
                   <span className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-[#229ED9] animate-ping" />
@@ -558,7 +543,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
                   <button
                     type="button"
                     onClick={handleQuickTelegramSync}
-                    className="flex-1 py-1 px-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 rounded text-[9px] font-mono font-bold flex items-center justify-center gap-1 cursor-pointer"
+                    className="btn-liquid flex-1 py-1 px-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 rounded-xl text-[9px] font-mono font-bold flex items-center justify-center gap-1 cursor-pointer"
                   >
                     <CheckCircle2 className="w-3 h-3" />
                     <span>Sincronizar Telegram</span>
@@ -566,7 +551,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
                   <button
                     type="button"
                     onClick={() => setIsTelegramWaiting(false)}
-                    className="py-1 px-2 bg-white/5 hover:bg-white/10 text-slate-400 rounded text-[9px] font-mono cursor-pointer"
+                    className="btn-liquid py-1 px-2 bg-white/5 hover:bg-white/10 text-slate-400 rounded-xl text-[9px] font-mono cursor-pointer"
                   >
                     Cancelar
                   </button>
@@ -578,10 +563,10 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
             <button
               type="button"
               onClick={handleDemoLogin}
-              className="w-full py-1.5 px-2 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-mono text-slate-400 hover:text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              className="btn-liquid w-full py-2 px-3 rounded-2xl bg-black/40 hover:bg-black/60 border border-white/20 text-[10px] font-mono text-slate-300 hover:text-white transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg backdrop-blur-xl"
             >
-              <Sparkles className="w-3 h-3 text-[#F472B6]" />
-              <span>Explorar en Modo Invitado / Demo</span>
+              <Sparkles className="w-3.5 h-3.5 text-[#F472B6]" />
+              <span>Explorar en Modo Invitado / Demo Quant</span>
             </button>
           </div>
         </div>
