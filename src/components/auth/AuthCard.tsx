@@ -151,13 +151,17 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
       )}
 
       {/* ═══════════════════════════════════════════════════════════════
-          DEGRADADO DE CONTRASTE PARA MÓVIL (cuando el login está activo)
+          RESPLANDOR AMBIENTAL ENVOLVENTE (Rellena el fondo sin cortar el vídeo)
          ═══════════════════════════════════════════════════════════════ */}
-      <div 
-        className={`fixed md:hidden inset-0 pointer-events-none transition-opacity duration-700 bg-gradient-to-t from-[#06070B] via-[#06070B]/70 to-transparent z-10 ${
-          isRevealed ? 'opacity-95' : 'opacity-25'
-        }`} 
-      />
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 flex items-center justify-center">
+        <img 
+          src={lastFrameLogo} 
+          alt="" 
+          aria-hidden="true"
+          className="w-full h-full object-cover blur-[80px] opacity-20 scale-125 saturate-150 transition-opacity duration-1000" 
+        />
+        <div className="absolute inset-0 bg-[#06070B]/75 backdrop-blur-[1px]" />
+      </div>
 
       {/* Contenedor Flex Animado con Motion Layout */}
       <motion.div 
@@ -165,24 +169,23 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
         transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
         className={`w-full flex ${
           isRevealed 
-            ? 'flex-col md:flex-row items-center justify-center gap-6 sm:gap-8 md:gap-12 lg:gap-16' 
+            ? 'flex-col md:flex-row items-center justify-center gap-4 sm:gap-6 md:gap-12 lg:gap-16' 
             : 'flex-col items-center justify-center'
         }`}
       >
 
         {/* ═══════════════════════════════════════════════════════════════
-            VIDEO / LOGO PRINCIPAL:
-            En móvil: Fondo completo vertical inmersivo
-            En escritorio: Centrado primero, luego se desplaza a la izquierda
+            VIDEO / LOGO PRINCIPAL (100% object-contain, NUNCA CORTADO)
+            Primero centrado; al terminar, se desplaza suavemente a la izquierda 
+            en escritorio o arriba en móvil
            ═══════════════════════════════════════════════════════════════ */}
         <motion.div 
           layout
           transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
           className={`relative flex flex-col items-center justify-center select-none shrink-0 ${
-            // En móvil se expande a pantalla completa de fondo; en escritorio mantiene su tamaño elegante
             isRevealed 
-              ? 'fixed md:relative inset-0 md:inset-auto w-full h-[100dvh] md:w-[320px] lg:w-[360px] md:aspect-[9/16] md:max-h-[62vh] z-0 md:z-10 cursor-pointer pointer-events-none md:pointer-events-auto' 
-              : 'fixed md:relative inset-0 md:inset-auto w-full h-[100dvh] md:w-[380px] md:aspect-[9/16] md:max-h-[72vh] z-0 md:z-10 pointer-events-none md:pointer-events-auto'
+              ? 'w-full max-w-[260px] sm:max-w-[290px] md:max-w-[330px] lg:max-w-[370px] aspect-[9/16] max-h-[32vh] sm:max-h-[38vh] md:max-h-[62vh] cursor-pointer' 
+              : 'w-full max-w-[280px] sm:max-w-[340px] md:max-w-[380px] aspect-[9/16] max-h-[72vh]'
           }`}
           onClick={isRevealed ? handleReplayVideo : undefined}
           title={isRevealed ? "Toca para reproducir el vídeo de nuevo" : undefined}
@@ -195,7 +198,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
               src={lastFrameLogo}
               alt="Global City Logo"
               onContextMenu={(e) => e.preventDefault()}
-              className="w-full h-full object-cover md:object-contain object-center md:drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)] hover:scale-[1.02] transition-transform"
+              className="w-full h-full object-contain object-center drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)] hover:scale-[1.02] transition-transform"
             />
           ) : (
             <video
@@ -209,13 +212,13 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
               disablePictureInPicture
               onContextMenu={(e) => e.preventDefault()}
               onEnded={handleVideoEnded}
-              className="w-full h-full object-cover md:object-contain object-center md:drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)]"
+              className="w-full h-full object-contain object-center drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)]"
             />
           )}
 
-          {/* Botón sutil para continuar al login antes de que termine el video (centrado abajo en móvil) */}
+          {/* Botón sutil para continuar al login antes de que termine el video */}
           {!isRevealed && (
-            <div className="fixed md:static bottom-8 inset-x-0 flex justify-center z-30 pointer-events-auto">
+            <div className="mt-4 flex justify-center z-30 pointer-events-auto">
               <button
                 onClick={handleManualContinue}
                 className="px-5 py-2.5 rounded-full bg-black/80 hover:bg-black/95 backdrop-blur-md text-white/95 text-xs font-semibold tracking-wide flex items-center gap-1.5 transition-all shadow-2xl border border-white/20 group cursor-pointer active:scale-95"
@@ -229,18 +232,18 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
 
         {/* ═══════════════════════════════════════════════════════════════
             LOGIN SIN CONTENEDOR: 
-            En móvil: Aparece deslizándose desde abajo encima del fondo
             En escritorio: Aparece a la derecha suavemente
+            En móvil: Aparece debajo sin tapar el logo
            ═══════════════════════════════════════════════════════════════ */}
         <AnimatePresence>
           {isRevealed && (
             <motion.div 
               key="login-controls"
-              initial={{ opacity: 0, y: 50, x: 0 }}
+              initial={{ opacity: 0, y: 35, x: 0 }}
               animate={{ opacity: 1, y: 0, x: 0 }}
-              exit={{ opacity: 0, y: 30 }}
+              exit={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed md:relative bottom-0 inset-x-0 md:inset-auto z-20 w-full px-6 pb-8 pt-4 md:p-0 max-w-sm md:max-w-md flex flex-col items-center md:items-start text-center md:text-left space-y-4 mx-auto md:mx-0"
+              className="w-full max-w-xs sm:max-w-sm md:max-w-md flex flex-col items-center md:items-start text-center md:text-left space-y-4"
             >
           
           {/* TÍTULO CON GRADIENTE SUNSET */}
