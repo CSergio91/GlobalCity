@@ -3,7 +3,8 @@ import {
   Send, 
   CheckCircle2, 
   ExternalLink,
-  ArrowRight
+  ArrowRight,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { authService, AuthResult } from '../../services/authService';
@@ -18,10 +19,11 @@ interface AuthCardProps {
 export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal = false }) => {
   const { user, loginWithTelegram } = useAuth();
   
-  // Detección directa de sesión previa en localStorage
+  // Detección de sesión previa en localStorage
   const storedUser = user || authService.getCurrentUser();
   const hasExistingSession = !!storedUser;
 
+  const [isRevealed, setIsRevealed] = useState(false);
   const [isTelegramWaiting, setIsTelegramWaiting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState<AuthResult | null>(null);
@@ -39,9 +41,15 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
     }
   }, []);
 
-  // Pausa el video al finalizar la reproducción
+  // Al terminar el video se pausa y sale animado el login
   const handleVideoEnded = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     e.currentTarget.pause();
+    setIsRevealed(true);
+  };
+
+  // Al pulsar "Continuar" se revela el login sin pausar el video
+  const handleRevealWithoutPausing = () => {
+    setIsRevealed(true);
   };
 
   // Polling automático para cuando el usuario pulsa START en Telegram
@@ -122,11 +130,20 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
         </button>
       )}
 
-      {/* Contenedor Limpio y Directo: Video a la izquierda y Login a la derecha sin esperas */}
-      <div className="w-full max-w-4xl flex flex-col md:flex-row items-center justify-center gap-6 sm:gap-8 md:gap-12">
+      {/* Contenedor Principal: Video primero, Login revelado animadamente al terminar */}
+      <div className="w-full max-w-4xl flex flex-col md:flex-row items-center justify-center gap-6 sm:gap-8 md:gap-14 transition-all duration-700 ease-out">
         
-        {/* VIDEO DE PRESENTACIÓN 9:16 (Pausa solo al final) */}
-        <div className="w-[260px] sm:w-[290px] md:w-[315px] h-[460px] sm:h-[500px] md:h-[530px] rounded-3xl overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.95)] shrink-0 bg-black">
+        {/* VIDEO DE PRESENTACIÓN 9:16 (Click derecho deshabilitado) */}
+        <div 
+          onClick={handleRevealWithoutPausing}
+          onContextMenu={(e) => e.preventDefault()}
+          className={`relative rounded-3xl overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.95)] shrink-0 transition-all duration-700 ease-out z-20 cursor-pointer select-none bg-black ${
+            isRevealed 
+              ? 'w-[260px] sm:w-[290px] md:w-[315px] h-[460px] sm:h-[500px] md:h-[530px]' 
+              : 'w-[280px] sm:w-[330px] md:w-[350px] h-[500px] sm:h-[560px] md:h-[600px] hover:scale-[1.01]'
+          }`}
+          title={isRevealed ? '' : 'Toca para continuar'}
+        >
           <video
             ref={videoRef}
             src={presentationVideo}
@@ -134,57 +151,79 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
             muted
             playsInline
             preload="auto"
+            controlsList="nodownload nofullscreen noremoteplayback"
+            disablePictureInPicture
+            onContextMenu={(e) => e.preventDefault()}
             onEnded={handleVideoEnded}
-            className="w-full h-full object-cover object-center filter contrast-105"
+            className="w-full h-full object-cover object-center filter contrast-105 pointer-events-none select-none"
           />
+
+          {/* Botón discreto para continuar sin pausar el video */}
+          {!isRevealed && (
+            <div className="absolute bottom-4 inset-x-0 flex justify-center pointer-events-auto">
+              <span className="px-4 py-1.5 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-md text-white text-xs font-semibold tracking-wide flex items-center gap-1.5 transition-all shadow-xl border border-white/20">
+                <span>Continuar</span>
+                <ChevronRight className="w-3.5 h-3.5 text-[#F472B6]" />
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* PANEL DE LOGIN: Centrado, Minimalista, Botón arriba y detección de sesión */}
-        <div className="flex-1 max-w-sm sm:max-w-md w-full flex flex-col items-center justify-center text-center space-y-6">
-          
-          {/* TÍTULO PRINCIPAL: Login */}
+        {/* PANEL DE LOGIN ANIMADO CON COLORES Y ALTO CONTRASTE */}
+        <div 
+          className={`flex-1 max-w-sm sm:max-w-md w-full flex flex-col items-center justify-center text-center space-y-6 transition-all duration-700 ease-out z-10 relative ${
+            isRevealed 
+              ? 'opacity-100 translate-x-0 translate-y-0 pointer-events-auto' 
+              : 'opacity-0 md:-translate-x-16 translate-y-10 pointer-events-none hidden md:flex'
+          }`}
+        >
+          {/* Resplandor ambiental de color sutil detrás del Login */}
+          <div className="absolute -inset-4 bg-gradient-to-r from-[#229ED9]/15 via-[#EC4899]/10 to-[#FBBF24]/10 rounded-3xl blur-2xl pointer-events-none -z-10" />
+
+          {/* TÍTULO CON GRADIENTE DE COLORES INSTITUCIONALES (Sunset Gradient) */}
           <div className="space-y-2">
-            <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white leading-tight drop-shadow-[0_8px_30px_rgba(0,0,0,0.95)]">
+            <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] drop-shadow-[0_0_35px_rgba(244,114,182,0.45)]">
               Login
             </h1>
-            <p className="text-sm sm:text-base text-slate-300 font-normal drop-shadow">
+            <p className="text-sm sm:text-base text-slate-200 font-medium drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
               {hasExistingSession 
                 ? `Bienvenido de nuevo, ${storedUser?.firstName || 'Trader'}` 
                 : 'Acceso directo con tu cuenta de Telegram'}
             </p>
           </div>
 
-          {/* ACCIÓN PRINCIPAL DE ACCESO (Prioridad si hay sesión previa) */}
+          {/* ACCIÓN PRINCIPAL DE ACCESO CON COLORES VIBRANTES */}
           <div className="w-full flex flex-col items-center space-y-3">
             {hasExistingSession ? (
               // CASO 1: Sesión previa en localStorage -> Botón GRANDE "Ver Mi Dashboard" (Prioridad máxima)
               <div className="w-full flex flex-col items-center space-y-3">
                 <button
                   onClick={() => onSuccess()}
-                  className="w-full btn-liquid py-4 px-8 rounded-2xl bg-gradient-to-r from-[#0088CC] via-[#229ED9] to-[#00A8FF] hover:brightness-110 text-white text-base sm:text-lg font-black flex items-center justify-center gap-3 shadow-[0_10px_40px_rgba(0,136,204,0.6)] transition-all cursor-pointer group"
+                  className="w-full btn-liquid py-4 px-8 rounded-2xl bg-gradient-to-r from-[#0088CC] via-[#229ED9] to-[#00C2FF] hover:brightness-110 text-white text-base sm:text-lg font-black flex items-center justify-center gap-3 shadow-[0_10px_40px_rgba(0,136,204,0.65)] hover:shadow-cyan-400/40 transition-all cursor-pointer group"
                 >
                   <span>Ver Mi Dashboard</span>
                   <ArrowRight className="w-5 h-5 text-white group-hover:translate-x-1.5 transition-transform" />
                 </button>
 
-                <div className="flex items-center justify-center gap-2 text-xs font-mono text-emerald-400">
+                {/* Tarjeta de estado de sesión con acento esmeralda */}
+                <div className="flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-xs font-mono text-emerald-300 shadow-md">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>Sesión verificada: {storedUser?.username || storedUser?.firstName}</span>
+                  <span>Sesión activa: {storedUser?.username || storedUser?.firstName}</span>
                 </div>
 
                 <button
                   onClick={handleLaunchTelegramOAuth}
-                  className="text-xs text-slate-400 hover:text-white transition-colors cursor-pointer pt-2"
+                  className="text-xs text-slate-300 hover:text-white transition-colors cursor-pointer pt-2 hover:underline"
                 >
                   Conectar con otra cuenta de Telegram
                 </button>
               </div>
             ) : (
-              // CASO 2: Sin sesión previa -> Botón "Conectar con Telegram"
+              // CASO 2: Sin sesión previa -> Botón "Conectar con Telegram" con gradiente celeste neón
               <div className="w-full flex flex-col items-center space-y-3">
                 <button
                   onClick={handleLaunchTelegramOAuth}
-                  className="w-full btn-liquid py-3.5 px-6 rounded-2xl bg-[#0088CC] hover:bg-[#0077b3] text-white text-sm font-bold flex items-center justify-center gap-2 shadow-[0_6px_30px_rgba(0,136,204,0.45)] transition-all cursor-pointer group"
+                  className="w-full btn-liquid py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#229ED9] to-[#0088CC] hover:brightness-110 text-white text-sm font-bold flex items-center justify-center gap-2.5 shadow-[0_8px_35px_rgba(34,158,217,0.5)] transition-all cursor-pointer group"
                 >
                   <Send className="w-4 h-4 fill-white group-hover:translate-x-0.5 transition-transform" />
                   <span>Conectar con Telegram</span>
@@ -204,7 +243,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
 
           {/* BANNER DE ESPERA SI ESTÁ AUTORIZANDO EN TELEGRAM */}
           {isTelegramWaiting && (
-            <div className="p-2.5 rounded-xl bg-[#229ED9]/25 backdrop-blur-sm text-xs text-[#38BDF8] font-medium flex items-center justify-center gap-2 animate-pulse shadow-xl w-full">
+            <div className="p-2.5 rounded-xl bg-[#229ED9]/25 border border-[#229ED9]/40 backdrop-blur-md text-xs text-[#38BDF8] font-medium flex items-center justify-center gap-2 animate-pulse shadow-xl w-full">
               <div className="w-3.5 h-3.5 border-2 border-[#229ED9] border-t-transparent rounded-full animate-spin shrink-0" />
               <span>Esperando confirmación en Telegram...</span>
             </div>
@@ -212,10 +251,10 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
 
           {/* MENSAJE DE FEEDBACK */}
           {feedback && (
-            <div className={`p-2 rounded-xl text-xs flex items-center justify-center gap-2 backdrop-blur-sm shadow-xl w-full ${
+            <div className={`p-2.5 rounded-xl text-xs flex items-center justify-center gap-2 backdrop-blur-md shadow-xl w-full border ${
               feedback.success 
-                ? 'bg-emerald-500/20 text-emerald-200' 
-                : 'bg-rose-500/20 text-rose-200'
+                ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-200' 
+                : 'bg-rose-500/20 border-rose-500/30 text-rose-200'
             }`}>
               <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
               <span>{feedback.message}</span>
