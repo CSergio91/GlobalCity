@@ -7,7 +7,7 @@ export const LoginPage: React.FC = () => {
 
   const handleAuthSuccess = () => {
     // Redirige directamente a la sala de operaciones con sesión activa
-    navigate('/operaciones');
+    navigate('/operations');
   };
 
   return (

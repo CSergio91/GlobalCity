@@ -84,7 +84,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
   const handleLoginClick = () => {
     setIsMobileMenuOpen(false);
     if (hasConnection || isAuthenticated) {
-      navigate('/operaciones');
+      navigate('/operations');
     } else {
       navigate('/login');
     }

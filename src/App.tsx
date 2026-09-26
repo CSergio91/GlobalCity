@@ -37,13 +37,13 @@ function MainAppContent() {
     if (!isAuthenticated) {
       navigate('/login');
     } else {
-      navigate('/operaciones');
+      navigate('/operations');
     }
   };
 
   const handleAuthSuccess = () => {
     setIsAuthModalOpen(false);
-    navigate('/operaciones');
+    navigate('/operations');
   };
 
   const handleNavigateSection = (sectionId: string) => {

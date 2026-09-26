@@ -293,3 +293,30 @@ La división entre la presentación visual (video 9:16) y la tarjeta de acceso d
 - **Implementación Reactiva:** Todo texto visible (encabezados, etiquetas, placeholders, botones de acción, estados de conexión, tooltips y mensajes de error/éxito) debe consumir el contexto de idioma activo (`useLanguage` / `CandlestickLanguageSelector`).
 - **Diccionarios Tipados:** Cada sección debe proveer su diccionario bilingüe estructurado (`en` y `es`) garantizando consistencia terminológica institucional (ej. `Margin`, `Spread`, `Taker Fee`, `Order Book`, `API Key`, etc.).
 
+---
+
+## 11. Enrutamiento Canónico en Inglés y Aprovechamiento Total del Canvas (Full-Width Pro Layout)
+
+### 11.1 Regla Canónica de Rutas en Inglés
+- **Todas las rutas de la aplicación deben estar en idioma inglés:**
+  - `/` (Home / Landing Page)
+  - `/operations` (Trading & Operations Hub — reemplaza canónicamente a `/operaciones`)
+  - `/login` (Authentication Hub)
+  - `/terms` (Terms of Service)
+  - `/privacy` (Privacy Policy)
+- **Redirección de Compatibilidad:** Cualquier acceso legado a `/operaciones` o `/terminal` debe redirigir inmediatamente a `/operations`.
+
+### 11.2 Aprovechamiento Total del Espacio (100% Full-Width)
+- **Sin Márgenes Muertos:** En el Navbar, header superior y workspace de `/operations`, queda terminantemente prohibido encerrar la interfaz en contenedores angostos como `max-w-7xl` que dejen márgenes vacíos en monitores amplios (1080p, 1440p, 4K).
+- **Layout de Borde a Borde:** Utilizar `w-full px-3 sm:px-6` con altura completa `min-h-screen`, permitiendo a los operadores ver tablas de órdenes, feeds y gráficos aprovechando todo el ancho de su pantalla.
+
+### 11.3 Navegación Lateral Acoplada (Side-by-Side Flex Layout, Sin Overlay)
+- **Sin Bloqueo Visual (No Overlay):** La barra lateral de navegación no debe tapar la pantalla con modales flotantes ni fondos oscuros opacos (*backdrop*).
+- **Estructura Flex Dividida:** El sidebar se acopla directamente al layout principal (`flex flex-row w-full`), adaptando el contenido del workspace adyacente para que ambos permanezcan visibles.
+- **Alineación Estética con la Landing Page:**
+  - Secciones agrupadas con etiquetas en mayúsculas monospace (`TRADING SUITE`, `RISK & GOVERNANCE`).
+  - Botón activo en píldora con esquinas redondeadas (`rounded-xl` / `rounded-2xl`) y degradado insignia de la landing (`bg-gradient-to-r from-[#EC4899] to-[#38BDF8] text-white font-bold shadow-lg shadow-[#EC4899]/25`).
+  - Badges de conteo numérico en píldoras con color de acento (`bg-[#EC4899]/20 text-[#F472B6]`).
+  - Colapsable a modo icono compacto o toggle lateral fluido sin interrumpir la operativa.
+
+

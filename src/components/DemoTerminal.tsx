@@ -16,10 +16,17 @@ import {
   TrendingUp,
   TrendingDown,
   Wallet,
-  Menu,
-  X,
   ShieldCheck,
-  ChevronRight
+  ChevronLeft,
+  ChevronRight,
+  SlidersHorizontal,
+  Server,
+  Terminal,
+  Wifi,
+  Sparkles,
+  ExternalLink,
+  Flame,
+  LayoutDashboard
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { CandlestickLanguageSelector } from './CandlestickLanguageSelector';
@@ -40,10 +47,11 @@ export type TabId = 'connections' | 'overview' | 'multiorder' | 'arbitrage' | 'c
 export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onOpenAuth }) => {
   const { user, logout } = useAuth();
   
-  // Starting with the primary workspace module: Conexiones & Exchanges
+  // Primary module: Conexiones & Exchanges
   const [activeTab, setActiveTab] = useState<TabId>('connections');
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
-  const [isSidebarHovered, setIsSidebarHovered] = useState<boolean>(false);
+  
+  // Persistent side-by-side dock state (NO overlay backdrop, pushes workspace)
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(true);
   
   // Real LocalStorage Exchange Accounts
   const [accounts, setAccounts] = useState<StoredExchangeAccount[]>(() => exchangeStorage.getAccounts());
@@ -88,167 +96,159 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
     );
   };
 
-  // Modules List ordered from easiest to most complex (as codified in WORKFLOW_ROADMAP.md)
-  const moduleList = [
-    { 
-      id: 'connections' as TabId, 
-      num: '01', 
-      title: 'Conexiones & Exchanges CCXT', 
-      desc: 'Gestor de API Keys y Brokers DMA (Uno debajo de otro)', 
-      icon: Key, 
-      color: '#EC4899',
-      badge: `${accounts.length} Venues`,
-      status: 'Enfoque Actual'
+  // Grouped Navigation Modules inspired by Bento & Pro Dashboards
+  const navSections = [
+    {
+      group: 'APPLICATION',
+      items: [
+        { 
+          id: 'connections' as TabId, 
+          label: 'Connections', 
+          icon: Key, 
+          badge: `${accounts.length}`,
+          badgeColor: accounts.length > 0 ? 'bg-[#EC4899]/20 text-[#F472B6]' : 'bg-white/10 text-slate-400'
+        },
+        { 
+          id: 'overview' as TabId, 
+          label: 'Portfolio L2', 
+          icon: LayoutDashboard, 
+          badge: 'Live',
+          badgeColor: 'bg-emerald-500/20 text-emerald-400'
+        },
+        { 
+          id: 'multiorder' as TabId, 
+          label: 'Smart Orders', 
+          icon: Zap, 
+          badge: 'EMS',
+          badgeColor: 'bg-amber-500/20 text-amber-400'
+        },
+        { 
+          id: 'arbitrage' as TabId, 
+          label: 'Arbitrage L2', 
+          icon: RotateCcw, 
+          badge: 'Radar',
+          badgeColor: 'bg-teal-500/20 text-teal-400'
+        },
+        { 
+          id: 'copy' as TabId, 
+          label: 'Copy Trading', 
+          icon: Copy, 
+          badge: 'Sync',
+          badgeColor: 'bg-purple-500/20 text-purple-400'
+        },
+      ]
     },
-    { 
-      id: 'overview' as TabId, 
-      num: '02', 
-      title: 'Portafolio & Margen Agregado', 
-      desc: 'Visión consolidada y streaming WebSocket de ticks', 
-      icon: Layers, 
-      color: '#38BDF8',
-      badge: 'Live WS',
-      status: 'Fase 2'
-    },
-    { 
-      id: 'multiorder' as TabId, 
-      num: '03', 
-      title: 'Smart Order Router (EMS)', 
-      desc: 'Fragmentación concurrente asíncrona de órdenes', 
-      icon: Zap, 
-      color: '#F59E0B',
-      badge: 'Bajo Slippage',
-      status: 'Fase 3'
-    },
-    { 
-      id: 'arbitrage' as TabId, 
-      num: '04', 
-      title: 'Arbitraje Sintético L2', 
-      desc: 'Captura de spreads cruzados entre libros de órdenes', 
-      icon: RotateCcw, 
-      color: '#2DD4BF',
-      badge: 'Sub-20ms',
-      status: 'Fase 4'
-    },
-    { 
-      id: 'copy' as TabId, 
-      num: '05', 
-      title: 'Copy Trading Multibroker', 
-      desc: 'Replicación cruzada con normalización de lotaje', 
-      icon: Copy, 
-      color: '#A78BFA',
-      badge: 'Master / Slave',
-      status: 'Fase 5'
-    },
-    { 
-      id: 'telegram' as TabId, 
-      num: '06', 
-      title: 'Webhooks & Telegram Bot', 
-      desc: 'Control y auditoría por chat @GlobalCityMaster_bot', 
-      icon: Bot, 
-      color: '#229ED9',
-      badge: 'Cifrado mTLS',
-      status: 'Fase 6'
-    },
-    { 
-      id: 'risk' as TabId, 
-      num: '07', 
-      title: 'Risk Engine & Prop Firm', 
-      desc: 'Drawdown diario (5%), colateral y governance', 
-      icon: ShieldCheck, 
-      color: '#10B981',
-      badge: 'Auditoría',
-      status: 'Fase 7'
+    {
+      group: 'SETTINGS & RISK',
+      items: [
+        { 
+          id: 'telegram' as TabId, 
+          label: 'Telegram Bot', 
+          icon: Bot, 
+          badge: 'mTLS',
+          badgeColor: 'bg-sky-500/20 text-sky-400'
+        },
+        { 
+          id: 'risk' as TabId, 
+          label: 'Risk Engine', 
+          icon: ShieldCheck, 
+          badge: '5% DD',
+          badgeColor: 'bg-rose-500/20 text-rose-400'
+        }
+      ]
     }
   ];
-
-  const sidebarVisible = isSidebarOpen || isSidebarHovered;
 
   return (
     <div className="min-h-screen bg-[#06070B] text-slate-100 flex flex-col font-sans relative overflow-x-hidden selection:bg-[#EC4899]/30">
       
-      {/* Dynamic Ambient Background Video (Streamed with zero memory bloat) */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden opacity-20">
+      {/* Cinematic Ambient Atmosphere (Top Blue Glow + Right Warm Gold Glow) */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        {/* Ambient video layer */}
         <video 
           autoPlay 
           loop 
           muted 
           playsInline
           poster="/video/fondo_poster.webp"
-          className="w-full h-full object-cover filter contrast-125 brightness-90"
+          className="w-full h-full object-cover filter contrast-125 brightness-75 opacity-15"
         >
           <source src="/video/fondo_bg.mp4" type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-gradient-to-t from-[#06070B] via-[#06070B]/90 to-[#06070B]/70" />
+        {/* Atmospheric mesh gradient glows matching reference image */}
+        <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-gradient-to-br from-[#0284C7]/20 via-[#38BDF8]/10 to-transparent blur-3xl opacity-60" />
+        <div className="absolute top-1/4 right-0 w-[550px] h-[550px] bg-gradient-to-bl from-[#F59E0B]/15 via-[#EC4899]/15 to-transparent blur-3xl opacity-50" />
+        <div className="absolute inset-0 bg-[#06070B]/80 backdrop-blur-[2px]" />
       </div>
 
-      <div className="relative z-10 flex flex-col min-h-screen pb-16">
+      <div className="relative z-10 flex flex-col min-h-screen w-full">
         
-        {/* Terminal Top Bar (High-Density Zoom-Out Pro Header) */}
-        <header className="sticky top-0 z-40 bg-[#0A0B10]/95 backdrop-blur-xl border-b border-white/10 px-3 sm:px-6 py-2 transition-all">
-          <div className="max-w-7xl mx-auto w-full flex items-center justify-between gap-3">
+        {/* Full-Width Edge-to-Edge Top Navigation Bar */}
+        <header className="sticky top-0 z-30 w-full bg-[#090A10]/95 backdrop-blur-xl border-b border-white/10 px-3 sm:px-6 py-2 transition-all">
+          <div className="w-full flex items-center justify-between gap-3">
             
-            {/* Left: Sidebar Trigger (Opens on Hover or Click) + Back + Brand */}
+            {/* Left: Brand + Back to Web + Sidebar Toggle */}
             <div className="flex items-center gap-2 sm:gap-3">
-              
-              {/* Lateral Navigation Trigger Button */}
-              <div 
-                className="relative"
-                onMouseEnter={() => setIsSidebarHovered(true)}
-              >
-                <button 
-                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-white/5 to-white/10 hover:from-[#EC4899]/20 hover:to-[#38BDF8]/20 border border-white/10 hover:border-[#EC4899]/40 text-slate-200 hover:text-white transition-all flex items-center gap-2 text-xs font-bold cursor-pointer active:scale-95 shadow-sm"
-                  title="Desplegar Menú Lateral de Módulos (Hover o Clic)"
-                >
-                  <Menu className="w-4 h-4 text-[#F472B6]" />
-                  <span className="hidden sm:inline font-mono">Módulos</span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-white/10 text-[#38BDF8]">
-                    07
-                  </span>
-                </button>
-              </div>
-
-              <div className="h-4 w-[1px] bg-white/10 hidden sm:block" />
-
               <button 
                 onClick={onBackToLanding}
                 className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all flex items-center gap-1.5 text-xs font-medium cursor-pointer border border-white/5 hover:border-white/15"
-                title="Volver a la Web"
+                title="Back to Landing Page"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span className="hidden md:inline text-[11px]">Web</span>
               </button>
 
+              <div className="h-4 w-[1px] bg-white/10 hidden sm:block" />
+
               <div className="flex items-center gap-2">
                 <BrandLogo size="sm" />
-                <span className="hidden lg:inline-flex text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-[#EC4899]/15 to-[#38BDF8]/15 border border-[#EC4899]/30 text-[#F472B6]">
-                  CCXT Hub
+                <span className="hidden xl:inline-flex text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-[#EC4899]/15 to-[#38BDF8]/15 border border-[#EC4899]/30 text-[#F472B6]">
+                  Institutional Core
                 </span>
               </div>
+
+              {/* Sidebar Collapse / Expand Toggle Button */}
+              <button
+                onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+                className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all cursor-pointer border border-white/5 ml-1 hidden sm:flex items-center justify-center"
+                title={isSidebarExpanded ? "Collapse Sidebar to Rail" : "Expand Sidebar"}
+              >
+                {isSidebarExpanded ? (
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                ) : (
+                  <ChevronRight className="w-3.5 h-3.5" />
+                )}
+              </button>
             </div>
 
-            {/* Middle: Active Module Title & Single-WebSocket Indicator */}
-            <div className="flex items-center gap-3">
-              <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/[0.02] border border-white/5 text-[11px] font-mono">
-                <span className="text-slate-400">Espacio de Trabajo:</span>
-                <span className="text-white font-bold">
-                  {moduleList.find(m => m.id === activeTab)?.title}
-                </span>
+            {/* Middle: Real-time Telemetry & Stream Status */}
+            <div className="hidden md:flex items-center gap-3">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/[0.02] border border-white/5 text-[11px] font-mono">
+                <span className="text-slate-400">Venue Hub:</span>
+                <span className="text-white font-bold">28+ CCXT & DMA</span>
               </div>
 
-              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.03] border border-white/10 text-[10px] font-mono">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.03] border border-white/10 text-[10px] font-mono">
                 <span className={`w-1.5 h-1.5 rounded-full ${wsConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-                <span className="text-slate-400">Stream:</span>
+                <span className="text-slate-400">WebSocket:</span>
                 <span className={wsConnected ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
-                  1 Conexión Binance WS
+                  1-Stream Active
                 </span>
               </div>
             </div>
 
-            {/* Right: User / Telegram / Borderless Candlestick Language */}
-            <div className="flex items-center gap-2 text-xs">
+            {/* Right: Metrics Quick Pills + Telegram User + Candlestick Language */}
+            <div className="flex items-center gap-2 sm:gap-3 text-xs">
               
+              {/* Quick Equity Chip */}
+              <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-xl bg-white/[0.03] border border-white/10 text-xs font-mono">
+                <span className="text-slate-400 text-[10px] uppercase font-sans">Equity:</span>
+                <span className="font-bold text-white font-mono-nums">
+                  ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+
+              {/* User Profile */}
               {user ? (
                 <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#229ED9]/15 border border-[#229ED9]/30 hover:border-[#229ED9]/60 transition-colors shadow-sm">
                   <div className="w-5 h-5 rounded-md bg-[#229ED9]/30 flex items-center justify-center text-[#229ED9] shrink-0">
@@ -280,215 +280,197 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                 </button>
               )}
 
-              {/* Candlestick Language Selector */}
+              {/* Borderless Candlestick Language Selector */}
               <CandlestickLanguageSelector />
-            </div>
-          </div>
-
-          {/* Compact Pro Metrics Ribbon (Zoom-Alejado Density) */}
-          <div className="mt-1.5 pt-1.5 border-t border-white/5 max-w-7xl mx-auto flex items-center justify-between sm:justify-start gap-4 text-[10px] font-mono overflow-x-auto no-scrollbar">
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-slate-500 font-sans uppercase">Equidad:</span>
-              <span className="font-bold text-white font-mono-nums">
-                ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
-              </span>
-            </div>
-
-            <div className="h-2.5 w-[1px] bg-white/10 shrink-0" />
-
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-slate-500 font-sans uppercase">Margen Libre:</span>
-              <span className="font-bold text-slate-300 font-mono-nums">
-                ${totalFreeMargin.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-            </div>
-
-            <div className="h-2.5 w-[1px] bg-white/10 shrink-0" />
-
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-slate-500 font-sans uppercase">Conexiones:</span>
-              <span className={`font-bold px-1.5 py-0.2 rounded ${
-                connectedAccounts.length > 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'
-              }`}>
-                {connectedAccounts.length} / {accounts.length}
-              </span>
-            </div>
-
-            <div className="h-2.5 w-[1px] bg-white/10 shrink-0" />
-
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-slate-500 font-sans uppercase">Gas Tank:</span>
-              <span className="font-bold text-emerald-400 font-mono-nums">
-                {gasTankBalance.toFixed(2)} USDT
-              </span>
-            </div>
-
-            <div className="h-2.5 w-[1px] bg-white/10 shrink-0" />
-
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-slate-500 font-sans uppercase">Catálogo:</span>
-              <span className="text-[#38BDF8] font-bold">28+ Venues</span>
             </div>
           </div>
         </header>
 
-        {/* Lateral Navigation Sidebar (Small, Slim & Animated from Lateral) */}
-        <div 
-          className={`fixed inset-0 z-50 flex transition-all duration-300 ${
-            sidebarVisible ? 'pointer-events-auto' : 'pointer-events-none'
-          }`}
-          onMouseLeave={() => setIsSidebarHovered(false)}
-        >
-          {/* Smooth Backdrop */}
-          <div 
-            onClick={() => {
-              setIsSidebarOpen(false);
-              setIsSidebarHovered(false);
-            }}
-            className={`fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
-              sidebarVisible ? 'opacity-100' : 'opacity-0'
-            }`} 
-          />
-
-          {/* Small Slim Lateral Drawer Content (w-64 sm:w-72) */}
-          <div 
-            className={`relative w-64 sm:w-72 bg-[#0A0C13]/98 backdrop-blur-2xl border-r border-white/10 shadow-2xl h-full flex flex-col z-10 transition-transform duration-300 ease-out transform ${
-              sidebarVisible ? 'translate-x-0' : '-translate-x-full'
+        {/* Integrated Side-by-Side Flex Layout (NO Overlay, Full Width Optimization) */}
+        <div className="flex flex-1 w-full relative overflow-hidden">
+          
+          {/* Lateral Dock / Sidebar (Docked Column with Smooth Width Transition) */}
+          <aside 
+            className={`shrink-0 border-r border-white/10 bg-[#090A10]/95 backdrop-blur-2xl flex flex-col justify-between transition-all duration-300 ease-in-out select-none z-20 ${
+              isSidebarExpanded ? 'w-56 lg:w-60 p-3' : 'w-14 sm:w-16 p-2 items-center'
             }`}
           >
-            {/* Drawer Header (Compact) */}
-            <div className="p-3.5 border-b border-white/10 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <BrandLogo size="sm" />
-                <span className="font-bold text-white text-xs">GlobalCity Suite</span>
-              </div>
-              <button
-                onClick={() => {
-                  setIsSidebarOpen(false);
-                  setIsSidebarHovered(false);
-                }}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Modules List (Compact rows, no bloated cards) */}
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
-              <div className="px-2 py-1 text-[9px] font-mono uppercase text-slate-500 font-bold">
-                Ruta Secuencial
-              </div>
-
-              {moduleList.map((m) => {
-                const Icon = m.icon;
-                const isActive = activeTab === m.id;
-
-                return (
-                  <button
-                    key={m.id}
-                    onClick={() => {
-                      setActiveTab(m.id);
-                      setIsSidebarOpen(false);
-                      setIsSidebarHovered(false);
-                    }}
-                    className={`w-full p-2 rounded-xl text-left transition-all flex items-center gap-2.5 cursor-pointer group relative overflow-hidden ${
-                      isActive 
-                        ? 'bg-gradient-to-r from-[#EC4899]/20 to-[#38BDF8]/20 border border-[#EC4899]/40 text-white' 
-                        : 'bg-white/[0.02] hover:bg-white/[0.05] border border-transparent text-slate-300 hover:text-white'
-                    }`}
-                  >
-                    <div 
-                      className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ 
-                        backgroundColor: `${m.color}20`,
-                        color: m.color,
-                        border: `1px solid ${m.color}40`
-                      }}
-                    >
-                      <Icon className="w-3 h-3" />
+            {/* Navigation Groups */}
+            <div className="space-y-5 w-full">
+              {navSections.map((section, sIdx) => (
+                <div key={sIdx} className="space-y-1 w-full">
+                  {/* Category Header */}
+                  {isSidebarExpanded && (
+                    <div className="px-2.5 py-1 text-[9px] font-mono uppercase tracking-wider text-slate-500 font-bold">
+                      {section.group}
                     </div>
+                  )}
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold truncate">
-                          {m.num}. {m.title.split(' ')[0]} {m.title.split(' ')[1] || ''}
-                        </span>
-                      </div>
-                      <div className="text-[9px] font-mono text-slate-500">
-                        {m.status}
-                      </div>
-                    </div>
+                  {/* Category Items */}
+                  <div className="space-y-1 w-full">
+                    {section.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = activeTab === item.id;
 
-                    <ChevronRight className={`w-3 h-3 shrink-0 ${isActive ? 'text-[#EC4899]' : 'text-slate-600'}`} />
-                  </button>
-                );
-              })}
-            </div>
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => setActiveTab(item.id)}
+                          className={`w-full transition-all flex items-center cursor-pointer group relative overflow-hidden ${
+                            isSidebarExpanded 
+                              ? 'px-3 py-2.5 rounded-xl text-left gap-3' 
+                              : 'w-10 h-10 rounded-xl justify-center mx-auto'
+                          } ${
+                            isActive 
+                              ? 'bg-gradient-to-r from-[#EC4899] to-[#38BDF8] text-white font-bold shadow-lg shadow-[#EC4899]/25' 
+                              : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+                          }`}
+                          title={item.label}
+                        >
+                          <Icon className={`shrink-0 transition-transform ${
+                            isSidebarExpanded ? 'w-4 h-4' : 'w-4 h-4'
+                          } ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'}`} />
 
-            {/* Drawer Footer (Compact architecture badge) */}
-            <div className="p-2.5 border-t border-white/10 bg-[#07080D] text-[9px] font-mono text-slate-400 space-y-0.5">
-              <div className="flex justify-between">
-                <span>Caché & Hot State:</span>
-                <span className="text-emerald-400 font-bold">Redis / RAM</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Conexión:</span>
-                <span className="text-[#38BDF8] font-bold">Singleton WS</span>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        {/* Main Clean Workspace Canvas (Zoom-Alejado Pro Trading Density) */}
-        <main className="flex-1 p-3 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto">
-          
-          {/* Notification Toast */}
-          {notification && (
-            <div className="mb-4 p-3.5 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-3 animate-fade-in shadow-xl backdrop-blur-xl">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="font-medium">{notification}</span>
-            </div>
-          )}
-
-          {/* TAB 01: Conexiones & Exchanges CCXT (CURRENT FOCUS & WORKSPACE) */}
-          {activeTab === 'connections' && (
-            <div className="animate-in fade-in duration-200">
-              <ExchangeManager />
-            </div>
-          )}
-
-          {/* TAB 02: Portafolio Agregado & Margen Consolidado */}
-          {activeTab === 'overview' && (
-            <div className="space-y-5 animate-in fade-in duration-200">
-              
-              {/* Real-time Streaming Ticker Catalog */}
-              <div className="rounded-2xl p-4 sm:p-5 border border-white/10 bg-[#0D0F17]/85 backdrop-blur-xl shadow-xl">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2.5 border-b border-white/5">
-                  <div>
-                    <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
-                      <Activity className="w-4 h-4 text-emerald-400" />
-                      <span>Catálogo de Activos y Precios en Tiempo Real</span>
-                    </h3>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      Flujo de mercado multiplexado en 1 sola conexión WebSocket persistente.
-                    </p>
+                          {isSidebarExpanded && (
+                            <div className="flex items-center justify-between flex-1 min-w-0">
+                              <span className="text-xs truncate">
+                                {item.label}
+                              </span>
+                              <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full ${
+                                isActive 
+                                  ? 'bg-white/20 text-white font-bold' 
+                                  : item.badgeColor
+                              }`}>
+                                {item.badge}
+                              </span>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300 self-start sm:self-auto">
-                    Latencia: ~12ms
-                  </span>
                 </div>
+              ))}
+            </div>
 
-                <div className="overflow-x-auto -mx-4 sm:mx-0">
-                  <div className="min-w-[580px] px-4 sm:px-0">
+            {/* Sidebar Bottom: Architecture Pill & Mode Toggle */}
+            <div className="pt-3 border-t border-white/5 w-full">
+              {isSidebarExpanded ? (
+                <div className="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 text-[10px] font-mono text-slate-400 space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span>Protocol:</span>
+                    <span className="text-[#38BDF8] font-bold">CCXT + DMA</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Storage:</span>
+                    <span className="text-emerald-400 font-bold">Zero-Custody</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-slate-400 mx-auto" title="Zero-Custody Local">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                </div>
+              )}
+            </div>
+          </aside>
+
+          {/* Main Operations Canvas (Takes 100% of remaining width) */}
+          <main className="flex-1 w-full overflow-y-auto px-3 sm:px-6 py-4 pb-20 max-w-full">
+            
+            {/* Top Workspace Metrics Banner (Full-Width Bento Bar) */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5 mb-5">
+              <div className="bg-[#0D0F17]/85 border border-white/10 p-3 sm:p-4 rounded-2xl relative overflow-hidden backdrop-blur-xl">
+                <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs mb-1">
+                  <span>Equidad Consolidada</span>
+                  <Wallet className="w-3.5 h-3.5 text-[#F472B6]" />
+                </div>
+                <div className="text-base sm:text-xl font-bold font-mono-nums text-white">
+                  ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                <div className="text-[10px] text-slate-400 font-mono mt-1">Suma cuentas activas</div>
+              </div>
+
+              <div className="bg-[#0D0F17]/85 border border-white/10 p-3 sm:p-4 rounded-2xl relative overflow-hidden backdrop-blur-xl">
+                <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs mb-1">
+                  <span>Margen Libre Total</span>
+                  <Zap className="w-3.5 h-3.5 text-[#38BDF8]" />
+                </div>
+                <div className="text-base sm:text-xl font-bold font-mono-nums text-emerald-400">
+                  ${totalFreeMargin.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                <div className="text-[10px] text-slate-400 font-mono mt-1">Capacidad para órdenes</div>
+              </div>
+
+              <div className="bg-[#0D0F17]/85 border border-white/10 p-3 sm:p-4 rounded-2xl relative overflow-hidden backdrop-blur-xl">
+                <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs mb-1">
+                  <span>Conexiones Activas</span>
+                  <Key className="w-3.5 h-3.5 text-[#F59E0B]" />
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-base sm:text-xl font-bold font-mono-nums text-white">{connectedAccounts.length}</span>
+                  <span className="text-[10px] text-slate-400 font-mono">/ {accounts.length} configuradas</span>
+                </div>
+                <div className="text-[10px] text-emerald-400 font-mono mt-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Zero-Knowledge Local
+                </div>
+              </div>
+
+              <div className="bg-[#0D0F17]/85 border border-white/10 p-3 sm:p-4 rounded-2xl relative overflow-hidden backdrop-blur-xl">
+                <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs mb-1">
+                  <span>Gas Tank de Ejecución</span>
+                  <Flame className="w-3.5 h-3.5 text-amber-400" />
+                </div>
+                <div className="text-base sm:text-xl font-bold font-mono-nums text-amber-400">
+                  {gasTankBalance.toFixed(2)} USDT
+                </div>
+                <div className="text-[10px] text-slate-400 font-mono mt-1">Deducción de micro-fees</div>
+              </div>
+            </div>
+
+            {/* Notification Toast */}
+            {notification && (
+              <div className="mb-4 p-3 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-3 animate-fade-in shadow-xl backdrop-blur-xl">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="font-medium">{notification}</span>
+              </div>
+            )}
+
+            {/* TAB 01: Connections & Exchanges (Primary Focus) */}
+            {activeTab === 'connections' && (
+              <div className="animate-in fade-in duration-200">
+                <ExchangeManager />
+              </div>
+            )}
+
+            {/* TAB 02: Portfolio L2 Overview */}
+            {activeTab === 'overview' && (
+              <div className="space-y-4 animate-in fade-in duration-200">
+                <div className="rounded-2xl p-4 sm:p-5 border border-white/10 bg-[#0D0F17]/85 backdrop-blur-xl shadow-xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2.5 border-b border-white/5">
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-emerald-400" />
+                        <span>Real-Time Streaming Ticker Catalog</span>
+                      </h3>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Multiplexed live feed over 1 single WebSocket connection.
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300 self-start sm:self-auto">
+                      Latency: ~12ms
+                    </span>
+                  </div>
+
+                  <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs font-mono-nums">
                       <thead>
                         <tr className="border-b border-white/10 text-slate-400 font-sans text-[10px] uppercase">
-                          <th className="pb-2.5 px-3">Símbolo</th>
-                          <th className="pb-2.5 px-3">Precio Spot / Perp</th>
-                          <th className="pb-2.5 px-3">Variación 24h</th>
-                          <th className="pb-2.5 px-3">Volumen 24h</th>
-                          <th className="pb-2.5 px-3 font-sans">Venues Sincronizados</th>
+                          <th className="pb-2.5 px-3">Symbol</th>
+                          <th className="pb-2.5 px-3">Spot / Perp Price</th>
+                          <th className="pb-2.5 px-3">24h Change</th>
+                          <th className="pb-2.5 px-3">24h Volume</th>
+                          <th className="pb-2.5 px-3 font-sans">Synced Venues</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
@@ -514,7 +496,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                               </span>
                             </td>
                             <td className="py-2.5 px-3 text-slate-300">{t.volume24h}</td>
-                            <td className="py-2.5 px-3 text-slate-400 font-sans text-[11px] truncate max-w-[200px]">{t.venues}</td>
+                            <td className="py-2.5 px-3 text-slate-400 font-sans text-[11px] truncate max-w-[240px]">{t.venues}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -522,224 +504,224 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* TAB 03: Smart Order Router (EMS) */}
-          {activeTab === 'multiorder' && (
-            <div className="rounded-2xl p-5 sm:p-6 max-w-2xl mx-auto border border-white/10 bg-[#0D0F17]/85 backdrop-blur-xl shadow-xl animate-in fade-in duration-200">
-              <h3 className="text-base font-bold text-white mb-1 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-[#F59E0B]" />
-                <span>Despacho Concurrente Asíncrono (EMS)</span>
-              </h3>
-              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
-                Envía una orden padre que el Smart Order Router fragmenta en milisegundos entre tus cuentas activas sin saturar la liquidez de un solo libro.
-              </p>
+            {/* TAB 03: Smart Orders EMS */}
+            {activeTab === 'multiorder' && (
+              <div className="rounded-2xl p-5 sm:p-6 max-w-2xl mx-auto border border-white/10 bg-[#0D0F17]/85 backdrop-blur-xl shadow-xl animate-in fade-in duration-200">
+                <h3 className="text-base font-bold text-white mb-1 flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-[#F59E0B]" />
+                  <span>Concurrent Asynchronous Order Dispatch (EMS)</span>
+                </h3>
+                <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+                  Route orders concurrently across multiple active venues to minimize market impact and slippage.
+                </p>
 
-              {connectedAccounts.length === 0 ? (
-                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-start gap-2.5 mb-5">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
-                  <div>
-                    <div className="font-bold mb-0.5">Sin cuentas vinculadas</div>
-                    <div className="text-slate-300">
-                      Conecta tus exchanges en <button onClick={() => setActiveTab('connections')} className="underline font-bold text-amber-300 cursor-pointer">Conexiones & APIs</button> para activar el enrutamiento concurrente.
+                {connectedAccounts.length === 0 ? (
+                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-start gap-2.5 mb-5">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+                    <div>
+                      <div className="font-bold mb-0.5">No Connected Accounts</div>
+                      <div className="text-slate-300">
+                        Connect at least one exchange in <button onClick={() => setActiveTab('connections')} className="underline font-bold text-amber-300 cursor-pointer">Connections</button> to enable EMS routing.
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : null}
+                ) : null}
 
-              <div className="space-y-3.5">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Instrumento a Operar</label>
-                  <select 
-                    value={selectedSymbol}
-                    onChange={(e) => setSelectedSymbol(e.target.value)}
-                    className="w-full bg-[#151724] border border-white/10 rounded-xl p-2.5 text-xs font-bold text-white focus:outline-none focus:border-[#EC4899]"
-                  >
-                    <option value="BTC/USDT">BTC/USDT (Cripto Perpetuo)</option>
-                    <option value="ETH/USDT">ETH/USDT (Cripto Perpetuo)</option>
-                    <option value="SOL/USDT">SOL/USDT (Cripto Perpetuo)</option>
-                    <option value="EUR/USD">EUR/USD (Forex cTrader/MT5)</option>
-                    <option value="XAU/USD">XAU/USD (Oro MT5)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Tamaño de la Orden Padre</label>
-                  <input 
-                    type="text" 
-                    value={orderAmount}
-                    onChange={(e) => setOrderAmount(e.target.value)}
-                    className="w-full bg-[#151724] border border-white/10 rounded-xl p-2.5 text-xs font-mono-nums font-bold text-white focus:outline-none focus:border-[#EC4899]"
-                    placeholder="1.0"
-                  />
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-xs space-y-2">
-                  <div className="text-slate-400 font-medium text-[11px]">Distribución Calculada por el EMS:</div>
-                  {connectedAccounts.length > 0 ? (
-                    connectedAccounts.map((acc) => {
-                      const sharePct = 100 / connectedAccounts.length;
-                      const splitQty = (Number(orderAmount || 0) / connectedAccounts.length).toFixed(4);
-                      return (
-                        <div key={acc.id} className="flex justify-between font-mono-nums text-slate-300 text-[11px]">
-                          <span>{acc.venueName} ({acc.label}) ({sharePct.toFixed(0)}%):</span>
-                          <span className="font-bold text-white">{splitQty}</span>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="text-slate-500 italic text-[11px]">Conecta exchanges para ver el split automático en tiempo real.</div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 pt-1">
-                  <button
-                    onClick={() => handleSimulateSplitOrder('BUY')}
-                    className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs transition-all active:scale-95 cursor-pointer shadow-lg shadow-emerald-500/20"
-                  >
-                    COMPRA CONCURRENTE (LONG)
-                  </button>
-                  <button
-                    onClick={() => handleSimulateSplitOrder('SELL')}
-                    className="w-full py-3 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-extrabold text-xs transition-all active:scale-95 cursor-pointer shadow-lg shadow-rose-500/20"
-                  >
-                    VENTA CONCURRENTE (SHORT)
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 04: Arbitraje Sintético L2 */}
-          {activeTab === 'arbitrage' && (
-            <div className="rounded-2xl p-5 sm:p-6 border border-white/10 bg-[#0D0F17]/85 backdrop-blur-xl shadow-xl max-w-3xl mx-auto animate-in fade-in duration-200">
-              <h3 className="text-base font-bold text-white mb-1 flex items-center gap-2">
-                <RotateCcw className="w-4 h-4 text-[#2DD4BF]" />
-                <span>Radar de Arbitraje Sintético Simultáneo</span>
-              </h3>
-              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
-                Captura divergencias de precio entre libros L2 en tiempo real sin transferencias on-chain, ejecutando operaciones en ambos lados en microsegundos.
-              </p>
-
-              <div className="space-y-3">
-                <div className="p-4 rounded-xl bg-[#141624] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-3.5">
                   <div>
-                    <div className="text-xs font-bold text-white flex items-center gap-2">
-                      <span>BTC/USDT: Binance Spot ➔ Bybit v5 Perp</span>
-                      <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300">
-                        OPORTUNIDAD
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">
-                      Spread Neto: <strong className="text-emerald-400 font-mono-nums">+0.284%</strong> (Deducidas comisiones taker)
-                    </div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Trading Instrument</label>
+                    <select 
+                      value={selectedSymbol}
+                      onChange={(e) => setSelectedSymbol(e.target.value)}
+                      className="w-full bg-[#151724] border border-white/10 rounded-xl p-2.5 text-xs font-bold text-white focus:outline-none focus:border-[#EC4899]"
+                    >
+                      <option value="BTC/USDT">BTC/USDT (Crypto Perpetual)</option>
+                      <option value="ETH/USDT">ETH/USDT (Crypto Perpetual)</option>
+                      <option value="SOL/USDT">SOL/USDT (Crypto Perpetual)</option>
+                      <option value="EUR/USD">EUR/USD (Forex cTrader/MT5)</option>
+                      <option value="XAU/USD">XAU/USD (Gold MT5)</option>
+                    </select>
                   </div>
-                  <button 
-                    onClick={() => showNotification("¡Arbitraje Sintético BTC/USDT ejecutado en 14ms! Fee deducido de Gas Tank.")}
-                    className="px-4 py-2 rounded-xl bg-[#2DD4BF] text-slate-950 font-bold text-xs hover:bg-[#3be0cb] cursor-pointer transition-all active:scale-95 shrink-0"
-                  >
-                    Disparar 1-Clic
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
-          {/* TAB 05: Copy Trading */}
-          {activeTab === 'copy' && (
-            <div className="rounded-2xl p-5 sm:p-6 border border-white/10 bg-[#0D0F17]/85 backdrop-blur-xl shadow-xl max-w-2xl mx-auto animate-in fade-in duration-200">
-              <h3 className="text-base font-bold text-white mb-1 flex items-center gap-2">
-                <Copy className="w-4 h-4 text-[#A78BFA]" />
-                <span>Puente de Replicación de Señales (Copy Trading)</span>
-              </h3>
-              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
-                Configura tu cuenta Maestra y las secundarias para replicar operaciones con normalización de lotaje y riesgo por equidad.
-              </p>
-
-              <div className="space-y-3 text-xs">
-                <div className="p-3.5 rounded-xl bg-[#141624] border border-white/5 flex justify-between items-center">
                   <div>
-                    <div className="font-bold text-white">
-                      Cuenta Master: {connectedAccounts[0]?.venueName || 'No asignada'}
-                    </div>
-                    <div className="text-slate-400 text-[11px]">Origen de señales de trading y órdenes manuales.</div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Parent Order Size</label>
+                    <input 
+                      type="text" 
+                      value={orderAmount}
+                      onChange={(e) => setOrderAmount(e.target.value)}
+                      className="w-full bg-[#151724] border border-white/10 rounded-xl p-2.5 text-xs font-mono-nums font-bold text-white focus:outline-none focus:border-[#EC4899]"
+                      placeholder="1.0"
+                    />
                   </div>
-                  <span className="text-emerald-400 font-bold font-mono-nums px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-[10px]">
-                    MASTER OK
-                  </span>
+
+                  <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-xs space-y-2">
+                    <div className="text-slate-400 font-medium text-[11px]">Calculated EMS Split:</div>
+                    {connectedAccounts.length > 0 ? (
+                      connectedAccounts.map((acc) => {
+                        const sharePct = 100 / connectedAccounts.length;
+                        const splitQty = (Number(orderAmount || 0) / connectedAccounts.length).toFixed(4);
+                        return (
+                          <div key={acc.id} className="flex justify-between font-mono-nums text-slate-300 text-[11px]">
+                            <span>{acc.venueName} ({acc.label}) ({sharePct.toFixed(0)}%):</span>
+                            <span className="font-bold text-white">{splitQty}</span>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-slate-500 italic text-[11px]">Connect exchanges to view real-time split routing.</div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <button
+                      onClick={() => handleSimulateSplitOrder('BUY')}
+                      className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs transition-all active:scale-95 cursor-pointer shadow-lg shadow-emerald-500/20"
+                    >
+                      CONCURRENT BUY (LONG)
+                    </button>
+                    <button
+                      onClick={() => handleSimulateSplitOrder('SELL')}
+                      className="w-full py-3 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-extrabold text-xs transition-all active:scale-95 cursor-pointer shadow-lg shadow-rose-500/20"
+                    >
+                      CONCURRENT SELL (SHORT)
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* TAB 06: Telegram Bot */}
-          {activeTab === 'telegram' && (
-            <div className="rounded-2xl p-5 sm:p-6 border border-white/10 bg-[#0D0F17]/85 backdrop-blur-xl shadow-xl max-w-xl mx-auto text-center animate-in fade-in duration-200">
-              <div className="w-12 h-12 rounded-xl bg-[#229ED9]/15 text-[#229ED9] border border-[#229ED9]/30 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-[#229ED9]/20">
-                <Bot className="w-6 h-6" />
-              </div>
-              <h3 className="text-base font-bold text-white">Centro de Control Telegram Bot</h3>
-              <p className="text-xs text-slate-300 mt-1 mb-5 leading-relaxed">
-                Controla la ejecución de órdenes, recibe reportes de margin call y autoriza retiros con comandos cifrados vía Telegram.
-              </p>
+            {/* TAB 04: Arbitrage L2 */}
+            {activeTab === 'arbitrage' && (
+              <div className="rounded-2xl p-5 sm:p-6 border border-white/10 bg-[#0D0F17]/85 backdrop-blur-xl shadow-xl max-w-3xl mx-auto animate-in fade-in duration-200">
+                <h3 className="text-base font-bold text-white mb-1 flex items-center gap-2">
+                  <RotateCcw className="w-4 h-4 text-[#2DD4BF]" />
+                  <span>Simultaneous Synthetic Arbitrage Radar</span>
+                </h3>
+                <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+                  Capture cross-venue L2 price divergences without on-chain transfer delays.
+                </p>
 
-              <div className="p-3.5 rounded-xl bg-[#141624] border border-white/5 text-xs text-slate-300 font-mono-nums mb-5 space-y-1 text-left">
-                <div className="flex justify-between">
-                  <span className="text-slate-400 font-sans">Bot Oficial:</span>
-                  <span className="text-white font-bold">@GlobalCityMaster_bot</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400 font-sans">Estado Webhook:</span>
-                  <span className="text-emerald-400 font-bold">ACTIVO (SSL MTLS)</span>
-                </div>
-              </div>
-
-              <button 
-                onClick={() => showNotification("Notificación enviada a tu chat de Telegram con @GlobalCityMaster_bot.")}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#229ED9] to-[#0284C7] text-white font-bold text-xs hover:brightness-110 cursor-pointer shadow-lg shadow-[#229ED9]/25 transition-all active:scale-95"
-              >
-                Enviar Notificación de Prueba a Telegram
-              </button>
-            </div>
-          )}
-
-          {/* TAB 07: Risk Engine & Prop Firm */}
-          {activeTab === 'risk' && (
-            <div className="rounded-2xl p-5 sm:p-6 border border-white/10 bg-[#0D0F17]/85 backdrop-blur-xl shadow-xl max-w-3xl mx-auto animate-in fade-in duration-200">
-              <h3 className="text-base font-bold text-white mb-1 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Risk Engine & Governance Institucional (Prop Firm)</span>
-              </h3>
-              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
-                Reglas de control de drawdown diario (5%), drawdown total (10%), apalancamiento máximo y protección frente a caídas bruscas.
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
-                <div className="p-3.5 rounded-xl bg-[#12141F] border border-white/5">
-                  <div className="text-slate-400 text-[10px]">MAX DRAWDOWN DIARIO</div>
-                  <div className="text-lg font-bold text-rose-400 mt-1">-5.00%</div>
-                  <div className="text-[10px] text-slate-500 mt-1">Límite: $0.00 USD</div>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-[#12141F] border border-white/5">
-                  <div className="text-slate-400 text-[10px]">MAX DRAWDOWN TOTAL</div>
-                  <div className="text-lg font-bold text-rose-400 mt-1">-10.00%</div>
-                  <div className="text-[10px] text-slate-500 mt-1">Trailing High-Water Mark</div>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-[#12141F] border border-white/5">
-                  <div className="text-slate-400 text-[10px]">APALANCAMIENTO MÁXIMO</div>
-                  <div className="text-lg font-bold text-emerald-400 mt-1">1:30 (DMA)</div>
-                  <div className="text-[10px] text-slate-500 mt-1">Margen dinámico por tier</div>
+                <div className="space-y-3">
+                  <div className="p-4 rounded-xl bg-[#141624] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="text-xs font-bold text-white flex items-center gap-2">
+                        <span>BTC/USDT: Binance Spot ➔ Bybit v5 Perp</span>
+                        <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300">
+                          OPPORTUNITY
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">
+                        Net Spread: <strong className="text-emerald-400 font-mono-nums">+0.284%</strong> (After taker fees)
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => showNotification("Synthetic Arbitrage BTC/USDT executed in 14ms! Gas Tank fee deducted.")}
+                      className="px-4 py-2 rounded-xl bg-[#2DD4BF] text-slate-950 font-bold text-xs hover:bg-[#3be0cb] cursor-pointer transition-all active:scale-95 shrink-0"
+                    >
+                      Execute 1-Click
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-        </main>
+            {/* TAB 05: Copy Trading */}
+            {activeTab === 'copy' && (
+              <div className="rounded-2xl p-5 sm:p-6 border border-white/10 bg-[#0D0F17]/85 backdrop-blur-xl shadow-xl max-w-2xl mx-auto animate-in fade-in duration-200">
+                <h3 className="text-base font-bold text-white mb-1 flex items-center gap-2">
+                  <Copy className="w-4 h-4 text-[#A78BFA]" />
+                  <span>Cross-Broker Signal Replication (Copy Trading)</span>
+                </h3>
+                <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+                  Configure your Master Account and mirror brokers with automatic lot and margin risk normalization.
+                </p>
 
-        {/* Bottom AI Assistant Dock (Grok / ChatGPT / Cursor Style) */}
+                <div className="space-y-3 text-xs">
+                  <div className="p-3.5 rounded-xl bg-[#141624] border border-white/5 flex justify-between items-center">
+                    <div>
+                      <div className="font-bold text-white">
+                        Master Account: {connectedAccounts[0]?.venueName || 'Unassigned'}
+                      </div>
+                      <div className="text-slate-400 text-[11px]">Primary signal source for manual and algo trades.</div>
+                    </div>
+                    <span className="text-emerald-400 font-bold font-mono-nums px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-[10px]">
+                      MASTER OK
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 06: Telegram Bot */}
+            {activeTab === 'telegram' && (
+              <div className="rounded-2xl p-5 sm:p-6 border border-white/10 bg-[#0D0F17]/85 backdrop-blur-xl shadow-xl max-w-xl mx-auto text-center animate-in fade-in duration-200">
+                <div className="w-12 h-12 rounded-xl bg-[#229ED9]/15 text-[#229ED9] border border-[#229ED9]/30 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-[#229ED9]/20">
+                  <Bot className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-bold text-white">Telegram Bot Control Center</h3>
+                <p className="text-xs text-slate-300 mt-1 mb-5 leading-relaxed">
+                  Authorize orders, receive real-time margin alerts, and manage risk using encrypted bot commands.
+                </p>
+
+                <div className="p-3.5 rounded-xl bg-[#141624] border border-white/5 text-xs text-slate-300 font-mono-nums mb-5 space-y-1 text-left">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-sans">Official Bot:</span>
+                    <span className="text-white font-bold">@GlobalCityMaster_bot</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-sans">Webhook State:</span>
+                    <span className="text-emerald-400 font-bold">ACTIVE (mTLS SSL)</span>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => showNotification("Test notification sent to your Telegram chat with @GlobalCityMaster_bot.")}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#229ED9] to-[#0284C7] text-white font-bold text-xs hover:brightness-110 cursor-pointer shadow-lg shadow-[#229ED9]/25 transition-all active:scale-95"
+                >
+                  Send Test Telegram Alert
+                </button>
+              </div>
+            )}
+
+            {/* TAB 07: Risk Engine & Prop Firm */}
+            {activeTab === 'risk' && (
+              <div className="rounded-2xl p-5 sm:p-6 border border-white/10 bg-[#0D0F17]/85 backdrop-blur-xl shadow-xl max-w-3xl mx-auto animate-in fade-in duration-200">
+                <h3 className="text-base font-bold text-white mb-1 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span>Institutional Risk Engine & Governance (Prop Firm)</span>
+                </h3>
+                <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+                  Enforce strict max daily drawdown (5%), total drawdown (10%), and dynamic leverage caps.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+                  <div className="p-3.5 rounded-xl bg-[#12141F] border border-white/5">
+                    <div className="text-slate-400 text-[10px]">MAX DAILY DRAWDOWN</div>
+                    <div className="text-lg font-bold text-rose-400 mt-1">-5.00%</div>
+                    <div className="text-[10px] text-slate-500 mt-1">EOD Threshold: $0.00 USD</div>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-[#12141F] border border-white/5">
+                    <div className="text-slate-400 text-[10px]">MAX TOTAL DRAWDOWN</div>
+                    <div className="text-lg font-bold text-rose-400 mt-1">-10.00%</div>
+                    <div className="text-[10px] text-slate-500 mt-1">Trailing High-Water Mark</div>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-[#12141F] border border-white/5">
+                    <div className="text-slate-400 text-[10px]">MAX LEVERAGE CAP</div>
+                    <div className="text-lg font-bold text-emerald-400 mt-1">1:30 (DMA)</div>
+                    <div className="text-[10px] text-slate-500 mt-1">Tier-based margin rule</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </main>
+        </div>
+
+        {/* Minimalist Floating AI Assistant Dock (Grok / Raycast Style) */}
         <AiAssistantDock 
           accounts={accounts}
           totalEquity={totalBalance}
