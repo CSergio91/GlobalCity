@@ -152,16 +152,16 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
       >
 
         {/* ═══════════════════════════════════════════════════════════════
-            VIDEO / LOGO PRINCIPAL (100% Integrado en Negro Puro #000000)
+            VIDEO / LOGO PRINCIPAL (100% Responsivo: Se adapta a cualquier ancho de móvil)
             Cero bordes visibles, se funde por completo con el fondo
            ═══════════════════════════════════════════════════════════════ */}
         <motion.div 
           layout
           transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
-          className={`relative flex flex-col items-center justify-center select-none shrink-0 ${
+          className={`relative flex flex-col items-center justify-center select-none shrink-0 w-full ${
             isRevealed 
-              ? 'w-full md:w-[340px] lg:w-[380px] aspect-[9/16] max-h-[38vh] sm:max-h-[42vh] md:max-h-[68vh]' 
-              : 'w-screen md:w-full md:max-w-[460px] aspect-[9/16] max-h-[88vh]'
+              ? 'max-w-full sm:max-w-md md:max-w-[340px] lg:max-w-[380px] max-h-[38vh] sm:max-h-[44vh] md:max-h-[68vh]' 
+              : 'max-w-full sm:max-w-md md:max-w-[480px]'
           }`}
         >
           {isRevealed ? (
@@ -172,7 +172,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
               src={lastFrameLogo}
               alt="Global City Logo"
               onContextMenu={(e) => e.preventDefault()}
-              className="w-full h-full object-contain object-center bg-black"
+              className="w-full h-auto max-h-[38vh] sm:max-h-[44vh] md:max-h-[68vh] object-contain object-center bg-black"
             />
           ) : (
             <video
@@ -186,7 +186,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
               disablePictureInPicture
               onContextMenu={(e) => e.preventDefault()}
               onEnded={handleVideoEnded}
-              className="w-full h-full object-contain object-center bg-black"
+              className="w-full h-auto max-h-[85vh] object-contain object-center bg-black"
             />
           )}
 
