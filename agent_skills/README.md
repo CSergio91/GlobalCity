@@ -22,6 +22,7 @@ Cada skill define con máxima rigurosidad técnica, matemática, regulatoria y d
 | **9. Sistema de Diseño & Landing Page** | [`global-city-design-system-and-landing-spec`](./global-city-design-system-and-landing-spec/SKILL.md) | Dirección estética oscura premium, acentos rose-mauve/copper, tipografía Plus Jakarta Sans / JetBrains Mono, iconografía Bootstrap/Lucide, copywriting no genérico y arquitectura bento-grid. |
 | **10. Optimización y Rendimiento Web** | [`web-performance-asset-caching-and-resource-optimization`](./web-performance-asset-caching-and-resource-optimization/SKILL.md) | Políticas de caché inmutable a 1 año (max-age 31536000s), Service Worker, decodificación asíncrona, SVGs vectoriales inline y aceleración de animación por GPU. |
 | **11. Servidor MCP & Agente IA** | [`mcp-server-and-llm-agent-architecture`](./mcp-server-and-llm-agent-architecture/SKILL.md) | Arquitectura Model Context Protocol (MCP), dock de chat conversacional minimalista (Grok/ChatGPT style), schemas de tools JSON-RPC y recursos unificados. |
+| **12. KLineChart Canvas & Backtesting** | [`klinechart-financial-engine-and-backtesting`](./klinechart-financial-engine-and-backtesting/SKILL.md) | **Motor Canvas Open Source (Apache 2.0)**. Ciclo de vida `init/dispose`, `DataLoader` reactivo v10 sin polling, integración de streaming WebSocket, simulación Replay de backtesting con dataset histórico, overlays SL/TP y Order Blocks a 60 FPS. |
 
 ---
 
