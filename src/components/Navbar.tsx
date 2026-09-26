@@ -50,14 +50,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 select-none ${
         scrolled 
-          ? "bg-[#06070B]/90 backdrop-blur-2xl border-b border-white/[0.08] shadow-2xl py-2.5 sm:py-3" 
-          : "bg-gradient-to-b from-[#06070B]/95 via-[#06070B]/60 to-transparent border-b border-white/[0.04] py-3 sm:py-4"
+          ? "bg-black/20 backdrop-blur-xl shadow-lg py-2.5 sm:py-3" 
+          : "bg-transparent py-3 sm:py-5"
       }`}
     >
-      <div className="w-full px-4 sm:px-6 lg:px-10 flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 md:gap-4">
+      <div className="w-full px-4 sm:px-6 lg:px-10 flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
         
-        {/* Top Row: Brand Logo + Mobile Actions */}
-        <div className="w-full md:w-auto flex items-center justify-between shrink-0">
+        {/* Left: Brand Logo (+ Mobile Right Controls) */}
+        <div className="w-full md:w-auto flex items-center justify-between md:justify-start shrink-0">
           <div 
             onClick={() => onNavigateSection("hero")}
             className="flex items-center cursor-pointer group shrink-0"
@@ -65,7 +65,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
             <BrandLogo size="md" />
           </div>
 
-          {/* Direct Actions on Mobile (Language + Login, NO Hamburger) */}
+          {/* Right Controls on Mobile (Language + Login) */}
           <div className="flex md:hidden items-center gap-2 shrink-0">
             <CandlestickLanguageSelector />
             <button
@@ -78,8 +78,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           </div>
         </div>
 
-        {/* Visual Text Navigation: ALWAYS VISIBLE AT THE TOP ON ALL SCREENS */}
-        <nav className="flex items-center justify-start md:justify-center gap-3.5 sm:gap-5 md:gap-6 lg:gap-8 text-[11px] md:text-xs font-semibold tracking-widest uppercase text-slate-300 overflow-x-auto no-scrollbar py-1">
+        {/* Center: Navigation Menu */}
+        <nav className="flex-1 flex items-center justify-center gap-3.5 sm:gap-5 md:gap-6 lg:gap-8 text-[11px] md:text-xs font-semibold tracking-widest uppercase text-slate-300 overflow-x-auto no-scrollbar py-0.5">
           {navItems.map((item) => (
             <button
               key={item.id}
@@ -92,8 +92,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           ))}
         </nav>
 
-        {/* Right Zone on Desktop (Language + Login) */}
-        <div className="hidden md:flex items-center gap-3 shrink-0">
+        {/* Right on Desktop: Language Selector + Login */}
+        <div className="hidden md:flex items-center justify-end gap-3 shrink-0">
           <CandlestickLanguageSelector />
 
           {isAuthenticated && user ? (
