@@ -320,7 +320,18 @@ export const ExchangeManager: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="space-y-2">
+          {/* Table Header Row (Desktop) */}
+          <div className="hidden lg:grid grid-cols-12 gap-3 px-4 py-2 text-[10px] font-mono uppercase text-slate-500 border-b border-white/5">
+            <div className="col-span-4">Exchange / Broker & Etiqueta</div>
+            <div className="col-span-2">Mercado & CCXT</div>
+            <div className="col-span-1 text-center">Latencia</div>
+            <div className="col-span-2 text-right">Equidad / Margen</div>
+            <div className="col-span-1 text-center">Estado</div>
+            <div className="col-span-2 text-right">Acciones</div>
+          </div>
+
+          {/* Stacked Rows (Uno debajo de otro) */}
           {accounts.map((account) => {
             const venueMeta = SUPPORTED_VENUES.find(v => v.id === account.venueId);
             const isOnline = account.status === 'CONNECTED';
@@ -328,112 +339,114 @@ export const ExchangeManager: React.FC = () => {
             return (
               <div 
                 key={account.id}
-                className={`bg-[#12131A] border rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 relative overflow-hidden group hover:border-white/20 ${
-                  isOnline ? 'border-white/10' : 'border-white/5 opacity-75'
+                className={`bg-[#0D0F17]/90 hover:bg-[#121422] border rounded-xl p-3 sm:p-3.5 transition-all flex flex-col lg:grid lg:grid-cols-12 gap-3 items-start lg:items-center relative overflow-hidden group ${
+                  isOnline ? 'border-white/10 hover:border-white/25' : 'border-white/5 opacity-70'
                 }`}
               >
-                {/* Top Accent Color Bar */}
+                {/* Left accent bar */}
                 <div 
-                  className="absolute top-0 left-0 right-0 h-1"
+                  className="absolute left-0 top-0 bottom-0 w-1"
                   style={{ backgroundColor: venueMeta?.color || '#F472B6' }}
                 />
 
-                {/* Card Header */}
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2.5">
-                      <div 
-                        className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs"
-                        style={{ 
-                          backgroundColor: `${venueMeta?.color || '#FFF'}15`, 
-                          color: venueMeta?.color || '#FFF',
-                          border: `1px solid ${venueMeta?.color || '#FFF'}30`
-                        }}
-                      >
-                        {account.venueId.substring(0, 2).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold text-white flex items-center gap-1.5">
-                          <span>{account.label}</span>
-                        </div>
-                        <div className="text-[11px] text-slate-400">
-                          {account.venueName}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Status Badge */}
-                    <div className="flex items-center gap-1.5">
+                {/* Col 1: Venue Logo & Info (Col-span 4) */}
+                <div className="col-span-4 flex items-center gap-3 w-full pl-1.5">
+                  <div 
+                    className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0"
+                    style={{ 
+                      backgroundColor: `${venueMeta?.color || '#FFF'}15`, 
+                      color: venueMeta?.color || '#FFF',
+                      border: `1px solid ${venueMeta?.color || '#FFF'}30`
+                    }}
+                  >
+                    {account.venueId.substring(0, 2).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white truncate">{account.label}</span>
                       {account.isTestnet && (
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-400">
+                        <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-500/15 border border-amber-500/30 text-amber-400 shrink-0">
                           TESTNET
                         </span>
                       )}
-                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded flex items-center gap-1 ${
-                        isOnline 
-                          ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400' 
-                          : 'bg-slate-500/15 border border-slate-500/30 text-slate-400'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
-                        {account.status}
-                      </span>
                     </div>
-                  </div>
-
-                  {/* Key / Agent Preview */}
-                  <div className="bg-[#0A0B0F] border border-white/5 rounded-xl p-2.5 text-xs font-mono space-y-1 mb-4">
-                    <div className="text-slate-500 text-[10px] flex items-center justify-between">
-                      <span>{account.authType === 'web3_agent' ? 'DIRECCIÓN DEL AGENTE' : 'API KEY'}</span>
-                      <span className="text-emerald-400 flex items-center gap-1">
-                        <Lock className="w-2.5 h-2.5" /> Read & Trade
-                      </span>
-                    </div>
-                    <div className="text-slate-300 truncate">
-                      {account.apiKey}
-                    </div>
-                  </div>
-
-                  {/* Balance & Free Margin */}
-                  <div className="grid grid-cols-2 gap-2 text-xs font-mono mb-4 pt-1 border-t border-white/5">
-                    <div>
-                      <span className="text-slate-500 text-[10px] block">EQUIDAD</span>
-                      <span className="text-white font-bold text-sm">
-                        ${account.balanceUsd.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 text-[10px] block">MARGEN LIBRE</span>
-                      <span className="text-emerald-400 font-bold text-sm">
-                        ${account.freeMarginUsd.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </span>
+                    <div className="text-[11px] text-slate-400 flex items-center gap-2 font-mono">
+                      <span>{account.venueName}</span>
+                      <span>·</span>
+                      <span className="text-slate-500 truncate max-w-[120px]">{account.apiKey.substring(0, 10)}...</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Card Footer Actions */}
-                <div className="flex items-center justify-between pt-3 border-t border-white/10 text-xs">
-                  <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-400">
-                    <Wifi className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{account.pingMs} ms</span>
-                  </div>
+                {/* Col 2: Category & Rate Limit (Col-span 2) */}
+                <div className="col-span-2 hidden lg:flex flex-col text-left">
+                  <span className="text-[11px] font-medium text-slate-300">
+                    {venueMeta?.category === 'tier1_derivatives' ? 'Tier 1 Futuros' :
+                     venueMeta?.category === 'dex_l1' ? 'DEX L1 On-Chain' :
+                     venueMeta?.category === 'regional_regulated' ? 'Spot Regulado' : 'Broker DMA'}
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-500">
+                    {venueMeta?.rateLimitInfo || 'CCXT Standard'}
+                  </span>
+                </div>
 
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleToggleStatus(account.id, account.label)}
-                      title={isOnline ? 'Pausar cuenta' : 'Activar cuenta'}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-                    >
-                      <Power className={`w-4 h-4 ${isOnline ? 'text-emerald-400' : 'text-slate-500'}`} />
-                    </button>
+                {/* Col 3: Ping Latency (Col-span 1) */}
+                <div className="col-span-1 hidden lg:flex items-center justify-center gap-1.5 font-mono text-xs">
+                  <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+                  <span className={account.pingMs < 20 ? 'text-emerald-400' : 'text-amber-400'}>
+                    {account.pingMs}ms
+                  </span>
+                </div>
 
-                    <button
-                      onClick={() => handleDelete(account.id, account.label)}
-                      title="Eliminar de LocalStorage"
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                {/* Col 4: Balance & Margen (Col-span 2) */}
+                <div className="col-span-2 w-full lg:w-auto flex lg:flex-col justify-between lg:items-end text-left lg:text-right font-mono">
+                  <div className="text-xs font-bold text-white">
+                    ${account.balanceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
+                  <div className="text-[10px] text-slate-400">
+                    Margen: ${account.freeMarginUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+                </div>
+
+                {/* Col 5: Status (Col-span 1) */}
+                <div className="col-span-1 hidden lg:flex justify-center">
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${
+                    isOnline 
+                      ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400' 
+                      : 'bg-slate-500/15 border border-slate-500/30 text-slate-400'
+                  }`}>
+                    {account.status}
+                  </span>
+                </div>
+
+                {/* Col 6: Actions (Col-span 2) */}
+                <div className="col-span-2 w-full lg:w-auto flex items-center justify-end gap-1.5 pt-2 lg:pt-0 border-t lg:border-t-0 border-white/5">
+                  <button
+                    onClick={() => handlePingOne(account.id)}
+                    title="Medir Latencia Directa"
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer text-xs font-mono flex items-center gap-1"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span className="lg:hidden text-[10px]">Ping</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleToggleStatus(account.id, account.label)}
+                    title={isOnline ? 'Pausar cuenta' : 'Reanudar cuenta'}
+                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                      isOnline ? 'text-emerald-400 hover:bg-emerald-500/10' : 'text-slate-500 hover:bg-white/5'
+                    }`}
+                  >
+                    <Power className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(account.id, account.label)}
+                    title="Eliminar Conexión"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
 
               </div>
