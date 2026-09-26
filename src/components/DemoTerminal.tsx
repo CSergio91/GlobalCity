@@ -96,6 +96,18 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
       localStorage.setItem('globalcity_active_venue_type', tab);
       window.dispatchEvent(new CustomEvent('globalcity_active_venue_type_changed', { detail: tab }));
     } catch {}
+
+    if (tab === 'brokers') {
+      setSelectedSymbol('EUR/USD');
+      setPairCategoryFilter('forex');
+    } else if (tab === 'futures') {
+      setSelectedSymbol('BTC/USDT');
+      setPairCategoryFilter('futures');
+    } else {
+      setSelectedSymbol('BTC/USDT');
+      setPairCategoryFilter('crypto');
+    }
+
     if (activeTab !== 'connections') {
       setActiveTab('connections');
     }
@@ -479,105 +491,54 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
           <main className="flex-1 w-full overflow-y-auto px-3 sm:px-6 py-4 pb-20 max-w-full">
             
             {/* Top Browser-Style Master Tabs: Exchanges | Brokers | Futuros */}
-            <div className="flex items-center justify-between border-b border-white/10 bg-[#07080D]/90 px-2 sm:px-3 pt-2 mb-3.5 rounded-2xl backdrop-blur-xl shadow-lg">
-              <div className="flex items-end gap-1 sm:gap-2 overflow-x-auto scrollbar-none">
+            <div className="flex items-center justify-between border-b border-white/10 bg-[#07080D]/90 px-3 pt-2 mb-3.5 rounded-2xl backdrop-blur-xl shadow-lg overflow-hidden">
+              <div className="flex items-end gap-1.5 sm:gap-2">
                 
                 {/* Browser Tab 1: Exchanges */}
                 <button
                   type="button"
                   onClick={() => handleMasterVenueTabChange('exchanges')}
-                  className={`group relative flex items-center gap-2 px-3.5 sm:px-5 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer border-t-2 border-l border-r -mb-[1px] select-none ${
+                  className={`px-4 sm:px-6 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer border-t-2 border-l border-r -mb-[1px] select-none ${
                     masterVenueTab === 'exchanges'
                       ? 'bg-[#0D0F17] text-white border-t-[#38BDF8] border-l-white/10 border-r-white/10 border-b-transparent shadow-lg shadow-black/50 z-10'
                       : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] border-transparent'
                   }`}
                 >
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${
-                    masterVenueTab === 'exchanges' ? 'bg-[#38BDF8] shadow-sm shadow-[#38BDF8]/60 animate-pulse' : 'bg-slate-600'
-                  }`} />
-                  <Layers className={`w-3.5 h-3.5 ${masterVenueTab === 'exchanges' ? 'text-[#38BDF8]' : 'text-slate-400'}`} />
-                  <span>Exchanges</span>
-                  <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full ${
-                    masterVenueTab === 'exchanges' 
-                      ? 'bg-[#38BDF8]/20 text-[#38BDF8]' 
-                      : 'bg-white/5 text-slate-400'
-                  }`}>
-                    CCXT Cripto
-                  </span>
+                  Exchanges
                 </button>
 
                 {/* Browser Tab 2: Brokers */}
                 <button
                   type="button"
                   onClick={() => handleMasterVenueTabChange('brokers')}
-                  className={`group relative flex items-center gap-2 px-3.5 sm:px-5 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer border-t-2 border-l border-r -mb-[1px] select-none ${
+                  className={`px-4 sm:px-6 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer border-t-2 border-l border-r -mb-[1px] select-none ${
                     masterVenueTab === 'brokers'
                       ? 'bg-[#0D0F17] text-white border-t-emerald-400 border-l-white/10 border-r-white/10 border-b-transparent shadow-lg shadow-black/50 z-10'
                       : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] border-transparent'
                   }`}
                 >
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${
-                    masterVenueTab === 'brokers' ? 'bg-emerald-400 shadow-sm shadow-emerald-400/60 animate-pulse' : 'bg-slate-600'
-                  }`} />
-                  <Server className={`w-3.5 h-3.5 ${masterVenueTab === 'brokers' ? 'text-emerald-400' : 'text-slate-400'}`} />
-                  <span>Brokers</span>
-                  <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full ${
-                    masterVenueTab === 'brokers' 
-                      ? 'bg-emerald-500/20 text-emerald-400' 
-                      : 'bg-white/5 text-slate-400'
-                  }`}>
-                    MT5 · cTrader
-                  </span>
+                  Brokers
                 </button>
 
                 {/* Browser Tab 3: Futuros */}
                 <button
                   type="button"
                   onClick={() => handleMasterVenueTabChange('futures')}
-                  className={`group relative flex items-center gap-2 px-3.5 sm:px-5 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer border-t-2 border-l border-r -mb-[1px] select-none ${
+                  className={`px-4 sm:px-6 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer border-t-2 border-l border-r -mb-[1px] select-none ${
                     masterVenueTab === 'futures'
                       ? 'bg-[#0D0F17] text-white border-t-[#EC4899] border-l-white/10 border-r-white/10 border-b-transparent shadow-lg shadow-black/50 z-10'
                       : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] border-transparent'
                   }`}
                 >
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${
-                    masterVenueTab === 'futures' ? 'bg-[#EC4899] shadow-sm shadow-[#EC4899]/60' : 'bg-slate-600'
-                  }`} />
-                  <Flame className={`w-3.5 h-3.5 ${masterVenueTab === 'futures' ? 'text-[#F472B6]' : 'text-slate-400'}`} />
-                  <span>Futuros</span>
-                  <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full ${
-                    masterVenueTab === 'futures' 
-                      ? 'bg-[#EC4899]/20 text-[#F472B6]' 
-                      : 'bg-white/5 text-slate-400'
-                  }`}>
-                    CME L3
-                  </span>
-                </button>
-
-                {/* Browser New Tab '+' Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleMasterVenueTabChange(masterVenueTab);
-                    setActiveTab('connections');
-                  }}
-                  className="mb-1 p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all cursor-pointer border border-white/5 hover:border-white/20"
-                  title="Conectar nuevo Exchange o Broker (+ Tab)"
-                >
-                  <Plus className="w-3.5 h-3.5" />
+                  Futuros
                 </button>
               </div>
 
-              {/* Right Side: Venue Routing Telemetry Pill */}
-              <div className="hidden md:flex items-center gap-2.5 pb-2 text-[10px] font-mono text-slate-400">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>Routing Activo:</span>
-                </span>
-                <span className="text-slate-200 font-bold">
-                  {masterVenueTab === 'exchanges' && 'CCXT Cripto Direct'}
-                  {masterVenueTab === 'brokers' && 'MT5 / cTrader Open API'}
-                  {masterVenueTab === 'futures' && 'CME Globex Gateway'}
+              {/* Right Side: Active Category Context Info */}
+              <div className="hidden sm:flex items-center gap-2 pb-2 text-[10px] font-mono text-slate-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-slate-200 font-bold uppercase">
+                  {masterVenueTab}
                 </span>
               </div>
             </div>
@@ -926,7 +887,11 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
             {/* TAB 01: Connections & Exchanges (Primary Focus) */}
             {activeTab === 'connections' && (
               <div className="animate-in fade-in duration-200">
-                <ExchangeManager />
+                <ExchangeManager 
+                  activeMasterTab={masterVenueTab} 
+                  onMasterTabChange={setMasterVenueTab} 
+                  hideInternalTabs={true} 
+                />
               </div>
             )}
 
