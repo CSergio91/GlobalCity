@@ -72,14 +72,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 select-none ${
         scrolled 
-          ? "bg-black/25 backdrop-blur-xl shadow-lg py-1.5 sm:py-2" 
-          : "bg-transparent py-2 sm:py-2.5"
+          ? "bg-black/30 backdrop-blur-xl shadow-lg h-14 sm:h-16" 
+          : "bg-transparent h-16 sm:h-20"
       }`}
     >
-      <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 flex items-center justify-between gap-3 sm:gap-4">
+      <div className="w-full h-full px-4 sm:px-6 lg:px-8 xl:px-10 flex items-center justify-between relative">
         
         {/* 1. Left: Brand Logo */}
-        <div className="flex items-center shrink-0">
+        <div className="flex items-center shrink-0 z-10">
           <div 
             onClick={() => handleNavClick("hero")}
             className="flex items-center cursor-pointer group shrink-0"
@@ -88,8 +88,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           </div>
         </div>
 
-        {/* 2. Center: Navigation Menu with Active and Hover Signal Indicators */}
-        <nav className="hidden md:flex flex-1 items-center justify-center gap-1.5 lg:gap-2.5 xl:gap-3 text-[11px] lg:text-xs font-semibold tracking-wider uppercase text-slate-300 overflow-x-auto no-scrollbar py-0">
+        {/* 2. Center: Perfectly Centered on the Navbar Axis (Vertical & Horizontal) */}
+        <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 items-center justify-center gap-1 lg:gap-2 xl:gap-3 text-[11px] lg:text-xs font-semibold tracking-wider uppercase text-slate-300 z-10">
           {navItems.map((item) => {
             const isActive = activeSection === item.id;
             return (
@@ -98,7 +98,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
                 onClick={() => handleNavClick(item.id)}
                 className={`relative px-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer group whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
                   isActive 
-                    ? "text-white font-bold bg-white/[0.08] border border-white/15 shadow-[0_0_15px_rgba(244,114,182,0.18)]" 
+                    ? "text-white font-bold bg-white/[0.08] border border-white/15 shadow-[0_0_15px_rgba(244,114,182,0.2)]" 
                     : "text-slate-300 hover:text-white hover:bg-white/[0.04]"
                 }`}
               >
@@ -123,7 +123,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
         </nav>
 
         {/* 3. Right: Language Selector + Login (Strictly at the right) */}
-        <div className="flex items-center justify-end gap-2.5 sm:gap-3.5 shrink-0">
+        <div className="flex items-center justify-end gap-2.5 sm:gap-3.5 shrink-0 z-10 ml-auto">
           <CandlestickLanguageSelector />
 
           {isAuthenticated && user ? (
@@ -152,29 +152,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           )}
         </div>
 
-      </div>
-
-      {/* Mobile-only menu bar: sits cleanly below the main row */}
-      <div className="flex md:hidden w-full px-4 pt-1.5 pb-0.5 overflow-x-auto no-scrollbar justify-center items-center gap-3 text-[11px] font-semibold tracking-wider uppercase text-slate-300">
-        {navItems.map((item) => {
-          const isActive = activeSection === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => handleNavClick(item.id)}
-              className={`whitespace-nowrap transition-colors cursor-pointer py-0.5 px-2 rounded-full shrink-0 flex items-center gap-1 ${
-                isActive 
-                  ? "text-white font-bold bg-white/10" 
-                  : "hover:text-white"
-              }`}
-            >
-              {isActive && (
-                <span className="w-1 h-1 rounded-full bg-[#F472B6] shadow-[0_0_6px_rgba(244,114,182,1)]" />
-              )}
-              <span>{item.label}</span>
-            </button>
-          );
-        })}
       </div>
     </header>
   );
