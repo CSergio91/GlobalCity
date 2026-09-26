@@ -217,26 +217,26 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
               animate={{ opacity: 1, y: 0, x: 0 }}
               exit={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-xs sm:max-w-sm md:max-w-md flex flex-col items-center md:items-start text-center md:text-left space-y-4"
+              className="w-full max-w-xs sm:max-w-sm md:max-w-md flex flex-col items-center text-center space-y-4 mx-auto"
             >
           
-          {/* TÍTULO CON GRADIENTE SUNSET */}
-          <div className="space-y-1">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] drop-shadow-[0_0_30px_rgba(244,114,182,0.4)]">
+          {/* TÍTULO CON GRADIENTE SUNSET (PERFECTAMENTE CENTRADO) */}
+          <div className="space-y-1 w-full flex flex-col items-center text-center">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-center text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] drop-shadow-[0_0_30px_rgba(244,114,182,0.4)]">
               Login
             </h1>
-            <p className="text-xs sm:text-sm lg:text-base text-slate-300 font-medium drop-shadow-md">
+            <p className="text-xs sm:text-sm lg:text-base text-slate-300 font-medium text-center drop-shadow-md">
               {hasExistingSession 
                 ? `Bienvenido de nuevo, ${storedUser?.firstName || 'Trader'}` 
                 : 'Acceso directo con tu cuenta de Telegram'}
             </p>
           </div>
 
-          {/* ACCIÓN PRINCIPAL DE ACCESO (SIN CONTENEDOR) */}
-          <div className="w-full flex flex-col items-center md:items-start space-y-3 pt-1">
+          {/* ACCIÓN PRINCIPAL DE ACCESO (PERFECTAMENTE CENTRADA) */}
+          <div className="w-full flex flex-col items-center text-center space-y-3 pt-1">
             {hasExistingSession ? (
               // CASO 1: Sesión previa en localStorage -> Botón GRANDE "Ver Mi Dashboard"
-              <div className="w-full flex flex-col items-center md:items-start space-y-3">
+              <div className="w-full flex flex-col items-center text-center space-y-3">
                 <button
                   onClick={() => onSuccess()}
                   className="w-full btn-liquid py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#0088CC] via-[#229ED9] to-[#00C2FF] hover:brightness-110 text-white text-sm sm:text-base font-black flex items-center justify-center gap-2.5 shadow-[0_10px_35px_rgba(0,136,204,0.6)] hover:shadow-cyan-400/50 transition-all cursor-pointer group active:scale-95"
@@ -260,20 +260,20 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
               </div>
             ) : (
               // CASO 2: Sin sesión previa -> Botón "Conectar con Telegram"
-              <div className="w-full flex flex-col items-center md:items-start space-y-3">
+              <div className="w-full flex flex-col items-center text-center space-y-3">
                 <button
                   onClick={handleLaunchTelegramOAuth}
-                  className="w-full btn-liquid py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#229ED9] to-[#0088CC] hover:brightness-110 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-[0_10px_35px_rgba(34,158,217,0.5)] transition-all cursor-pointer group active:scale-95"
+                  className="w-full btn-liquid py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#229ED9] to-[#0088CC] hover:brightness-110 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2.5 shadow-[0_10px_35px_rgba(34,158,217,0.5)] transition-all cursor-pointer group active:scale-95"
                 >
                   <Send className="w-4 h-4 fill-white group-hover:translate-x-0.5 transition-transform" />
-                  <span>Conectar con Telegram</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-white/70 ml-auto" />
+                  <span className="mx-auto">Conectar con Telegram</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-white/70" />
                 </button>
 
                 <button
                   onClick={handleQuickTelegramSync}
                   disabled={isLoading}
-                  className="text-xs text-slate-300 hover:text-white transition-colors cursor-pointer py-1 drop-shadow"
+                  className="text-xs text-slate-300 hover:text-white transition-colors cursor-pointer py-1 drop-shadow text-center"
                 >
                   {isLoading ? 'Sincronizando...' : 'Sincronizar mi sesión verificada'}
                 </button>
