@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Send,
   ArrowRight,
-  LogIn,
+  User,
   Menu,
   X,
   Compass,
@@ -98,15 +98,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           </div>
         </div>
 
-        {/* 2. Center: Desktop Navigation Bar (Only for desktop screens >= 1024px) */}
-        <nav className="hidden lg:flex flex-1 items-center justify-center gap-1 xl:gap-2.5 text-[11px] xl:text-xs font-semibold tracking-wider uppercase text-slate-300 z-10 mx-2 xl:mx-4">
+        {/* 2. Center: Prominent Superior Navigation (Always visible from 768px and up, desktop & tablet) */}
+        <nav className="hidden md:flex flex-1 items-center justify-center gap-1 lg:gap-2 xl:gap-3 text-[10.5px] lg:text-xs font-semibold tracking-wider uppercase text-slate-300 z-10 mx-1.5 lg:mx-4">
           {navItems.map((item) => {
             const isActive = activeSection === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`relative px-2.5 xl:px-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer group whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+                className={`relative px-2 lg:px-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer group whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
                   isActive 
                     ? "text-white font-bold bg-white/[0.08] border border-white/15 shadow-[0_0_15px_rgba(244,114,182,0.2)]" 
                     : "text-slate-300 hover:text-white hover:bg-white/[0.04]"
@@ -121,7 +121,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
 
                 {/* Bottom Luminous Indicator Bar (Hover & Active) */}
                 <span 
-                  className={`absolute -bottom-0.5 left-2.5 right-2.5 h-[2px] rounded-full bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] transition-all duration-300 ${
+                  className={`absolute -bottom-0.5 left-2 right-2 h-[2px] rounded-full bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] transition-all duration-300 ${
                     isActive 
                       ? "opacity-100 scale-x-100 shadow-[0_0_10px_rgba(244,114,182,0.9)]" 
                       : "opacity-0 scale-x-0 group-hover:opacity-100 group-hover:scale-x-100"
@@ -132,16 +132,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           })}
         </nav>
 
-        {/* 3. Right: Candlestick Language Selector + Login + Hamburger Menu (Mobile & Tablet Portrait) */}
+        {/* 3. Right: Candlestick Language Selector + Login (User Profile Icon) + Mobile Hamburger Toggle */}
         <div className="flex items-center justify-end gap-1.5 sm:gap-2.5 shrink-0 z-10 ml-auto">
           {/* Japanese Candlestick Selector (Responsive Compact) */}
           <CandlestickLanguageSelector compactMobile />
 
-          {/* Login Button (Compact icon on small phones, full pill on tablet/desktop) */}
+          {/* Login Button with User Avatar Icon (Never confusing with logout) */}
           {isAuthenticated && user ? (
             <button
               onClick={handleLoginClick}
-              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-[#0088CC]/20 border border-[#0088CC]/40 text-white hover:bg-[#0088CC]/30 transition-all cursor-pointer group shadow-lg shadow-[#0088CC]/20 shrink-0"
+              className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-[#0088CC]/20 border border-[#0088CC]/40 text-white hover:bg-[#0088CC]/30 transition-all cursor-pointer group shadow-lg shadow-[#0088CC]/20 shrink-0"
               title="Sesión de Telegram Activa"
             >
               <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#0088CC] flex items-center justify-center text-white shrink-0">
@@ -155,19 +155,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           ) : (
             <button
               onClick={handleLoginClick}
-              className="px-2 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-black tracking-wider uppercase text-white bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 rounded-full shadow-[0_2px_12px_rgba(244,114,182,0.35)] flex items-center gap-1 sm:gap-1.5 cursor-pointer transition-all active:scale-95 group shrink-0"
+              className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-black tracking-wider uppercase text-white bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 rounded-full shadow-[0_2px_12px_rgba(244,114,182,0.35)] flex items-center gap-1 sm:gap-1.5 cursor-pointer transition-all active:scale-95 group shrink-0"
               title="Iniciar Sesión"
             >
-              <LogIn className="w-3.5 h-3.5 text-white" />
+              <User className="w-3.5 h-3.5 text-white" />
               <span className="hidden xs:inline">Login</span>
               <ArrowRight className="hidden sm:inline w-3 h-3 text-white group-hover:translate-x-0.5 transition-transform" />
             </button>
           )}
 
-          {/* Hamburger Toggle Button (Mobile phones & Vertical Tablets < 1024px: ALWAYS Visible with safe margin) */}
+          {/* Hamburger Toggle Button (Mobile phones < 768px: ALWAYS Visible with safe margin) */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-1.5 sm:p-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/15 text-slate-200 hover:text-white transition-all cursor-pointer shrink-0 active:scale-95 shadow-sm"
+            className="md:hidden p-1.5 sm:p-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/15 text-slate-200 hover:text-white transition-all cursor-pointer shrink-0 active:scale-95 shadow-sm"
             aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú de navegación"}
           >
             {isMobileMenuOpen ? (
@@ -180,9 +180,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
 
       </div>
 
-      {/* Slide-Down Navigation Menu (Mobile Phones & Vertical Tablets < 1024px) */}
+      {/* Slide-Down Navigation Menu (Mobile Phones < 768px) */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-16 sm:top-18 bg-[#070912]/98 backdrop-blur-2xl border-b border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.95)] px-4 sm:px-6 py-5 space-y-3 z-40 animate-reveal max-h-[calc(100vh-4rem)] overflow-y-auto">
+        <div className="md:hidden fixed inset-x-0 top-16 sm:top-18 bg-[#070912]/98 backdrop-blur-2xl border-b border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.95)] px-4 sm:px-6 py-5 space-y-3 z-40 animate-reveal max-h-[calc(100vh-4rem)] overflow-y-auto">
           <div className="text-[10px] font-mono uppercase tracking-widest text-slate-400 px-2 pb-1 border-b border-white/10 flex justify-between items-center">
             <span>Navegación del Ecosistema</span>
             <span className="text-[#2DD4BF] flex items-center gap-1 font-bold">
@@ -226,7 +226,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
               onClick={handleLoginClick}
               className="w-full py-2.5 px-4 text-xs font-black tracking-wider uppercase text-white bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98"
             >
-              <LogIn className="w-4 h-4 text-white" />
+              <User className="w-4 h-4 text-white" />
               <span>{isAuthenticated ? 'Abrir Terminal de Operaciones' : 'Iniciar Sesión con Telegram'}</span>
             </button>
           </div>

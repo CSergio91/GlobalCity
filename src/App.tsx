@@ -12,7 +12,7 @@ import { Footer } from './components/Footer';
 import { DemoTerminal } from './components/DemoTerminal';
 import { CandlestickCursor } from './components/CandlestickCursor';
 import { ScrollReveal } from './components/ScrollReveal';
-import { Terminal, ArrowRight, LogIn } from 'lucide-react';
+import { Terminal, ArrowRight } from 'lucide-react';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { RouterProvider, useAppRouter } from './context/RouterContext';
@@ -61,19 +61,13 @@ function MainAppContent() {
 
   // If on /login route, render the full-screen split LoginPage
   if (isLoginRoute) {
-    return (
-      <>
-        <CandlestickCursor />
-        <LoginPage />
-      </>
-    );
+    return <LoginPage />;
   }
 
   // If on /operaciones, /terminal or /operations route, render the Trading & Operations Terminal
   if (isTerminalRoute) {
     return (
       <>
-        <CandlestickCursor />
         <DemoTerminal 
           onBackToLanding={() => navigate('/')} 
           onOpenAuth={() => navigate('/login')}
@@ -91,9 +85,6 @@ function MainAppContent() {
   return (
     <div className="min-h-screen bg-[#06070B] text-slate-100 flex flex-col selection:bg-[#EC4899]/30 selection:text-white relative">
       
-      {/* Global Japanese Candlestick (Green + Red) Cursor */}
-      <CandlestickCursor />
-
       {/* Dynamic Immersive Navbar with Candlestick Pair Language Selector */}
       <Navbar 
         onOpenTerminal={handleOpenTerminal} 
@@ -102,9 +93,7 @@ function MainAppContent() {
 
       <main className="flex-1">
         
-        {/* Unified Hero + Multi-Venue Cinematic Scrub Experience:
-            The background canvas remains pinned while Hero scrolls away and Multi-Venue rises up on top of it,
-            scrubbing frames until the video flight reaches its final frame. */}
+        {/* Unified Hero + Multi-Venue Cinematic Scrub Experience */}
         <div id="hero-experience" className="relative w-full">
           {/* Pinned Video Canvas */}
           <div className="sticky top-0 h-screen w-full overflow-hidden pointer-events-none z-0">
@@ -172,22 +161,21 @@ function MainAppContent() {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-                <button
-                  onClick={() => navigate('/login')}
-                  className="w-full sm:w-auto px-8 sm:px-10 py-3.5 sm:py-4 text-xs sm:text-sm font-black tracking-wider uppercase text-white bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 rounded-full shadow-[0_10px_35px_rgba(244,114,182,0.4)] flex items-center justify-center gap-2.5 cursor-pointer border border-white/20 transition-all active:scale-95 group"
+                <button 
+                  onClick={handleOpenTerminal}
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-full text-xs font-black tracking-widest uppercase text-white bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 shadow-[0_0_30px_rgba(244,114,182,0.4)] transition-all cursor-pointer flex items-center justify-center gap-2 group active:scale-95"
                 >
-                  <LogIn className="w-4 h-4 text-white" />
-                  <span>Login / Iniciar Operaciones</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-white group-hover:translate-x-1 transition-transform" />
+                  <Terminal className="w-4 h-4 text-white" />
+                  <span>{t.cta.accessTerminalBtn}</span>
+                  <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1 transition-transform" />
                 </button>
 
-                <button
-                  onClick={() => handleNavigateSection('multi-venue')}
-                  className="w-full sm:w-auto px-8 sm:px-10 py-3.5 sm:py-4 text-xs sm:text-sm font-bold tracking-wider uppercase text-slate-200 hover:text-white bg-white/[0.04] hover:bg-white/[0.09] rounded-full cursor-pointer border border-white/15 hover:border-white/30 backdrop-blur-xl transition-all active:scale-95 flex items-center justify-center gap-2 group"
+                <a 
+                  href="#multi-venue"
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-full text-xs font-bold tracking-wider uppercase text-slate-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 transition-all text-center"
                 >
-                  <span>{t.cta.exploreGatewaysBtn}</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-                </button>
+                  {t.cta.exploreGatewaysBtn}
+                </a>
               </div>
             </div>
           </ScrollReveal>
@@ -214,6 +202,8 @@ export default function App() {
     <LanguageProvider>
       <AuthProvider>
         <RouterProvider>
+          {/* Global Japanese Candlestick Cursor for the Entire Project */}
+          <CandlestickCursor />
           <MainAppContent />
         </RouterProvider>
       </AuthProvider>
