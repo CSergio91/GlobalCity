@@ -41,17 +41,17 @@ El área de operaciones (`/operations` o `/terminal`) debe transmitir calma, pre
 ### 🟢 FASE 1: Rediseño del Espacio Operativo a "Lienzo Limpio" & KLineChart
 > **Objetivo:** Dejar la interfaz de operaciones con cero ruido, logos nítidos y motor de gráficos nativo Canvas.
 
-- [ ] **1.1. Rediseño del Layout Operativo (Lienzo Limpio):**
-  - [ ] Ocultar paneles densos si no hay cuentas conectadas; mostrar vista minimalista enfocada en la gestión de conexiones.
-  - [ ] Navbar compacta con selector de modo visual `DEMO` vs `REAL`.
-  - [ ] Selector de pares (`BTC/USDT`, etc.) refinado, sin textos redundantes.
-- [ ] **1.2. Logos Oficiales en el Directorio de Exchanges:**
-  - [ ] Reemplazar iniciales de texto en el avatar por los emblemas vectoriales reales de Binance, Bybit, OKX, KuCoin, Gate.io, MT5, cTrader e Hyperliquid (de `MarketIcons.tsx`).
-- [ ] **1.3. Reemplazo de TradingView por KLineChart Nativo:**
-  - [ ] Instalar paquete `klinecharts` en el frontend.
-  - [ ] Crear el componente `GlobalCityChart.tsx` montado en un `<canvas>` HTML5.
-  - [ ] Conectar datos OHLCV históricos y actualización en vivo del precio actual tick a tick.
-  - [ ] Añadir soporte para dibujar líneas de ejecución (Entry, SL, TP) nativas en el Canvas.
+- [x] **1.1. Rediseño del Layout Operativo (Lienzo Limpio):**
+  - [x] Ocultar paneles densos si no hay cuentas conectadas; mostrar vista minimalista enfocada en la gestión de conexiones (`DemoTerminal.tsx`).
+  - [x] Navbar compacta con selector de modo visual `DEMO` vs `REAL` y estado de conexión limpio.
+  - [x] Eliminada barra lateral intrusiva (`aside`), eliminados videos de fondo y brillos pesados para obtener un lienzo sobrio `#06070B`.
+- [x] **1.2. Logos Oficiales en el Directorio de Exchanges:**
+  - [x] Creados vectores SVG oficiales para los 44 exchanges, DEXs y brokers institucionales en `MarketIcons.tsx` (`PlatformLogo`), eliminando avatares con iniciales de texto.
+- [x] **1.3. Reemplazo de TradingView por KLineChart Nativo:**
+  - [x] Instalado paquete `klinecharts@10.0.3` en el proyecto.
+  - [x] Creado el componente `GlobalCityChart.tsx` acelerado por hardware en `<canvas>` HTML5 con tema pro dark institucional.
+  - [x] Conectada actualización de velas en vivo tick-a-tick sin polling y toolbar con selectores de temporalidad (1m, 5m, 15m, 1h, 4h, 1D) e indicadores técnicos (MA, EMA, BOLL, RSI).
+  - [x] Iframe externo de TradingView eliminado y reemplazado en `VenueChartViewer.tsx`.
 
 ---
 

@@ -21,6 +21,7 @@ import { useLiveMarketTicks, MarketAssetTick } from '../services/liveMarketFeed'
 import { StoredExchangeAccount } from '../types/exchange';
 import { positionStorage } from '../services/positionStorage';
 import { exchangeStorage } from '../services/exchangeStorage';
+import { GlobalCityChart } from './GlobalCityChart';
 
 interface VenueChartViewerProps {
   venueId: string;
@@ -521,15 +522,14 @@ export const VenueChartViewer: React.FC<VenueChartViewerProps> = ({
         </div>
       )}
 
-      {/* Embedded Chart Canvas */}
-      <div className={`w-full bg-[#08090E] relative ${isFullscreen ? 'flex-1 min-h-[500px]' : 'h-[460px]'}`}>
-        <iframe
-          key={`${tvSymbol}_${interval}`}
-          src={tvWidgetUrl}
-          className="w-full h-full border-0"
-          title={`${venueName} ${currentPair} Real-Time Chart`}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+      {/* Native KLineChart Canvas (60 FPS, Hardware-Accelerated) */}
+      <div className={`w-full bg-[#06070B] relative ${isFullscreen ? 'flex-1 min-h-[500px]' : 'h-[460px]'}`}>
+        <GlobalCityChart
+          symbol={currentPair}
+          venueId={venueId}
+          venueName={venueName}
+          livePrice={currentPrice}
+          className="w-full h-full"
         />
       </div>
     </div>
