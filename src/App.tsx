@@ -11,6 +11,7 @@ import { TelegramOperations } from './components/TelegramOperations';
 import { Footer } from './components/Footer';
 import { DemoTerminal } from './components/DemoTerminal';
 import { LiquidFollower } from './components/LiquidFollower';
+import { CandlestickCursor } from './components/CandlestickCursor';
 import { ScrollReveal } from './components/ScrollReveal';
 import { Terminal, ArrowRight, LogIn } from 'lucide-react';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
@@ -59,13 +60,19 @@ function MainAppContent() {
 
   // If on /login route, render the full-screen split LoginPage
   if (isLoginRoute) {
-    return <LoginPage />;
+    return (
+      <>
+        <CandlestickCursor />
+        <LoginPage />
+      </>
+    );
   }
 
   // If on /operaciones, /terminal or /operations route, render the Trading & Operations Terminal
   if (isTerminalRoute) {
     return (
       <>
+        <CandlestickCursor />
         <DemoTerminal 
           onBackToLanding={() => navigate('/')} 
           onOpenAuth={() => navigate('/login')}
@@ -83,6 +90,9 @@ function MainAppContent() {
   return (
     <div className="min-h-screen bg-[#06070B] text-slate-100 flex flex-col selection:bg-[#EC4899]/30 selection:text-white relative">
       
+      {/* Global Japanese Candlestick (Green + Red) Cursor */}
+      <CandlestickCursor />
+
       {/* Interactive Liquid Water Follower */}
       <LiquidFollower />
 
