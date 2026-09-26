@@ -139,8 +139,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
           onContextMenu={(e) => e.preventDefault()}
           className={`relative rounded-3xl overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.95)] shrink-0 transition-all duration-700 ease-out z-20 cursor-pointer select-none bg-black ${
             isRevealed 
-              ? 'w-[310px] sm:w-[350px] md:w-[315px] h-[260px] sm:h-[300px] md:h-[530px]' 
-              : 'w-[310px] sm:w-[350px] md:w-[350px] h-[480px] sm:h-[540px] md:h-[600px] hover:scale-[1.01]'
+              ? 'w-[280px] sm:w-[320px] md:w-[315px] h-[380px] sm:h-[430px] md:h-[530px]' 
+              : 'w-[280px] sm:w-[330px] md:w-[350px] h-[480px] sm:h-[540px] md:h-[600px] hover:scale-[1.01]'
           }`}
           title={isRevealed ? '' : 'Toca para continuar'}
         >
@@ -155,7 +155,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
             disablePictureInPicture
             onContextMenu={(e) => e.preventDefault()}
             onEnded={handleVideoEnded}
-            className="w-full h-full object-cover object-center filter contrast-105 pointer-events-none select-none"
+            className="w-full h-full object-contain md:object-cover object-center filter contrast-105 pointer-events-none select-none bg-black"
           />
 
           {/* Botón discreto para continuar sin pausar el video */}
@@ -169,9 +169,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
           )}
         </div>
 
-        {/* PANEL DE LOGIN: Mismo ancho exacto que el video en móvil (w-[310px] sm:w-[350px]) */}
+        {/* PANEL DE LOGIN: Mismo ancho exacto que el video en móvil (w-[280px] sm:w-[320px]) */}
         <div 
-          className={`w-[310px] sm:w-[350px] md:w-full md:max-w-md flex flex-col items-center justify-center text-center space-y-3.5 sm:space-y-5 transition-all duration-700 ease-out z-10 relative ${
+          className={`w-[280px] sm:w-[320px] md:w-full md:max-w-md flex flex-col items-center justify-center text-center space-y-3.5 sm:space-y-5 transition-all duration-700 ease-out z-10 relative ${
             isRevealed 
               ? 'opacity-100 translate-x-0 translate-y-0 pointer-events-auto' 
               : 'opacity-0 md:-translate-x-16 translate-y-10 pointer-events-none hidden md:flex'
