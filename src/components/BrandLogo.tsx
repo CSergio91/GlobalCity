@@ -13,27 +13,27 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   className = '',
 }) => {
   const dimensionMap = {
-    sm: { img: 'w-8 h-8', text: 'text-base' },
-    md: { img: 'w-11 h-11', text: 'text-lg' },
-    lg: { img: 'w-16 h-16', text: 'text-2xl' },
-    xl: { img: 'w-24 h-24 sm:w-28 sm:h-28', text: 'text-3xl' },
+    sm: { img: 'w-7 h-7', text: 'text-sm' },
+    md: { img: 'w-9 h-9', text: 'text-base sm:text-lg' },
+    lg: { img: 'w-12 h-12', text: 'text-xl' },
+    xl: { img: 'w-16 h-16 sm:w-20 sm:h-20', text: 'text-2xl' },
   };
 
   const current = dimensionMap[size];
 
   return (
-    <div className={`flex items-center gap-3.5 select-none ${className}`}>
-      {/* Official Exact Global City Emblem Badge */}
+    <div className={`flex items-center gap-2.5 sm:gap-3 select-none ${className}`}>
+      {/* Sleek, Minimalist Futuristic Brand Emblem */}
       <div className={`relative ${current.img} flex-shrink-0 group cursor-pointer`}>
-        {/* Colorful neon ambient glow matching Trading City skyline */}
-        <div className="absolute -inset-2 rounded-full bg-gradient-to-tr from-[#3B82F6]/50 via-[#EC4899]/40 to-[#F59E0B]/35 blur-lg opacity-85 group-hover:opacity-100 transition-opacity" />
+        {/* Subtle cyan/pink ambient backlight */}
+        <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-[#38BDF8]/40 via-[#F472B6]/40 to-[#FBBF24]/30 blur-md opacity-70 group-hover:opacity-100 transition-opacity" />
         
-        {/* Double neon-border circular emblem */}
-        <div className="relative w-full h-full rounded-full p-[2px] bg-gradient-to-tr from-[#60A5FA] via-[#F472B6] to-[#FBBF24] shadow-2xl overflow-hidden group-hover:scale-105 transition-transform duration-300">
+        {/* Crisp, clean emblem container without excessive circular ring */}
+        <div className="relative w-full h-full rounded-full overflow-hidden border border-white/25 shadow-lg group-hover:scale-105 transition-transform duration-300 bg-[#090A0F]">
           <img 
             src={officialLogoImg} 
-            alt="Global City Official Logo" 
-            className="w-full h-full object-cover rounded-full filter contrast-125 brightness-110"
+            alt="Global City Logo" 
+            className="w-full h-full object-cover rounded-full filter contrast-115 brightness-105"
             referrerPolicy="no-referrer"
           />
         </div>
@@ -41,11 +41,11 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 
       {showText && (
         <div className="flex flex-col justify-center leading-none">
-          <div className="flex items-center tracking-tight">
-            <span className="font-black text-white font-display text-illuminate tracking-tight text-lg">
+          <div className="flex items-center tracking-wider">
+            <span className="font-black text-white tracking-widest text-sm sm:text-base font-display">
               GLOBAL
             </span>
-            <span className="ml-1.5 font-black text-transparent bg-clip-text bg-gradient-to-r from-[#F472B6] via-[#EC4899] to-[#818CF8] text-lg">
+            <span className="ml-1.5 font-black text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] tracking-widest text-sm sm:text-base">
               CITY
             </span>
           </div>

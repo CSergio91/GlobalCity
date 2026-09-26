@@ -11,7 +11,7 @@ import { Footer } from './components/Footer';
 import { DemoTerminal } from './components/DemoTerminal';
 import { LiquidFollower } from './components/LiquidFollower';
 import { ScrollReveal } from './components/ScrollReveal';
-import { Terminal, ArrowRight } from 'lucide-react';
+import { Terminal, ArrowRight, LogIn } from 'lucide-react';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { RouterProvider, useAppRouter } from './context/RouterContext';
@@ -151,12 +151,12 @@ function MainAppContent() {
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
                 <button
-                  onClick={handleOpenTerminal}
-                  className="btn-liquid w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-[#F472B6] via-[#EC4899] to-[#818CF8] hover:brightness-110 rounded-2xl shadow-xl shadow-[#EC4899]/30 flex items-center justify-center gap-2 cursor-pointer border border-white/20 group"
+                  onClick={() => navigate('/login')}
+                  className="w-full sm:w-auto px-8 sm:px-10 py-3.5 sm:py-4 text-xs sm:text-sm font-black tracking-wider uppercase text-white bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 rounded-full shadow-[0_10px_35px_rgba(244,114,182,0.4)] flex items-center justify-center gap-2.5 cursor-pointer border border-white/20 transition-all active:scale-95 group"
                 >
-                  <Terminal className="w-5 h-5 text-white" />
-                  <span>{t.cta.accessTerminalBtn}</span>
-                  <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1.5 transition-transform" />
+                  <LogIn className="w-4 h-4 text-white" />
+                  <span>Login / Iniciar Operaciones</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-white group-hover:translate-x-1 transition-transform" />
                 </button>
 
                 <button
