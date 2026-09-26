@@ -24,9 +24,9 @@ export const LoginPage: React.FC = () => {
       <header className="w-full max-w-4xl mx-auto flex items-center justify-between z-20 pb-2 sm:pb-4">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all text-xs font-semibold cursor-pointer border border-white/10 backdrop-blur-md group"
+          className="btn-liquid flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-black/40 hover:bg-black/60 text-slate-300 hover:text-white transition-all text-xs font-semibold cursor-pointer border border-white/20 backdrop-blur-xl shadow-lg group"
         >
-          <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1.5 transition-transform" />
           <span>Volver al Inicio</span>
         </button>
 
