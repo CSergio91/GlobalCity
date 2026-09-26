@@ -26,7 +26,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("hero");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const { user, isAuthenticated } = useAuth();
   const { navigate } = useAppRouter();
 
@@ -159,10 +159,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           })}
         </nav>
 
-        {/* 3. Right: Candlestick Language Selector + Standard Login + Mobile Hamburger Toggle */}
+        {/* 3. Right: Candlestick Language Selector (Desktop only) + Action Button + Mobile Hamburger Toggle */}
         <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0 z-10">
-          {/* Japanese Candlestick Selector (Responsive Compact, Borderless) */}
-          <CandlestickLanguageSelector compactMobile />
+          {/* Japanese Candlestick Selector: Visible ONLY on Desktop/Tablet >= 768px, removed from mobile top navbar */}
+          <div className="desktop-only-flex items-center">
+            <CandlestickLanguageSelector compactMobile />
+          </div>
 
           {/* Action Button: Dashboard if connection detected in localStorage, otherwise Login */}
           <button
@@ -197,13 +199,45 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
 
       {/* Slide-Down Navigation Menu (Mobile Phones < 768px) */}
       {isMobileMenuOpen && (
-        <div className="global-mobile-menu fixed inset-x-0 top-16 sm:top-18 bg-[#070912]/98 backdrop-blur-2xl border-b border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.95)] px-4 sm:px-6 py-5 space-y-3 z-40 animate-reveal max-h-[calc(100vh-4rem)] overflow-y-auto">
+        <div className="global-mobile-menu fixed inset-x-0 top-16 sm:top-18 bg-[#070912]/98 backdrop-blur-2xl border-b border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.95)] px-4 sm:px-6 py-5 space-y-3.5 z-40 animate-reveal max-h-[calc(100vh-4rem)] overflow-y-auto">
+          {/* Header Row: Ecosystem + Status */}
           <div className="text-[10px] font-mono uppercase tracking-widest text-slate-400 px-2 pb-1 border-b border-white/10 flex justify-between items-center">
             <span>Navegación del Ecosistema</span>
             <span className="text-[#2DD4BF] flex items-center gap-1 font-bold">
               <span className="w-1.5 h-1.5 rounded-full bg-[#2DD4BF] animate-ping" />
               Direct Market Access
             </span>
+          </div>
+
+          {/* Mobile Language Selector Row: Clean Dual-Pair Pill Switch */}
+          <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10">
+            <span className="text-xs font-semibold text-slate-300">
+              Idioma / Language
+            </span>
+            <div className="flex items-center gap-1 bg-black/60 p-1 rounded-lg border border-white/10">
+              <button
+                onClick={() => setLanguage('es')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-bold transition-all cursor-pointer ${
+                  language === 'es'
+                    ? 'bg-emerald-500/25 text-emerald-400 border border-emerald-500/40 shadow-[0_0_10px_rgba(52,211,153,0.3)]'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span>ES/BTC</span>
+              </button>
+              <button
+                onClick={() => setLanguage('en')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-bold transition-all cursor-pointer ${
+                  language === 'en'
+                    ? 'bg-rose-500/25 text-rose-400 border border-rose-500/40 shadow-[0_0_10px_rgba(244,63,94,0.3)]'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                <span>EN/USD</span>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
