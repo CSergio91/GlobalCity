@@ -310,13 +310,28 @@ La división entre la presentación visual (video 9:16) y la tarjeta de acceso d
 - **Sin Márgenes Muertos:** En el Navbar, header superior y workspace de `/operations`, queda terminantemente prohibido encerrar la interfaz en contenedores angostos como `max-w-7xl` que dejen márgenes vacíos en monitores amplios (1080p, 1440p, 4K).
 - **Layout de Borde a Borde:** Utilizar `w-full px-3 sm:px-6` con altura completa `min-h-screen`, permitiendo a los operadores ver tablas de órdenes, feeds y gráficos aprovechando todo el ancho de su pantalla.
 
-### 11.3 Navegación Lateral Acoplada (Side-by-Side Flex Layout, Sin Overlay)
-- **Sin Bloqueo Visual (No Overlay):** La barra lateral de navegación no debe tapar la pantalla con modales flotantes ni fondos oscuros opacos (*backdrop*).
-- **Estructura Flex Dividida:** El sidebar se acopla directamente al layout principal (`flex flex-row w-full`), adaptando el contenido del workspace adyacente para que ambos permanezcan visibles.
+### 11.3 Navegación Lateral Replegada en Reposo y Despliegue al Hover (Floating Overlay Drawer)
+- **Modo en Reposo:** La barra lateral de navegación se mantiene replegada con solo los iconos de cada módulo (`w-16`), dejando el 100% del área de trabajo visible y despejada.
+- **Despliegue al Hover:** Al pasar el cursor sobre la barra lateral o barra de usuario, se expande fluidamente (`w-64`) posicionándose por encima del contenido (`z-40 floating overlay`) con fondo backdrop-blur profundo y bordes nítidos, retrayéndose automáticamente al retirar el cursor (`onMouseLeave`).
 - **Alineación Estética con la Landing Page:**
-  - Secciones agrupadas con etiquetas en mayúsculas monospace (`TRADING SUITE`, `RISK & GOVERNANCE`).
-  - Botón activo en píldora con esquinas redondeadas (`rounded-xl` / `rounded-2xl`) y degradado insignia de la landing (`bg-gradient-to-r from-[#EC4899] to-[#38BDF8] text-white font-bold shadow-lg shadow-[#EC4899]/25`).
+  - Secciones agrupadas con etiquetas en mayúsculas monospace (`APPLICATION`, `SETTINGS & RISK`).
+  - Botón activo en píldora con esquinas redondeadas (`rounded-xl`) y degradado insignia de la landing (`bg-gradient-to-r from-[#EC4899] to-[#38BDF8] text-white font-bold shadow-lg shadow-[#EC4899]/25`).
   - Badges de conteo numérico en píldoras con color de acento (`bg-[#EC4899]/20 text-[#F472B6]`).
-  - Colapsable a modo icono compacto o toggle lateral fluido sin interrumpir la operativa.
+
+---
+
+## 12. Prohibición Terminante de Etiquetas Técnicas Innecesarias & Pestañas de Categoría
+
+### 12.1 Prohibición de Badges Técnicos Clutter (Cero Etiquetas Tipo Redis / WS Multiplex)
+- **Regla Estricta:** Queda terminantemente prohibido incluir etiquetas o pills visibles que expongan detalles técnicos internos como `Redis 7 NX`, `WS Multiplex 1:1`, o estados de caché similares en el dashboard.
+- **Enfoque Limpio:** La interfaz debe ser limpia, ejecutiva y enfocada 100% en cotizaciones, balances, gestión de órdenes y rendimiento del portafolio.
+
+### 12.2 Sistema de Pestañas Superiores de Conectividad (Exchanges, Brokers, Futuros)
+- **Tres Categorías Distintivas con Código Cromático Propio:**
+  1. **Exchanges (Cripto CCXT):** Acento azul/ámbar (`#38BDF8` / `#F59E0B`). Muestra el catálogo y conexiones de Binance, Bybit, OKX, KuCoin, Hyperliquid, etc.
+  2. **Brokers (DMA / Forex / ECN):** Acento verde esmeralda (`#10B981`). Muestra terminales MetaTrader 5 (MT5), cTrader y brokers ECN como Pepperstone.
+  3. **Futuros (CME / Institucional):** Acento rosa/púrpura (`#EC4899`). Muestra estado de despliegue institucional para futuros regulados (CME, Rithmic, CQG).
+- **Persistencia de Estado:** La pestaña activa se almacena en `localStorage` (`globalcity_active_venue_type`) para preservar la selección del operador incluso al cambiar de módulo lateral.
+
 
 

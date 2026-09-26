@@ -20,7 +20,7 @@ export const INITIAL_MARKET_TICKS: MarketAssetTick[] = [
     change24h: 3.82,
     volume24h: "$28.4B",
     category: "crypto",
-    venues: "Binance · Bybit · OKX · Hyperliquid"
+    venues: "Binance · Bybit · OKX · KuCoin · Hyperliquid"
   },
   {
     symbol: "ETH/USDT",
@@ -29,7 +29,7 @@ export const INITIAL_MARKET_TICKS: MarketAssetTick[] = [
     change24h: 2.15,
     volume24h: "$12.1B",
     category: "crypto",
-    venues: "Binance · Bybit · OKX · Coinbase"
+    venues: "Binance · Bybit · OKX · KuCoin · Coinbase"
   },
   {
     symbol: "SOL/USDT",
@@ -38,7 +38,7 @@ export const INITIAL_MARKET_TICKS: MarketAssetTick[] = [
     change24h: 7.24,
     volume24h: "$4.8B",
     category: "crypto",
-    venues: "Binance · Bybit · Hyperliquid"
+    venues: "Binance · Bybit · OKX · KuCoin · Hyperliquid"
   },
   {
     symbol: "BNB/USDT",
@@ -47,7 +47,142 @@ export const INITIAL_MARKET_TICKS: MarketAssetTick[] = [
     change24h: 1.45,
     volume24h: "$1.9B",
     category: "crypto",
+    venues: "Binance · OKX · Bybit · KuCoin"
+  },
+  {
+    symbol: "XRP/USDT",
+    name: "Ripple Perpetual",
+    price: 2.18,
+    change24h: 4.12,
+    volume24h: "$3.5B",
+    category: "crypto",
+    venues: "Binance · Bybit · OKX · KuCoin"
+  },
+  {
+    symbol: "DOGE/USDT",
+    name: "Dogecoin Perpetual",
+    price: 0.245,
+    change24h: 6.85,
+    volume24h: "$2.7B",
+    category: "crypto",
+    venues: "Binance · Bybit · OKX · KuCoin"
+  },
+  {
+    symbol: "ADA/USDT",
+    name: "Cardano Perpetual",
+    price: 0.784,
+    change24h: -1.20,
+    volume24h: "$850M",
+    category: "crypto",
     venues: "Binance · OKX · Bybit"
+  },
+  {
+    symbol: "AVAX/USDT",
+    name: "Avalanche Perpetual",
+    price: 34.20,
+    change24h: 3.10,
+    volume24h: "$620M",
+    category: "crypto",
+    venues: "Binance · Bybit · KuCoin"
+  },
+  {
+    symbol: "LINK/USDT",
+    name: "Chainlink Perpetual",
+    price: 18.90,
+    change24h: 5.45,
+    volume24h: "$480M",
+    category: "crypto",
+    venues: "Binance · OKX · Bybit"
+  },
+  {
+    symbol: "SUI/USDT",
+    name: "Sui Network Perpetual",
+    price: 3.25,
+    change24h: 8.90,
+    volume24h: "$1.2B",
+    category: "crypto",
+    venues: "Binance · Bybit · KuCoin · OKX"
+  },
+  {
+    symbol: "NEAR/USDT",
+    name: "NEAR Protocol",
+    price: 6.42,
+    change24h: 4.30,
+    volume24h: "$410M",
+    category: "crypto",
+    venues: "Binance · Bybit · OKX"
+  },
+  {
+    symbol: "DOT/USDT",
+    name: "Polkadot Perpetual",
+    price: 7.95,
+    change24h: 1.15,
+    volume24h: "$320M",
+    category: "crypto",
+    venues: "Binance · OKX · KuCoin"
+  },
+  {
+    symbol: "PEPE/USDT",
+    name: "Pepe Memecoin",
+    price: 0.0000185,
+    change24h: 12.40,
+    volume24h: "$1.8B",
+    category: "crypto",
+    venues: "Binance · Bybit · OKX · KuCoin"
+  },
+  {
+    symbol: "SHIB/USDT",
+    name: "Shiba Inu Perpetual",
+    price: 0.0000248,
+    change24h: 3.80,
+    volume24h: "$750M",
+    category: "crypto",
+    venues: "Binance · OKX · Bybit"
+  },
+  {
+    symbol: "ARB/USDT",
+    name: "Arbitrum Perpetual",
+    price: 0.88,
+    change24h: 2.90,
+    volume24h: "$290M",
+    category: "crypto",
+    venues: "Binance · Bybit · OKX"
+  },
+  {
+    symbol: "OP/USDT",
+    name: "Optimism Perpetual",
+    price: 1.95,
+    change24h: 3.75,
+    volume24h: "$210M",
+    category: "crypto",
+    venues: "Binance · Bybit · KuCoin"
+  },
+  {
+    symbol: "TIA/USDT",
+    name: "Celestia Perpetual",
+    price: 6.80,
+    change24h: -2.40,
+    volume24h: "$190M",
+    category: "crypto",
+    venues: "Binance · OKX · Bybit"
+  },
+  {
+    symbol: "RENDER/USDT",
+    name: "Render Network",
+    price: 7.15,
+    change24h: 4.80,
+    volume24h: "$340M",
+    category: "crypto",
+    venues: "Binance · Bybit · OKX"
+  },
+  {
+    symbol: "INJ/USDT",
+    name: "Injective Perpetual",
+    price: 24.60,
+    change24h: 5.15,
+    volume24h: "$260M",
+    category: "crypto",
+    venues: "Binance · KuCoin · Bybit"
   },
   {
     symbol: "EUR/USD",
@@ -64,6 +199,15 @@ export const INITIAL_MARKET_TICKS: MarketAssetTick[] = [
     price: 1.29840,
     change24h: 0.32,
     volume24h: "$9.6B",
+    category: "forex",
+    venues: "cTrader · MetaTrader 5"
+  },
+  {
+    symbol: "USD/JPY",
+    name: "US Dollar / Japanese Yen",
+    price: 154.62,
+    change24h: 0.45,
+    volume24h: "$18.4B",
     category: "forex",
     venues: "cTrader · MetaTrader 5"
   },
@@ -121,10 +265,12 @@ async function fetchForexBaseline() {
     if (data && data.rates) {
       const eurRate = data.rates.EUR ? 1 / data.rates.EUR : 1.0845;
       const gbpRate = data.rates.GBP ? 1 / data.rates.GBP : 1.2984;
+      const jpyRate = data.rates.JPY ? data.rates.JPY : 154.62;
       
       sharedTicks = sharedTicks.map(t => {
         if (t.symbol === 'EUR/USD') return { ...t, price: Number(eurRate.toFixed(5)) };
         if (t.symbol === 'GBP/USD') return { ...t, price: Number(gbpRate.toFixed(5)) };
+        if (t.symbol === 'USD/JPY') return { ...t, price: Number(jpyRate.toFixed(2)) };
         return t;
       });
       notifyListeners();
@@ -146,7 +292,22 @@ function connectBinanceWS() {
       'btcusdt@ticker',
       'ethusdt@ticker',
       'solusdt@ticker',
-      'bnbusdt@ticker'
+      'bnbusdt@ticker',
+      'xrpusdt@ticker',
+      'dogeusdt@ticker',
+      'adausdt@ticker',
+      'avaxusdt@ticker',
+      'linkusdt@ticker',
+      'suiusdt@ticker',
+      'nearusdt@ticker',
+      'dotusdt@ticker',
+      'pepeusdt@ticker',
+      'shibusdt@ticker',
+      'arbusdt@ticker',
+      'opusdt@ticker',
+      'tiausdt@ticker',
+      'renderusdt@ticker',
+      'injusdt@ticker'
     ].join('/');
 
     const wsUrl = `wss://stream.binance.com:9443/stream?streams=${streams}`;
@@ -171,6 +332,21 @@ function connectBinanceWS() {
           'ETHUSDT': 'ETH/USDT',
           'SOLUSDT': 'SOL/USDT',
           'BNBUSDT': 'BNB/USDT',
+          'XRPUSDT': 'XRP/USDT',
+          'DOGEUSDT': 'DOGE/USDT',
+          'ADAUSDT': 'ADA/USDT',
+          'AVAXUSDT': 'AVAX/USDT',
+          'LINKUSDT': 'LINK/USDT',
+          'SUIUSDT': 'SUI/USDT',
+          'NEARUSDT': 'NEAR/USDT',
+          'DOTUSDT': 'DOT/USDT',
+          'PEPEUSDT': 'PEPE/USDT',
+          'SHIBUSDT': 'SHIB/USDT',
+          'ARBUSDT': 'ARB/USDT',
+          'OPUSDT': 'OP/USDT',
+          'TIAUSDT': 'TIA/USDT',
+          'RENDERUSDT': 'RENDER/USDT',
+          'INJUSDT': 'INJ/USDT',
         };
 
         const appSymbol = symbolMap[data.s];
