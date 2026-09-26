@@ -211,5 +211,30 @@ export const telegramBotService = {
       `🎯 *Take Profit / Stop Loss activos en Risk Guardian.*`;
 
     return this.sendMessage(chatId, text);
+  },
+
+  /**
+   * Emite una notificación de conexión de exchange o broker autorizada al Telegram del usuario
+   */
+  async notifyVenueConnected(chatId: number | string, params: {
+    venueName: string;
+    authType: string;
+    mode: 'demo' | 'real';
+    balanceUsd?: number;
+    accountLabel?: string;
+  }): Promise<boolean> {
+    const isReal = params.mode === 'real';
+    const text = 
+      `🔐 *GLOBAL CITY · CONEXIÓN AUTORIZADA*\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `Venue:        *${params.venueName.toUpperCase()}*\n` +
+      `Modo:         *${isReal ? '🟢 REAL (Capital Oficial)' : '🟡 DEMO (Simulación)'}*\n` +
+      `Protocolo:    \`${params.authType.toUpperCase()}\`\n` +
+      (params.accountLabel ? `Etiqueta:     \`${params.accountLabel}\`\n` : '') +
+      (params.balanceUsd !== undefined ? `Saldo Disp.:  \`$${params.balanceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD\`\n` : '') +
+      `Timestamp:    \`${new Date().toLocaleTimeString()} - ${new Date().toLocaleDateString()}\`\n\n` +
+      `🛡️ _Zero-Custody: Conexión cifrada de solo lectura y despacho de órdenes sin permisos de retiro._`;
+
+    return this.sendMessage(chatId, text);
   }
 };

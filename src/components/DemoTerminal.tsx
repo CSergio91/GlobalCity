@@ -1,19 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   ArrowLeft, 
   Send, 
   LogOut, 
   Sparkles, 
-  CheckCircle2 
+  CheckCircle2, 
+  Plus, 
+  Trash2, 
+  Layers, 
+  ArrowUpRight, 
+  ArrowDownRight, 
+  RefreshCw,
+  ExternalLink,
+  ShieldCheck,
+  ChevronDown,
+  Search
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { CandlestickLanguageSelector } from './CandlestickLanguageSelector';
-import { ExchangeManager, MasterVenueTab } from './ExchangeManager';
+import { GlobalCityChart } from './GlobalCityChart';
+import { AddConnectionModal } from './AddConnectionModal';
+import { PlatformLogo } from './MarketIcons';
 import { useAuth } from '../context/AuthContext';
-import { useLiveMarketTicks } from '../services/liveMarketFeed';
+import { useLiveMarketTicks, MarketAssetTick } from '../services/liveMarketFeed';
 import { exchangeStorage } from '../services/exchangeStorage';
+import { positionStorage } from '../services/positionStorage';
 import { getRealMultiVenueQuotes, VenueLiveQuote } from '../services/realVenueQuotes';
 import { StoredExchangeAccount } from '../types/exchange';
+import { verifyAndFetchExchangeBalance } from '../services/realExchangeApi';
 
 interface DemoTerminalProps {
   onBackToLanding: () => void;
@@ -27,36 +41,31 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
   
   // Real LocalStorage Exchange Accounts
   const [accounts, setAccounts] = useState<StoredExchangeAccount[]>(() => exchangeStorage.getAccounts());
+  const connectedAccounts = useMemo(() => accounts.filter(a => a.status === 'CONNECTED'), [accounts]);
+
+  // Selected Active Venue Account
+  const [activeAccountId, setActiveAccountId] = useState<string | null>(() => {
+    return connectedAccounts[0]?.id || null;
+  });
+
+  const activeAccount = useMemo(() => {
+    return accounts.find(a => a.id === activeAccountId) || connectedAccounts[0] || null;
+  }, [accounts, activeAccountId, connectedAccounts]);
+
+  // Modal State for adding new connection
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   // Live WebSocket Feed Connection
   const { ticks, isConnected: wsConnected } = useLiveMarketTicks();
 
   const [selectedSymbol, setSelectedSymbol] = useState<string>("BTC/USDT");
   const [notification, setNotification] = useState<string | null>(null);
-  const [realQuotes, setRealQuotes] = useState<Record<string, VenueLiveQuote>>({});
+  const [orderAmountUsdt, setOrderAmountUsdt] = useState<string>("500");
+  const [syncingId, setSyncingId] = useState<string | null>(null);
 
-  // Fetch real market quotes directly from Bybit, OKX, KuCoin, Gate.io, and Coinbase
-  useEffect(() => {
-    let isMounted = true;
-    const tick = ticks.find(t => t?.symbol === selectedSymbol) || ticks[0];
-    const baseP = Number(tick?.price || 84000);
-
-    const updateQuotes = async () => {
-      try {
-        const q = await getRealMultiVenueQuotes(selectedSymbol, baseP);
-        if (isMounted) {
-          setRealQuotes(q);
-        }
-      } catch {}
-    };
-
-    updateQuotes();
-    const interval = setInterval(updateQuotes, 3500);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, [selectedSymbol, (ticks.find(t => t?.symbol === selectedSymbol) || ticks[0])?.price]);
+  // Pair selector dropdown
+  const [isPairDropdownOpen, setIsPairDropdownOpen] = useState(false);
+  const [pairSearchQuery, setPairSearchQuery] = useState('');
 
   // Trading Mode: 'demo' (Virtual Simulation) vs 'real' (Verified Real Funds)
   const [tradingMode, setTradingMode] = useState<'demo' | 'real'>(() => {
@@ -75,63 +84,117 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
     } catch {}
     showNotification(
       mode === 'demo'
-        ? 'Modo DEMO activado: Simulación de trading sin arriesgar capital.'
+        ? 'Modo DEMO activado: Simulación sin arriesgar capital.'
         : 'Modo REAL activado: Solo cuentas con claves oficiales autenticadas directamente por el exchange.'
     );
   };
 
-  // Master Venue Type Browser Tabs: 'exchanges' | 'brokers' | 'futures'
-  const [masterVenueTab, setMasterVenueTab] = useState<MasterVenueTab>(() => {
-    try {
-      return (localStorage.getItem('globalcity_active_venue_type') as MasterVenueTab) || 'exchanges';
-    } catch {
-      return 'exchanges';
-    }
-  });
+  // Find active tick for currentPair
+  const activeTick = useMemo(() => {
+    return ticks.find(t => t.symbol === selectedSymbol) || ticks[0] || {
+      symbol: selectedSymbol,
+      name: 'Bitcoin Perpetual',
+      price: 84150,
+      change24h: 2.5,
+      category: 'crypto' as const
+    };
+  }, [ticks, selectedSymbol]);
 
-  const handleMasterVenueTabChange = (tab: MasterVenueTab) => {
-    setMasterVenueTab(tab);
-    try {
-      localStorage.setItem('globalcity_active_venue_type', tab);
-      window.dispatchEvent(new CustomEvent('globalcity_active_venue_type_changed', { detail: tab }));
-    } catch {}
+  const currentPrice = Number(activeTick.price || 84150);
 
-    if (tab === 'brokers') {
-      setSelectedSymbol('EUR/USD');
-    } else {
-      setSelectedSymbol('BTC/USDT');
-    }
-  };
+  // Filtered pairs for dropdown
+  const filteredPairs = useMemo(() => {
+    return ticks.filter(t => {
+      const q = pairSearchQuery.toLowerCase();
+      return t.symbol.toLowerCase().includes(q) || (t.name || '').toLowerCase().includes(q);
+    });
+  }, [ticks, pairSearchQuery]);
 
   // Subscribe to storage changes
   useEffect(() => {
     const refreshAccounts = () => {
-      setAccounts(exchangeStorage.getAccounts());
-    };
-    const handleVenueTypeSync = (e: any) => {
-      if (e?.detail && ['exchanges', 'brokers', 'futures'].includes(e.detail)) {
-        setMasterVenueTab(e.detail);
+      const accs = exchangeStorage.getAccounts();
+      setAccounts(accs);
+      if (!activeAccountId && accs.length > 0) {
+        setActiveAccountId(accs[0].id);
       }
     };
 
     const unsubAcc = exchangeStorage.subscribe(refreshAccounts);
-    window.addEventListener('globalcity_active_venue_type_changed', handleVenueTypeSync);
-
-    return () => {
-      unsubAcc();
-      window.removeEventListener('globalcity_active_venue_type_changed', handleVenueTypeSync);
-    };
-  }, []);
+    return () => unsubAcc();
+  }, [activeAccountId]);
 
   const showNotification = (msg: string) => {
     setNotification(msg);
-    setTimeout(() => setNotification(null), 4000);
+    setTimeout(() => setNotification(null), 4500);
+  };
+
+  const handleConnectionSuccess = (newAccount: StoredExchangeAccount) => {
+    setAccounts(exchangeStorage.getAccounts());
+    setActiveAccountId(newAccount.id);
+    showNotification(`¡Conexión establecida con éxito en ${newAccount.venueName}! Alerta de seguridad enviada al bot de Telegram.`);
+  };
+
+  const handleDeleteAccount = (acc: StoredExchangeAccount, e: React.MouseEvent) => {
+    e.stopPropagation();
+    exchangeStorage.removeAccount(acc.id);
+    setAccounts(exchangeStorage.getAccounts());
+    if (activeAccountId === acc.id) {
+      const remaining = accounts.filter(a => a.id !== acc.id);
+      setActiveAccountId(remaining[0]?.id || null);
+    }
+    showNotification(`Conexión con ${acc.venueName} desvinculada.`);
+  };
+
+  const handleSyncBalance = async (acc: StoredExchangeAccount, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSyncingId(acc.id);
+    try {
+      const res = await verifyAndFetchExchangeBalance(acc.venueId, {
+        apiKey: acc.apiKey,
+        apiSecret: acc.apiSecret,
+        passphrase: acc.passphrase,
+        isTestnet: acc.isTestnet
+      });
+      if (res.success) {
+        const updated = accounts.map(a => a.id === acc.id ? { ...a, balanceUsd: res.balanceUsd, freeMarginUsd: res.freeMarginUsd, lastSync: new Date().toISOString() } : a);
+        exchangeStorage.saveAccounts(updated);
+        setAccounts(updated);
+        showNotification(`Saldo de ${acc.venueName} actualizado: $${res.balanceUsd.toLocaleString()} USD`);
+      }
+    } catch {}
+    finally {
+      setSyncingId(null);
+    }
+  };
+
+  const handleQuickTrade = (side: 'BUY' | 'SELL') => {
+    if (!activeAccount) {
+      showNotification('Conecta un exchange primero para operar.');
+      return;
+    }
+
+    const numericAmount = parseFloat(orderAmountUsdt) || 500;
+    const cryptoSize = (numericAmount / currentPrice).toFixed(4);
+
+    positionStorage.addPosition({
+      symbol: selectedSymbol,
+      exchange: activeAccount.venueName,
+      type: side === 'BUY' ? 'LONG' : 'SHORT',
+      entryPrice: currentPrice,
+      size: parseFloat(cryptoSize) || 0.01,
+      notionalUsd: numericAmount,
+      leverage: 1,
+      margin: numericAmount
+    });
+
+    showNotification(`¡Orden ${side} de $${numericAmount} ${selectedSymbol} despachada a ${activeAccount.venueName}!`);
   };
 
   return (
     <div className="min-h-screen bg-[#06070B] text-slate-100 flex flex-col font-sans selection:bg-[#EC4899]/30">
       
-      {/* Top Navigation Bar: Minimalist, fast, zero noise */}
+      {/* Top Navigation Bar: Minimalist, clean, zero noise */}
       <header className="sticky top-0 z-30 w-full bg-[#08090E]/95 backdrop-blur-xl border-b border-white/10 px-3 sm:px-6 py-2 transition-all">
         <div className="w-full flex items-center justify-between gap-3">
           
@@ -161,8 +224,39 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
             </span>
           </div>
 
-          {/* Right: Telegram User Profile + Language Selector */}
+          {/* Right: Telegram User Profile + Visual DEMO/REAL Switch + Language */}
           <div className="flex items-center gap-2 sm:gap-3 text-xs">
+            
+            {/* DEMO / REAL Switch */}
+            <div className="flex items-center p-0.5 rounded-xl bg-black/60 border border-white/15 shadow-inner">
+              <button
+                type="button"
+                onClick={() => handleTradingModeChange('demo')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                  tradingMode === 'demo'
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-md shadow-amber-500/20'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Sparkles className="w-3 h-3" />
+                <span className="text-[10px]">DEMO</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleTradingModeChange('real')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                  tradingMode === 'real'
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-black shadow-md shadow-emerald-500/20'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[10px]">REAL</span>
+              </button>
+            </div>
+
+            {/* Telegram Profile */}
             {user ? (
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#229ED9]/15 border border-[#229ED9]/30 hover:border-[#229ED9]/60 transition-colors shadow-sm">
                 <div className="w-5 h-5 rounded-md bg-[#229ED9]/30 flex items-center justify-center text-[#229ED9] shrink-0">
@@ -201,98 +295,228 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
       </header>
 
       {/* Main Operations Canvas (Lienzo Vacío) */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 pb-16">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 flex flex-col space-y-4">
         
-        {/* Top Browser-Style Master Tabs: Exchanges | Brokers | Futuros + DEMO/REAL Switch */}
-        <div className="flex items-center justify-between border-b border-white/10 bg-[#07080D]/90 px-3 pt-2 mb-4 rounded-2xl backdrop-blur-xl shadow-lg overflow-hidden">
-          <div className="flex items-end gap-1.5 sm:gap-2">
-            
-            {/* Browser Tab 1: Exchanges */}
-            <button
-              type="button"
-              onClick={() => handleMasterVenueTabChange('exchanges')}
-              className={`px-4 sm:px-6 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer border-t-2 border-l border-r -mb-[1px] select-none ${
-                masterVenueTab === 'exchanges'
-                  ? 'bg-[#0D0F17] text-white border-t-[#38BDF8] border-l-white/10 border-r-white/10 border-b-transparent shadow-lg shadow-black/50 z-10'
-                  : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] border-transparent'
-              }`}
-            >
-              Exchanges
-            </button>
+        {/* Connected Venues Pills Bar */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          
+          {/* Left: Row of Connected Venue Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+            {connectedAccounts.length > 0 ? (
+              connectedAccounts.map((acc) => {
+                const isSelected = activeAccount?.id === acc.id;
 
-            {/* Browser Tab 2: Brokers */}
-            <button
-              type="button"
-              onClick={() => handleMasterVenueTabChange('brokers')}
-              className={`px-4 sm:px-6 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer border-t-2 border-l border-r -mb-[1px] select-none ${
-                masterVenueTab === 'brokers'
-                  ? 'bg-[#0D0F17] text-white border-t-emerald-400 border-l-white/10 border-r-white/10 border-b-transparent shadow-lg shadow-black/50 z-10'
-                  : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] border-transparent'
-              }`}
-            >
-              Brokers
-            </button>
+                return (
+                  <div
+                    key={acc.id}
+                    onClick={() => setActiveAccountId(acc.id)}
+                    className={`flex items-center gap-2.5 px-3 py-1.5 rounded-2xl border transition-all cursor-pointer select-none ${
+                      isSelected
+                        ? 'bg-gradient-to-r from-[#0E1524] to-[#121E36] border-[#38BDF8] shadow-lg shadow-[#38BDF8]/20 ring-1 ring-[#38BDF8]/40 text-white'
+                        : 'bg-[#0B0D16] hover:bg-[#101322] border-white/10 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <PlatformLogo name={acc.venueName} className="w-5 h-5 rounded-lg shadow-sm shrink-0" />
+                    
+                    <div className="flex flex-col text-left">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-white truncate max-w-[110px]">
+                          {acc.venueName}
+                        </span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                      </div>
+                      <div className="text-[10px] font-mono text-emerald-400 font-bold">
+                        ${(acc.balanceUsd || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
+                    </div>
 
-            {/* Browser Tab 3: Futuros */}
+                    {/* Sync Balance Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => handleSyncBalance(acc, e)}
+                      className="p-1 rounded-lg text-slate-500 hover:text-white transition-colors cursor-pointer"
+                      title="Sincronizar balance real"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${syncingId === acc.id ? 'animate-spin text-[#38BDF8]' : ''}`} />
+                    </button>
+
+                    {/* Disconnect Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteAccount(acc, e)}
+                      className="p-1 rounded-lg text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
+                      title="Desvincular cuenta"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                );
+              })
+            ) : null}
+
+            {/* Always visible: Add Connection Button '+' */}
             <button
               type="button"
-              onClick={() => handleMasterVenueTabChange('futures')}
-              className={`px-4 sm:px-6 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer border-t-2 border-l border-r -mb-[1px] select-none ${
-                masterVenueTab === 'futures'
-                  ? 'bg-[#0D0F17] text-white border-t-[#EC4899] border-l-white/10 border-r-white/10 border-b-transparent shadow-lg shadow-black/50 z-10'
-                  : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] border-transparent'
-              }`}
+              onClick={() => setIsAddModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-[#38BDF8] to-[#0284C7] hover:brightness-110 text-white text-xs font-extrabold transition-all cursor-pointer shadow-md shadow-[#38BDF8]/20 active:scale-95 shrink-0"
+              title="Añadir nueva conexión a Exchange o Broker"
             >
-              Futuros
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>Añadir Conexión</span>
             </button>
           </div>
 
-          {/* Right Side: Visual Toggle DEMO vs REAL */}
-          <div className="flex items-center gap-2 pb-1.5">
-            <div className="flex items-center p-0.5 rounded-xl bg-black/60 border border-white/15 shadow-inner">
+          {/* Right: Pair Selector Dropdown (When connected) */}
+          {activeAccount && (
+            <div className="relative">
               <button
                 type="button"
-                onClick={() => handleTradingModeChange('demo')}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  tradingMode === 'demo'
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-md shadow-amber-500/20'
-                    : 'text-slate-400 hover:text-white'
-                }`}
+                onClick={() => setIsPairDropdownOpen(!isPairDropdownOpen)}
+                className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono font-bold text-white transition-all cursor-pointer"
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>DEMO</span>
+                <span>{selectedSymbol}</span>
+                <span className="text-emerald-400 font-bold">
+                  ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isPairDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
-              <button
-                type="button"
-                onClick={() => handleTradingModeChange('real')}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  tradingMode === 'real'
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-black shadow-md shadow-emerald-500/20'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>REAL</span>
-              </button>
+              {/* Pair dropdown */}
+              {isPairDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-[#0E1018] border border-white/15 rounded-2xl p-2.5 shadow-2xl z-40 backdrop-blur-2xl animate-in fade-in">
+                  <div className="relative mb-2">
+                    <Search className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      autoFocus
+                      value={pairSearchQuery}
+                      onChange={(e) => setPairSearchQuery(e.target.value)}
+                      placeholder="Buscar par..."
+                      className="w-full bg-black/60 border border-white/10 rounded-lg pl-7 pr-2 py-1 text-xs text-white focus:outline-none focus:border-[#38BDF8]"
+                    />
+                  </div>
+                  <div className="max-h-48 overflow-y-auto space-y-1">
+                    {filteredPairs.map(p => (
+                      <button
+                        key={p.symbol}
+                        type="button"
+                        onClick={() => {
+                          setSelectedSymbol(p.symbol);
+                          setIsPairDropdownOpen(false);
+                          setPairSearchQuery('');
+                        }}
+                        className={`w-full px-2.5 py-1.5 rounded-lg text-left text-xs font-mono flex items-center justify-between cursor-pointer ${
+                          selectedSymbol === p.symbol ? 'bg-white/15 text-white font-bold' : 'hover:bg-white/5 text-slate-300'
+                        }`}
+                      >
+                        <span>{p.symbol}</span>
+                        <span className="text-slate-400 font-sans text-[11px]">${Number(p.price || 0).toLocaleString()}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          )}
+
         </div>
 
-        {/* Exchange Manager: Directory and connection of venues */}
-        <div className="animate-in fade-in duration-200">
-          <ExchangeManager 
-            activeMasterTab={masterVenueTab} 
-            onMasterTabChange={setMasterVenueTab} 
-            hideInternalTabs={true} 
-            selectedSymbol={selectedSymbol}
-            onSymbolChange={setSelectedSymbol}
-            realQuotes={realQuotes}
-            tradingMode={tradingMode}
-          />
-        </div>
+        {/* WORKSPACE CANVAS BODY */}
+        {connectedAccounts.length === 0 ? (
+          /* Empty Canvas State */
+          <div className="flex-1 flex flex-col items-center justify-center min-h-[500px] border border-dashed border-white/15 rounded-3xl p-8 text-center bg-[#070910]/60 backdrop-blur-sm relative overflow-hidden">
+            <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#38BDF8]/20 to-[#0284C7]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] mb-4 shadow-xl shadow-[#38BDF8]/10">
+              <Plus className="w-8 h-8 stroke-[2.5]" />
+            </div>
+
+            <h3 className="text-lg font-bold text-white mb-1.5">
+              Lienzo de Operaciones Vacío
+            </h3>
+            <p className="text-xs text-slate-400 max-w-md leading-relaxed mb-6">
+              No tienes ningún exchange, broker o terminal conectado actualmente. Conecta tu primera plataforma vía <strong>1-Click Auth</strong> o <strong>Claves API Oficiales</strong> para activar el gráfico interactivo KLineChart y el despacho de órdenes.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setIsAddModalOpen(true)}
+              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#38BDF8] to-[#0284C7] hover:brightness-110 text-white font-extrabold text-xs transition-all cursor-pointer shadow-lg shadow-[#38BDF8]/25 flex items-center gap-2 active:scale-95"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>Conectar Exchange o Broker</span>
+            </button>
+          </div>
+        ) : (
+          /* Connected State: Active KLineChart Canvas + 1-Click Execution */
+          <div className="flex-1 flex flex-col bg-[#070910] border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative min-h-[550px]">
+            
+            {/* Quick 1-Click Execution Header Bar */}
+            <div className="px-4 py-2.5 bg-[#090B12] border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleQuickTrade('BUY')}
+                  className="py-1.5 px-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:brightness-110 text-black font-bold shadow-md shadow-emerald-500/20 flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all text-xs"
+                >
+                  <ArrowUpRight className="w-3.5 h-3.5 text-black stroke-[3]" />
+                  <span>COMPRAR (ASK: ${currentPrice.toFixed(2)})</span>
+                </button>
+
+                <div className="flex items-center bg-black/60 border border-white/15 rounded-xl px-2.5 py-1 font-mono">
+                  <span className="text-slate-500 mr-1">$</span>
+                  <input
+                    type="number"
+                    value={orderAmountUsdt}
+                    onChange={(e) => setOrderAmountUsdt(e.target.value)}
+                    className="w-16 bg-transparent text-white text-xs font-bold focus:outline-none"
+                  />
+                  <span className="text-[10px] text-slate-400 ml-1">USDT</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleQuickTrade('SELL')}
+                  className="py-1.5 px-3.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 hover:brightness-110 text-white font-bold shadow-md shadow-rose-500/20 flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all text-xs"
+                >
+                  <ArrowDownRight className="w-3.5 h-3.5 text-white stroke-[3]" />
+                  <span>VENDER (BID: ${(currentPrice * 0.9998).toFixed(2)})</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 font-mono text-[11px] text-slate-400">
+                <span>Operando en:</span>
+                <span className="text-white font-bold flex items-center gap-1.5">
+                  <PlatformLogo name={activeAccount?.venueName || ''} className="w-4 h-4 rounded" />
+                  {activeAccount?.venueName}
+                </span>
+                <span className="text-emerald-400 font-bold ml-1">
+                  (Disp: ${(activeAccount?.freeMarginUsd || 0).toLocaleString()})
+                </span>
+              </div>
+            </div>
+
+            {/* Native KLineChart Hardware-Accelerated Canvas */}
+            <div className="flex-1 w-full min-h-[480px] relative">
+              <GlobalCityChart
+                symbol={selectedSymbol}
+                venueId={activeAccount?.venueId || 'binance'}
+                venueName={activeAccount?.venueName || 'Binance'}
+                livePrice={currentPrice}
+                className="w-full h-full min-h-[480px]"
+              />
+            </div>
+
+          </div>
+        )}
 
       </main>
+
+      {/* Add Connection Modal */}
+      <AddConnectionModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={handleConnectionSuccess}
+        tradingMode={tradingMode}
+      />
 
       {/* Floating Web Toast Notification */}
       {notification && (
