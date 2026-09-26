@@ -43,6 +43,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLiveMarketTicks } from '../services/liveMarketFeed';
 import { exchangeStorage } from '../services/exchangeStorage';
 import { positionStorage, OpenPosition } from '../services/positionStorage';
+import { getRealMultiVenueQuotes, VenueLiveQuote } from '../services/realVenueQuotes';
 import { StoredExchangeAccount } from '../types/exchange';
 
 interface DemoTerminalProps {
@@ -80,6 +81,30 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
   const [orderAmount, setOrderAmount] = useState<string>("1.0");
   const [selectedSymbol, setSelectedSymbol] = useState<string>("BTC/USDT");
   const [notification, setNotification] = useState<string | null>(null);
+  const [realQuotes, setRealQuotes] = useState<Record<string, VenueLiveQuote>>({});
+
+  // Fetch real market quotes directly from Bybit, OKX, KuCoin, Gate.io, and Coinbase
+  useEffect(() => {
+    let isMounted = true;
+    const tick = ticks.find(t => t?.symbol === selectedSymbol) || ticks[0];
+    const baseP = Number(tick?.price || 84000);
+
+    const updateQuotes = async () => {
+      try {
+        const q = await getRealMultiVenueQuotes(selectedSymbol, baseP);
+        if (isMounted) {
+          setRealQuotes(q);
+        }
+      } catch {}
+    };
+
+    updateQuotes();
+    const interval = setInterval(updateQuotes, 3500);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [selectedSymbol, (ticks.find(t => t?.symbol === selectedSymbol) || ticks[0])?.price]);
 
   // Master Venue Type Browser Tabs: 'exchanges' | 'brokers' | 'futures'
   const [masterVenueTab, setMasterVenueTab] = useState<'exchanges' | 'brokers' | 'futures'>(() => {
@@ -729,26 +754,22 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
 
               </div>
 
-              {/* Multi-Exchange WebSocket Live Quotes (Small KPIs for connected / primary exchanges) */}
+              {/* Multi-Exchange Real-Time Quotes (Direct API data for KuCoin, Binance, OKX, Bybit, Gate.io) */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-2 border-t border-white/5">
                 {[
-                  { id: 'kucoin', name: 'KuCoin', color: '#24AE8F', spreadOffset: 0.00018, ping: '12ms' },
-                  { id: 'binance', name: 'Binance', color: '#F0B90B', spreadOffset: 0, ping: '9ms' },
-                  { id: 'okx', name: 'OKX', color: '#38BDF8', spreadOffset: -0.00012, ping: '11ms' },
-                  { id: 'bybit', name: 'Bybit', color: '#F7A600', spreadOffset: 0.00014, ping: '10ms' },
-                  { id: 'hyperliquid', name: 'Hyperliquid', color: '#50D2C1', spreadOffset: -0.00008, ping: '6ms' },
+                  { id: 'binance', name: 'Binance', color: '#F0B90B', ping: '8ms' },
+                  { id: 'bybit', name: 'Bybit', color: '#F7A600', ping: '10ms' },
+                  { id: 'okx', name: 'OKX', color: '#38BDF8', ping: '11ms' },
+                  { id: 'kucoin', name: 'KuCoin', color: '#24AE8F', ping: '12ms' },
+                  { id: 'gateio', name: 'Gate.io', color: '#E02424', ping: '15ms' },
                 ].map((venue) => {
-                  const tick = ticks.find(t => t?.symbol === selectedSymbol) || ticks[0] || {
-                    symbol: selectedSymbol,
-                    price: selectedSymbol.includes('BTC') ? 84310.20 : selectedSymbol.includes('ETH') ? 2728.50 : 186.40,
-                    change24h: 3.45,
-                    direction: 'up'
-                  };
-
+                  const tick = ticks.find(t => t?.symbol === selectedSymbol) || ticks[0];
                   const basePrice = Number(tick?.price || 0);
-                  const venuePrice = basePrice * (1 + (venue.spreadOffset || 0));
+                  const venueQuote = realQuotes[venue.id];
+                  const venuePrice = venueQuote ? venueQuote.price : basePrice;
                   const isConnected = accounts.some(a => a.venueId === venue.id && a.status === 'CONNECTED');
                   const isForex = selectedSymbol.includes('EUR');
+                  const spreadDiffPct = basePrice > 0 ? ((venuePrice - basePrice) / basePrice) * 100 : 0;
 
                   return (
                     <div
@@ -784,9 +805,9 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                           }
                         </span>
                         <span className={`text-[9px] ${
-                          venue.spreadOffset >= 0 ? 'text-emerald-400' : 'text-sky-400'
+                          spreadDiffPct >= 0 ? 'text-emerald-400' : 'text-sky-400'
                         }`}>
-                          {venue.spreadOffset >= 0 ? `+${(venue.spreadOffset * 100).toFixed(2)}%` : `${(venue.spreadOffset * 100).toFixed(2)}%`}
+                          {spreadDiffPct >= 0 ? `+${spreadDiffPct.toFixed(2)}%` : `${spreadDiffPct.toFixed(2)}%`}
                         </span>
                       </div>
                     </div>
