@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   ArrowRight,
   User,
+  LayoutDashboard,
   Menu,
   X,
   Compass,
@@ -29,6 +30,33 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
   const { user, isAuthenticated } = useAuth();
   const { navigate } = useAppRouter();
 
+  // Detect active connection / authentication in localStorage
+  const [hasConnection, setHasConnection] = useState<boolean>(() => {
+    try {
+      const authUser = localStorage.getItem('globalcity_auth_user');
+      const exchangeConn = localStorage.getItem('globalcity_exchange_connections');
+      return !!authUser || (!!exchangeConn && exchangeConn !== '[]' && exchangeConn !== '{}');
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const checkConnection = () => {
+      try {
+        const authUser = localStorage.getItem('globalcity_auth_user');
+        const exchangeConn = localStorage.getItem('globalcity_exchange_connections');
+        setHasConnection(isAuthenticated || !!authUser || (!!exchangeConn && exchangeConn !== '[]' && exchangeConn !== '{}'));
+      } catch {
+        setHasConnection(isAuthenticated);
+      }
+    };
+
+    checkConnection();
+    window.addEventListener('storage', checkConnection);
+    return () => window.removeEventListener('storage', checkConnection);
+  }, [isAuthenticated, user]);
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 15);
@@ -55,7 +83,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
 
   const handleLoginClick = () => {
     setIsMobileMenuOpen(false);
-    if (isAuthenticated) {
+    if (hasConnection || isAuthenticated) {
       navigate('/operaciones');
     } else {
       navigate('/login');
@@ -136,28 +164,20 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           {/* Japanese Candlestick Selector (Responsive Compact, Borderless) */}
           <CandlestickLanguageSelector compactMobile />
 
-          {/* Login / Terminal Button: Standardized, Clean, No Telegram Icon */}
-          {isAuthenticated && user ? (
-            <button
-              onClick={handleLoginClick}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] text-white hover:brightness-110 transition-all cursor-pointer group shadow-[0_2px_12px_rgba(244,114,182,0.35)] shrink-0 active:scale-95"
-              title="Terminal de Operaciones"
-            >
+          {/* Action Button: Dashboard if connection detected in localStorage, otherwise Login */}
+          <button
+            onClick={handleLoginClick}
+            className="px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-black tracking-wider uppercase text-white bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 rounded-full shadow-[0_2px_12px_rgba(244,114,182,0.35)] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 group shrink-0"
+            title={hasConnection ? "Ir al Dashboard de Operaciones" : "Iniciar Sesión"}
+          >
+            {hasConnection ? (
+              <LayoutDashboard className="w-3.5 h-3.5 text-white" />
+            ) : (
               <User className="w-3.5 h-3.5 text-white" />
-              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider">{user.firstName || user.username || "TERMINAL"}</span>
-              <ArrowRight className="hidden sm:inline w-3 h-3 text-white group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          ) : (
-            <button
-              onClick={handleLoginClick}
-              className="px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-black tracking-wider uppercase text-white bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 rounded-full shadow-[0_2px_12px_rgba(244,114,182,0.35)] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 group shrink-0"
-              title="Iniciar Sesión"
-            >
-              <User className="w-3.5 h-3.5 text-white" />
-              <span>Login</span>
-              <ArrowRight className="hidden sm:inline w-3 h-3 text-white group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          )}
+            )}
+            <span>{hasConnection ? "Dashboard" : "Login"}</span>
+            <ArrowRight className="hidden sm:inline w-3 h-3 text-white group-hover:translate-x-0.5 transition-transform" />
+          </button>
 
           {/* Hamburger Toggle Button (Mobile phones < 768px: ALWAYS Visible with safe margin) */}
           <button
@@ -221,8 +241,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
               onClick={handleLoginClick}
               className="w-full py-2.5 px-4 text-xs font-black tracking-wider uppercase text-white bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98"
             >
-              <User className="w-4 h-4 text-white" />
-              <span>{isAuthenticated ? 'Abrir Terminal de Operaciones' : 'Iniciar Sesión con Telegram'}</span>
+              {hasConnection ? (
+                <LayoutDashboard className="w-4 h-4 text-white" />
+              ) : (
+                <User className="w-4 h-4 text-white" />
+              )}
+              <span>{hasConnection ? 'Dashboard' : 'Login'}</span>
             </button>
           </div>
         </div>
