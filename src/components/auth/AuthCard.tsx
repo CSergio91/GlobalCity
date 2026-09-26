@@ -3,10 +3,7 @@ import {
   Send, 
   CheckCircle2, 
   ExternalLink,
-  Zap,
-  RefreshCw,
-  ChevronRight,
-  Sparkles
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { authService, AuthResult } from '../../services/authService';
@@ -20,24 +17,20 @@ interface AuthCardProps {
 
 const MOTIVATIONAL_PHRASES = [
   {
-    icon: '⚡',
-    title: 'Hecho para comunidades y traders activos de Telegram',
-    desc: 'Acceso directo a libros L2 y arbitraje sin contraseñas ni formularios manuales.'
+    title: 'Diseñado para comunidades y traders activos de Telegram',
+    desc: 'Acceso directo a libros L2, cotizaciones en vivo y arbitraje institucional en un solo toque.'
   },
   {
-    icon: '💎',
     title: 'Trading Cuantitativo 100% Non-Custodial',
-    desc: 'Conectividad Broker API con total soberanía y ejecución directa en exchange.'
+    desc: 'Conectividad directa vía Broker API. Control total y absoluto de tus fondos sin intermediarios.'
   },
   {
-    icon: '🌐',
-    title: 'Arbitraje Sintético & Retos de Fondeo',
-    desc: 'Ejecución sub-100ms sincronizada en tiempo real con canales de liquidez.'
+    title: 'Arbitraje Sintético y Liquidez Multi-Broker',
+    desc: 'Rutas de ejecución instantánea con spreads optimizados y telemetría de red sub-100ms.'
   },
   {
-    icon: '🚀',
-    title: 'Sincronización Criptográfica Instantánea',
-    desc: 'Tu cuenta de Telegram es tu llave de acceso institucional.'
+    title: 'Tu identidad de Telegram es tu llave de acceso',
+    desc: 'Sin registros engorrosos ni contraseñas olvidadas. Sincronización criptográfica nativa.'
   }
 ];
 
@@ -50,16 +43,22 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
   const [feedback, setFeedback] = useState<AuthResult | null>(null);
   const [authSessionNonce, setAuthSessionNonce] = useState('');
   const [detectedTelegramUser, setDetectedTelegramUser] = useState<any>(null);
+  
   const [phraseIndex, setPhraseIndex] = useState(0);
+  const [fade, setFade] = useState(true);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'globalcity_auth_bot';
 
-  // Rotación dinámica de frases motivacionales cada 3.8s
+  // Transición suave de texto motivacional sin contenedores cada 4.2s
   useEffect(() => {
     const interval = setInterval(() => {
-      setPhraseIndex((prev) => (prev + 1) % MOTIVATIONAL_PHRASES.length);
-    }, 3800);
+      setFade(false);
+      setTimeout(() => {
+        setPhraseIndex((prev) => (prev + 1) % MOTIVATIONAL_PHRASES.length);
+        setFade(true);
+      }, 400);
+    }, 4200);
     return () => clearInterval(interval);
   }, []);
 
@@ -176,7 +175,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
       )}
 
       {/* Contenedor Flex Dinámico: Distribuye los espacios abarcando todo el alto del video */}
-      <div className="w-full max-w-4xl flex flex-col md:flex-row items-center md:items-stretch justify-center gap-6 sm:gap-8 md:gap-12 transition-all duration-700 ease-out">
+      <div className="w-full max-w-4xl flex flex-col md:flex-row items-center md:items-stretch justify-center gap-6 sm:gap-8 md:gap-14 transition-all duration-700 ease-out">
         
         {/* ─────────────────────────────────────────────────────────────
             VIDEO DE PRESENTACIÓN 9:16
@@ -215,101 +214,69 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
 
         {/* ─────────────────────────────────────────────────────────────
             COMPONENTES DE LOGIN: ABARCAN TODO EL ALTO DEL VIDEO
-            Sin fondo, alto contraste, botón al final, frases dinámicas motivacionales
+            Sin etiquetas, sin contenedores, sin iconos genéricos, tipografía Monumental
            ───────────────────────────────────────────────────────────── */}
         <div 
-          className={`flex-1 max-w-sm sm:max-w-md md:max-w-lg w-full md:h-[540px] flex flex-col justify-between transition-all duration-700 ease-out z-10 ${
+          className={`flex-1 max-w-sm sm:max-w-md md:max-w-xl w-full md:h-[540px] flex flex-col justify-between transition-all duration-700 ease-out z-10 ${
             isRevealed 
               ? 'opacity-100 translate-x-0 translate-y-0 pointer-events-auto' 
               : 'opacity-0 md:-translate-x-20 translate-y-10 pointer-events-none hidden md:flex'
           }`}
         >
-          {/* SECCIÓN SUPERIOR: Título Institucional con Alto Contraste */}
-          <div className="text-left space-y-1.5 pt-1">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#229ED9]/15 border border-[#229ED9]/30 text-[#229ED9] text-[10px] font-mono tracking-wider font-semibold shadow-sm">
-              <Sparkles className="w-3 h-3 text-[#38BDF8]" />
-              <span>COMUNIDAD OFICIAL · PROTOCOLO NON-CUSTODIAL</span>
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight drop-shadow-[0_2px_14px_rgba(0,0,0,0.95)]">
-              Ecosistema Global City
+          {/* SECCIÓN SUPERIOR: Tipografía Hero sin etiquetas ni pills */}
+          <div className="text-left pt-2">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white leading-[1.1] text-balance drop-shadow-[0_8px_30px_rgba(0,0,0,0.95)]">
+              <span>Ecosistema </span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA]">
+                Global City
+              </span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-200 leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
-              Infraestructura descentralizada de ejecución cuantitativa y arbitraje multi-venue.
+            <p className="mt-2 text-sm sm:text-base md:text-lg text-slate-200 font-normal leading-relaxed drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)] max-w-lg">
+              Infraestructura descentralizada de ejecución institucional y arbitraje multi-venue.
             </p>
           </div>
 
-          {/* SECCIÓN MEDIA: Frases Motivacionales Animadas + Tarjeta de Usuario */}
-          <div className="space-y-4 my-auto py-3">
-            
-            {/* Frases dinámicas que van pasando */}
-            <div className="relative min-h-[90px] flex flex-col justify-center">
-              <div 
-                key={phraseIndex}
-                className="animate-in fade-in slide-in-from-bottom-2 duration-500 p-4 rounded-2xl bg-white/[0.04] backdrop-blur-md border border-white/10 shadow-2xl"
-              >
-                <div className="flex items-center gap-2 text-[#38BDF8] text-xs font-bold">
-                  <span className="text-base">{MOTIVATIONAL_PHRASES[phraseIndex].icon}</span>
-                  <span>{MOTIVATIONAL_PHRASES[phraseIndex].title}</span>
-                </div>
-                <p className="text-xs text-slate-300 mt-1.5 leading-relaxed drop-shadow">
-                  {MOTIVATIONAL_PHRASES[phraseIndex].desc}
-                </p>
-              </div>
-
-              {/* Paginadores sutiles de la frase activa */}
-              <div className="flex items-center gap-1.5 mt-2 px-1">
-                {MOTIVATIONAL_PHRASES.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setPhraseIndex(i)}
-                    aria-label={`Frase ${i + 1}`}
-                    className={`h-1 rounded-full transition-all duration-300 cursor-pointer ${
-                      i === phraseIndex ? 'w-5 bg-[#229ED9]' : 'w-1.5 bg-white/20 hover:bg-white/40'
-                    }`}
-                  />
-                ))}
-              </div>
+          {/* SECCIÓN MEDIA: Frases Motivacionales Puras (Sin contenedores, sin iconos, animación suave) */}
+          <div className="my-auto py-4 min-h-[110px] sm:min-h-[130px] flex flex-col justify-center">
+            <div className={`transition-opacity duration-500 ease-in-out ${fade ? 'opacity-100' : 'opacity-0'}`}>
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white tracking-tight leading-snug drop-shadow-[0_4px_20px_rgba(0,0,0,0.95)]">
+                {MOTIVATIONAL_PHRASES[phraseIndex].title}
+              </h2>
+              <p className="mt-2 text-xs sm:text-sm md:text-base text-slate-300 font-normal leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] max-w-md">
+                {MOTIVATIONAL_PHRASES[phraseIndex].desc}
+              </p>
             </div>
 
             {/* Tarjeta de Usuario Telegram Detectado (Ej. Travel) */}
             {detectedTelegramUser && (
-              <div className="p-3.5 rounded-2xl bg-white/[0.04] backdrop-blur-md border border-white/10 flex items-center justify-between gap-3 shadow-xl">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#229ED9] to-[#38BDF8] flex items-center justify-center font-bold text-white text-xs shadow-md shrink-0">
+              <div className="mt-4 pt-3 flex items-center justify-between gap-3 border-t border-white/10">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#60A5FA] to-[#F472B6] flex items-center justify-center font-bold text-white text-xs shadow-md shrink-0">
                     {detectedTelegramUser.first_name?.[0] || 'T'}
                   </div>
                   <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs sm:text-sm font-semibold text-white truncate drop-shadow">
-                        {detectedTelegramUser.first_name}
-                      </span>
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" title="Sesión activa" />
+                    <div className="text-xs sm:text-sm font-bold text-white truncate drop-shadow">
+                      {detectedTelegramUser.first_name} {detectedTelegramUser.last_name || ''}
                     </div>
-                    <span className="text-[11px] font-mono text-[#38BDF8] truncate block">
+                    <div className="text-[11px] font-mono text-[#38BDF8] truncate">
                       @{detectedTelegramUser.username || 'life_trading_motivation'}
-                    </span>
+                    </div>
                   </div>
                 </div>
 
                 <button
                   onClick={handleQuickTelegramSync}
                   disabled={isLoading}
-                  className="btn-liquid px-3.5 py-1.5 rounded-xl bg-[#229ED9] hover:bg-[#1A8CC4] text-white text-xs font-bold shadow-md hover:shadow-cyan-500/20 transition-all cursor-pointer shrink-0 flex items-center gap-1.5"
+                  className="btn-liquid px-4 py-2 rounded-xl bg-[#229ED9] hover:bg-[#1A8CC4] text-white text-xs font-bold shadow-md transition-all cursor-pointer shrink-0"
                 >
-                  {isLoading ? (
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Zap className="w-3.5 h-3.5 fill-white" />
-                  )}
-                  <span>{isLoading ? 'Entrando...' : '⚡ Entrar'}</span>
+                  {isLoading ? 'Entrando...' : 'Entrar Ahora'}
                 </button>
               </div>
             )}
 
             {/* Banner de espera si se inició la autorización */}
             {isTelegramWaiting && (
-              <div className="p-2.5 rounded-xl bg-[#229ED9]/25 backdrop-blur-sm text-xs text-[#38BDF8] font-medium flex items-center gap-2 animate-pulse shadow-xl">
+              <div className="mt-3 p-2.5 rounded-xl bg-[#229ED9]/25 backdrop-blur-sm text-xs text-[#38BDF8] font-medium flex items-center gap-2 animate-pulse shadow-xl">
                 <div className="w-3.5 h-3.5 border-2 border-[#229ED9] border-t-transparent rounded-full animate-spin shrink-0" />
                 <span>Esperando confirmación en Telegram...</span>
               </div>
@@ -317,7 +284,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
 
             {/* Feedback de estado */}
             {feedback && (
-              <div className={`p-2 rounded-xl text-xs flex items-center gap-2 backdrop-blur-sm shadow-xl ${
+              <div className={`mt-3 p-2 rounded-xl text-xs flex items-center gap-2 backdrop-blur-sm shadow-xl ${
                 feedback.success 
                   ? 'bg-emerald-500/20 text-emerald-200' 
                   : 'bg-rose-500/20 text-rose-200'
@@ -326,14 +293,13 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
                 <span>{feedback.message}</span>
               </div>
             )}
-
           </div>
 
           {/* SECCIÓN INFERIOR: Botón de Login al Final */}
-          <div className="pt-2 pb-1 space-y-2">
+          <div className="pt-2 pb-2 space-y-2">
             <button
               onClick={handleLaunchTelegramOAuth}
-              className="w-full btn-liquid py-3 px-6 rounded-2xl bg-gradient-to-r from-[#229ED9] to-[#0088CC] hover:from-[#1b8ec6] hover:to-[#0077b3] text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-[0_6px_30px_rgba(34,158,217,0.45)] transition-all cursor-pointer group"
+              className="w-full btn-liquid py-3.5 px-6 rounded-2xl bg-[#0088CC] hover:bg-[#0077b3] text-white text-sm font-bold flex items-center justify-center gap-2 shadow-[0_6px_30px_rgba(0,136,204,0.45)] transition-all cursor-pointer group"
             >
               <Send className="w-4 h-4 fill-white group-hover:translate-x-0.5 transition-transform" />
               <span>Conectar con Telegram</span>
