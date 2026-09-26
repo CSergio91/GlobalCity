@@ -1,5 +1,26 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { init, dispose, Chart, KLineData, DeepPartial, Styles, Period } from 'klinecharts';
+import { init, dispose, registerLocale, Chart, KLineData, DeepPartial, Styles, Period } from 'klinecharts';
+
+// Register full Spanish dictionary for KLineChart v10 engine
+try {
+  registerLocale('es', {
+    time: 'Hora: ',
+    open: 'Apertura: ',
+    high: 'Máx: ',
+    low: 'Mín: ',
+    close: 'Cierre: ',
+    volume: 'Volumen: ',
+    turnover: 'Turnover: ',
+    change: 'Cambio: ',
+    second: 's',
+    minute: 'm',
+    hour: 'h',
+    day: 'd',
+    week: 's',
+    month: 'm',
+    year: 'a'
+  });
+} catch {}
 
 export interface GlobalCityChartProps {
   symbol: string;
