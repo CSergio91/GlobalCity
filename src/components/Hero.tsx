@@ -68,12 +68,12 @@ export const Hero: React.FC<HeroProps> = ({ onExploreModules }) => {
       {/* Left-Aligned Display: Framing the Cyberpunk City on the Right */}
       <div className="w-full px-4 sm:px-8 lg:px-16 xl:px-20 relative z-10 max-w-[1360px] mx-auto flex flex-col items-start text-left my-auto">
           
-          {/* Refined Headline: Sleek, Balanced, Left-Aligned */}
-          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.12] sm:leading-[1.08] max-w-2xl lg:max-w-3xl drop-shadow-[0_8px_30px_rgba(0,0,0,0.95)]">
-            <span>{t.hero.headlineStart} </span>
-            <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] drop-shadow-[0_0_35px_rgba(244,114,182,0.45)] whitespace-nowrap">
-              {displayWord}
-              <span className="inline-block w-0.5 sm:w-1 h-5 sm:h-8 md:h-10 lg:h-12 bg-[#F472B6] animate-pulse ml-1 align-middle" />
+          {/* Refined Headline: Sleek, Balanced, Left-Aligned with Zero Layout Shift */}
+          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.14] sm:leading-[1.10] max-w-2xl lg:max-w-3xl drop-shadow-[0_8px_30px_rgba(0,0,0,0.95)]">
+            <span className="block">{t.hero.headlineStart}</span>
+            <span className="block min-h-[1.2em] mt-1 text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] drop-shadow-[0_0_35px_rgba(244,114,182,0.45)] whitespace-nowrap">
+              <span>{displayWord || '\u00A0'}</span>
+              <span className="inline-block w-0.5 sm:w-1 h-[0.75em] bg-[#F472B6] animate-pulse ml-1.5 align-middle" />
             </span>
           </h1>
 
