@@ -12,6 +12,17 @@
 
 ---
 
+## ⚡ PROTOCOLO MANDATORIO DE OPTIMIZACIÓN (Skills First)
+> **ANTES DE IMPLEMENTAR LÓGICA PESADA O BACKEND EN CADA FASE:**
+> 1. **Redis 7 NX Idempotencia:** Consultar [`trading-engine-oms-ems-risk`](./agent_skills/trading-engine-oms-ems-risk/SKILL.md#5-idempotencia-transaccional-con-redis-nx) (`SET idempotency:order:{id} PROCESSING NX EX 86400`).
+> 2. **Distributed Locks (Redlock):** Consultar [`institutional-trading-core-architecture`](./agent_skills/institutional-trading-core-architecture/SKILL.md#6-arquitectura-de-estado-y-persistencia-políglota) para evitar colisiones de margen en operaciones concurrentes.
+> 3. **Buffers RAM In-Memory (<1ms):** Consultar [`crypto-synthetic-arbitrage-engine`](./agent_skills/crypto-synthetic-arbitrage-engine/SKILL.md) para libros L2 y VWAP antes de persistir snapshots a Redis.
+> 4. **Event Bus (Redis Streams):** Consultar [`trading-engine-oms-ems-risk`](./agent_skills/trading-engine-oms-ems-risk/SKILL.md#7-event-bus-asíncrono-y-eventos-de-dominio) para propagación desacoplada de eventos de dominio.
+> 5. **WebSocket Singleton:** Consultar [`multi-broker-connectivity-adapters`](./agent_skills/multi-broker-connectivity-adapters/SKILL.md#21-regla-mandatoria-de-eficiencia-conexión-única-multiplexada-singleton-pubsub) (1 conexión única multiplexada por proveedor).
+
+
+---
+
 ## Checklist Secuencial de Módulos (Orden de Complejidad)
 
 ### FASE 1: Conectores CCXT, Brokers DMA & Workspace Limpio (Nivel 1 - Básico)
