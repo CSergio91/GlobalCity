@@ -165,60 +165,60 @@ export const ExchangeManager: React.FC = () => {
         </div>
       )}
 
-      {/* Metrics Header Bar */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* Metrics Header Bar - Mobile-First Compact Density */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
         
-        <div className="bg-[#12131A] border border-white/[0.08] p-4 sm:p-5 rounded-2xl relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
+        <div className="bg-[#12131A] border border-white/[0.08] p-3 sm:p-4 rounded-xl sm:rounded-2xl relative overflow-hidden group">
+          <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs mb-1 sm:mb-1.5">
             <span>Cuentas Conectadas</span>
-            <Building2 className="w-4 h-4 text-[#F472B6]" />
+            <Building2 className="w-3.5 h-3.5 text-[#F472B6]" />
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl sm:text-2xl font-bold font-mono text-white">{connectedCount}</span>
-            <span className="text-xs text-slate-500 font-mono">/ {accounts.length} activas</span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-base sm:text-xl font-bold font-mono text-white">{connectedCount}</span>
+            <span className="text-[10px] text-slate-500 font-mono">/ {accounts.length} activas</span>
           </div>
-          <div className="text-[11px] text-emerald-400 mt-2 flex items-center gap-1 font-mono">
+          <div className="text-[10px] text-emerald-400 mt-1 sm:mt-1.5 flex items-center gap-1 font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             Zero-Custody Local
           </div>
         </div>
 
-        <div className="bg-[#12131A] border border-white/[0.08] p-4 sm:p-5 rounded-2xl relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
+        <div className="bg-[#12131A] border border-white/[0.08] p-3 sm:p-4 rounded-xl sm:rounded-2xl relative overflow-hidden group">
+          <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs mb-1 sm:mb-1.5">
             <span>Equidad Consolidada</span>
-            <Layers className="w-4 h-4 text-[#60A5FA]" />
+            <Layers className="w-3.5 h-3.5 text-[#60A5FA]" />
           </div>
-          <div className="text-xl sm:text-2xl font-bold font-mono text-white">
+          <div className="text-base sm:text-xl font-bold font-mono text-white">
             ${totalEquity.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </div>
-          <div className="text-[11px] text-slate-400 mt-2 font-mono">
-            Suma de cuentas activas
+          <div className="text-[10px] text-slate-400 mt-1 sm:mt-1.5 font-mono">
+            Suma cuentas activas
           </div>
         </div>
 
-        <div className="bg-[#12131A] border border-white/[0.08] p-4 sm:p-5 rounded-2xl relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
+        <div className="bg-[#12131A] border border-white/[0.08] p-3 sm:p-4 rounded-xl sm:rounded-2xl relative overflow-hidden group">
+          <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs mb-1 sm:mb-1.5">
             <span>Margen Disponible</span>
-            <Zap className="w-4 h-4 text-emerald-400" />
+            <Zap className="w-3.5 h-3.5 text-emerald-400" />
           </div>
-          <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-400">
+          <div className="text-base sm:text-xl font-bold font-mono text-emerald-400">
             ${totalFreeMargin.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </div>
-          <div className="text-[11px] text-slate-400 mt-2 font-mono">
+          <div className="text-[10px] text-slate-400 mt-1 sm:mt-1.5 font-mono">
             Capacidad para órdenes
           </div>
         </div>
 
-        <div className="bg-[#12131A] border border-white/[0.08] p-4 sm:p-5 rounded-2xl relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
+        <div className="bg-[#12131A] border border-white/[0.08] p-3 sm:p-4 rounded-xl sm:rounded-2xl relative overflow-hidden group">
+          <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs mb-1 sm:mb-1.5">
             <span>Latencia Media</span>
-            <Wifi className="w-4 h-4 text-[#FBBF24]" />
+            <Wifi className="w-3.5 h-3.5 text-[#FBBF24]" />
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl sm:text-2xl font-bold font-mono text-white">{avgPing}</span>
-            <span className="text-xs text-slate-500 font-mono">ms</span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-base sm:text-xl font-bold font-mono text-white">{avgPing}</span>
+            <span className="text-[10px] text-slate-500 font-mono">ms</span>
           </div>
-          <div className="text-[11px] text-emerald-400 mt-2 flex items-center gap-1 font-mono">
+          <div className="text-[10px] text-emerald-400 mt-1 sm:mt-1.5 flex items-center gap-1 font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             Routing directo L2
           </div>
@@ -226,25 +226,23 @@ export const ExchangeManager: React.FC = () => {
 
       </div>
 
-      {/* Security & Non-Custodial Protocol Banner */}
-      <div className="bg-gradient-to-r from-[#12131A] via-[#161824] to-[#12131A] border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg">
-        <div className="flex items-start gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FBBF24]/15 via-[#F472B6]/15 to-[#60A5FA]/15 border border-white/15 flex items-center justify-center shrink-0 text-[#F472B6]">
-            <ShieldCheck className="w-5 h-5" />
+      {/* Security & Non-Custodial Protocol Banner - Compact Mobile */}
+      <div className="bg-gradient-to-r from-[#12131A] via-[#161824] to-[#12131A] border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-md">
+        <div className="flex items-start gap-2.5 sm:gap-3">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#FBBF24]/15 via-[#F472B6]/15 to-[#60A5FA]/15 border border-white/15 flex items-center justify-center shrink-0 text-[#F472B6]">
+            <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h4 className="text-xs sm:text-sm font-bold text-white">
-                Seguridad Estricta No Custodial & Privacidad en LocalStorage
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h4 className="text-[11px] sm:text-xs font-bold text-white">
+                Seguridad Estricta No Custodial (LocalStorage)
               </h4>
-              <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
-                100% CLIENT-SIDE
+              <span className="text-[8px] sm:text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                CLIENT-SIDE
               </span>
             </div>
-            <p className="text-[11px] sm:text-xs text-slate-400 max-w-3xl leading-relaxed">
-              Tus claves API se almacenan de forma local en tu propio navegador. 
-              <strong className="text-slate-200"> Nunca habilites permisos de retiro (Withdrawal)</strong> en tus exchanges. 
-              Solo se requieren permisos de <code className="text-[#F472B6] font-mono">Lectura</code> y <code className="text-[#60A5FA] font-mono">Operación (Trade)</code>.
+            <p className="text-[10px] sm:text-[11px] text-slate-400 max-w-2xl leading-normal">
+              Claves cifradas en tu navegador. <strong className="text-slate-200">No habilites retiros</strong>. Solo permisos de <code className="text-[#F472B6] font-mono">Lectura</code> y <code className="text-[#60A5FA] font-mono">Trade</code>.
             </p>
           </div>
         </div>

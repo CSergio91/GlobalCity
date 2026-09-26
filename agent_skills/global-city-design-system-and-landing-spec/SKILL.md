@@ -268,3 +268,28 @@ La división entre la presentación visual (video 9:16) y la tarjeta de acceso d
 2. **Catálogo Integral CCXT:** Infraestructura lista para descubrir y conectar más de 80 exchanges globales de criptomonedas y protocolos de brokers (MT4/MT5, cTrader, QuickFIX).
 3. **Stream Unificado Singleton:** La telemetría en tiempo real se alimenta exclusivamente del servicio Singleton multiplexado, sin abrir sockets redundantes.
 4. **Fondo Cinematográfico Optimizado:** Se proyecta el video `fondo_bg.mp4` / `fondo_loop.webp` con máscara de gradiente oscuro (`opacity-25`), manteniendo legibilidad perfecta de métricas financieras.
+
+---
+
+## 10. Estándar de Ejecución por Módulo: Ergonomía Móvil, Highlight por Coordenadas y Traducción Nativa
+
+### 10.1 Ergonomía y Densidad Mobile-First en Paralelo
+- **Diseño Móvil Concurrente Obligatorio:** Todo componente, tabla, fila o modal debe construirse y validarse simultáneamente en pantallas móviles (360px - 430px) y escritorio (1080p - 4K).
+- **Prohibición de Elementos Gigantes:**
+  - En móvil están terminantemente prohibidos encabezados o métricas de tamaños gigantescos (`text-3xl`, `text-4xl`) que roben el espacio de trading.
+  - La escala tipográfica móvil debe mantenerse compacta y ultra legible: métricas primarias en `text-base` o `text-sm font-bold font-mono-nums`, etiquetas en `text-[10px]` o `text-[11px]`.
+  - Paddings y márgenes reducidos (`p-3`, `p-3.5`, `gap-2`, `gap-2.5`) para maximizar el área visible sin scrolls innecesarios.
+  - Botones y filas táctiles con altura mínima ergonómica (`min-h-[38px]`) pero compacta.
+
+### 10.2 Sistema de Ayuda Contextual con Highlight por Coordenadas (`Onboarding Highlight System`)
+- **Requisito al Concluir Cada Módulo:** Al finalizar el desarrollo funcional de cada sección, se debe incorporar una guía interactiva contextual.
+- **Mecánica de Coordenadas Flotantes:**
+  - El sistema detecta dinámicamente las coordenadas del elemento objetivo (`getBoundingClientRect()`) para proyectar un foco o anillo brillante (`ring-2 ring-[#EC4899] shadow-[0_0_25px_rgba(236,72,153,0.5)]`).
+  - Posiciona un tooltip o ventana flotante asistida de forma inteligente (arriba, abajo o a los lados según el espacio de pantalla disponible).
+  - Incluye: Título del paso, explicación técnica concisa, contador de pasos (`1 de 4`), botón "Siguiente", botón "Omitir Tour" y persistencia en `localStorage` (`globalcity_tour_completed_{moduleId}`).
+
+### 10.3 Traducción Nativa Integral Dual (Inglés / Español)
+- **Requisito al Concluir Cada Módulo:** Queda prohibido dejar textos huérfanos o hardcodeados en un solo idioma.
+- **Implementación Reactiva:** Todo texto visible (encabezados, etiquetas, placeholders, botones de acción, estados de conexión, tooltips y mensajes de error/éxito) debe consumir el contexto de idioma activo (`useLanguage` / `CandlestickLanguageSelector`).
+- **Diccionarios Tipados:** Cada sección debe proveer su diccionario bilingüe estructurado (`en` y `es`) garantizando consistencia terminológica institucional (ej. `Margin`, `Spread`, `Taker Fee`, `Order Book`, `API Key`, etc.).
+
