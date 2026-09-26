@@ -78,6 +78,7 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
   // Search and Category Filter
   const [directorySearch, setDirectorySearch] = useState('');
   const [activeDirectoryFilter, setActiveDirectoryFilter] = useState<'favorites' | 'all' | VenueCategory>('all');
+  const [isExpandedList, setIsExpandedList] = useState<boolean>(false);
 
   // Inline Accordion Expander State (NO TOP ADD BOX, NO MODALS)
   const [expandedVenueId, setExpandedVenueId] = useState<string | null>(null);
@@ -565,94 +566,98 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
             )}
           </div>
 
-          {/* UNIFIED LIST OF VENUES */}
-          <div className="divide-y divide-white/5 bg-[#0D0F17]/90 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
-            {venueList.length === 0 ? (
-              <div className="p-8 text-center text-slate-500 text-xs">
-                No se encontraron opciones para el filtro actual.
-              </div>
-            ) : (
-              venueList.map((venue) => {
-                const isFav = favoriteVenues.includes(venue.id);
-                const connectedAccount = accounts.find(a => a.venueId === venue.id);
-                const isConnected = !!connectedAccount;
-                const isExpanded = expandedVenueId === venue.id;
-                const isChartOpen = activeChartVenueId === venue.id;
-                const isOrderTicketOpen = activeOrderTicket?.venueId === venue.id;
-                const isPermissionsOpen = activePermissionsVenueId === venue.id;
-                const isSyncing = connectedAccount && syncingAccountId === connectedAccount.id;
+          {/* UNIFIED GRID OF VENUES (2 COLUMNS IN DESKTOP, 10 INITIAL LIMIT) */}
+          {(() => {
+            const visibleVenues = isExpandedList ? venueList : venueList.slice(0, 10);
+            const remainingCount = Math.max(0, venueList.length - 10);
 
-                const liveQuote = realQuotes[venue.id];
-                const venuePrice = liveQuote?.price || 84150;
+            return (
+              <div className="space-y-4">
+                {visibleVenues.length === 0 ? (
+                  <div className="p-8 text-center text-slate-500 text-xs bg-[#0D0F17]/90 border border-white/10 rounded-2xl">
+                    No se encontraron opciones para el filtro actual.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 sm:gap-3">
+                    {visibleVenues.map((venue) => {
+                      const isFav = favoriteVenues.includes(venue.id);
+                      const connectedAccount = accounts.find(a => a.venueId === venue.id);
+                      const isConnected = !!connectedAccount;
+                      const isExpanded = expandedVenueId === venue.id;
+                      const isChartOpen = activeChartVenueId === venue.id;
+                      const isOrderTicketOpen = activeOrderTicket?.venueId === venue.id;
+                      const isPermissionsOpen = activePermissionsVenueId === venue.id;
+                      const isSyncing = connectedAccount && syncingAccountId === connectedAccount.id;
 
-                return (
-                  <div
-                    key={venue.id}
-                    className={`transition-colors ${
-                      isConnected 
-                        ? 'bg-emerald-950/[0.08] hover:bg-emerald-950/[0.14]' 
-                        : isExpanded 
-                        ? 'bg-white/[0.04]' 
-                        : 'hover:bg-white/[0.02]'
-                    }`}
-                  >
-                    {/* Primary Row */}
-                    <div className="p-3 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
-                      
-                      {/* Left: Star + Venue Emblem + Name + Info */}
-                      <div className="flex items-center gap-3 min-w-0">
-                        {/* Star Button */}
-                        <button
-                          type="button"
-                          onClick={(e) => handleToggleFavorite(venue.id, e)}
-                          className="p-1 rounded-md text-slate-500 hover:text-amber-400 transition-transform active:scale-125 cursor-pointer shrink-0"
-                          title={isFav ? "Quitar de favoritos" : "Añadir a favoritos"}
+                      const liveQuote = realQuotes[venue.id];
+                      const venuePrice = liveQuote?.price || 84150;
+
+                      return (
+                        <div
+                          key={venue.id}
+                          className={`rounded-2xl border transition-all duration-200 overflow-hidden flex flex-col justify-between ${
+                            isExpanded || isChartOpen || isOrderTicketOpen || isPermissionsOpen
+                              ? 'col-span-1 lg:col-span-2 bg-[#0A0C14] border-white/20 shadow-2xl ring-1 ring-white/10'
+                              : isConnected 
+                              ? 'bg-gradient-to-r from-emerald-950/20 via-[#0D0F17]/95 to-[#0A0C14] border-emerald-500/30 hover:border-emerald-500/50 shadow-md' 
+                              : isExpanded 
+                              ? 'bg-white/[0.04] border-white/20' 
+                              : 'bg-[#0D0F17]/90 hover:bg-[#0E101A] border-white/10 hover:border-white/20 shadow-sm'
+                          }`}
                         >
-                          <Star className={`w-4 h-4 ${isFav ? 'text-amber-400 fill-amber-400' : 'text-slate-600'}`} />
-                        </button>
-
-                        {/* Venue Avatar / Emblem */}
-                        <div 
-                          className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold text-white shrink-0 border shadow-sm"
-                          style={{ 
-                            backgroundColor: (venue.color || '#38BDF8') + '25', 
-                            borderColor: (venue.color || '#38BDF8') + '50',
-                            color: venue.color || '#38BDF8'
-                          }}
-                        >
-                          {venue.name.substring(0, 2).toUpperCase()}
-                        </div>
-
-                        {/* Name & Details */}
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold text-white flex items-center gap-2 flex-wrap">
-                            <span className="truncate">{venue.name}</span>
+                          {/* Primary Row */}
+                          <div className="p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             
-                            {isConnected && (
-                              <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 shrink-0">
-                                <span className={`w-1.5 h-1.5 rounded-full ${connectedAccount.status === 'CONNECTED' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-                                <span>{connectedAccount.status === 'CONNECTED' ? 'Conectado' : 'Pausado'}</span>
-                              </span>
-                            )}
+                            {/* Left: Star + Venue Emblem + Name (NO TAGLINE) */}
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              {/* Star Button */}
+                              <button
+                                type="button"
+                                onClick={(e) => handleToggleFavorite(venue.id, e)}
+                                className="p-1 rounded-md text-slate-500 hover:text-amber-400 transition-transform active:scale-125 cursor-pointer shrink-0"
+                                title={isFav ? "Quitar de favoritos" : "Añadir a favoritos"}
+                              >
+                                <Star className={`w-4 h-4 ${isFav ? 'text-amber-400 fill-amber-400' : 'text-slate-600'}`} />
+                              </button>
 
-                            {venue.supportsOAuth && !isConnected && (
-                              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
-                                1-Click OAuth
-                              </span>
-                            )}
-                            
-                            {venue.supportsPerpetuals && (
-                              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 hidden sm:inline shrink-0">
-                                Perps
-                              </span>
-                            )}
-                          </div>
-                          
-                          <div className="text-[10px] text-slate-400 truncate max-w-sm sm:max-w-md mt-0.5">
-                            {venue.tagline}
-                          </div>
-                        </div>
-                      </div>
+                              {/* Venue Avatar / Emblem */}
+                              <div 
+                                className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white shrink-0 border shadow-sm"
+                                style={{ 
+                                  backgroundColor: (venue.color || '#38BDF8') + '25', 
+                                  borderColor: (venue.color || '#38BDF8') + '50',
+                                  color: venue.color || '#38BDF8'
+                                }}
+                              >
+                                {venue.name.substring(0, 2).toUpperCase()}
+                              </div>
+
+                              {/* Name & Badges (Clean, no description) */}
+                              <div className="min-w-0">
+                                <div className="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap">
+                                  <span className="truncate">{venue.name}</span>
+                                  
+                                  {isConnected && (
+                                    <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 shrink-0">
+                                      <span className={`w-1.5 h-1.5 rounded-full ${connectedAccount.status === 'CONNECTED' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                                      <span>{connectedAccount.status === 'CONNECTED' ? 'Conectado' : 'Pausado'}</span>
+                                    </span>
+                                  )}
+
+                                  {venue.supportsOAuth && !isConnected && (
+                                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                                      1-Click OAuth
+                                    </span>
+                                  )}
+                                  
+                                  {venue.supportsPerpetuals && (
+                                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 hidden sm:inline shrink-0">
+                                      Perps
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
 
                       {/* Right: Connected State (Balances + Trade & Chart Controls) OR Connect Button */}
                       <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center flex-wrap">
@@ -1146,11 +1151,37 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
                         )}
                       </div>
                     )}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })
-            )}
-          </div>
+                )}
+
+                {/* Ver más / Ver menos Button */}
+                {venueList.length > 10 && (
+                  <div className="pt-2 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => setIsExpandedList(!isExpandedList)}
+                      className="py-2.5 px-6 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-xs font-bold text-slate-200 hover:text-white transition-all cursor-pointer flex items-center gap-2 shadow-sm hover:shadow-md"
+                    >
+                      {isExpandedList ? (
+                        <>
+                          <ChevronUp className="w-4 h-4 text-[#38BDF8]" />
+                          <span>Ver menos exchanges</span>
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="w-4 h-4 text-[#38BDF8]" />
+                          <span>Ver más exchanges (+{remainingCount} adicionales)</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
 
