@@ -31,7 +31,7 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2.5">
               <li><a href="#multi-venue" className="hover:text-white transition-colors">{language === 'en' ? 'Multi-Venue Portfolio' : 'Portafolio Multi-Exchange'}</a></li>
-              <li><a href="#arbitrage" className="hover:text-white transition-colors">{language === 'en' ? 'Synthetic Arbitrage L2' : 'Arbitraje Sintético L2'}</a></li>
+              <li><a href="#arbitrage" className="hover:text-white transition-colors">{language === 'en' ? 'Cross-Venue Arbitrage L2' : 'Arbitraje Cross-Venue L2'}</a></li>
               <li><a href="#horizontal-showcase" className="hover:text-white transition-colors">{language === 'en' ? 'Telegram Bot Ops' : 'Telegram Bot Ops'}</a></li>
               <li><a href="#rebalance" className="hover:text-white transition-colors">{language === 'en' ? 'Synthetic Rebalancing' : 'Rebalanceo Asistido'}</a></li>
               <li><a href="#copy-trading" className="hover:text-white transition-colors">{language === 'en' ? 'Cross Copy Trading' : 'Copy Trading Cruzado'}</a></li>

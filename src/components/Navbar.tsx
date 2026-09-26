@@ -17,15 +17,32 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
   const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("hero");
   const { t } = useLanguage();
   const { user, isAuthenticated } = useAuth();
   const { navigate } = useAppRouter();
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      setScrolled(window.scrollY > 15);
+
+      const sectionIds = ["hero", "multi-venue", "arbitrage", "rebalance", "copy-trading", "telegram"];
+      const scrollPosition = window.scrollY + 220;
+
+      for (let i = sectionIds.length - 1; i >= 0; i--) {
+        const el = document.getElementById(sectionIds[i]);
+        if (el) {
+          const top = el.offsetTop;
+          if (scrollPosition >= top) {
+            setActiveSection(sectionIds[i]);
+            break;
+          }
+        }
+      }
     };
-    window.addEventListener('scroll', handleScroll);
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -35,6 +52,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
     } else {
       navigate('/login');
     }
+  };
+
+  const handleNavClick = (sectionId: string) => {
+    setActiveSection(sectionId);
+    onNavigateSection(sectionId);
   };
 
   const navItems = [
@@ -50,8 +72,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 select-none ${
         scrolled 
-          ? "bg-black/20 backdrop-blur-xl shadow-lg py-2.5 sm:py-3" 
-          : "bg-transparent py-3 sm:py-4"
+          ? "bg-black/25 backdrop-blur-xl shadow-lg py-1.5 sm:py-2" 
+          : "bg-transparent py-2 sm:py-2.5"
       }`}
     >
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 flex items-center justify-between gap-3 sm:gap-4">
@@ -59,25 +81,45 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
         {/* 1. Left: Brand Logo */}
         <div className="flex items-center shrink-0">
           <div 
-            onClick={() => onNavigateSection("hero")}
+            onClick={() => handleNavClick("hero")}
             className="flex items-center cursor-pointer group shrink-0"
           >
             <BrandLogo size="md" />
           </div>
         </div>
 
-        {/* 2. Center: Navigation Menu (Desktop & Tablets) */}
-        <nav className="hidden md:flex flex-1 items-center justify-center gap-3.5 lg:gap-6 xl:gap-8 text-[11px] lg:text-xs font-semibold tracking-widest uppercase text-slate-300 overflow-x-auto no-scrollbar py-0.5">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => onNavigateSection(item.id)}
-              className="relative py-1 hover:text-white transition-colors cursor-pointer group whitespace-nowrap shrink-0"
-            >
-              <span>{item.label}</span>
-              <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] group-hover:w-full transition-all duration-300 rounded-full" />
-            </button>
-          ))}
+        {/* 2. Center: Navigation Menu with Active and Hover Signal Indicators */}
+        <nav className="hidden md:flex flex-1 items-center justify-center gap-1.5 lg:gap-2.5 xl:gap-3 text-[11px] lg:text-xs font-semibold tracking-wider uppercase text-slate-300 overflow-x-auto no-scrollbar py-0">
+          {navItems.map((item) => {
+            const isActive = activeSection === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleNavClick(item.id)}
+                className={`relative px-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer group whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+                  isActive 
+                    ? "text-white font-bold bg-white/[0.08] border border-white/15 shadow-[0_0_15px_rgba(244,114,182,0.18)]" 
+                    : "text-slate-300 hover:text-white hover:bg-white/[0.04]"
+                }`}
+              >
+                {/* Luminous Active Signal Dot */}
+                {isActive && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] shadow-[0_0_8px_rgba(244,114,182,1)] animate-pulse shrink-0" />
+                )}
+
+                <span>{item.label}</span>
+
+                {/* Bottom Luminous Indicator Bar (Hover & Active) */}
+                <span 
+                  className={`absolute -bottom-0.5 left-2.5 right-2.5 h-[2px] rounded-full bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] transition-all duration-300 ${
+                    isActive 
+                      ? "opacity-100 scale-x-100 shadow-[0_0_10px_rgba(244,114,182,0.9)]" 
+                      : "opacity-0 scale-x-0 group-hover:opacity-100 group-hover:scale-x-100"
+                  }`} 
+                />
+              </button>
+            );
+          })}
         </nav>
 
         {/* 3. Right: Language Selector + Login (Strictly at the right) */}
@@ -87,7 +129,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           {isAuthenticated && user ? (
             <button
               onClick={handleLoginClick}
-              className="flex items-center gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#0088CC]/20 border border-[#0088CC]/40 text-white hover:bg-[#0088CC]/30 transition-all cursor-pointer group shadow-lg shadow-[#0088CC]/20 shrink-0"
+              className="flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-[#0088CC]/20 border border-[#0088CC]/40 text-white hover:bg-[#0088CC]/30 transition-all cursor-pointer group shadow-lg shadow-[#0088CC]/20 shrink-0"
               title="Sesión de Telegram Activa"
             >
               <div className="w-5 h-5 rounded-full bg-[#0088CC] flex items-center justify-center text-white">
@@ -112,17 +154,27 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
 
       </div>
 
-      {/* Mobile-only menu bar: sits cleanly below the main row without wrapping or breaking right controls */}
-      <div className="flex md:hidden w-full px-4 pt-2 pb-0.5 overflow-x-auto no-scrollbar justify-center items-center gap-4 text-[11px] font-semibold tracking-wider uppercase text-slate-300">
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onNavigateSection(item.id)}
-            className="whitespace-nowrap hover:text-white transition-colors cursor-pointer py-0.5 shrink-0"
-          >
-            {item.label}
-          </button>
-        ))}
+      {/* Mobile-only menu bar: sits cleanly below the main row */}
+      <div className="flex md:hidden w-full px-4 pt-1.5 pb-0.5 overflow-x-auto no-scrollbar justify-center items-center gap-3 text-[11px] font-semibold tracking-wider uppercase text-slate-300">
+        {navItems.map((item) => {
+          const isActive = activeSection === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => handleNavClick(item.id)}
+              className={`whitespace-nowrap transition-colors cursor-pointer py-0.5 px-2 rounded-full shrink-0 flex items-center gap-1 ${
+                isActive 
+                  ? "text-white font-bold bg-white/10" 
+                  : "hover:text-white"
+              }`}
+            >
+              {isActive && (
+                <span className="w-1 h-1 rounded-full bg-[#F472B6] shadow-[0_0_6px_rgba(244,114,182,1)]" />
+              )}
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
       </div>
     </header>
   );

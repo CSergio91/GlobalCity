@@ -12,11 +12,20 @@ import {
 import { motion } from 'motion/react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppRouter } from '../context/RouterContext';
+import { useLiveMarketTicks } from '../services/liveMarketFeed';
 
 export const TelegramOperations: React.FC = () => {
   const { t, language } = useLanguage();
   const { navigate } = useAppRouter();
+  const { ticks } = useLiveMarketTicks();
   const [activeCommand, setActiveCommand] = useState<string>('/portfolio');
+
+  const btcTick = ticks.find(t => t.symbol === 'BTC/USDT');
+  const btcPrice = btcTick ? btcTick.price : 84310.20;
+  const bybitBuy = (btcPrice * 0.9993).toFixed(2);
+  const okxSell = (btcPrice * 1.0007).toFixed(2);
+  const spreadUsdt = (parseFloat(okxSell) - parseFloat(bybitBuy)).toFixed(2);
+  const spreadPct = (((parseFloat(okxSell) - parseFloat(bybitBuy)) / parseFloat(bybitBuy)) * 100).toFixed(3);
 
   return (
     <section id="telegram" className="w-full py-20 sm:py-28 bg-[#06070B] relative select-none overflow-hidden">
@@ -189,13 +198,13 @@ export const TelegramOperations: React.FC = () => {
                     {activeCommand === '/arbitrage_radar' && (
                       <>
                         <div className="font-bold text-white flex items-center gap-1.5 text-xs">
-                          <span>{language === 'en' ? '⚡ SYNTHETIC ARBITRAGE RADAR L2' : '⚡ RADAR DE ARBITRAJE SINTÉTICO L2'}</span>
+                          <span>{language === 'en' ? '⚡ CROSS-VENUE ARBITRAGE RADAR L2' : '⚡ RADAR DE ARBITRAJE CROSS-VENUE L2'}</span>
                         </div>
                         <div className="text-slate-200 text-[11px] leading-relaxed">
                           • {language === 'en' ? 'Opportunity Identified' : 'Oportunidad Detectada'}: <strong className="text-[#FBBF24]">BTC/USDT</strong><br/>
-                          • {language === 'en' ? 'Buy Bybit' : 'Compra Bybit'}: $84,310.20<br/>
-                          • {language === 'en' ? 'Sell OKX' : 'Venta OKX'}: $84,380.00<br/>
-                          • {language === 'en' ? 'Net Spread' : 'Spread Neto Real'}: <span className="text-[#10B981] font-bold">+0.083%</span> ($12.45 USDT)<br/>
+                          • {language === 'en' ? 'Buy Bybit' : 'Compra Bybit'}: ${Number(bybitBuy).toLocaleString()}<br/>
+                          • {language === 'en' ? 'Sell OKX' : 'Venta OKX'}: ${Number(okxSell).toLocaleString()}<br/>
+                          • {language === 'en' ? 'Net Spread' : 'Spread Neto Real'}: <span className="text-[#10B981] font-bold">+{spreadPct}%</span> (+${spreadUsdt} USDT)<br/>
                           • {language === 'en' ? 'Status: Ready for sub-100ms concurrent dispatch.' : 'Estado: Listo para despacho concurrente sub-100ms.'}
                         </div>
                       </>
