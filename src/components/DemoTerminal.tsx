@@ -19,11 +19,7 @@ import {
   Menu,
   X,
   ShieldCheck,
-  FileText,
-  ChevronRight,
-  Gauge,
-  Sliders,
-  HelpCircle
+  ChevronRight
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { CandlestickLanguageSelector } from './CandlestickLanguageSelector';
@@ -39,7 +35,7 @@ interface DemoTerminalProps {
   onOpenAuth?: () => void;
 }
 
-export type TabId = 'connections' | 'overview' | 'multiorder' | 'arbitrage' | 'copy' | 'telegram' | 'risk' | 'roadmap';
+export type TabId = 'connections' | 'overview' | 'multiorder' | 'arbitrage' | 'copy' | 'telegram' | 'risk';
 
 export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onOpenAuth }) => {
   const { user, logout } = useAuth();
@@ -163,16 +159,6 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
       color: '#10B981',
       badge: 'Auditoría',
       status: 'Fase 7'
-    },
-    { 
-      id: 'roadmap' as TabId, 
-      num: '08', 
-      title: 'Roadmap & Checklist MCP', 
-      desc: 'Ruta de desarrollo paso a paso y protocolo de IA', 
-      icon: FileText, 
-      color: '#F43F5E',
-      badge: 'Hoja de Ruta',
-      status: 'Checklist'
     }
   ];
 
@@ -218,7 +204,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                   <Menu className="w-4 h-4 text-[#F472B6]" />
                   <span className="hidden sm:inline font-mono">Módulos</span>
                   <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-white/10 text-[#38BDF8]">
-                    08
+                    07
                   </span>
                 </button>
               </div>
@@ -747,36 +733,6 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                   <div className="text-lg font-bold text-emerald-400 mt-1">1:30 (DMA)</div>
                   <div className="text-[10px] text-slate-500 mt-1">Margen dinámico por tier</div>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 08: Roadmap & Checklist MCP */}
-          {activeTab === 'roadmap' && (
-            <div className="rounded-2xl p-5 sm:p-6 border border-white/10 bg-[#0D0F17]/85 backdrop-blur-xl shadow-xl max-w-3xl mx-auto animate-in fade-in duration-200">
-              <h3 className="text-base font-bold text-white mb-1 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#F43F5E]" />
-                <span>Hoja de Ruta y Checklist Secuencial (WORKFLOW_ROADMAP.md)</span>
-              </h3>
-              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
-                Desarrollo modular de menor a mayor complejidad algorítmica para GlobalCity Institutional Core.
-              </p>
-
-              <div className="space-y-2.5 text-xs">
-                {moduleList.map((m) => (
-                  <div key={m.id} className="p-3 rounded-xl bg-[#12141F] border border-white/5 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-slate-500 text-[11px] font-bold">{m.num}</span>
-                      <div>
-                        <div className="font-bold text-white">{m.title}</div>
-                        <div className="text-[11px] text-slate-400">{m.desc}</div>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-[#38BDF8] border border-white/10 shrink-0">
-                      {m.status}
-                    </span>
-                  </div>
-                ))}
               </div>
             </div>
           )}

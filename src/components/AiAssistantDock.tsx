@@ -30,7 +30,7 @@ export const AiAssistantDock: React.FC<AiAssistantDockProps> = ({
     { label: "Auditar Balance", tab: "overview", prompt: "Auditar balance" },
     { label: "Split EMS", tab: "multiorder", prompt: "Calcular split" },
     { label: "Arbitraje L2", tab: "arbitrage", prompt: "Escanear arbitraje" },
-    { label: "Roadmap", tab: "roadmap", prompt: "Ver checklist" },
+    { label: "Risk Engine", tab: "risk", prompt: "Auditar riesgo" },
   ];
 
   const handleAction = (tab: string, promptText: string) => {
