@@ -98,7 +98,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
         </div>
 
         {/* 2. Center: Prominent Superior Navigation (Always visible from 768px and up, desktop & tablet) */}
-        <nav className="hidden md:flex items-center justify-center gap-1 lg:gap-2 xl:gap-3 text-[10.5px] lg:text-xs font-semibold tracking-wider uppercase text-slate-300 z-10 mx-auto">
+        <nav className="global-desktop-nav items-center justify-center gap-1 lg:gap-2 xl:gap-3 text-[10.5px] lg:text-xs font-semibold tracking-wider uppercase text-slate-300 z-10 mx-auto">
           {navItems.map((item) => {
             const isActive = activeSection === item.id;
             return (
@@ -162,7 +162,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           {/* Hamburger Toggle Button (Mobile phones < 768px: ALWAYS Visible with safe margin) */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-1.5 sm:p-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/15 text-slate-200 hover:text-white transition-all cursor-pointer shrink-0 active:scale-95 shadow-sm"
+            className="global-mobile-menu-btn p-1.5 sm:p-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.15] border border-white/15 text-slate-200 hover:text-white transition-all cursor-pointer shrink-0 active:scale-95 shadow-sm"
             aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú de navegación"}
           >
             {isMobileMenuOpen ? (
@@ -177,7 +177,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
 
       {/* Slide-Down Navigation Menu (Mobile Phones < 768px) */}
       {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-x-0 top-16 sm:top-18 bg-[#070912]/98 backdrop-blur-2xl border-b border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.95)] px-4 sm:px-6 py-5 space-y-3 z-40 animate-reveal max-h-[calc(100vh-4rem)] overflow-y-auto">
+        <div className="global-mobile-menu fixed inset-x-0 top-16 sm:top-18 bg-[#070912]/98 backdrop-blur-2xl border-b border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.95)] px-4 sm:px-6 py-5 space-y-3 z-40 animate-reveal max-h-[calc(100vh-4rem)] overflow-y-auto">
           <div className="text-[10px] font-mono uppercase tracking-widest text-slate-400 px-2 pb-1 border-b border-white/10 flex justify-between items-center">
             <span>Navegación del Ecosistema</span>
             <span className="text-[#2DD4BF] flex items-center gap-1 font-bold">

@@ -205,3 +205,29 @@
   will-change: transform;
 }
 
+/* Bulletproof Navbar Responsive Rules: 100% immune to Tailwind JIT / caching */
+.global-desktop-nav {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  .global-desktop-nav {
+    display: flex !important;
+  }
+}
+
+.global-mobile-menu-btn {
+  display: flex !important;
+}
+
+.global-mobile-menu {
+  display: block !important;
+}
+
+@media (min-width: 768px) {
+  .global-mobile-menu-btn,
+  .global-mobile-menu {
+    display: none !important;
+  }
+}
+
