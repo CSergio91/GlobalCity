@@ -26,12 +26,15 @@ import {
   Sparkles,
   ExternalLink,
   Flame,
-  LayoutDashboard
+  LayoutDashboard,
+  Database
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { CandlestickLanguageSelector } from './CandlestickLanguageSelector';
 import { ExchangeManager } from './ExchangeManager';
 import { AiAssistantDock } from './AiAssistantDock';
+import { GlobalCapitalChart } from './GlobalCapitalChart';
+import { PortfolioAllocationRing } from './PortfolioAllocationRing';
 import { useAuth } from '../context/AuthContext';
 import { useLiveMarketTicks } from '../services/liveMarketFeed';
 import { exchangeStorage } from '../services/exchangeStorage';
@@ -377,54 +380,164 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
           {/* Main Operations Canvas (Takes 100% of remaining width) */}
           <main className="flex-1 w-full overflow-y-auto px-3 sm:px-6 py-4 pb-20 max-w-full">
             
-            {/* Top Workspace Metrics Banner (Full-Width Bento Bar) */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5 mb-5">
-              <div className="bg-[#0D0F17]/85 border border-white/10 p-3 sm:p-4 rounded-2xl relative overflow-hidden backdrop-blur-xl">
-                <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs mb-1">
-                  <span>Equidad Consolidada</span>
-                  <Wallet className="w-3.5 h-3.5 text-[#F472B6]" />
+            {/* Real-Time Pair Selector & Redis 7 RAM Buffer Ribbon */}
+            <div className="bg-[#0D0F17]/90 border border-white/10 rounded-2xl p-3 sm:p-4 mb-4 backdrop-blur-xl shadow-xl space-y-3">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                {/* Pair Selector Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 md:pb-0">
+                  <span className="text-[10px] font-mono uppercase text-slate-400 font-bold mr-1 shrink-0">
+                    Par Activo:
+                  </span>
+                  {['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'BNB/USDT', 'EUR/USD', 'XAU/USD'].map((pair) => {
+                    const isSelected = selectedSymbol === pair;
+                    return (
+                      <button
+                        key={pair}
+                        onClick={() => setSelectedSymbol(pair)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer whitespace-nowrap ${
+                          isSelected
+                            ? 'bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] text-white shadow-md shadow-[#F472B6]/25 scale-105'
+                            : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5'
+                        }`}
+                      >
+                        {pair}
+                      </button>
+                    );
+                  })}
                 </div>
-                <div className="text-base sm:text-xl font-bold font-mono-nums text-white">
-                  ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+
+                {/* Redis 7 RAM Optimization Indicator */}
+                <div className="flex items-center gap-2 self-start md:self-auto">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 font-mono text-[10px]">
+                    <Database className="w-3 h-3 text-emerald-400 animate-pulse" />
+                    <span>Redis 7 NX: Active Buffer · RAM 0.4ms</span>
+                  </div>
+                  <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/5 border border-white/10 text-slate-400 font-mono text-[10px]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                    <span>WS Multiplex 1:1</span>
+                  </div>
                 </div>
-                <div className="text-[10px] text-slate-400 font-mono mt-1">Suma cuentas activas</div>
               </div>
 
-              <div className="bg-[#0D0F17]/85 border border-white/10 p-3 sm:p-4 rounded-2xl relative overflow-hidden backdrop-blur-xl">
-                <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs mb-1">
-                  <span>Margen Libre Total</span>
-                  <Zap className="w-3.5 h-3.5 text-[#38BDF8]" />
+              {/* Multi-Exchange WebSocket Live Quotes (Small KPIs for connected / primary exchanges) */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-2 border-t border-white/5">
+                {[
+                  { id: 'kucoin', name: 'KuCoin', color: '#24AE8F', spreadOffset: 0.00018, ping: '12ms' },
+                  { id: 'binance', name: 'Binance', color: '#F0B90B', spreadOffset: 0, ping: '9ms' },
+                  { id: 'okx', name: 'OKX', color: '#38BDF8', spreadOffset: -0.00012, ping: '11ms' },
+                  { id: 'bybit', name: 'Bybit', color: '#F7A600', spreadOffset: 0.00014, ping: '10ms' },
+                  { id: 'hyperliquid', name: 'Hyperliquid', color: '#50D2C1', spreadOffset: -0.00008, ping: '6ms' },
+                ].map((venue) => {
+                  const tick = ticks.find(t => t.symbol === selectedSymbol) || ticks[0] || {
+                    symbol: selectedSymbol,
+                    price: selectedSymbol.includes('BTC') ? 84310.20 : selectedSymbol.includes('ETH') ? 2728.50 : 186.40,
+                    change24h: 3.45,
+                    direction: 'up'
+                  };
+
+                  const venuePrice = tick.price * (1 + venue.spreadOffset);
+                  const isConnected = accounts.some(a => a.venueId === venue.id && a.status === 'CONNECTED');
+                  const isForex = selectedSymbol.includes('EUR');
+
+                  return (
+                    <div
+                      key={venue.id}
+                      className="bg-black/40 border border-white/5 hover:border-white/15 rounded-xl p-2.5 transition-all flex flex-col justify-between"
+                    >
+                      <div className="flex items-center justify-between text-[10px] mb-1">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span 
+                            className="w-2 h-2 rounded-full shrink-0" 
+                            style={{ backgroundColor: venue.color }} 
+                          />
+                          <span className="font-bold text-white truncate">{venue.name}</span>
+                        </div>
+                        {isConnected ? (
+                          <span className="text-[8px] font-mono px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            ON
+                          </span>
+                        ) : (
+                          <span className="text-[8.5px] font-mono text-slate-500">
+                            {venue.ping}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-baseline justify-between gap-1 font-mono">
+                        <span className="text-xs sm:text-sm font-bold text-white tracking-tight">
+                          ${isForex 
+                            ? venuePrice.toFixed(5) 
+                            : venuePrice >= 1000 
+                            ? venuePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                            : venuePrice.toFixed(2)
+                          }
+                        </span>
+                        <span className={`text-[9px] ${
+                          venue.spreadOffset >= 0 ? 'text-emerald-400' : 'text-sky-400'
+                        }`}>
+                          {venue.spreadOffset >= 0 ? `+${(venue.spreadOffset * 100).toFixed(2)}%` : `${(venue.spreadOffset * 100).toFixed(2)}%`}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Compact Bento Grid: Global Capital Chart + Portfolio Allocation Ring */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 mb-4">
+              <div className="lg:col-span-8">
+                <GlobalCapitalChart totalEquity={totalBalance} />
+              </div>
+              <div className="lg:col-span-4">
+                <PortfolioAllocationRing 
+                  accounts={accounts} 
+                  totalEquity={totalBalance} 
+                  onOpenConnectModal={() => setActiveTab('connections')} 
+                />
+              </div>
+            </div>
+
+            {/* Compact Workspace Key Metrics Strip */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+              <div className="bg-[#0D0F17]/80 border border-white/10 px-3.5 py-2.5 rounded-xl flex items-center justify-between">
+                <div>
+                  <div className="text-[9.5px] text-slate-400 uppercase font-mono">Equidad Consolidada</div>
+                  <div className="text-sm sm:text-base font-bold font-mono text-white">
+                    ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
                 </div>
-                <div className="text-base sm:text-xl font-bold font-mono-nums text-emerald-400">
-                  ${totalFreeMargin.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </div>
-                <div className="text-[10px] text-slate-400 font-mono mt-1">Capacidad para órdenes</div>
+                <Wallet className="w-4 h-4 text-[#F472B6] shrink-0" />
               </div>
 
-              <div className="bg-[#0D0F17]/85 border border-white/10 p-3 sm:p-4 rounded-2xl relative overflow-hidden backdrop-blur-xl">
-                <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs mb-1">
-                  <span>Conexiones Activas</span>
-                  <Key className="w-3.5 h-3.5 text-[#F59E0B]" />
+              <div className="bg-[#0D0F17]/80 border border-white/10 px-3.5 py-2.5 rounded-xl flex items-center justify-between">
+                <div>
+                  <div className="text-[9.5px] text-slate-400 uppercase font-mono">Margen Libre Total</div>
+                  <div className="text-sm sm:text-base font-bold font-mono text-emerald-400">
+                    ${totalFreeMargin.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
                 </div>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-base sm:text-xl font-bold font-mono-nums text-white">{connectedAccounts.length}</span>
-                  <span className="text-[10px] text-slate-400 font-mono">/ {accounts.length} configuradas</span>
-                </div>
-                <div className="text-[10px] text-emerald-400 font-mono mt-1 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Zero-Knowledge Local
-                </div>
+                <Zap className="w-4 h-4 text-[#38BDF8] shrink-0" />
               </div>
 
-              <div className="bg-[#0D0F17]/85 border border-white/10 p-3 sm:p-4 rounded-2xl relative overflow-hidden backdrop-blur-xl">
-                <div className="flex items-center justify-between text-slate-400 text-[10px] sm:text-xs mb-1">
-                  <span>Gas Tank de Ejecución</span>
-                  <Flame className="w-3.5 h-3.5 text-amber-400" />
+              <div className="bg-[#0D0F17]/80 border border-white/10 px-3.5 py-2.5 rounded-xl flex items-center justify-between">
+                <div>
+                  <div className="text-[9.5px] text-slate-400 uppercase font-mono">Conexiones Activas</div>
+                  <div className="text-sm sm:text-base font-bold font-mono text-white">
+                    {connectedAccounts.length} <span className="text-[10px] text-slate-400 font-normal">/ {accounts.length}</span>
+                  </div>
                 </div>
-                <div className="text-base sm:text-xl font-bold font-mono-nums text-amber-400">
-                  {gasTankBalance.toFixed(2)} USDT
+                <Key className="w-4 h-4 text-amber-400 shrink-0" />
+              </div>
+
+              <div className="bg-[#0D0F17]/80 border border-white/10 px-3.5 py-2.5 rounded-xl flex items-center justify-between">
+                <div>
+                  <div className="text-[9.5px] text-slate-400 uppercase font-mono">Gas Tank L2</div>
+                  <div className="text-sm sm:text-base font-bold font-mono text-amber-400">
+                    {gasTankBalance.toFixed(2)} USDT
+                  </div>
                 </div>
-                <div className="text-[10px] text-slate-400 font-mono mt-1">Deducción de micro-fees</div>
+                <Flame className="w-4 h-4 text-amber-400 shrink-0" />
               </div>
             </div>
 

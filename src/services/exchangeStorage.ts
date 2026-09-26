@@ -121,5 +121,36 @@ export const exchangeStorage = {
       apiSecret: '***REDACTED***'
     }));
     return JSON.stringify(sanitized, null, 2);
+  },
+
+  getFavoriteVenues(): string[] {
+    try {
+      const raw = localStorage.getItem('globalcity_favorite_venues');
+      if (!raw) {
+        const defaults = ['binance', 'bybit', 'okx', 'kucoin', 'hyperliquid', 'bitget', 'coinbase', 'kraken', 'deribit', 'metatrader5', 'ctrader'];
+        this.saveFavoriteVenues(defaults);
+        return defaults;
+      }
+      return JSON.parse(raw);
+    } catch {
+      return ['binance', 'bybit', 'okx', 'kucoin', 'hyperliquid', 'bitget', 'coinbase', 'kraken', 'deribit', 'metatrader5', 'ctrader'];
+    }
+  },
+
+  saveFavoriteVenues(favorites: string[]): void {
+    try {
+      localStorage.setItem('globalcity_favorite_venues', JSON.stringify(favorites));
+      window.dispatchEvent(new CustomEvent('globalcity_favorites_changed'));
+    } catch (err) {
+      console.error('Error saving favorite venues:', err);
+    }
+  },
+
+  toggleFavoriteVenue(venueId: string): string[] {
+    const current = this.getFavoriteVenues();
+    const exists = current.includes(venueId);
+    const updated = exists ? current.filter(id => id !== venueId) : [...current, venueId];
+    this.saveFavoriteVenues(updated);
+    return updated;
   }
 };
