@@ -30,7 +30,8 @@ import {
   Database,
   ChevronDown,
   Search,
-  Check
+  Check,
+  ShieldAlert
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { CandlestickLanguageSelector } from './CandlestickLanguageSelector';
@@ -41,6 +42,7 @@ import { PortfolioAllocationRing } from './PortfolioAllocationRing';
 import { useAuth } from '../context/AuthContext';
 import { useLiveMarketTicks } from '../services/liveMarketFeed';
 import { exchangeStorage } from '../services/exchangeStorage';
+import { positionStorage, OpenPosition } from '../services/positionStorage';
 import { StoredExchangeAccount } from '../types/exchange';
 
 interface DemoTerminalProps {
@@ -56,8 +58,10 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
   // Primary module: Conexiones & Exchanges
   const [activeTab, setActiveTab] = useState<TabId>('connections');
   
-  // Hover Overlay Drawer state (replegada con solo iconos en reposo, se despliega completa al hover por encima del contenido)
+  // Hover & Pin Overlay Drawer state (replegada con solo iconos en reposo, se despliega completa al hover por encima del contenido)
   const [isSidebarHovered, setIsSidebarHovered] = useState<boolean>(false);
+  const [isSidebarPinned, setIsSidebarPinned] = useState<boolean>(false);
+  const isSidebarExpanded = isSidebarPinned || isSidebarHovered;
 
   // Searchable Pair Dropdown selector state
   const [isPairDropdownOpen, setIsPairDropdownOpen] = useState<boolean>(false);
@@ -67,6 +71,9 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
   // Real LocalStorage Exchange Accounts
   const [accounts, setAccounts] = useState<StoredExchangeAccount[]>(() => exchangeStorage.getAccounts());
   
+  // Real LocalStorage Positions & PnL History (Compatible with future PostgreSQL/Supabase)
+  const [positions, setPositions] = useState<OpenPosition[]>(() => positionStorage.getPositions());
+
   // Live WebSocket Ticks from Singleton Feed
   const { ticks, isConnected: wsConnected } = useLiveMarketTicks();
 
@@ -74,21 +81,72 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
   const [selectedSymbol, setSelectedSymbol] = useState<string>("BTC/USDT");
   const [notification, setNotification] = useState<string | null>(null);
 
-  // Subscribe to storage changes
+  // Master Venue Type Browser Tabs: 'exchanges' | 'brokers' | 'futures'
+  const [masterVenueTab, setMasterVenueTab] = useState<'exchanges' | 'brokers' | 'futures'>(() => {
+    try {
+      return (localStorage.getItem('globalcity_active_venue_type') as 'exchanges' | 'brokers' | 'futures') || 'exchanges';
+    } catch {
+      return 'exchanges';
+    }
+  });
+
+  const handleMasterVenueTabChange = (tab: 'exchanges' | 'brokers' | 'futures') => {
+    setMasterVenueTab(tab);
+    try {
+      localStorage.setItem('globalcity_active_venue_type', tab);
+      window.dispatchEvent(new CustomEvent('globalcity_active_venue_type_changed', { detail: tab }));
+    } catch {}
+    if (activeTab !== 'connections') {
+      setActiveTab('connections');
+    }
+  };
+
+  // Subscribe to storage changes (accounts and positions)
   useEffect(() => {
     const refreshAccounts = () => {
       setAccounts(exchangeStorage.getAccounts());
     };
+    const refreshPositions = () => {
+      setPositions(positionStorage.getPositions());
+    };
+    const handleVenueTypeSync = (e: any) => {
+      if (e?.detail && ['exchanges', 'brokers', 'futures'].includes(e.detail)) {
+        setMasterVenueTab(e.detail);
+      }
+    };
 
-    const unsubscribe = exchangeStorage.subscribe(refreshAccounts);
-    return () => unsubscribe();
+    const unsubAcc = exchangeStorage.subscribe(refreshAccounts);
+    const unsubPos = positionStorage.subscribe(refreshPositions);
+    window.addEventListener('globalcity_active_venue_type_changed', handleVenueTypeSync);
+
+    return () => {
+      unsubAcc();
+      unsubPos();
+      window.removeEventListener('globalcity_active_venue_type_changed', handleVenueTypeSync);
+    };
   }, []);
+
+  // Update position mark prices with live WebSocket ticks
+  useEffect(() => {
+    if (ticks && ticks.length > 0 && positions.length > 0) {
+      const priceMap: Record<string, number> = {};
+      ticks.forEach(t => {
+        if (t && t.symbol && typeof t.price === 'number') {
+          priceMap[t.symbol] = t.price;
+        }
+      });
+      positionStorage.updateMarkPrices(priceMap);
+    }
+  }, [ticks, positions.length]);
 
   // Aggregated Real Balances (Zero if no accounts connected)
   const connectedAccounts = accounts.filter(a => a.status === 'CONNECTED');
   const totalBalance = connectedAccounts.reduce((acc, curr) => acc + (curr.balanceUsd || 0), 0);
   const totalFreeMargin = connectedAccounts.reduce((acc, curr) => acc + (curr.freeMarginUsd || 0), 0);
   const gasTankBalance = user ? 50.00 : 0.00;
+
+  // Real-Time Consolidated Performance Metrics
+  const performance = positionStorage.getPerformanceMetrics(totalBalance);
 
   const showNotification = (msg: string) => {
     setNotification(msg);
@@ -101,10 +159,37 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
       return;
     }
 
+    const primaryAcc = connectedAccounts[0];
+    const tick = ticks.find(t => t?.symbol === selectedSymbol) || ticks[0];
+    const price = Number(tick?.price || (selectedSymbol.includes('BTC') ? 84310 : 2700));
+    const size = parseFloat(orderAmount) || 0.1;
+
+    positionStorage.openPosition({
+      accountId: primaryAcc.id,
+      venueId: primaryAcc.venueId,
+      venueName: primaryAcc.venueName,
+      symbol: selectedSymbol,
+      side,
+      size,
+      entryPrice: price,
+      leverage: 10
+    });
+
     const venuesList = connectedAccounts.map(a => a.venueName).join(', ');
     showNotification(
-      `¡Orden Multi-Exchange ${side} de ${orderAmount} ${selectedSymbol} enviada con éxito! Fragmentada de forma concurrente entre: ${venuesList}.`
+      `¡Orden Multi-Exchange ${side} de ${orderAmount} ${selectedSymbol} enviada con éxito! Posición abierta registrada en tiempo real en: ${venuesList}.`
     );
+  };
+
+  const handleClosePosition = (pos: OpenPosition) => {
+    const tick = ticks.find(t => t?.symbol === pos.symbol);
+    const exitPrice = tick && typeof tick.price === 'number' ? tick.price : pos.markPrice;
+    const closed = positionStorage.closePosition(pos.id, exitPrice);
+    if (closed) {
+      showNotification(
+        `Posición ${pos.side} ${pos.symbol} cerrada en ${pos.venueName}. PnL Realizado: ${closed.realizedPnl >= 0 ? '+' : ''}$${closed.realizedPnl.toFixed(2)}`
+      );
+    }
   };
 
   // Grouped Navigation Modules inspired by Bento & Pro Dashboards
@@ -220,9 +305,9 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
 
               {/* Sidebar Collapse / Expand Toggle Button */}
               <button
-                onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+                onClick={() => setIsSidebarPinned(!isSidebarPinned)}
                 className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all cursor-pointer border border-white/5 ml-1 hidden sm:flex items-center justify-center"
-                title={isSidebarExpanded ? "Collapse Sidebar to Rail" : "Expand Sidebar"}
+                title={isSidebarPinned ? "Desfijar barra lateral" : "Fijar barra lateral"}
               >
                 {isSidebarExpanded ? (
                   <ChevronLeft className="w-3.5 h-3.5" />
@@ -308,15 +393,15 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
             onMouseEnter={() => setIsSidebarHovered(true)}
             onMouseLeave={() => setIsSidebarHovered(false)}
             className={`absolute top-0 bottom-0 left-0 border-r border-white/10 bg-[#090A10]/95 backdrop-blur-2xl flex flex-col justify-between transition-all duration-300 ease-in-out select-none z-40 shadow-2xl ${
-              isSidebarHovered ? 'w-60 p-3 shadow-black/90 ring-1 ring-white/10' : 'w-14 sm:w-16 p-2 items-center'
+              isSidebarExpanded ? 'w-60 p-3 shadow-black/90 ring-1 ring-white/10' : 'w-14 sm:w-16 p-2 items-center'
             }`}
           >
             {/* Navigation Groups */}
             <div className="space-y-4 w-full">
               {navSections.map((section, sIdx) => (
                 <div key={sIdx} className="space-y-1 w-full">
-                  {/* Category Header (Visible only on hover expansion) */}
-                  {isSidebarHovered && (
+                  {/* Category Header (Visible only on expansion) */}
+                  {isSidebarExpanded && (
                     <div className="px-2.5 py-1 text-[9px] font-mono uppercase tracking-wider text-slate-500 font-bold">
                       {section.group}
                     </div>
@@ -333,7 +418,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                           key={item.id}
                           onClick={() => setActiveTab(item.id)}
                           className={`w-full transition-all flex items-center cursor-pointer group relative overflow-hidden ${
-                            isSidebarHovered 
+                            isSidebarExpanded 
                               ? 'px-3 py-2.5 rounded-xl text-left gap-3' 
                               : 'w-10 h-10 rounded-xl justify-center mx-auto'
                           } ${
@@ -344,10 +429,10 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                           title={item.label}
                         >
                           <Icon className={`shrink-0 transition-transform ${
-                            isSidebarHovered ? 'w-4 h-4' : 'w-4 h-4'
+                            isSidebarExpanded ? 'w-4 h-4' : 'w-4 h-4'
                           } ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'}`} />
 
-                          {isSidebarHovered && (
+                          {isSidebarExpanded && (
                             <div className="flex items-center justify-between flex-1 min-w-0">
                               <span className="text-xs truncate">
                                 {item.label}
@@ -371,7 +456,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
 
             {/* Sidebar Bottom: Status / Info */}
             <div className="pt-3 border-t border-white/5 w-full">
-              {isSidebarHovered ? (
+              {isSidebarExpanded ? (
                 <div className="bg-white/[0.02] border border-white/5 rounded-xl p-2.5 text-[10px] font-mono text-slate-400 space-y-1">
                   <div className="flex justify-between items-center">
                     <span>Protocol:</span>
@@ -393,6 +478,110 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
           {/* Main Operations Canvas (Takes 100% of remaining width) */}
           <main className="flex-1 w-full overflow-y-auto px-3 sm:px-6 py-4 pb-20 max-w-full">
             
+            {/* Top Browser-Style Master Tabs: Exchanges | Brokers | Futuros */}
+            <div className="flex items-center justify-between border-b border-white/10 bg-[#07080D]/90 px-2 sm:px-3 pt-2 mb-3.5 rounded-2xl backdrop-blur-xl shadow-lg">
+              <div className="flex items-end gap-1 sm:gap-2 overflow-x-auto scrollbar-none">
+                
+                {/* Browser Tab 1: Exchanges */}
+                <button
+                  type="button"
+                  onClick={() => handleMasterVenueTabChange('exchanges')}
+                  className={`group relative flex items-center gap-2 px-3.5 sm:px-5 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer border-t-2 border-l border-r -mb-[1px] select-none ${
+                    masterVenueTab === 'exchanges'
+                      ? 'bg-[#0D0F17] text-white border-t-[#38BDF8] border-l-white/10 border-r-white/10 border-b-transparent shadow-lg shadow-black/50 z-10'
+                      : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] border-transparent'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${
+                    masterVenueTab === 'exchanges' ? 'bg-[#38BDF8] shadow-sm shadow-[#38BDF8]/60 animate-pulse' : 'bg-slate-600'
+                  }`} />
+                  <Layers className={`w-3.5 h-3.5 ${masterVenueTab === 'exchanges' ? 'text-[#38BDF8]' : 'text-slate-400'}`} />
+                  <span>Exchanges</span>
+                  <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full ${
+                    masterVenueTab === 'exchanges' 
+                      ? 'bg-[#38BDF8]/20 text-[#38BDF8]' 
+                      : 'bg-white/5 text-slate-400'
+                  }`}>
+                    CCXT Cripto
+                  </span>
+                </button>
+
+                {/* Browser Tab 2: Brokers */}
+                <button
+                  type="button"
+                  onClick={() => handleMasterVenueTabChange('brokers')}
+                  className={`group relative flex items-center gap-2 px-3.5 sm:px-5 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer border-t-2 border-l border-r -mb-[1px] select-none ${
+                    masterVenueTab === 'brokers'
+                      ? 'bg-[#0D0F17] text-white border-t-emerald-400 border-l-white/10 border-r-white/10 border-b-transparent shadow-lg shadow-black/50 z-10'
+                      : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] border-transparent'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${
+                    masterVenueTab === 'brokers' ? 'bg-emerald-400 shadow-sm shadow-emerald-400/60 animate-pulse' : 'bg-slate-600'
+                  }`} />
+                  <Server className={`w-3.5 h-3.5 ${masterVenueTab === 'brokers' ? 'text-emerald-400' : 'text-slate-400'}`} />
+                  <span>Brokers</span>
+                  <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full ${
+                    masterVenueTab === 'brokers' 
+                      ? 'bg-emerald-500/20 text-emerald-400' 
+                      : 'bg-white/5 text-slate-400'
+                  }`}>
+                    MT5 · cTrader
+                  </span>
+                </button>
+
+                {/* Browser Tab 3: Futuros */}
+                <button
+                  type="button"
+                  onClick={() => handleMasterVenueTabChange('futures')}
+                  className={`group relative flex items-center gap-2 px-3.5 sm:px-5 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer border-t-2 border-l border-r -mb-[1px] select-none ${
+                    masterVenueTab === 'futures'
+                      ? 'bg-[#0D0F17] text-white border-t-[#EC4899] border-l-white/10 border-r-white/10 border-b-transparent shadow-lg shadow-black/50 z-10'
+                      : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] border-transparent'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${
+                    masterVenueTab === 'futures' ? 'bg-[#EC4899] shadow-sm shadow-[#EC4899]/60' : 'bg-slate-600'
+                  }`} />
+                  <Flame className={`w-3.5 h-3.5 ${masterVenueTab === 'futures' ? 'text-[#F472B6]' : 'text-slate-400'}`} />
+                  <span>Futuros</span>
+                  <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full ${
+                    masterVenueTab === 'futures' 
+                      ? 'bg-[#EC4899]/20 text-[#F472B6]' 
+                      : 'bg-white/5 text-slate-400'
+                  }`}>
+                    CME L3
+                  </span>
+                </button>
+
+                {/* Browser New Tab '+' Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleMasterVenueTabChange(masterVenueTab);
+                    setActiveTab('connections');
+                  }}
+                  className="mb-1 p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all cursor-pointer border border-white/5 hover:border-white/20"
+                  title="Conectar nuevo Exchange o Broker (+ Tab)"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Right Side: Venue Routing Telemetry Pill */}
+              <div className="hidden md:flex items-center gap-2.5 pb-2 text-[10px] font-mono text-slate-400">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Routing Activo:</span>
+                </span>
+                <span className="text-slate-200 font-bold">
+                  {masterVenueTab === 'exchanges' && 'CCXT Cripto Direct'}
+                  {masterVenueTab === 'brokers' && 'MT5 / cTrader Open API'}
+                  {masterVenueTab === 'futures' && 'CME Globex Gateway'}
+                </span>
+              </div>
+            </div>
+
             {/* Real-Time Searchable Pair Selector Dropdown & Live Venue Quotes */}
             <div className="bg-[#0D0F17]/90 border border-white/10 rounded-2xl p-3 sm:p-4 mb-4 backdrop-blur-xl shadow-xl space-y-3 relative z-30">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -400,7 +589,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                 {/* Searchable Pair Dropdown Selector */}
                 <div className="relative">
                   {(() => {
-                    const activeTick = ticks.find(t => t.symbol === selectedSymbol) || ticks[0] || {
+                    const activeTick = ticks.find(t => t?.symbol === selectedSymbol) || ticks[0] || {
                       symbol: selectedSymbol,
                       name: "Bitcoin Perpetual",
                       price: 84310.20,
@@ -409,9 +598,17 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                       category: "crypto"
                     };
 
-                    const filteredPairs = ticks.filter(t => {
-                      const matchesSearch = t.symbol.toLowerCase().includes(pairSearchQuery.toLowerCase()) ||
-                                            t.name.toLowerCase().includes(pairSearchQuery.toLowerCase());
+                    const safePrice = Number(activeTick?.price || 0);
+                    const safeChange = Number(activeTick?.change24h || 0);
+                    const safeName = activeTick?.name || activeTick?.symbol || selectedSymbol;
+                    const safeCat = (activeTick?.category || 'crypto').toUpperCase();
+
+                    const filteredPairs = (ticks || []).filter(t => {
+                      if (!t || !t.symbol) return false;
+                      const sym = t.symbol.toLowerCase();
+                      const nm = (t.name || '').toLowerCase();
+                      const q = (pairSearchQuery || '').toLowerCase();
+                      const matchesSearch = sym.includes(q) || nm.includes(q);
                       if (!matchesSearch) return false;
                       if (pairCategoryFilter === 'all') return true;
                       return t.category === pairCategoryFilter;
@@ -432,26 +629,26 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                               <div className="text-xs font-bold text-white group-hover:text-[#38BDF8] transition-colors flex items-center gap-1.5">
                                 <span>{selectedSymbol}</span>
                                 <span className="text-[9px] font-sans px-1 py-0.2 rounded bg-white/10 text-slate-400">
-                                  {activeTick.category.toUpperCase()}
+                                  {safeCat}
                                 </span>
                               </div>
                               <div className="text-[10px] text-slate-400 truncate max-w-[130px]">
-                                {activeTick.name}
+                                {safeName}
                               </div>
                             </div>
                           </div>
 
                           <div className="text-right font-mono pl-2 border-l border-white/10">
                             <div className="text-xs font-bold text-white">
-                              ${activeTick.price >= 10 
-                                ? activeTick.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
-                                : activeTick.price.toFixed(5)
+                              ${safePrice >= 10 
+                                ? safePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) 
+                                : safePrice.toFixed(5)
                               }
                             </div>
                             <div className={`text-[10px] font-bold ${
-                              activeTick.change24h >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                              safeChange >= 0 ? 'text-emerald-400' : 'text-rose-400'
                             }`}>
-                              {activeTick.change24h >= 0 ? `+${activeTick.change24h}%` : `${activeTick.change24h}%`}
+                              {safeChange >= 0 ? `+${safeChange}%` : `${safeChange}%`}
                             </div>
                           </div>
 
@@ -501,6 +698,9 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                             <div className="max-h-60 overflow-y-auto space-y-1 pr-1">
                               {filteredPairs.map((tick) => {
                                 const isSelected = selectedSymbol === tick.symbol;
+                                const itemPrice = Number(tick.price || 0);
+                                const itemChange = Number(tick.change24h || 0);
+
                                 return (
                                   <button
                                     key={tick.symbol}
@@ -523,19 +723,19 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                                           {isSelected && <Check className="w-3 h-3 text-[#38BDF8]" />}
                                         </div>
                                         <div className="text-[10px] text-slate-400 truncate max-w-[150px]">
-                                          {tick.name}
+                                          {tick.name || tick.symbol}
                                         </div>
                                       </div>
                                     </div>
 
                                     <div className="text-right font-mono text-xs">
                                       <div className="font-bold text-white">
-                                        ${tick.price >= 10 ? tick.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : tick.price.toFixed(5)}
+                                        ${itemPrice >= 10 ? itemPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : itemPrice.toFixed(5)}
                                       </div>
                                       <div className={`text-[10px] ${
-                                        tick.change24h >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                                        itemChange >= 0 ? 'text-emerald-400' : 'text-rose-400'
                                       }`}>
-                                        {tick.change24h >= 0 ? `+${tick.change24h}%` : `${tick.change24h}%`}
+                                        {itemChange >= 0 ? `+${itemChange}%` : `${itemChange}%`}
                                       </div>
                                     </div>
                                   </button>
@@ -551,7 +751,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
 
                 {/* 24h Clean Market Stats Strip (Replaces the Redis / tech tags) */}
                 {(() => {
-                  const tick = ticks.find(t => t.symbol === selectedSymbol) || ticks[0];
+                  const tick = ticks.find(t => t?.symbol === selectedSymbol) || ticks[0];
                   return (
                     <div className="flex items-center gap-4 text-xs font-mono text-slate-400 self-start sm:self-auto">
                       <div>
@@ -577,14 +777,15 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                   { id: 'bybit', name: 'Bybit', color: '#F7A600', spreadOffset: 0.00014, ping: '10ms' },
                   { id: 'hyperliquid', name: 'Hyperliquid', color: '#50D2C1', spreadOffset: -0.00008, ping: '6ms' },
                 ].map((venue) => {
-                  const tick = ticks.find(t => t.symbol === selectedSymbol) || ticks[0] || {
+                  const tick = ticks.find(t => t?.symbol === selectedSymbol) || ticks[0] || {
                     symbol: selectedSymbol,
                     price: selectedSymbol.includes('BTC') ? 84310.20 : selectedSymbol.includes('ETH') ? 2728.50 : 186.40,
                     change24h: 3.45,
                     direction: 'up'
                   };
 
-                  const venuePrice = tick.price * (1 + venue.spreadOffset);
+                  const basePrice = Number(tick?.price || 0);
+                  const venuePrice = basePrice * (1 + (venue.spreadOffset || 0));
                   const isConnected = accounts.some(a => a.venueId === venue.id && a.status === 'CONNECTED');
                   const isForex = selectedSymbol.includes('EUR');
 
@@ -615,10 +816,10 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                       <div className="flex items-baseline justify-between gap-1 font-mono">
                         <span className="text-xs sm:text-sm font-bold text-white tracking-tight">
                           ${isForex 
-                            ? venuePrice.toFixed(5) 
-                            : venuePrice >= 1000 
-                            ? venuePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                            : venuePrice.toFixed(2)
+                            ? (venuePrice || 0).toFixed(5) 
+                            : (venuePrice || 0) >= 1000 
+                            ? (venuePrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                            : (venuePrice || 0).toFixed(2)
                           }
                         </span>
                         <span className={`text-[9px] ${
@@ -636,57 +837,81 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
             {/* Compact Bento Grid: Global Capital Chart + Portfolio Allocation Ring */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 mb-4">
               <div className="lg:col-span-8">
-                <GlobalCapitalChart totalEquity={totalBalance} />
+                <GlobalCapitalChart 
+                  totalEquity={performance.totalEquity} 
+                  unrealizedPnl={performance.unrealizedPnl}
+                  realizedPnl={performance.realizedPnl}
+                  maxDrawdownPct={performance.maxDrawdownPct}
+                  maxDrawdownUsd={performance.maxDrawdownUsd}
+                />
               </div>
               <div className="lg:col-span-4">
                 <PortfolioAllocationRing 
                   accounts={accounts} 
-                  totalEquity={totalBalance} 
+                  totalEquity={performance.totalEquity} 
                   onOpenConnectModal={() => setActiveTab('connections')} 
                 />
               </div>
             </div>
 
-            {/* Compact Workspace Key Metrics Strip */}
+            {/* Real-Time Positions & PnL Key Metrics Strip across all Connected Exchanges */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
-              <div className="bg-[#0D0F17]/80 border border-white/10 px-3.5 py-2.5 rounded-xl flex items-center justify-between">
+              {/* KPI 1: Operaciones Abiertas */}
+              <div className="bg-[#0D0F17]/85 border border-white/10 px-3.5 py-2.5 rounded-xl flex items-center justify-between">
                 <div>
-                  <div className="text-[9.5px] text-slate-400 uppercase font-mono">Equidad Consolidada</div>
-                  <div className="text-sm sm:text-base font-bold font-mono text-white">
-                    ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <div className="text-[9.5px] text-slate-400 uppercase font-mono">Operaciones Abiertas</div>
+                  <div className="text-sm sm:text-base font-bold font-mono text-white flex items-baseline gap-1.5">
+                    <span>{performance.openPositionsCount} Activas</span>
+                    <span className="text-[10px] text-slate-400 font-normal">
+                      (${performance.totalMarginUsed.toLocaleString(undefined, { maximumFractionDigits: 0 })} mrg)
+                    </span>
                   </div>
                 </div>
-                <Wallet className="w-4 h-4 text-[#F472B6] shrink-0" />
+                <Layers className="w-4 h-4 text-[#38BDF8] shrink-0" />
               </div>
 
-              <div className="bg-[#0D0F17]/80 border border-white/10 px-3.5 py-2.5 rounded-xl flex items-center justify-between">
+              {/* KPI 2: PnL No Realizado (uPnL Flotante en tiempo real) */}
+              <div className="bg-[#0D0F17]/85 border border-white/10 px-3.5 py-2.5 rounded-xl flex items-center justify-between">
                 <div>
-                  <div className="text-[9.5px] text-slate-400 uppercase font-mono">Margen Libre Total</div>
-                  <div className="text-sm sm:text-base font-bold font-mono text-emerald-400">
-                    ${totalFreeMargin.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <div className="text-[9.5px] text-slate-400 uppercase font-mono">PnL No Realizado</div>
+                  <div className={`text-sm sm:text-base font-bold font-mono ${
+                    performance.unrealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                  }`}>
+                    {performance.unrealizedPnl >= 0 ? '+' : ''}${performance.unrealizedPnl.toFixed(2)}
                   </div>
                 </div>
-                <Zap className="w-4 h-4 text-[#38BDF8] shrink-0" />
+                {performance.unrealizedPnl >= 0 ? (
+                  <TrendingUp className="w-4 h-4 text-emerald-400 shrink-0" />
+                ) : (
+                  <TrendingDown className="w-4 h-4 text-rose-400 shrink-0" />
+                )}
               </div>
 
-              <div className="bg-[#0D0F17]/80 border border-white/10 px-3.5 py-2.5 rounded-xl flex items-center justify-between">
+              {/* KPI 3: PnL Realizado Acumulado */}
+              <div className="bg-[#0D0F17]/85 border border-white/10 px-3.5 py-2.5 rounded-xl flex items-center justify-between">
                 <div>
-                  <div className="text-[9.5px] text-slate-400 uppercase font-mono">Conexiones Activas</div>
-                  <div className="text-sm sm:text-base font-bold font-mono text-white">
-                    {connectedAccounts.length} <span className="text-[10px] text-slate-400 font-normal">/ {accounts.length}</span>
+                  <div className="text-[9.5px] text-slate-400 uppercase font-mono">PnL Realizado</div>
+                  <div className={`text-sm sm:text-base font-bold font-mono ${
+                    performance.realizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                  }`}>
+                    {performance.realizedPnl >= 0 ? '+' : ''}${performance.realizedPnl.toFixed(2)}
                   </div>
                 </div>
-                <Key className="w-4 h-4 text-amber-400 shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-[#FBBF24] shrink-0" />
               </div>
 
-              <div className="bg-[#0D0F17]/80 border border-white/10 px-3.5 py-2.5 rounded-xl flex items-center justify-between">
+              {/* KPI 4: Mayor Drawdown sobre el total */}
+              <div className="bg-[#0D0F17]/85 border border-white/10 px-3.5 py-2.5 rounded-xl flex items-center justify-between">
                 <div>
-                  <div className="text-[9.5px] text-slate-400 uppercase font-mono">Gas Tank L2</div>
-                  <div className="text-sm sm:text-base font-bold font-mono text-amber-400">
-                    {gasTankBalance.toFixed(2)} USDT
+                  <div className="text-[9.5px] text-slate-400 uppercase font-mono">Mayor Drawdown (DD)</div>
+                  <div className="text-sm sm:text-base font-bold font-mono text-rose-400 flex items-baseline gap-1.5">
+                    <span>-{performance.maxDrawdownPct.toFixed(2)}%</span>
+                    <span className="text-[10px] text-rose-300/70 font-normal">
+                      (-${performance.maxDrawdownUsd.toFixed(0)})
+                    </span>
                   </div>
                 </div>
-                <Flame className="w-4 h-4 text-amber-400 shrink-0" />
+                <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
               </div>
             </div>
 
@@ -708,6 +933,110 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
             {/* TAB 02: Portfolio L2 Overview */}
             {activeTab === 'overview' && (
               <div className="space-y-4 animate-in fade-in duration-200">
+                {/* Posiciones Abiertas Multivenue con uPnL en Tiempo Real */}
+                <div className="rounded-2xl p-4 sm:p-5 border border-white/10 bg-[#0D0F17]/85 backdrop-blur-xl shadow-xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2.5 border-b border-white/5">
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-[#38BDF8]" />
+                        <span>Posiciones Abiertas Multivenue ({positions.length})</span>
+                      </h3>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Posiciones activas consolidadas entre todos los exchanges conectados con uPnL en vivo.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
+                        performance.unrealizedPnl >= 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                      }`}>
+                        uPnL: {performance.unrealizedPnl >= 0 ? '+' : ''}${performance.unrealizedPnl.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {positions.length === 0 ? (
+                    <div className="py-8 flex flex-col items-center justify-center text-center space-y-2">
+                      <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-500">
+                        <Layers className="w-5 h-5 text-slate-400" />
+                      </div>
+                      <div className="text-xs font-bold text-white">Sin Posiciones Abiertas</div>
+                      <p className="text-[11px] text-slate-400 max-w-sm">
+                        Despacha órdenes desde la barra superior de trading rápido o desde Smart Orders para registrar ejecuciones en tiempo real.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs font-mono-nums">
+                        <thead>
+                          <tr className="border-b border-white/10 text-slate-400 font-sans text-[10px] uppercase">
+                            <th className="pb-2.5 px-3">Operación / Par</th>
+                            <th className="pb-2.5 px-3">Exchange</th>
+                            <th className="pb-2.5 px-3">Tamaño / Margen</th>
+                            <th className="pb-2.5 px-3">Precio Entrada</th>
+                            <th className="pb-2.5 px-3">Mark Price</th>
+                            <th className="pb-2.5 px-3">uPnL Flotante</th>
+                            <th className="pb-2.5 px-3">Liq. Price</th>
+                            <th className="pb-2.5 px-3 text-right">Acción</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {positions.map((pos) => (
+                            <tr key={pos.id} className="hover:bg-white/[0.02] transition-colors">
+                              <td className="py-2.5 px-3">
+                                <div className="flex items-center gap-1.5 font-bold font-sans">
+                                  <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                                    pos.side === 'LONG' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                  }`}>
+                                    {pos.side} {pos.leverage}x
+                                  </span>
+                                  <span className="text-white text-xs">{pos.symbol}</span>
+                                </div>
+                              </td>
+                              <td className="py-2.5 px-3">
+                                <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono text-slate-300">
+                                  {pos.venueName}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3 text-slate-200">
+                                <div>{pos.size} {pos.symbol.split('/')[0]}</div>
+                                <div className="text-[10px] text-slate-400">${(pos.marginUsed || 0).toFixed(1)} mrg</div>
+                              </td>
+                              <td className="py-2.5 px-3 text-slate-300">
+                                ${(pos.entryPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </td>
+                              <td className="py-2.5 px-3 font-bold text-white">
+                                ${(pos.markPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </td>
+                              <td className="py-2.5 px-3">
+                                <span className={`font-bold flex items-center gap-1 ${
+                                  pos.unrealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                                }`}>
+                                  {pos.unrealizedPnl >= 0 ? '+' : ''}${pos.unrealizedPnl.toFixed(2)}
+                                  <span className="text-[10px] opacity-80">
+                                    ({pos.unrealizedPnlPct >= 0 ? '+' : ''}{pos.unrealizedPnlPct.toFixed(1)}%)
+                                  </span>
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3 text-rose-400/80 text-[11px]">
+                                ${(pos.liquidationPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </td>
+                              <td className="py-2.5 px-3 text-right">
+                                <button
+                                  onClick={() => handleClosePosition(pos)}
+                                  className="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 hover:text-white text-[10px] font-mono font-bold transition-all cursor-pointer"
+                                  title="Cerrar posición a mercado y liquidar PnL realizado"
+                                >
+                                  Cerrar
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
                 <div className="rounded-2xl p-4 sm:p-5 border border-white/10 bg-[#0D0F17]/85 backdrop-blur-xl shadow-xl">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2.5 border-b border-white/5">
                     <div>

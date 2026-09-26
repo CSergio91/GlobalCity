@@ -16,17 +16,18 @@ export const PortfolioAllocationRing: React.FC<PortfolioAllocationRingProps> = (
   const activeAccounts = accounts.filter(a => a.status === 'CONNECTED');
   const validTotal = totalEquity > 0 ? totalEquity : 0;
 
-  // Compute segments
+  // Compute segments safely
   const segments = activeAccounts.map(acc => {
-    const venue = SUPPORTED_VENUES.find(v => v.id === acc.venueId);
-    const pct = validTotal > 0 ? (acc.balanceUsd / validTotal) * 100 : 0;
+    const venue = SUPPORTED_VENUES.find(v => v.id === acc?.venueId);
+    const balance = Number(acc?.balanceUsd) || 0;
+    const pct = validTotal > 0 ? (balance / validTotal) * 100 : 0;
     return {
       id: acc.id,
-      name: acc.venueName,
-      label: acc.label,
+      name: acc.venueName || venue?.name || 'Exchange',
+      label: acc.label || '',
       color: venue?.color || '#EC4899',
-      balanceUsd: acc.balanceUsd,
-      pct
+      balanceUsd: balance,
+      pct: isNaN(pct) ? 0 : pct
     };
   });
 
@@ -134,9 +135,9 @@ export const PortfolioAllocationRing: React.FC<PortfolioAllocationRingProps> = (
                   </span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-slate-400 text-[10px]">{seg.pct.toFixed(1)}%</span>
+                  <span className="text-slate-400 text-[10px]">{(seg.pct || 0).toFixed(1)}%</span>
                   <span className="font-bold text-slate-200">
-                    ${seg.balanceUsd.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    ${(seg.balanceUsd || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </span>
                 </div>
               </div>

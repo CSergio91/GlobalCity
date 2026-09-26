@@ -77,11 +77,20 @@ export const ExchangeManager: React.FC = () => {
         }
       } catch {}
     };
+    const handleVenueTypeEvent = (e: any) => {
+      if (e?.detail && ['exchanges', 'brokers', 'futures'].includes(e.detail)) {
+        setMasterTab(e.detail);
+      }
+    };
+
     window.addEventListener('globalcity_accounts_changed', handleStorageChange);
     window.addEventListener('globalcity_favorites_changed', handleStorageChange);
+    window.addEventListener('globalcity_active_venue_type_changed', handleVenueTypeEvent);
+
     return () => {
       window.removeEventListener('globalcity_accounts_changed', handleStorageChange);
       window.removeEventListener('globalcity_favorites_changed', handleStorageChange);
+      window.removeEventListener('globalcity_active_venue_type_changed', handleVenueTypeEvent);
     };
   }, []);
 
@@ -89,6 +98,7 @@ export const ExchangeManager: React.FC = () => {
     setMasterTab(tab);
     try {
       localStorage.setItem('globalcity_active_venue_type', tab);
+      window.dispatchEvent(new CustomEvent('globalcity_active_venue_type_changed', { detail: tab }));
     } catch {}
   };
 
@@ -287,58 +297,86 @@ export const ExchangeManager: React.FC = () => {
         </div>
       )}
 
-      {/* Master Tabs: Exchanges, Brokers, Futuros (Distinct Colors & State Persistence) */}
-      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-[#0D0F17]/90 border border-white/10 shadow-lg">
-        {/* Tab 1: Exchanges (Electric Blue / Cyan) */}
-        <button
-          type="button"
-          onClick={() => handleMasterTabChange('exchanges')}
-          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
-            masterTab === 'exchanges'
-              ? 'bg-[#38BDF8]/15 border border-[#38BDF8]/50 text-[#38BDF8] shadow-md shadow-[#38BDF8]/20'
-              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-          }`}
-        >
-          <Layers className="w-4 h-4 text-[#38BDF8]" />
-          <span>Exchanges</span>
-          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-[#38BDF8]/20 text-[#38BDF8] hidden sm:inline">
-            CCXT Cripto
-          </span>
-        </button>
+      {/* Browser-Style Master Tabs: Exchanges | Brokers | Futuros */}
+      <div className="flex items-center justify-between border-b border-white/10 bg-[#07080D]/90 px-2 sm:px-3 pt-2 rounded-2xl shadow-lg">
+        <div className="flex items-end gap-1 sm:gap-2 overflow-x-auto scrollbar-none">
+          {/* Tab 1: Exchanges (Electric Blue / Cyan) */}
+          <button
+            type="button"
+            onClick={() => handleMasterTabChange('exchanges')}
+            className={`group relative flex items-center gap-2 px-3.5 sm:px-5 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer border-t-2 border-l border-r -mb-[1px] select-none ${
+              masterTab === 'exchanges'
+                ? 'bg-[#0D0F17] text-white border-t-[#38BDF8] border-l-white/10 border-r-white/10 border-b-transparent shadow-lg shadow-black/50 z-10'
+                : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] border-transparent'
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full shrink-0 ${
+              masterTab === 'exchanges' ? 'bg-[#38BDF8] shadow-sm shadow-[#38BDF8]/60 animate-pulse' : 'bg-slate-600'
+            }`} />
+            <Layers className={`w-3.5 h-3.5 ${masterTab === 'exchanges' ? 'text-[#38BDF8]' : 'text-slate-400'}`} />
+            <span>Exchanges</span>
+            <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full ${
+              masterTab === 'exchanges' 
+                ? 'bg-[#38BDF8]/20 text-[#38BDF8]' 
+                : 'bg-white/5 text-slate-400'
+            }`}>
+              CCXT Cripto
+            </span>
+          </button>
 
-        {/* Tab 2: Brokers (Emerald Green) */}
-        <button
-          type="button"
-          onClick={() => handleMasterTabChange('brokers')}
-          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
-            masterTab === 'brokers'
-              ? 'bg-emerald-500/15 border border-emerald-500/50 text-emerald-400 shadow-md shadow-emerald-500/20'
-              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-          }`}
-        >
-          <Server className="w-4 h-4 text-emerald-400" />
-          <span>Brokers</span>
-          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 hidden sm:inline">
-            MT5 · cTrader
-          </span>
-        </button>
+          {/* Tab 2: Brokers (Emerald Green) */}
+          <button
+            type="button"
+            onClick={() => handleMasterTabChange('brokers')}
+            className={`group relative flex items-center gap-2 px-3.5 sm:px-5 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer border-t-2 border-l border-r -mb-[1px] select-none ${
+              masterTab === 'brokers'
+                ? 'bg-[#0D0F17] text-white border-t-emerald-400 border-l-white/10 border-r-white/10 border-b-transparent shadow-lg shadow-black/50 z-10'
+                : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] border-transparent'
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full shrink-0 ${
+              masterTab === 'brokers' ? 'bg-emerald-400 shadow-sm shadow-emerald-400/60 animate-pulse' : 'bg-slate-600'
+            }`} />
+            <Server className={`w-3.5 h-3.5 ${masterTab === 'brokers' ? 'text-emerald-400' : 'text-slate-400'}`} />
+            <span>Brokers</span>
+            <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full ${
+              masterTab === 'brokers' 
+                ? 'bg-emerald-500/20 text-emerald-400' 
+                : 'bg-white/5 text-slate-400'
+            }`}>
+              MT5 · cTrader
+            </span>
+          </button>
 
-        {/* Tab 3: Futuros (Rose Pink) */}
-        <button
-          type="button"
-          onClick={() => handleMasterTabChange('futures')}
-          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
-            masterTab === 'futures'
-              ? 'bg-[#EC4899]/15 border border-[#EC4899]/50 text-[#F472B6] shadow-md shadow-[#EC4899]/20'
-              : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
-          }`}
-        >
-          <Flame className="w-4 h-4 text-[#F472B6]" />
-          <span>Futuros</span>
-          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-[#EC4899]/20 text-[#F472B6] hidden sm:inline">
-            CME L3
-          </span>
-        </button>
+          {/* Tab 3: Futuros (Rose Pink) */}
+          <button
+            type="button"
+            onClick={() => handleMasterTabChange('futures')}
+            className={`group relative flex items-center gap-2 px-3.5 sm:px-5 py-2 text-xs font-bold rounded-t-xl transition-all cursor-pointer border-t-2 border-l border-r -mb-[1px] select-none ${
+              masterTab === 'futures'
+                ? 'bg-[#0D0F17] text-white border-t-[#EC4899] border-l-white/10 border-r-white/10 border-b-transparent shadow-lg shadow-black/50 z-10'
+                : 'bg-white/[0.02] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] border-transparent'
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full shrink-0 ${
+              masterTab === 'futures' ? 'bg-[#EC4899] shadow-sm shadow-[#EC4899]/60' : 'bg-slate-600'
+            }`} />
+            <Flame className={`w-3.5 h-3.5 ${masterTab === 'futures' ? 'text-[#F472B6]' : 'text-slate-400'}`} />
+            <span>Futuros</span>
+            <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full ${
+              masterTab === 'futures' 
+                ? 'bg-[#EC4899]/20 text-[#F472B6]' 
+                : 'bg-white/5 text-slate-400'
+            }`}>
+              CME L3
+            </span>
+          </button>
+        </div>
+
+        {/* Tab Right: Quick Status */}
+        <div className="hidden sm:flex items-center gap-2 pb-2 text-[10px] font-mono text-slate-400">
+          <span>{filteredAccounts.length} Conectados</span>
+        </div>
       </div>
 
       {/* Main Header with Compact Button for active master tab */}
