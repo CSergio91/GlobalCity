@@ -6,6 +6,7 @@ import {
   ArrowRight,
   ChevronRight
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import { authService, AuthResult } from '../../services/authService';
 import presentationVideo from '../../assets/video/global_city_presentation_logo.mp4';
@@ -135,11 +136,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
   return (
     <div 
       onContextMenu={(e) => e.preventDefault()}
-      className={`w-full flex ${
-        isRevealed 
-          ? 'flex-col md:flex-row items-center justify-center gap-6 sm:gap-8 md:gap-12 lg:gap-16' 
-          : 'flex-col items-center justify-center'
-      } relative select-none transition-all duration-700`}
+      className="w-full flex items-center justify-center relative select-none"
     >
       
       {/* Botón de Cierre Superior (si se abre en modal) */}
@@ -153,62 +150,84 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
         </button>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════
-          VIDEO / LOGO PRINCIPAL (360x640, object-contain completo)
-          Reproduce primero centrado; al terminar el video, se coloca al lado 
-          en escritorio y arriba en móvil
-         ═══════════════════════════════════════════════════════════════ */}
-      <div 
-        className={`relative flex flex-col items-center justify-center transition-all duration-700 ease-out select-none shrink-0 ${
+      {/* Contenedor Flex Animado con Motion Layout */}
+      <motion.div 
+        layout
+        transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+        className={`w-full flex ${
           isRevealed 
-            ? 'w-[250px] sm:w-[280px] md:w-[320px] lg:w-[360px] aspect-[9/16] max-h-[35vh] sm:max-h-[40vh] md:max-h-[62vh] cursor-pointer' 
-            : 'w-[280px] sm:w-[340px] md:w-[380px] aspect-[9/16] max-h-[72vh]'
+            ? 'flex-col md:flex-row items-center justify-center gap-6 sm:gap-8 md:gap-12 lg:gap-16' 
+            : 'flex-col items-center justify-center'
         }`}
-        onClick={isRevealed ? handleReplayVideo : undefined}
-        title={isRevealed ? "Toca para reproducir el vídeo de nuevo" : undefined}
       >
-        {isRevealed ? (
-          <img
-            src={lastFrameLogo}
-            alt="Global City Logo"
-            onContextMenu={(e) => e.preventDefault()}
-            className="w-full h-full object-contain object-center pointer-events-none select-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)] animate-in fade-in duration-500 hover:scale-[1.02] transition-transform"
-          />
-        ) : (
-          <video
-            ref={videoRef}
-            src={presentationVideo}
-            autoPlay
-            muted
-            playsInline
-            preload="auto"
-            controlsList="nodownload nofullscreen noremoteplayback"
-            disablePictureInPicture
-            onContextMenu={(e) => e.preventDefault()}
-            onEnded={handleVideoEnded}
-            className="w-full h-full object-contain object-center pointer-events-none select-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)]"
-          />
-        )}
 
-        {/* Botón sutil para continuar al login antes de que termine el video */}
-        {!isRevealed && (
-          <button
-            onClick={handleManualContinue}
-            className="mt-4 px-5 py-2 rounded-full bg-black/70 hover:bg-black/95 backdrop-blur-md text-white/90 hover:text-white text-xs font-semibold tracking-wide flex items-center gap-1.5 transition-all shadow-2xl border border-white/15 group cursor-pointer active:scale-95"
-          >
-            <span>Continuar al Login</span>
-            <ChevronRight className="w-3.5 h-3.5 text-[#F472B6] group-hover:translate-x-0.5 transition-transform" />
-          </button>
-        )}
-      </div>
+        {/* ═══════════════════════════════════════════════════════════════
+            VIDEO / LOGO PRINCIPAL:
+            Primero centrado; al terminar, se desplaza suavemente a la izquierda
+           ═══════════════════════════════════════════════════════════════ */}
+        <motion.div 
+          layout
+          transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+          className={`relative flex flex-col items-center justify-center select-none shrink-0 ${
+            isRevealed 
+              ? 'w-[250px] sm:w-[280px] md:w-[320px] lg:w-[360px] aspect-[9/16] max-h-[35vh] sm:max-h-[40vh] md:max-h-[62vh] cursor-pointer' 
+              : 'w-[280px] sm:w-[340px] md:w-[380px] aspect-[9/16] max-h-[72vh]'
+          }`}
+          onClick={isRevealed ? handleReplayVideo : undefined}
+          title={isRevealed ? "Toca para reproducir el vídeo de nuevo" : undefined}
+        >
+          {isRevealed ? (
+            <motion.img
+              initial={{ opacity: 0.85 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              src={lastFrameLogo}
+              alt="Global City Logo"
+              onContextMenu={(e) => e.preventDefault()}
+              className="w-full h-full object-contain object-center pointer-events-none select-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)] hover:scale-[1.02] transition-transform"
+            />
+          ) : (
+            <video
+              ref={videoRef}
+              src={presentationVideo}
+              autoPlay
+              muted
+              playsInline
+              preload="auto"
+              controlsList="nodownload nofullscreen noremoteplayback"
+              disablePictureInPicture
+              onContextMenu={(e) => e.preventDefault()}
+              onEnded={handleVideoEnded}
+              className="w-full h-full object-contain object-center pointer-events-none select-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)]"
+            />
+          )}
 
-      {/* ═══════════════════════════════════════════════════════════════
-          LOGIN SIN CONTENEDOR: 
-          En escritorio: Al lado (derecha) | En móvil: Abajo
-          Sin caja, sin marco, sin borde, flotando sobre el fondo
-         ═══════════════════════════════════════════════════════════════ */}
-      {isRevealed && (
-        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md flex flex-col items-center md:items-start text-center md:text-left space-y-4 animate-in fade-in slide-in-from-bottom-6 md:slide-in-from-right-6 duration-700">
+          {/* Botón sutil para continuar al login antes de que termine el video */}
+          {!isRevealed && (
+            <button
+              onClick={handleManualContinue}
+              className="mt-4 px-5 py-2 rounded-full bg-black/70 hover:bg-black/95 backdrop-blur-md text-white/90 hover:text-white text-xs font-semibold tracking-wide flex items-center gap-1.5 transition-all shadow-2xl border border-white/15 group cursor-pointer active:scale-95"
+            >
+              <span>Continuar al Login</span>
+              <ChevronRight className="w-3.5 h-3.5 text-[#F472B6] group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          )}
+        </motion.div>
+
+        {/* ═══════════════════════════════════════════════════════════════
+            LOGIN SIN CONTENEDOR: 
+            Aparece suavemente al lado derecho (escritorio) o abajo (móvil)
+           ═══════════════════════════════════════════════════════════════ */}
+        <AnimatePresence>
+          {isRevealed && (
+            <motion.div 
+              key="login-controls"
+              initial={{ opacity: 0, x: 40, y: 0 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full max-w-xs sm:max-w-sm md:max-w-md flex flex-col items-center md:items-start text-center md:text-left space-y-4"
+            >
           
           {/* TÍTULO CON GRADIENTE SUNSET */}
           <div className="space-y-1">
@@ -291,8 +310,11 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
             </div>
           )}
 
-        </div>
-      )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+      </motion.div>
 
     </div>
   );
