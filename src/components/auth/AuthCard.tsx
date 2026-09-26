@@ -143,24 +143,24 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
       {/* Contenedor Flex Animado con Motion Layout */}
       <motion.div 
         layout
-        transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
         className={`w-full flex ${
           isRevealed 
-            ? 'flex-col md:flex-row items-center justify-center gap-6 sm:gap-8 md:gap-12 lg:gap-16' 
+            ? 'flex-col md:flex-row items-center justify-center gap-2 sm:gap-3 md:gap-12 lg:gap-16' 
             : 'flex-col items-center justify-center'
         }`}
       >
 
         {/* ═══════════════════════════════════════════════════════════════
-            VIDEO / LOGO PRINCIPAL (100% Ajustado a los bordes laterales)
-            Cero bordes visibles, la iluminación toca los límites de la pantalla
+            VIDEO / LOGO PRINCIPAL:
+            Al terminar: Sube suavemente y se achica sin disparar el scroll
            ═══════════════════════════════════════════════════════════════ */}
         <motion.div 
           layout
-          transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
-          className={`relative flex flex-col items-center justify-center select-none shrink-0 w-full overflow-hidden sm:overflow-visible ${
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          className={`relative flex flex-col items-center justify-center select-none shrink-0 w-full overflow-hidden sm:overflow-visible transition-all duration-700 ${
             isRevealed 
-              ? 'max-w-full sm:max-w-md md:max-w-[340px] lg:max-w-[380px] max-h-[36vh] sm:max-h-[42vh] md:max-h-[68vh]' 
+              ? 'max-w-full sm:max-w-md md:max-w-[340px] lg:max-w-[380px] max-h-[22vh] sm:max-h-[26vh] md:max-h-[64vh]' 
               : 'w-full max-w-full sm:max-w-md md:max-w-[480px]'
           }`}
         >
@@ -172,7 +172,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
               src={lastFrameLogo}
               alt="Global City Logo"
               onContextMenu={(e) => e.preventDefault()}
-              className="w-full h-auto max-h-[36vh] sm:max-h-[42vh] md:max-h-[68vh] object-contain object-center bg-black"
+              className="w-full h-auto max-h-[22vh] sm:max-h-[26vh] md:max-h-[64vh] object-contain object-center bg-black"
             />
           ) : (
             <video
@@ -195,7 +195,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
             <div className="mt-4 flex justify-center z-30 pointer-events-auto">
               <button
                 onClick={handleManualContinue}
-                className="px-5 py-2.5 rounded-full bg-black/90 hover:bg-black text-white/90 hover:text-white text-xs font-semibold tracking-wide flex items-center gap-1.5 transition-all shadow-2xl border border-white/20 group cursor-pointer active:scale-95"
+                className="px-5 py-2 rounded-full bg-black/90 hover:bg-black text-white/90 hover:text-white text-xs font-semibold tracking-wide flex items-center gap-1.5 transition-all shadow-2xl border border-white/20 group cursor-pointer active:scale-95"
               >
                 <span>Continuar al Login</span>
                 <ChevronRight className="w-3.5 h-3.5 text-[#F472B6] group-hover:translate-x-0.5 transition-transform" />
@@ -206,26 +206,25 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
 
         {/* ═══════════════════════════════════════════════════════════════
             LOGIN SIN CONTENEDOR: 
-            En escritorio: Aparece a la derecha suavemente
-            En móvil: Aparece debajo sin tapar el logo
+            Sube sutilmente sin exagerar para que todo quepa en la pantalla
            ═══════════════════════════════════════════════════════════════ */}
         <AnimatePresence>
           {isRevealed && (
             <motion.div 
               key="login-controls"
-              initial={{ opacity: 0, y: 35, x: 0 }}
-              animate={{ opacity: 1, y: 0, x: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-xs sm:max-w-sm md:max-w-md flex flex-col items-center text-center space-y-4 mx-auto px-4"
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full max-w-xs sm:max-w-sm md:max-w-md flex flex-col items-center text-center space-y-2.5 sm:space-y-3 mx-auto px-4"
             >
           
           {/* TÍTULO CON GRADIENTE SUNSET (PERFECTAMENTE CENTRADO) */}
-          <div className="space-y-1 w-full flex flex-col items-center text-center">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-center text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] drop-shadow-[0_0_30px_rgba(244,114,182,0.4)]">
+          <div className="space-y-0.5 w-full flex flex-col items-center text-center">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight text-center text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] drop-shadow-[0_0_25px_rgba(244,114,182,0.35)]">
               Login
             </h1>
-            <p className="text-xs sm:text-sm lg:text-base text-slate-300 font-medium text-center drop-shadow-md">
+            <p className="text-[11px] sm:text-xs lg:text-sm text-slate-300 font-medium text-center drop-shadow-md">
               {hasExistingSession 
                 ? `Bienvenido de nuevo, ${storedUser?.firstName || 'Trader'}` 
                 : 'Acceso directo con tu cuenta de Telegram'}
@@ -233,39 +232,39 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
           </div>
 
           {/* ACCIÓN PRINCIPAL DE ACCESO (PERFECTAMENTE CENTRADA) */}
-          <div className="w-full flex flex-col items-center text-center space-y-3 pt-1">
+          <div className="w-full flex flex-col items-center text-center space-y-2 pt-0.5">
             {hasExistingSession ? (
               // CASO 1: Sesión previa en localStorage -> Botón GRANDE "Ver Mi Dashboard"
-              <div className="w-full flex flex-col items-center text-center space-y-3">
+              <div className="w-full flex flex-col items-center text-center space-y-2">
                 <button
                   onClick={() => onSuccess()}
-                  className="w-full btn-liquid py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#0088CC] via-[#229ED9] to-[#00C2FF] hover:brightness-110 text-white text-sm sm:text-base font-black flex items-center justify-center gap-2.5 shadow-[0_10px_35px_rgba(0,136,204,0.6)] hover:shadow-cyan-400/50 transition-all cursor-pointer group active:scale-95"
+                  className="w-full btn-liquid py-2.5 sm:py-3 px-5 sm:px-6 rounded-2xl bg-gradient-to-r from-[#0088CC] via-[#229ED9] to-[#00C2FF] hover:brightness-110 text-white text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-[0_10px_35px_rgba(0,136,204,0.6)] hover:shadow-cyan-400/50 transition-all cursor-pointer group active:scale-95"
                 >
                   <span>Ver Mi Dashboard</span>
-                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:translate-x-1.5 transition-transform" />
+                  <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1.5 transition-transform" />
                 </button>
 
                 {/* Badge de estado verificado */}
-                <div className="flex items-center justify-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/35 text-xs font-mono text-emerald-300 backdrop-blur-md shadow-md">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="truncate max-w-[220px]">Sesión: {storedUser?.username || storedUser?.firstName}</span>
+                <div className="flex items-center justify-center gap-2 px-3 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/35 text-[11px] font-mono text-emerald-300 backdrop-blur-md shadow-md">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="truncate max-w-[200px]">Sesión: {storedUser?.username || storedUser?.firstName}</span>
                 </div>
 
                 <button
                   onClick={handleLaunchTelegramOAuth}
-                  className="text-xs text-slate-400 hover:text-white transition-colors cursor-pointer pt-1 hover:underline drop-shadow"
+                  className="text-[11px] text-slate-400 hover:text-white transition-colors cursor-pointer pt-0.5 hover:underline drop-shadow"
                 >
                   Conectar con otra cuenta de Telegram
                 </button>
               </div>
             ) : (
               // CASO 2: Sin sesión previa -> Botón "Conectar con Telegram"
-              <div className="w-full flex flex-col items-center text-center space-y-3">
+              <div className="w-full flex flex-col items-center text-center space-y-2">
                 <button
                   onClick={handleLaunchTelegramOAuth}
-                  className="w-full btn-liquid py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#229ED9] to-[#0088CC] hover:brightness-110 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2.5 shadow-[0_10px_35px_rgba(34,158,217,0.5)] transition-all cursor-pointer group active:scale-95"
+                  className="w-full btn-liquid py-2.5 sm:py-3 px-5 sm:px-6 rounded-2xl bg-gradient-to-r from-[#229ED9] to-[#0088CC] hover:brightness-110 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-[0_10px_35px_rgba(34,158,217,0.5)] transition-all cursor-pointer group active:scale-95"
                 >
-                  <Send className="w-4 h-4 fill-white group-hover:translate-x-0.5 transition-transform" />
+                  <Send className="w-3.5 h-3.5 fill-white group-hover:translate-x-0.5 transition-transform" />
                   <span className="mx-auto">Conectar con Telegram</span>
                   <ExternalLink className="w-3.5 h-3.5 text-white/70" />
                 </button>
@@ -273,7 +272,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
                 <button
                   onClick={handleQuickTelegramSync}
                   disabled={isLoading}
-                  className="text-xs text-slate-300 hover:text-white transition-colors cursor-pointer py-1 drop-shadow text-center"
+                  className="text-[11px] text-slate-300 hover:text-white transition-colors cursor-pointer py-0.5 drop-shadow text-center"
                 >
                   {isLoading ? 'Sincronizando...' : 'Sincronizar mi sesión verificada'}
                 </button>
