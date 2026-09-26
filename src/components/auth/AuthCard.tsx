@@ -135,7 +135,11 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
   return (
     <div 
       onContextMenu={(e) => e.preventDefault()}
-      className="w-full flex flex-col items-center justify-center relative select-none"
+      className={`w-full flex ${
+        isRevealed 
+          ? 'flex-col md:flex-row items-center justify-center gap-6 sm:gap-8 md:gap-12 lg:gap-16' 
+          : 'flex-col items-center justify-center'
+      } relative select-none transition-all duration-700`}
     >
       
       {/* Botón de Cierre Superior (si se abre en modal) */}
@@ -150,14 +154,15 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
       )}
 
       {/* ═══════════════════════════════════════════════════════════════
-          VIDEO PRINCIPAL: NUNCA CORTADO (360x640, object-contain completo)
-          Reproduce primero; al terminar, se pausa y aparece el login abajo
+          VIDEO / LOGO PRINCIPAL (360x640, object-contain completo)
+          Reproduce primero centrado; al terminar el video, se coloca al lado 
+          en escritorio y arriba en móvil
          ═══════════════════════════════════════════════════════════════ */}
       <div 
-        className={`relative flex flex-col items-center justify-center transition-all duration-700 ease-out select-none ${
+        className={`relative flex flex-col items-center justify-center transition-all duration-700 ease-out select-none shrink-0 ${
           isRevealed 
-            ? 'w-[260px] sm:w-[300px] aspect-[9/16] max-h-[36vh] sm:max-h-[42vh] cursor-pointer' 
-            : 'w-[280px] sm:w-[340px] md:w-[370px] aspect-[9/16] max-h-[72vh]'
+            ? 'w-[250px] sm:w-[280px] md:w-[320px] lg:w-[360px] aspect-[9/16] max-h-[35vh] sm:max-h-[40vh] md:max-h-[62vh] cursor-pointer' 
+            : 'w-[280px] sm:w-[340px] md:w-[380px] aspect-[9/16] max-h-[72vh]'
         }`}
         onClick={isRevealed ? handleReplayVideo : undefined}
         title={isRevealed ? "Toca para reproducir el vídeo de nuevo" : undefined}
@@ -167,7 +172,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
             src={lastFrameLogo}
             alt="Global City Logo"
             onContextMenu={(e) => e.preventDefault()}
-            className="w-full h-full object-contain object-center pointer-events-none select-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)] animate-in fade-in duration-500 hover:scale-105 transition-transform"
+            className="w-full h-full object-contain object-center pointer-events-none select-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)] animate-in fade-in duration-500 hover:scale-[1.02] transition-transform"
           />
         ) : (
           <video
@@ -198,18 +203,19 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
-          LOGIN SIN CONTENEDOR: Aparece animado cuando el video finaliza
-          Sin caja, sin marco, sin borde, flotando con estética premium
+          LOGIN SIN CONTENEDOR: 
+          En escritorio: Al lado (derecha) | En móvil: Abajo
+          Sin caja, sin marco, sin borde, flotando sobre el fondo
          ═══════════════════════════════════════════════════════════════ */}
       {isRevealed && (
-        <div className="w-full max-w-xs sm:max-w-sm flex flex-col items-center text-center space-y-4 mt-3 animate-in fade-in slide-in-from-bottom-6 duration-700">
+        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md flex flex-col items-center md:items-start text-center md:text-left space-y-4 animate-in fade-in slide-in-from-bottom-6 md:slide-in-from-right-6 duration-700">
           
           {/* TÍTULO CON GRADIENTE SUNSET */}
           <div className="space-y-1">
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] drop-shadow-[0_0_30px_rgba(244,114,182,0.4)]">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] drop-shadow-[0_0_30px_rgba(244,114,182,0.4)]">
               Login
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 font-medium drop-shadow-md">
+            <p className="text-xs sm:text-sm lg:text-base text-slate-300 font-medium drop-shadow-md">
               {hasExistingSession 
                 ? `Bienvenido de nuevo, ${storedUser?.firstName || 'Trader'}` 
                 : 'Acceso directo con tu cuenta de Telegram'}
@@ -217,10 +223,10 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
           </div>
 
           {/* ACCIÓN PRINCIPAL DE ACCESO (SIN CONTENEDOR) */}
-          <div className="w-full flex flex-col items-center space-y-3 pt-1">
+          <div className="w-full flex flex-col items-center md:items-start space-y-3 pt-1">
             {hasExistingSession ? (
               // CASO 1: Sesión previa en localStorage -> Botón GRANDE "Ver Mi Dashboard"
-              <div className="w-full flex flex-col items-center space-y-3">
+              <div className="w-full flex flex-col items-center md:items-start space-y-3">
                 <button
                   onClick={() => onSuccess()}
                   className="w-full btn-liquid py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#0088CC] via-[#229ED9] to-[#00C2FF] hover:brightness-110 text-white text-sm sm:text-base font-black flex items-center justify-center gap-2.5 shadow-[0_10px_35px_rgba(0,136,204,0.6)] hover:shadow-cyan-400/50 transition-all cursor-pointer group active:scale-95"
@@ -232,7 +238,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
                 {/* Badge de estado verificado */}
                 <div className="flex items-center justify-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/35 text-xs font-mono text-emerald-300 backdrop-blur-md shadow-md">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="truncate max-w-[200px]">Sesión: {storedUser?.username || storedUser?.firstName}</span>
+                  <span className="truncate max-w-[220px]">Sesión: {storedUser?.username || storedUser?.firstName}</span>
                 </div>
 
                 <button
@@ -244,7 +250,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
               </div>
             ) : (
               // CASO 2: Sin sesión previa -> Botón "Conectar con Telegram"
-              <div className="w-full flex flex-col items-center space-y-3">
+              <div className="w-full flex flex-col items-center md:items-start space-y-3">
                 <button
                   onClick={handleLaunchTelegramOAuth}
                   className="w-full btn-liquid py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#229ED9] to-[#0088CC] hover:brightness-110 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-[0_10px_35px_rgba(34,158,217,0.5)] transition-all cursor-pointer group active:scale-95"

@@ -28,7 +28,7 @@ export const LoginPage: React.FC = () => {
       <div className="fixed -bottom-40 -right-40 w-96 h-96 bg-[#229ED9]/20 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Tarjeta Central sin bordes y con entrada animada fluida */}
-      <main className="w-full max-w-3xl z-20 my-auto flex items-center justify-center">
+      <main className="w-full max-w-4xl lg:max-w-5xl z-20 my-auto flex items-center justify-center px-4">
         <AuthCard 
           onSuccess={handleAuthSuccess}
           isModal={false}
