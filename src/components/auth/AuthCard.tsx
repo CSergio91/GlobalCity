@@ -155,12 +155,22 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
             disablePictureInPicture
             onContextMenu={(e) => e.preventDefault()}
             onEnded={handleVideoEnded}
+            style={{
+              WebkitMaskImage: 'radial-gradient(ellipse 92% 88% at 50% 50%, black 55%, transparent 100%)',
+              maskImage: 'radial-gradient(ellipse 92% 88% at 50% 50%, black 55%, transparent 100%)'
+            }}
             className="w-full h-full object-contain md:object-cover object-center pointer-events-none select-none mix-blend-screen filter contrast-115 brightness-105"
           />
 
+          {/* Difuminado y degradado suave de bordes superior e inferior */}
+          <div className="absolute inset-x-0 top-0 h-16 sm:h-20 bg-gradient-to-b from-[#06070B] via-[#06070B]/50 to-transparent pointer-events-none z-10" />
+          <div className="absolute inset-x-0 bottom-0 h-16 sm:h-20 bg-gradient-to-t from-[#06070B] via-[#06070B]/50 to-transparent pointer-events-none z-10" />
+          <div className="absolute inset-y-0 left-0 w-8 sm:w-12 bg-gradient-to-r from-[#06070B]/60 to-transparent pointer-events-none z-10" />
+          <div className="absolute inset-y-0 right-0 w-8 sm:w-12 bg-gradient-to-l from-[#06070B]/60 to-transparent pointer-events-none z-10" />
+
           {/* Botón discreto para continuar sin pausar el video */}
           {!isRevealed && (
-            <div className="absolute bottom-4 inset-x-0 flex justify-center pointer-events-auto">
+            <div className="absolute bottom-5 inset-x-0 flex justify-center pointer-events-auto z-20">
               <span className="px-4 py-1.5 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-md text-white text-xs font-semibold tracking-wide flex items-center gap-1.5 transition-all shadow-xl border border-white/20">
                 <span>Continuar</span>
                 <ChevronRight className="w-3.5 h-3.5 text-[#F472B6]" />
