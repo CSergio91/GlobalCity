@@ -70,27 +70,27 @@ export const INITIAL_MARKET_TICKS: MarketAssetTick[] = [
   {
     symbol: "XAU/USD",
     name: "Gold Spot vs Dollar",
-    price: 2748.10,
+    price: 4286.14,
     change24h: 0.92,
-    volume24h: "$5.8B",
+    volume24h: "$12.8B",
     category: "forex",
     venues: "MetaTrader 5 · cTrader · Currenex"
   },
   {
     symbol: "ES1! (S&P 500)",
     name: "E-mini S&P 500 Futures",
-    price: 5892.25,
-    change24h: 0.65,
-    volume24h: "$18.5B",
+    price: 7805.75,
+    change24h: 0.51,
+    volume24h: "$34.5B",
     category: "futures",
     venues: "CME Group · QuickFIX DMA"
   },
   {
     symbol: "NQ1! (Nasdaq 100)",
     name: "E-mini Nasdaq 100 Futures",
-    price: 20645.50,
-    change24h: 1.12,
-    volume24h: "$15.2B",
+    price: 30919.00,
+    change24h: 0.85,
+    volume24h: "$28.2B",
     category: "futures",
     venues: "CME Group · ICE Futures"
   }
