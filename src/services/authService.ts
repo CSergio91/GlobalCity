@@ -49,10 +49,25 @@ export const authService = {
    * Obtiene la última autorización de Telegram enviada al bot
    */
   async getLatestTelegramAuthUser(): Promise<TelegramUserPayload | null> {
+    // 1. Si ya existe sesión activa en localStorage, retornarla de inmediato sin saturar getUpdates
+    const existing = this.getCurrentUser();
+    if (existing && existing.telegramId) {
+      return {
+        id: existing.telegramId,
+        first_name: existing.firstName,
+        last_name: existing.lastName,
+        username: existing.username?.replace('@', ''),
+        photo_url: existing.photoUrl,
+        auth_date: Math.floor(Date.now() / 1000)
+      };
+    }
+
     const token = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '';
     if (!token) return null;
     try {
       const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=-20`);
+      // Si Telegram responde 409 Conflict (porque el bot worker en background está activo con getUpdates)
+      if (!res.ok) return null;
       const data = await res.json();
       if (!data.ok || !data.result) return null;
 
@@ -90,6 +105,7 @@ export const authService = {
     if (!token) return null;
     try {
       const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=-20`);
+      if (!res.ok) return null; // Previene conflicto 409 con el bot worker
       const data = await res.json();
       if (!data.ok || !data.result) return null;
 

@@ -137,7 +137,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
         <div 
           onClick={handleRevealWithoutPausing}
           onContextMenu={(e) => e.preventDefault()}
-          className={`relative rounded-3xl overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.95)] shrink-0 transition-all duration-700 ease-out z-20 cursor-pointer select-none bg-black ${
+          className={`relative rounded-3xl overflow-hidden shrink-0 transition-all duration-700 ease-out z-20 cursor-pointer select-none bg-transparent ${
             isRevealed 
               ? 'w-[280px] sm:w-[320px] md:w-[315px] h-[380px] sm:h-[430px] md:h-[530px]' 
               : 'w-[280px] sm:w-[330px] md:w-[350px] h-[480px] sm:h-[540px] md:h-[600px] hover:scale-[1.01]'
@@ -155,7 +155,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
             disablePictureInPicture
             onContextMenu={(e) => e.preventDefault()}
             onEnded={handleVideoEnded}
-            className="w-full h-full object-contain md:object-cover object-center filter contrast-105 pointer-events-none select-none bg-black"
+            className="w-full h-full object-contain md:object-cover object-center pointer-events-none select-none mix-blend-screen filter contrast-115 brightness-105"
           />
 
           {/* Botón discreto para continuar sin pausar el video */}
