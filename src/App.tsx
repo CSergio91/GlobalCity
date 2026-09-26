@@ -93,10 +93,8 @@ function MainAppContent() {
 
       <main className="flex-1">
         
-        {/* Section 1: Hero Command Deck with Parallax City Skyline Background */}
-        <section id="hero">
-          <Hero onOpenTerminal={handleOpenTerminal} />
-        </section>
+        {/* Section 1: Hero Command Deck with Scrub Video Background */}
+        <Hero onOpenTerminal={handleOpenTerminal} />
 
         {/* Section 2: Multi-Venue Liquidity Node & Connectivity Plane */}
         <section id="multi-venue">

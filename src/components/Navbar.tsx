@@ -41,34 +41,34 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
   };
 
   const navItems = [
+    { id: "hero", label: "Inicio" },
     { id: "multi-venue", label: t.nav.multiVenue },
     { id: "arbitrage", label: t.nav.arbitrage },
-    { id: "horizontal-showcase", label: t.nav.modules },
     { id: "rebalance", label: t.nav.rebalance },
     { id: "copy-trading", label: t.nav.copyTrading },
-    { id: "calculator", label: t.nav.calculator }
+    { id: "telegram", label: "Telegram Ops" }
   ];
 
   return (
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 select-none ${
         scrolled 
-          ? "bg-[#06070B]/80 backdrop-blur-xl border-b border-white/[0.06] shadow-2xl py-3" 
+          ? "bg-[#06070B]/85 backdrop-blur-xl border-b border-white/[0.06] shadow-2xl py-3" 
           : "bg-transparent border-b border-transparent py-4 sm:py-5"
       }`}
     >
-      <div className="w-full px-4 sm:px-8 lg:px-12 flex items-center justify-between">
+      <div className="w-full px-4 sm:px-6 lg:px-10 flex items-center justify-between">
         
         {/* Zone 1: Sleek Brand Logo */}
         <div 
           onClick={() => onNavigateSection("hero")}
-          className="flex items-center cursor-pointer group"
+          className="flex items-center cursor-pointer group shrink-0"
         >
           <BrandLogo size="md" />
         </div>
 
-        {/* Zone 2: Navigation Links (Desktop) */}
-        <nav className="hidden xl:flex items-center gap-8 text-xs font-semibold tracking-wider uppercase text-slate-300">
+        {/* Zone 2: Visual Navigation Links (Visible on all desktop, laptops & tablets: sm:flex) */}
+        <nav className="hidden sm:flex items-center gap-3.5 md:gap-5 lg:gap-7 xl:gap-8 text-[11px] md:text-xs font-semibold tracking-widest uppercase text-slate-300">
           {navItems.map((item) => (
             <button
               key={item.id}
@@ -81,8 +81,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           ))}
         </nav>
 
-        {/* Zone 3: Language Selector & Login Action */}
-        <div className="hidden sm:flex items-center gap-3">
+        {/* Zone 3: Language Selector & Login Action (Desktop, laptops & tablets: sm:flex) */}
+        <div className="hidden sm:flex items-center gap-2.5 sm:gap-3 shrink-0">
           <CandlestickLanguageSelector />
 
           {isAuthenticated && user ? (
@@ -102,26 +102,25 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           ) : (
             <button
               onClick={handleLoginClick}
-              className="px-5 py-2 rounded-full bg-black/70 hover:bg-black text-xs font-bold tracking-wider uppercase text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] border border-white/20 hover:border-[#F472B6]/60 shadow-[0_0_20px_rgba(244,114,182,0.25)] hover:shadow-[0_0_25px_rgba(244,114,182,0.4)] flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 group"
+              className="px-5 py-2 text-xs font-black tracking-wider uppercase text-white bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 rounded-full shadow-[0_4px_20px_rgba(244,114,182,0.4)] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 group"
             >
-              <LogIn className="w-3.5 h-3.5 text-[#F472B6] group-hover:translate-x-0.5 transition-transform" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA]">
-                Login
-              </span>
-              <ArrowRight className="w-3 h-3 text-[#60A5FA] group-hover:translate-x-0.5 transition-transform" />
+              <LogIn className="w-3.5 h-3.5 text-white" />
+              <span>Login</span>
+              <ArrowRight className="w-3 h-3 text-white group-hover:translate-x-0.5 transition-transform" />
             </button>
           )}
         </div>
 
-        {/* Mobile Controls: Compact Selector + Login Pill + Hamburger */}
-        <div className="xl:hidden flex items-center gap-2">
+        {/* Mobile Controls (Strictly for mobile phones < 640px) */}
+        <div className="sm:hidden flex items-center gap-2">
           <CandlestickLanguageSelector />
 
           <button
             onClick={handleLoginClick}
-            className="px-3.5 py-1.5 rounded-full bg-black/80 text-xs font-bold tracking-wide uppercase text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] border border-white/20 active:scale-95 shadow-sm"
+            className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] text-white text-xs font-black tracking-wide uppercase active:scale-95 shadow-md flex items-center gap-1"
           >
-            Login
+            <LogIn className="w-3 h-3 text-white" />
+            <span>Login</span>
           </button>
 
           <button
@@ -135,9 +134,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
 
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer (Strictly for mobile phones < 640px) */}
       {mobileMenuOpen && (
-        <div className="xl:hidden bg-[#07090F]/95 backdrop-blur-2xl border-b border-white/10 px-6 py-6 flex flex-col gap-4 animate-reveal">
+        <div className="sm:hidden bg-[#07090F]/95 backdrop-blur-2xl border-b border-white/10 px-6 py-6 flex flex-col gap-4 animate-reveal">
           {navItems.map((item) => (
             <button
               key={item.id}
@@ -155,9 +154,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
               setMobileMenuOpen(false);
               handleLoginClick();
             }}
-            className="w-full py-3 text-center text-xs font-black tracking-widest uppercase text-white bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] rounded-full mt-2 shadow-lg cursor-pointer"
+            className="w-full py-3 text-center text-xs font-black tracking-widest uppercase text-white bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] rounded-full mt-2 shadow-lg cursor-pointer flex items-center justify-center gap-2"
           >
-            Login
+            <LogIn className="w-3.5 h-3.5 text-white" />
+            <span>Login</span>
+            <ArrowRight className="w-3.5 h-3.5 text-white" />
           </button>
         </div>
       )}

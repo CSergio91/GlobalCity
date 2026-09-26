@@ -28,10 +28,7 @@ export const CrossCopyTrading: React.FC = () => {
           className="mb-10 sm:mb-14"
         >
           <div className="max-w-3xl">
-            <span className="text-[11px] sm:text-xs uppercase font-mono tracking-widest text-[#F472B6] font-bold">
-              04 · Synchronized Pipeline
-            </span>
-            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight mt-2 drop-shadow-md">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-md">
               {t.copyTrading.titleStart}{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F472B6] via-[#EC4899] to-[#60A5FA]">
                 {t.copyTrading.titleEnd}

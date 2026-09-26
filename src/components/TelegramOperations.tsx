@@ -35,10 +35,7 @@ export const TelegramOperations: React.FC = () => {
         >
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 sm:gap-8">
             <div className="max-w-2xl">
-              <span className="text-[11px] sm:text-xs uppercase font-mono tracking-widest text-[#0088CC] font-bold">
-                05 · Omnichannel Control
-              </span>
-              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight mt-2 drop-shadow-md">
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-md">
                 {t.telegram.titleStart}{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0088CC] via-[#38BDF8] to-[#F472B6]">
                   {t.telegram.titleEnd}

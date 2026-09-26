@@ -3,11 +3,13 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 interface HeroScrollCanvasProps {
   totalFrames?: number;
   className?: string;
+  scrollProgress?: number;
 }
 
 export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
   totalFrames = 80,
   className = '',
+  scrollProgress,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<(HTMLImageElement | null)[]>([]);
@@ -16,11 +18,11 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
   const rafIdRef = useRef<number | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Preload frames in a non-blocking queue
+  // Preload sequence frames in an optimized, non-blocking queue
   useEffect(() => {
     imagesRef.current = new Array(totalFrames).fill(null);
 
-    // 1. Load initial frame immediately for 0ms First Contentful Paint
+    // 1. Load initial frame immediately for instant LCP
     const firstImg = new Image();
     firstImg.src = '/hero-sequence/frame_000.webp';
     firstImg.onload = () => {
@@ -29,7 +31,7 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
       renderFrame(0);
     };
 
-    // 2. Preload remaining frames in batches to avoid network congestion
+    // 2. Preload remaining sequence in background
     const loadRemainingFrames = () => {
       for (let i = 1; i < totalFrames; i++) {
         const img = new Image();
@@ -58,16 +60,18 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Use current frame or fallback to closest loaded frame
-    let img = imagesRef.current[frameIdx];
-    if (!img) {
+    const clampedIdx = Math.max(0, Math.min(totalFrames - 1, Math.round(frameIdx)));
+    let img = imagesRef.current[clampedIdx];
+
+    // Fallback to nearest loaded frame if current frame is loading
+    if (!img || !img.complete) {
       for (let offset = 1; offset < totalFrames; offset++) {
-        if (frameIdx - offset >= 0 && imagesRef.current[frameIdx - offset]) {
-          img = imagesRef.current[frameIdx - offset];
+        if (clampedIdx - offset >= 0 && imagesRef.current[clampedIdx - offset]?.complete) {
+          img = imagesRef.current[clampedIdx - offset];
           break;
         }
-        if (frameIdx + offset < totalFrames && imagesRef.current[frameIdx + offset]) {
-          img = imagesRef.current[frameIdx + offset];
+        if (clampedIdx + offset < totalFrames && imagesRef.current[clampedIdx + offset]?.complete) {
+          img = imagesRef.current[clampedIdx + offset];
           break;
         }
       }
@@ -80,7 +84,7 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
     const imgWidth = img.naturalWidth || 960;
     const imgHeight = img.naturalHeight || 540;
 
-    // Compute cover dimensions
+    // High quality aspect ratio cover scaling
     const scale = Math.max(canvasWidth / imgWidth, canvasHeight / imgHeight);
     const renderWidth = imgWidth * scale;
     const renderHeight = imgHeight * scale;
@@ -91,16 +95,16 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
     ctx.drawImage(img, renderX, renderY, renderWidth, renderHeight);
   }, [totalFrames]);
 
-  // Sync canvas internal resolution with window DPR and client dimensions
+  // Sync canvas internal resolution with DPR
   useEffect(() => {
     const handleResize = () => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap at 2x for mobile GPU efficiency
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      renderFrame(Math.round(currentFrameRef.current));
+      canvas.width = (rect.width || window.innerWidth) * dpr;
+      canvas.height = (rect.height || window.innerHeight) * dpr;
+      renderFrame(currentFrameRef.current);
     };
 
     window.addEventListener('resize', handleResize);
@@ -108,14 +112,48 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, [renderFrame]);
 
-  // Smooth linear interpolation animation loop
+  // Handle external scroll progress or local scroll listener
   useEffect(() => {
+    if (typeof scrollProgress === 'number') {
+      targetFrameRef.current = Math.max(0, Math.min(1, scrollProgress)) * (totalFrames - 1);
+      return;
+    }
+
+    const handleScroll = () => {
+      const heroContainer = document.getElementById('hero') || document.getElementById('hero-container');
+      if (!heroContainer) return;
+
+      const rect = heroContainer.getBoundingClientRect();
+      const scrollableHeight = rect.height - window.innerHeight;
+      if (scrollableHeight <= 0) return;
+
+      const progress = Math.max(0, Math.min(1, -rect.top / scrollableHeight));
+      targetFrameRef.current = progress * (totalFrames - 1);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    // Run once on mount to sync initial scroll position
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [scrollProgress, totalFrames]);
+
+  // Smooth lerp loop that ONLY animates towards targetFrame when the user scrolls
+  useEffect(() => {
+    let lastRenderedFrame = -1;
+
     const updateLoop = () => {
       const diff = targetFrameRef.current - currentFrameRef.current;
-      if (Math.abs(diff) > 0.05) {
-        currentFrameRef.current += diff * 0.18;
-        renderFrame(Math.round(currentFrameRef.current));
+      
+      // Only compute and re-render if there is actual scroll movement
+      if (Math.abs(diff) > 0.005) {
+        currentFrameRef.current += diff * 0.25;
+        const frameToRender = Math.round(currentFrameRef.current);
+        if (frameToRender !== lastRenderedFrame) {
+          renderFrame(frameToRender);
+          lastRenderedFrame = frameToRender;
+        }
       }
+
       rafIdRef.current = requestAnimationFrame(updateLoop);
     };
 
@@ -125,38 +163,19 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
     };
   }, [renderFrame]);
 
-  // Scroll handler calculating scroll progress through Hero
-  useEffect(() => {
-    const handleScroll = () => {
-      const heroSection = document.getElementById('hero');
-      if (!heroSection) return;
-
-      const rect = heroSection.getBoundingClientRect();
-      const heroHeight = rect.height;
-      const scrollY = -rect.top;
-
-      const progress = Math.max(0, Math.min(1, scrollY / (heroHeight * 0.85)));
-      targetFrameRef.current = progress * (totalFrames - 1);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [totalFrames]);
-
   return (
     <div className={`absolute inset-0 z-0 overflow-hidden pointer-events-none ${className}`}>
-      {/* HTML5 Canvas executing GPU-accelerated video sequence scrub */}
+      {/* Hardware-Accelerated Video Sequence Canvas */}
       <canvas 
         ref={canvasRef} 
-        className="w-full h-full object-cover transition-opacity duration-700 will-change-transform"
+        className="w-full h-full object-cover transition-opacity duration-500 will-change-transform"
         style={{ opacity: isLoaded ? 1 : 0 }}
       />
 
-      {/* Atmospheric dark gradient overlays matching NUORBIT reference */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#06070B] via-[#06070B]/50 to-[#06070B]/75 pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-r from-[#06070B]/80 via-transparent to-[#06070B]/80 pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_40%,rgba(56,189,248,0.1),transparent_70%)] pointer-events-none" />
+      {/* Balanced Atmospheric Overlays: Keeps the neon city vibrant while guaranteeing text legibility */}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#06070B] via-black/25 to-[#06070B]/60 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#06070B]/50 via-transparent to-[#06070B]/50 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_35%,rgba(56,189,248,0.12),transparent_75%)] pointer-events-none" />
     </div>
   );
 };

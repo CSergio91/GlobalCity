@@ -53,10 +53,7 @@ export const ArbitrageCalculator: React.FC = () => {
         >
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 sm:gap-8">
             <div className="max-w-2xl">
-              <span className="text-[11px] sm:text-xs uppercase font-mono tracking-widest text-[#F472B6] font-bold">
-                02 · Quantitative Spreads
-              </span>
-              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight mt-2 drop-shadow-md">
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-md">
                 {t.calculator.titleStart}{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA]">
                   {t.calculator.titleEnd}
