@@ -160,6 +160,11 @@ export interface Translations {
     quickLinks: string;
     legal: string;
     disclaimer: string;
+    riskTitle: string;
+    riskDisclaimerFull: string;
+    connectorsTitle: string;
+    connectorsCount: string;
+    securityTitle: string;
   };
 }
 
@@ -387,6 +392,11 @@ export const translations: Record<Language, Translations> = {
       quickLinks: "Platform Architecture",
       legal: "Security & Custody",
       disclaimer: "Non-custodial trading software. Global City does not hold user funds. All API keys operate strictly in Read & Trade mode with zero withdrawal permissions.",
+      riskTitle: "High-Risk Operational Disclaimer & Limitation of Liability",
+      riskDisclaimerFull: "Trading in digital assets, cryptocurrencies, Contracts for Difference (CFDs), foreign exchange (Forex), futures, and algorithmic synthetic arbitrage involves significant risk of capital loss and extreme price volatility. Financial leverage can amplify both gains and losses exponentially. Global City is strictly a financial technology and non-custodial software infrastructure provider; it is not a registered broker-dealer, financial advisor, investment manager, or exchange custodian. The software does not provide personalized investment advice or execute autonomous decisions without user-configured parameters. All order routing, risk thresholds, and executions are carried out under the user's sole discretion and responsibility. Past performance, backtested returns, or synthetic spreads do not guarantee future profitability. Before deploying capital, ensure you understand all inherent technical and financial risks.",
+      connectorsTitle: "Connected Gateways & Aggregation",
+      connectorsCount: "+20 Exchanges & Gateways",
+      securityTitle: "Institutional Security & Custody",
     },
   },
   es: {
@@ -612,6 +622,11 @@ export const translations: Record<Language, Translations> = {
       quickLinks: "Arquitectura de Plataforma",
       legal: "Seguridad y Custodia",
       disclaimer: "Software de negociación no custodial. Global City no retiene fondos de usuarios. Todas las claves API operan estrictamente en modo Read & Trade sin permisos de retiro.",
+      riskTitle: "Aviso de Alto Riesgo Operativo y Descargo de Responsabilidad",
+      riskDisclaimerFull: "El trading con criptoactivos, contratos por diferencia (CFDs), divisas (Forex), futuros y arbitraje sintético algorítmico implica un riesgo sustancial de pérdida de capital y una alta volatilidad. El apalancamiento financiero puede magnificar tanto las ganancias como las pérdidas de forma acelerada. Global City es exclusivamente una empresa de software tecnológico y desarrollo de infraestructura no custodial; no actúa como broker regulado, asesor financiero, gestor de fondos ni custodio de activos. La plataforma no proporciona asesoramiento financiero de ningún tipo. La configuración de parámetros, la conexión de claves API y toda ejecución de órdenes se realizan bajo la exclusiva responsabilidad y riesgo del usuario. El rendimiento pasado o los diferenciales de arbitraje mostrados no constituyen una garantía de resultados futuros. Asegúrese de evaluar minuciosamente su tolerancia al riesgo antes de operar.",
+      connectorsTitle: "Pasarelas & Capacidad de Conexión",
+      connectorsCount: "+20 Exchanges & Pasarelas",
+      securityTitle: "Seguridad y Custodia Institucional",
     },
   },
 };

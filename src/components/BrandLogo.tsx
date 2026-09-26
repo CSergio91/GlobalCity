@@ -1,5 +1,5 @@
 import React from 'react';
-import officialLogoImg from '../assets/images/global_city_official_exact_logo_1790349385972.jpg';
+import officialLogoImg from '../assets/images/logo.jpg';
 
 interface BrandLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -13,27 +13,23 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   className = '',
 }) => {
   const dimensionMap = {
-    sm: { img: 'w-7 h-7', text: 'text-sm' },
-    md: { img: 'w-9 h-9', text: 'text-base sm:text-lg' },
-    lg: { img: 'w-12 h-12', text: 'text-xl' },
-    xl: { img: 'w-16 h-16 sm:w-20 sm:h-20', text: 'text-2xl' },
+    sm: { img: 'w-8 h-8', text: 'text-xs sm:text-sm' },
+    md: { img: 'w-11 h-11 sm:w-12 sm:h-12', text: 'text-sm sm:text-base' },
+    lg: { img: 'w-14 h-14 sm:w-16 sm:h-16', text: 'text-base sm:text-xl' },
+    xl: { img: 'w-20 h-20 sm:w-24 sm:h-24', text: 'text-2xl sm:text-3xl' },
   };
 
   const current = dimensionMap[size];
 
   return (
     <div className={`flex items-center gap-2.5 sm:gap-3 select-none ${className}`}>
-      {/* Sleek, Minimalist Futuristic Brand Emblem */}
+      {/* Brand Emblem: enlarged and clean without surrounding circular borders or rings */}
       <div className={`relative ${current.img} flex-shrink-0 group cursor-pointer`}>
-        {/* Subtle cyan/pink ambient backlight */}
-        <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-[#38BDF8]/40 via-[#F472B6]/40 to-[#FBBF24]/30 blur-md opacity-70 group-hover:opacity-100 transition-opacity" />
-        
-        {/* Crisp, clean emblem container without excessive circular ring */}
-        <div className="relative w-full h-full rounded-full overflow-hidden border border-white/25 shadow-lg group-hover:scale-105 transition-transform duration-300 bg-[#090A0F]">
+        <div className="relative w-full h-full rounded-xl overflow-hidden group-hover:scale-105 transition-transform duration-300 shadow-lg shadow-black/50">
           <img 
             src={officialLogoImg} 
             alt="Global City Logo" 
-            className="w-full h-full object-cover rounded-full filter contrast-115 brightness-105"
+            className="w-full h-full object-cover filter contrast-110 brightness-105"
             referrerPolicy="no-referrer"
           />
         </div>
