@@ -643,6 +643,67 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Default to native English as requested
   const [language, setLanguage] = useState<Language>('en');
 
+  useEffect(() => {
+    document.documentElement.lang = language;
+    const isEs = language === 'es';
+    
+    // Dynamic Page Title
+    document.title = isEs 
+      ? "Global City · Terminal Institucional Multi-Exchange & Prop-Firm Trading"
+      : "Global City · Institutional Multi-Venue & Prop-Firm Trading Terminal";
+
+    // Dynamic Meta Description
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute(
+        'content',
+        isEs
+          ? "El terminal unificado definitivo para operar Cripto, Forex, Futuros y cuentas de Prop Firms. Conecta Binance, Bybit, OKX, MT5, cTrader, TradeLocker y CCXT con arbitraje sintético L2 y control por Telegram."
+          : "The ultimate unified terminal for Crypto, Forex, Futures, and Prop Firm accounts. Connect Binance, Bybit, OKX, MT5, cTrader, TradeLocker, and CCXT with L2 synthetic arbitrage and Telegram ops."
+      );
+    }
+
+    // Dynamic OpenGraph Title & Description
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) {
+      ogTitle.setAttribute(
+        'content',
+        isEs
+          ? "Global City · Terminal Institucional Multi-Exchange & Prop-Firm Trading"
+          : "Global City · Institutional Multi-Venue & Prop-Firm Trading Terminal"
+      );
+    }
+    const ogDesc = document.querySelector('meta[property="og:description"]');
+    if (ogDesc) {
+      ogDesc.setAttribute(
+        'content',
+        isEs
+          ? "Opera todas tus cuentas de exchanges y prop firms desde un único mando no custodial. Arbitraje sintético L2, pasarelas FIX/WebSocket y control biométrico desde Telegram."
+          : "Operate all your exchange and prop firm accounts from a single non-custodial command center. L2 synthetic arbitrage, FIX/WebSocket gateways, and Telegram biometric control."
+      );
+    }
+
+    // Dynamic Twitter Title & Description
+    const twTitle = document.querySelector('meta[name="twitter:title"]');
+    if (twTitle) {
+      twTitle.setAttribute(
+        'content',
+        isEs
+          ? "Global City · Terminal Multi-Exchange & Prop-Firm"
+          : "Global City · Multi-Exchange & Prop-Firm Terminal"
+      );
+    }
+    const twDesc = document.querySelector('meta[name="twitter:description"]');
+    if (twDesc) {
+      twDesc.setAttribute(
+        'content',
+        isEs
+          ? "Unifica Criptoactivos, Forex y Futuros. Ejecuta arbitraje sintético simultáneo y comanda tu operativa desde Telegram."
+          : "Unify Crypto, Forex, and Futures. Execute simultaneous synthetic arbitrage and command your operation from Telegram."
+      );
+    }
+  }, [language]);
+
   const value = {
     language,
     setLanguage,

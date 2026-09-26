@@ -1,0 +1,19 @@
+# Global City Trading Platform
+> Institutional Multi-Venue & Prop-Firm Trading Ecosystem
+
+## Overview
+Global City is a high-performance, non-custodial trading software platform connecting crypto exchanges, forex brokers, and prop firms into a single execution dashboard with low-latency synthetic arbitrage and Telegram bot commands.
+
+## Key Capabilities
+- **Multi-Venue Execution:** Connect Binance, Bybit, OKX, Hyperliquid, Kraken, Bitget, MEXC, KuCoin, Gate.io, and Coinbase with direct FIX and WebSocket feeds.
+- **Prop-Firm DMA Integration:** Direct API bridges for MetaTrader 5 (MT5), cTrader Open API (Protobuf), Rithmic, and TradeLocker. Supports passing and managing prop firm accounts (FTMO, The Funded Trader, FundedNext, Apex Trader Funding, Topstep, E8 Markets, Funding Pips).
+- **Synthetic Arbitrage L2 Engine:** Atomic multi-leg price discrepancy exploitation with fee rebate calculation and zero directional risk.
+- **Telegram Bot Control:** Biometric authorization, emergency liquidation (panic switch), real-time equity alerts, and trade management directly inside Telegram.
+- **Cross-Exchange Copy Trading:** Sub-10ms mirror trading with lot normalization across heterogenous brokers and accounts.
+- **Strict Non-Custodial Architecture:** Zero withdrawal permissions required. API credentials encrypted in volatile memory with hardware KMS/AES-256 enclaves.
+
+## Connected Exchanges & Protocols
+- Exchanges: Binance, Bybit v5, OKX DMA, Hyperliquid L1, dYdX v4, Kraken, MEXC, Bitget, Coinbase Prime, BingX, KuCoin.
+- Prop Firms & Broker Gateways: FTMO, Topstep, Apex, FundedNext, E8, MetaTrader 5, cTrader, Rithmic, Tradelocker.
+- Connectivity Frameworks: CCXT integration, FIX Protocol 4.4/5.0, TLS 1.3 WebSockets.
+- Ecosystem: Inspired by Trading City community and Gladis operational standards.

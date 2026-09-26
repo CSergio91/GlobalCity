@@ -98,8 +98,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           </div>
         </div>
 
-        {/* 2. Center: Perfectly Centered on the Navbar Axis (Desktop Only) */}
-        <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 items-center justify-center gap-1 lg:gap-2 xl:gap-3 text-[11px] lg:text-xs font-semibold tracking-wider uppercase text-slate-300 z-10">
+        {/* 2. Center: Prominent Desktop Navigation in Main Flex Flow */}
+        <nav className="hidden md:flex flex-1 items-center justify-center gap-1 lg:gap-2 xl:gap-3 text-[11px] lg:text-xs font-semibold tracking-wider uppercase text-slate-300 z-10 mx-2 lg:mx-4">
           {navItems.map((item) => {
             const isActive = activeSection === item.id;
             return (

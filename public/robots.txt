@@ -1,0 +1,40 @@
+# Global City Trading Platform - Robots Configuration
+# AI-Ready & Search Engine Crawling Allowed
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/private
+
+# Explicit Allow for AI Search Engines & LLM Indexers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: TelegramBot
+Allow: /
+
+Sitemap: https://globalcitytrading.com/sitemap.xml

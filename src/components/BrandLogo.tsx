@@ -1,5 +1,5 @@
 import React from 'react';
-import officialLogoImg from '../assets/images/logo.jpg';
+import officialLogoImg from '../assets/images/logo.png';
 
 interface BrandLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -23,16 +23,14 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 
   return (
     <div className={`flex items-center gap-2.5 sm:gap-3 select-none ${className}`}>
-      {/* Brand Emblem: enlarged and clean without surrounding circular borders or rings */}
+      {/* Brand Emblem: Optimized transparent PNG with no background or circular wrapper frames */}
       <div className={`relative ${current.img} flex-shrink-0 group cursor-pointer`}>
-        <div className="relative w-full h-full rounded-xl overflow-hidden group-hover:scale-105 transition-transform duration-300 shadow-lg shadow-black/50">
-          <img 
-            src={officialLogoImg} 
-            alt="Global City Logo" 
-            className="w-full h-full object-cover filter contrast-110 brightness-105"
-            referrerPolicy="no-referrer"
-          />
-        </div>
+        <img 
+          src={officialLogoImg} 
+          alt="Global City Logo" 
+          className="w-full h-full object-contain filter contrast-110 brightness-105 group-hover:scale-105 transition-transform duration-300 drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+          referrerPolicy="no-referrer"
+        />
       </div>
 
       {showText && (
