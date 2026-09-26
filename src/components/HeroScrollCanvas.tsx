@@ -4,12 +4,14 @@ interface HeroScrollCanvasProps {
   totalFrames?: number;
   className?: string;
   scrollProgress?: number;
+  containerId?: string;
 }
 
 export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
   totalFrames = 80,
   className = '',
   scrollProgress,
+  containerId,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<(HTMLImageElement | null)[]>([]);
@@ -120,12 +122,17 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
     }
 
     const handleScroll = () => {
-      const heroContainer = document.getElementById('hero') || document.getElementById('hero-container');
-      if (!heroContainer) return;
+      const container = (containerId ? document.getElementById(containerId) : null) || 
+                        document.getElementById('hero-experience') || 
+                        document.getElementById('hero');
+      if (!container) return;
 
-      const rect = heroContainer.getBoundingClientRect();
+      const rect = container.getBoundingClientRect();
       const scrollableHeight = rect.height - window.innerHeight;
-      if (scrollableHeight <= 0) return;
+      if (scrollableHeight <= 0) {
+        targetFrameRef.current = 0;
+        return;
+      }
 
       const progress = Math.max(0, Math.min(1, -rect.top / scrollableHeight));
       targetFrameRef.current = progress * (totalFrames - 1);
@@ -135,7 +142,7 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
     // Run once on mount to sync initial scroll position
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [scrollProgress, totalFrames]);
+  }, [scrollProgress, totalFrames, containerId]);
 
   // Smooth lerp loop that ONLY animates towards targetFrame when the user scrolls
   useEffect(() => {

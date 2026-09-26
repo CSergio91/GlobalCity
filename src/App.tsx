@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
+import { HeroScrollCanvas } from './components/HeroScrollCanvas';
 import { MultiVenueHub } from './components/MultiVenueHub';
 import { HorizontalShowcase } from './components/HorizontalShowcase';
 import { ArbitrageCalculator } from './components/ArbitrageCalculator';
@@ -93,13 +94,24 @@ function MainAppContent() {
 
       <main className="flex-1">
         
-        {/* Section 1: Hero Command Deck with Scrub Video Background */}
-        <Hero onOpenTerminal={handleOpenTerminal} />
+        {/* Unified Hero + Multi-Venue Cinematic Scrub Experience:
+            The background canvas remains pinned while Hero scrolls away and Multi-Venue rises up on top of it,
+            scrubbing frames until the video flight reaches its final frame. */}
+        <div id="hero-experience" className="relative w-full">
+          {/* Pinned Video Canvas */}
+          <div className="sticky top-0 h-screen w-full overflow-hidden pointer-events-none z-0">
+            <HeroScrollCanvas totalFrames={80} containerId="hero-experience" />
+          </div>
 
-        {/* Section 2: Multi-Venue Liquidity Node & Connectivity Plane */}
-        <section id="multi-venue">
-          <MultiVenueHub />
-        </section>
+          {/* Content Layer (Hero then MultiVenue rising on top of the scrolling video) */}
+          <div className="relative z-10 -mt-[100vh]">
+            {/* Section 1: Hero Deck */}
+            <Hero onOpenTerminal={handleOpenTerminal} />
+
+            {/* Section 2: Multi-Venue Liquidity Node rising directly over the scrubbing video */}
+            <MultiVenueHub />
+          </div>
+        </div>
 
         {/* Section 3: Horizontal Interactive Showcase (Sticky Drag Scroller) */}
         <section id="horizontal-showcase">

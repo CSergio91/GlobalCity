@@ -36,7 +36,7 @@ export const MultiVenueHub: React.FC = () => {
   ];
 
   return (
-    <section id="multi-venue" className="w-full py-20 sm:py-28 bg-[#06070B] relative select-none overflow-hidden">
+    <section id="multi-venue" className="w-full py-20 sm:py-28 bg-gradient-to-b from-transparent via-[#06070B]/70 to-[#06070B] relative select-none overflow-hidden">
       {/* Subtle Ambient Radial Lighting */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-gradient-to-b from-[#38BDF8]/10 via-transparent to-transparent blur-[120px] pointer-events-none" />
 

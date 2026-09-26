@@ -2,12 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { 
   ArrowRight, 
   LogIn, 
-  Compass,
-  Play
+  Compass
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppRouter } from '../context/RouterContext';
-import { HeroScrollCanvas } from './HeroScrollCanvas';
 
 interface HeroProps {
   onOpenTerminal?: () => void;
@@ -65,22 +63,10 @@ export const Hero: React.FC<HeroProps> = ({ onExploreModules }) => {
   return (
     <section 
       id="hero"
-      className="relative h-[180vh] sm:h-[220vh] w-full bg-[#06070B] select-none"
+      className="min-h-screen w-full flex flex-col justify-between items-center pt-24 sm:pt-32 pb-6 sm:pb-8 relative select-none bg-transparent"
     >
-      {/* ═══════════════════════════════════════════════════════════════
-          STICKY FULL-SCREEN STAGE:
-          Permite que el video canvas se anime y scrube con el scroll
-          mientras el usuario navega por la intro cinematográfica
-         ═══════════════════════════════════════════════════════════════ */}
-      <div 
-        id="hero-stage" 
-        className="sticky top-0 h-screen w-full flex flex-col justify-between items-center pt-24 sm:pt-32 pb-6 sm:pb-8 overflow-hidden z-10"
-      >
-        {/* GPU Video Sequence Scrub Canvas Background */}
-        <HeroScrollCanvas totalFrames={80} />
-
-        {/* Left-Aligned Display: Framing the Cyberpunk City on the Right */}
-        <div className="w-full px-4 sm:px-8 lg:px-16 xl:px-20 relative z-10 max-w-[1360px] mx-auto flex flex-col items-start text-left my-auto">
+      {/* Left-Aligned Display: Framing the Cyberpunk City on the Right */}
+      <div className="w-full px-4 sm:px-8 lg:px-16 xl:px-20 relative z-10 max-w-[1360px] mx-auto flex flex-col items-start text-left my-auto">
           
           {/* Refined Headline: Sleek, Balanced, Left-Aligned */}
           <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.12] sm:leading-[1.08] max-w-2xl lg:max-w-3xl drop-shadow-[0_8px_30px_rgba(0,0,0,0.95)]">
@@ -168,7 +154,6 @@ export const Hero: React.FC<HeroProps> = ({ onExploreModules }) => {
           </div>
         </div>
 
-      </div>
     </section>
   );
 };
