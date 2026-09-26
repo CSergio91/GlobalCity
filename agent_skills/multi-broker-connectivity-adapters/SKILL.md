@@ -54,6 +54,14 @@ Esta skill proporciona los estándares de ingeniería y patrones de implementaci
 | **STREAMING (WebSockets / TCP)** | Tickers, libros de órdenes Nivel 2, trades públicos, actualizaciones de órdenes y fills, eventos de cuenta en tiempo real. | **NUNCA diseñar la arquitectura alrededor de polling continuo.** Si el broker soporta WebSockets o TCP streaming, la escucha reactiva es obligatoria. |
 | **REST API** | Obtención de balances al inicio, catálogos de instrumentos, históricos estáticos y rondas periódicas de reconciliación. | Peticiones puntuales no bloqueantes ejecutadas en hilos de background o mediante clientes asíncronos (`aiohttp`, `httpx`). |
 
+### 2.1 Regla Mandatoria de Eficiencia: Conexión Única Multiplexada (Singleton Pub/Sub)
+- **1 sola conexión/petición consolidada:** Abrir siempre la menor cantidad posible de conexiones hacia cada proveedor. Todas las solicitudes de streams (tickers, libros, trades) deben agruparse en **1 único canal multiplexado** (por ejemplo, `wss://stream.binance.com:9443/stream?streams=btcusdt@ticker/ethusdt@ticker/solusdt@ticker...`).
+- **Cero conexiones redundantes en la UI:** Queda **estrictamente prohibido** que cada componente de frontend abra su propio socket WebSocket independiente. Se debe emplear un **Servicio Singleton con patrón Pub/Sub** donde múltiples componentes se suscriben al mismo feed centralizado en memoria.
+- **Prevención de Abort en Ciclo de Vida (Anti-Abort Guard):**
+  - Nunca ejecutar `ws.close()` de manera síncrona si el socket se encuentra en estado `WebSocket.CONNECTING` (readyState 0), ya que los navegadores cancelan el handshake TCP generando la advertencia `WebSocket is closed before the connection is established`.
+  - La desconexión debe esperar a `onopen` o limpiar los callbacks de error antes del cierre.
+  - La desconexión total cuando el número de suscriptores llega a 0 debe implementar un **debounce de 4 a 5 segundos** para evitar ciclos destructivos de apertura/cierre ante navegaciones o Fast Refresh de React.
+
 ---
 
 ## 3. Normalizador Bidireccional de Símbolos (`SymbolMapper`)

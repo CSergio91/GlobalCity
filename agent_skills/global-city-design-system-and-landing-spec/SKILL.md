@@ -242,3 +242,29 @@ La división entre la presentación visual (video 9:16) y la tarjeta de acceso d
   - **Capa Frontal 3 (Superficie del Card):** `#0C0E17` fundiéndose de forma contigua con la tarjeta.
 - **Mobile (Divisor Horizontal Superior):**
   - Los 3 lóbulos abombados se curvan hacia arriba invadiendo la zona inferior del video (`-top-8`), asegurando una altura compacta `h-40` que elimina el scroll en pantallas móviles.
+
+---
+
+## 9. Dashboard / Operaciones & Arquitectura Navbar Mobile-First
+
+### A. Selector de Idiomas Candlestick (Sin Contenedor ni Bordes)
+- **Diseño Ultra-Limpio:** El selector de idiomas abandona contenedores tipo píldora gruesos. Es completamente transparente y sin bordes (`bg-transparent border-0 shadow-none`).
+- **Composición del Glifo:**
+  - Vela japonesa gráfica con sombra incandescente (`emerald-400` para compras/ES, `rose-500` para ventas/EN), mostrando mecha superior, cuerpo y mecha inferior.
+  - Acrónimo institucional directo en tipografía monospace (`ES/BTC` o `EN/USD`).
+  - Chevron con rotación fluida al abrir el libro de órdenes desplegable.
+
+### B. Distribución Navbar Mobile-First
+1. **Dispositivos Móviles (< 768px):**
+   - La barra superior debe permanecer despejada para evitar saturación: muestra exclusivamente el **Logo de la Marca**, el **Botón de Acción** (`Login` o `Dashboard`) y el **Botón de Menú de Hamburguesa**.
+   - El selector de idiomas se reubica **dentro del menú desplegable de hamburguesa** con un control segmentado táctil directo (`[ 🟢 ES/BTC ] [ 🔴 EN/USD ]`).
+2. **Escritorio & Tablets (>= 768px / 1920px+):**
+   - El menú central de navegación se muestra con `display: flex !important` mediante clases CSS dedicadas (`.global-desktop-nav`), inmunes a omisiones del compilador JIT.
+   - El selector de idiomas se muestra en la cabecera junto al botón de acción.
+   - El botón de acción es reactivo a `localStorage`: muestra **`Dashboard`** si detecta sesión o cuentas guardadas, o **`Login`** en caso contrario.
+
+### C. Dashboard & Terminal de Operaciones (Mobile-First)
+1. **Cero Datos Demo Falsos:** Se eliminan los balances y cuentas hardcodeadas de prueba. El estado inicial refleja las cuentas reales que el usuario conecta y almacena en su navegador vía `localStorage`.
+2. **Catálogo Integral CCXT:** Infraestructura lista para descubrir y conectar más de 80 exchanges globales de criptomonedas y protocolos de brokers (MT4/MT5, cTrader, QuickFIX).
+3. **Stream Unificado Singleton:** La telemetría en tiempo real se alimenta exclusivamente del servicio Singleton multiplexado, sin abrir sockets redundantes.
+4. **Fondo Cinematográfico Optimizado:** Se proyecta el video `fondo_bg.mp4` / `fondo_loop.webp` con máscara de gradiente oscuro (`opacity-25`), manteniendo legibilidad perfecta de métricas financieras.

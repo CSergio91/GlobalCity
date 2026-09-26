@@ -19,10 +19,12 @@ import {
   Zap,
   Lock,
   Eye,
-  EyeOff
+  EyeOff,
+  Search,
+  SlidersHorizontal
 } from 'lucide-react';
 import { exchangeStorage } from '../services/exchangeStorage';
-import { StoredExchangeAccount, SUPPORTED_VENUES, VenueId } from '../types/exchange';
+import { StoredExchangeAccount, SUPPORTED_VENUES, VenueId, VenueCategory } from '../types/exchange';
 import { useAuth } from '../context/AuthContext';
 
 export const ExchangeManager: React.FC = () => {
@@ -31,8 +33,12 @@ export const ExchangeManager: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
 
+  // CCXT Search and Category Filter
+  const [searchVenueQuery, setSearchVenueQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | VenueCategory>('all');
+
   // Form State
-  const [selectedVenueId, setSelectedVenueId] = useState<VenueId>('bybit');
+  const [selectedVenueId, setSelectedVenueId] = useState<string>('binance');
   const [labelInput, setLabelInput] = useState('');
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [apiSecretInput, setApiSecretInput] = useState('');
@@ -129,6 +135,17 @@ export const ExchangeManager: React.FC = () => {
   const connectedCount = accounts.filter(acc => acc.status === 'CONNECTED').length;
   const avgPing = accounts.length > 0 ? Math.round(accounts.reduce((s, a) => s + a.pingMs, 0) / accounts.length) : 0;
 
+  const filteredVenues = SUPPORTED_VENUES.filter(v => {
+    const matchesCat = selectedCategory === 'all' || v.category === selectedCategory;
+    const q = searchVenueQuery.trim().toLowerCase();
+    const matchesQuery = !q || 
+      v.name.toLowerCase().includes(q) || 
+      v.id.toLowerCase().includes(q) || 
+      v.tagline.toLowerCase().includes(q) ||
+      v.ccxtId.toLowerCase().includes(q);
+    return matchesCat && matchesQuery;
+  });
+
   return (
     <div className="space-y-6">
 
@@ -149,85 +166,85 @@ export const ExchangeManager: React.FC = () => {
       )}
 
       {/* Metrics Header Bar */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         
         <div className="bg-[#12131A] border border-white/[0.08] p-4 sm:p-5 rounded-2xl relative overflow-hidden group">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span>Cuentas Conectadas</span>
-            <Building2 className="w-4 h-4 text-[#E06D8A]" />
+            <Building2 className="w-4 h-4 text-[#F472B6]" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-mono text-white">{connectedCount}</span>
-            <span className="text-xs text-slate-500 font-mono">/ {accounts.length} configuradas</span>
+            <span className="text-xl sm:text-2xl font-bold font-mono text-white">{connectedCount}</span>
+            <span className="text-xs text-slate-500 font-mono">/ {accounts.length} activas</span>
           </div>
           <div className="text-[11px] text-emerald-400 mt-2 flex items-center gap-1 font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Almacenamiento Local Activo
+            Zero-Custody Local
           </div>
         </div>
 
         <div className="bg-[#12131A] border border-white/[0.08] p-4 sm:p-5 rounded-2xl relative overflow-hidden group">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span>Equidad Consolidada</span>
-            <Layers className="w-4 h-4 text-[#38BDF8]" />
+            <Layers className="w-4 h-4 text-[#60A5FA]" />
           </div>
-          <div className="text-2xl font-bold font-mono text-white">
+          <div className="text-xl sm:text-2xl font-bold font-mono text-white">
             ${totalEquity.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </div>
           <div className="text-[11px] text-slate-400 mt-2 font-mono">
-            Suma de inventarios activos
+            Suma de cuentas activas
           </div>
         </div>
 
         <div className="bg-[#12131A] border border-white/[0.08] p-4 sm:p-5 rounded-2xl relative overflow-hidden group">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span>Margen Libre Disponible</span>
+            <span>Margen Disponible</span>
             <Zap className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-bold font-mono text-emerald-400">
+          <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-400">
             ${totalFreeMargin.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </div>
           <div className="text-[11px] text-slate-400 mt-2 font-mono">
-            Capacidad para nuevas órdenes
+            Capacidad para órdenes
           </div>
         </div>
 
         <div className="bg-[#12131A] border border-white/[0.08] p-4 sm:p-5 rounded-2xl relative overflow-hidden group">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span>Latencia Media (Ping)</span>
-            <Wifi className="w-4 h-4 text-[#E06D8A]" />
+            <span>Latencia Media</span>
+            <Wifi className="w-4 h-4 text-[#FBBF24]" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-mono text-white">{avgPing}</span>
+            <span className="text-xl sm:text-2xl font-bold font-mono text-white">{avgPing}</span>
             <span className="text-xs text-slate-500 font-mono">ms</span>
           </div>
           <div className="text-[11px] text-emerald-400 mt-2 flex items-center gap-1 font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            Baja latencia institucional
+            Routing directo L2
           </div>
         </div>
 
       </div>
 
       {/* Security & Non-Custodial Protocol Banner */}
-      <div className="bg-gradient-to-r from-[#12131A] to-[#1A1C26] border border-[#E06D8A]/20 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg">
+      <div className="bg-gradient-to-r from-[#12131A] via-[#161824] to-[#12131A] border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg">
         <div className="flex items-start gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-[#E06D8A]/15 border border-[#E06D8A]/30 flex items-center justify-center shrink-0 text-[#E06D8A]">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FBBF24]/15 via-[#F472B6]/15 to-[#60A5FA]/15 border border-white/15 flex items-center justify-center shrink-0 text-[#F472B6]">
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <h4 className="text-sm font-bold text-white">
+              <h4 className="text-xs sm:text-sm font-bold text-white">
                 Seguridad Estricta No Custodial & Privacidad en LocalStorage
               </h4>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400">
-                ZERO-CUSTODY
+              <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                100% CLIENT-SIDE
               </span>
             </div>
-            <p className="text-xs text-slate-400 max-w-3xl leading-relaxed">
+            <p className="text-[11px] sm:text-xs text-slate-400 max-w-3xl leading-relaxed">
               Tus claves API se almacenan de forma local en tu propio navegador. 
               <strong className="text-slate-200"> Nunca habilites permisos de retiro (Withdrawal)</strong> en tus exchanges. 
-              Solo se requieren permisos de <code className="text-[#E06D8A] font-mono">Lectura</code> y <code className="text-[#38BDF8] font-mono">Operación (Trade)</code>.
+              Solo se requieren permisos de <code className="text-[#F472B6] font-mono">Lectura</code> y <code className="text-[#60A5FA] font-mono">Operación (Trade)</code>.
             </p>
           </div>
         </div>
@@ -235,7 +252,7 @@ export const ExchangeManager: React.FC = () => {
         {/* Telegram Linked Identity */}
         {user && (
           <div className="bg-[#0A0B0F] border border-white/10 rounded-xl px-3.5 py-2.5 flex items-center gap-2.5 shrink-0">
-            <div className="w-7 h-7 rounded-lg bg-[#229ED9]/20 flex items-center justify-center text-[#229ED9]">
+            <div className="w-7 h-7 rounded-lg bg-[#60A5FA]/20 flex items-center justify-center text-[#60A5FA]">
               <Send className="w-3.5 h-3.5" />
             </div>
             <div className="text-left font-mono">
@@ -249,160 +266,185 @@ export const ExchangeManager: React.FC = () => {
       {/* Main Action Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <span>Conexiones Activas de Exchanges</span>
+          <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+            <span>Conexiones Activas de Exchanges & Brokers</span>
             <span className="text-xs font-mono text-slate-500">({accounts.length})</span>
           </h3>
           <p className="text-xs text-slate-400">
-            Gestiona tus cuentas de Bybit, Binance, OKX, Bitget e Hyperliquid L1.
+            Infraestructura multiactivo CCXT (Binance, Bybit, OKX, Hyperliquid, MT5, cTrader, etc).
           </p>
         </div>
 
         <div className="flex items-center gap-2.5 w-full sm:w-auto">
-          <button
-            onClick={handlePingAll}
-            disabled={isTestingPing}
-            className="py-2.5 px-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isTestingPing ? 'animate-spin' : ''}`} />
-            <span>Test Ping</span>
-          </button>
+          {accounts.length > 0 && (
+            <button
+              onClick={handlePingAll}
+              disabled={isTestingPing}
+              className="py-2.5 px-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isTestingPing ? 'animate-spin' : ''}`} />
+              <span>Test Ping</span>
+            </button>
+          )}
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="flex-1 sm:flex-initial py-2.5 px-4 bg-gradient-to-r from-[#E06D8A] to-[#ED7D9A] hover:brightness-110 text-white rounded-xl text-xs font-bold shadow-lg shadow-[#E06D8A]/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
+            className="flex-1 sm:flex-initial py-2.5 px-4 bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 text-white rounded-full text-xs font-bold shadow-lg shadow-[#F472B6]/25 flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
           >
             <Plus className="w-4 h-4" />
-            <span>Añadir Exchange</span>
+            <span>Añadir Exchange / Broker</span>
           </button>
         </div>
       </div>
 
-      {/* Accounts List Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {accounts.map((account) => {
-          const venueMeta = SUPPORTED_VENUES.find(v => v.id === account.venueId);
-          const isOnline = account.status === 'CONNECTED';
+      {/* Accounts List Grid or Empty State */}
+      {accounts.length === 0 ? (
+        <div className="p-8 sm:p-12 rounded-3xl bg-[#12131A]/60 border border-white/10 text-center flex flex-col items-center justify-center space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FBBF24]/20 via-[#F472B6]/20 to-[#60A5FA]/20 border border-white/15 flex items-center justify-center text-[#F472B6] shadow-xl">
+            <Key className="w-8 h-8" />
+          </div>
+          <div className="max-w-md space-y-1.5">
+            <h4 className="text-base sm:text-lg font-bold text-white">
+              0 Cuentas Conectadas
+            </h4>
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              Tus credenciales se guardan de forma 100% privada en tu navegador (LocalStorage). Conecta tus API Keys o Agent Wallets para activar la ejecución agregada multiactivo.
+            </p>
+          </div>
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="py-3 px-6 bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 text-white rounded-full text-xs sm:text-sm font-bold shadow-lg shadow-[#F472B6]/25 flex items-center gap-2 cursor-pointer transition-all active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Conectar Primer Exchange o Broker</span>
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {accounts.map((account) => {
+            const venueMeta = SUPPORTED_VENUES.find(v => v.id === account.venueId);
+            const isOnline = account.status === 'CONNECTED';
 
-          return (
-            <div 
-              key={account.id}
-              className={`bg-[#12131A] border rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 relative overflow-hidden group hover:border-white/20 ${
-                isOnline ? 'border-white/10' : 'border-white/5 opacity-75'
-              }`}
-            >
-              {/* Top Accent Color Bar */}
+            return (
               <div 
-                className="absolute top-0 left-0 right-0 h-1"
-                style={{ backgroundColor: venueMeta?.color || '#E06D8A' }}
-              />
+                key={account.id}
+                className={`bg-[#12131A] border rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 relative overflow-hidden group hover:border-white/20 ${
+                  isOnline ? 'border-white/10' : 'border-white/5 opacity-75'
+                }`}
+              >
+                {/* Top Accent Color Bar */}
+                <div 
+                  className="absolute top-0 left-0 right-0 h-1"
+                  style={{ backgroundColor: venueMeta?.color || '#F472B6' }}
+                />
 
-              {/* Card Header */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <div 
-                      className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs"
-                      style={{ 
-                        backgroundColor: `${venueMeta?.color || '#FFF'}15`, 
-                        color: venueMeta?.color || '#FFF',
-                        border: `1px solid ${venueMeta?.color || '#FFF'}30`
-                      }}
-                    >
-                      {account.venueId.substring(0, 2).toUpperCase()}
+                {/* Card Header */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div 
+                        className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs"
+                        style={{ 
+                          backgroundColor: `${venueMeta?.color || '#FFF'}15`, 
+                          color: venueMeta?.color || '#FFF',
+                          border: `1px solid ${venueMeta?.color || '#FFF'}30`
+                        }}
+                      >
+                        {account.venueId.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-white flex items-center gap-1.5">
+                          <span>{account.label}</span>
+                        </div>
+                        <div className="text-[11px] text-slate-400">
+                          {account.venueName}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Status Badge */}
+                    <div className="flex items-center gap-1.5">
+                      {account.isTestnet && (
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-400">
+                          TESTNET
+                        </span>
+                      )}
+                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded flex items-center gap-1 ${
+                        isOnline 
+                          ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400' 
+                          : 'bg-slate-500/15 border border-slate-500/30 text-slate-400'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
+                        {account.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Key / Agent Preview */}
+                  <div className="bg-[#0A0B0F] border border-white/5 rounded-xl p-2.5 text-xs font-mono space-y-1 mb-4">
+                    <div className="text-slate-500 text-[10px] flex items-center justify-between">
+                      <span>{account.authType === 'web3_agent' ? 'DIRECCIÓN DEL AGENTE' : 'API KEY'}</span>
+                      <span className="text-emerald-400 flex items-center gap-1">
+                        <Lock className="w-2.5 h-2.5" /> Read & Trade
+                      </span>
+                    </div>
+                    <div className="text-slate-300 truncate">
+                      {account.apiKey}
+                    </div>
+                  </div>
+
+                  {/* Balance & Free Margin */}
+                  <div className="grid grid-cols-2 gap-2 text-xs font-mono mb-4 pt-1 border-t border-white/5">
+                    <div>
+                      <span className="text-slate-500 text-[10px] block">EQUIDAD</span>
+                      <span className="text-white font-bold text-sm">
+                        ${account.balanceUsd.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </span>
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-white flex items-center gap-1.5">
-                        <span>{account.label}</span>
-                      </div>
-                      <div className="text-[11px] text-slate-400">
-                        {account.venueName}
-                      </div>
+                      <span className="text-slate-500 text-[10px] block">MARGEN LIBRE</span>
+                      <span className="text-emerald-400 font-bold text-sm">
+                        ${account.freeMarginUsd.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </span>
                     </div>
                   </div>
+                </div>
 
-                  {/* Status Badge */}
-                  <div className="flex items-center gap-1.5">
-                    {account.isTestnet && (
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-400">
-                        TESTNET
-                      </span>
-                    )}
-                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded flex items-center gap-1 ${
-                      isOnline 
-                        ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400' 
-                        : 'bg-slate-500/15 border border-slate-500/30 text-slate-400'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
-                      {account.status}
-                    </span>
+                {/* Card Footer Actions */}
+                <div className="flex items-center justify-between pt-3 border-t border-white/10 text-xs">
+                  <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-400">
+                    <Wifi className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{account.pingMs} ms</span>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleToggleStatus(account.id, account.label)}
+                      title={isOnline ? 'Pausar cuenta' : 'Activar cuenta'}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                    >
+                      <Power className={`w-4 h-4 ${isOnline ? 'text-emerald-400' : 'text-slate-500'}`} />
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(account.id, account.label)}
+                      title="Eliminar de LocalStorage"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
 
-                {/* Key / Agent Preview */}
-                <div className="bg-[#0A0B0F] border border-white/5 rounded-xl p-2.5 text-xs font-mono space-y-1 mb-4">
-                  <div className="text-slate-500 text-[10px] flex items-center justify-between">
-                    <span>{account.authType === 'web3_agent' ? 'DIRECCIÓN DEL AGENTE' : 'API KEY'}</span>
-                    <span className="text-emerald-400 flex items-center gap-1">
-                      <Lock className="w-2.5 h-2.5" /> Read & Trade
-                    </span>
-                  </div>
-                  <div className="text-slate-300 truncate">
-                    {account.apiKey}
-                  </div>
-                </div>
-
-                {/* Balance & Free Margin */}
-                <div className="grid grid-cols-2 gap-2 text-xs font-mono mb-4 pt-1 border-t border-white/5">
-                  <div>
-                    <span className="text-slate-500 text-[10px] block">EQUIDAD</span>
-                    <span className="text-white font-bold text-sm">
-                      ${account.balanceUsd.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 text-[10px] block">MARGEN LIBRE</span>
-                    <span className="text-emerald-400 font-bold text-sm">
-                      ${account.freeMarginUsd.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                </div>
               </div>
-
-              {/* Card Footer Actions */}
-              <div className="flex items-center justify-between pt-3 border-t border-white/10 text-xs">
-                <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-400">
-                  <Wifi className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>{account.pingMs} ms</span>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handleToggleStatus(account.id, account.label)}
-                    title={isOnline ? 'Pausar cuenta' : 'Activar cuenta'}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-                  >
-                    <Power className={`w-4 h-4 ${isOnline ? 'text-emerald-400' : 'text-slate-500'}`} />
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(account.id, account.label)}
-                    title="Eliminar de LocalStorage"
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Modal: Añadir Nueva Conexión */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#06070B]/85 backdrop-blur-xl animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#06070B]/85 backdrop-blur-xl animate-in fade-in duration-200">
           <div className="relative w-full max-w-xl bg-[#12131A] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
             
             {/* Top Accent */}
@@ -412,11 +454,11 @@ export const ExchangeManager: React.FC = () => {
             />
 
             {/* Modal Header */}
-            <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
+            <div className="p-4 sm:p-6 border-b border-white/[0.08] flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Key className="w-5 h-5 text-[#E06D8A]" />
-                  <span>Vincular Nueva API de Exchange</span>
+                <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                  <Key className="w-5 h-5 text-[#F472B6]" />
+                  <span>Vincular Nueva API de Exchange / Broker</span>
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
                   Conexión directa no custodial almacenada en tu navegador.
@@ -432,24 +474,65 @@ export const ExchangeManager: React.FC = () => {
             </div>
 
             {/* Modal Body */}
-            <form onSubmit={handleCreateConnection} className="p-6 overflow-y-auto space-y-5">
+            <form onSubmit={handleCreateConnection} className="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5">
               
-              {/* Venue Selector */}
+              {/* Venue Selector with Search & Categories */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-2">
-                  1. Selecciona el Exchange o Protocolo
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {SUPPORTED_VENUES.map((venue) => {
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-semibold text-slate-300">
+                    1. Catálogo CCXT & Brokers DMA ({filteredVenues.length})
+                  </label>
+                  <span className="text-[10px] font-mono text-slate-500">28+ Disponibles</span>
+                </div>
+
+                {/* Search Bar */}
+                <div className="relative mb-2.5">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Buscar exchange o broker (ej. Binance, Bybit, Deribit, MT5)..."
+                    value={searchVenueQuery}
+                    onChange={(e) => setSearchVenueQuery(e.target.value)}
+                    className="w-full bg-[#0A0B0F] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-[#F472B6]"
+                  />
+                </div>
+
+                {/* Category Filter Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 mb-2">
+                  {[
+                    { id: 'all', label: 'Todos' },
+                    { id: 'tier1_derivatives', label: 'Tier 1 Futuros' },
+                    { id: 'dex_l1', label: 'DEXs L1' },
+                    { id: 'institutional_broker', label: 'Brokers DMA' },
+                    { id: 'regional_regulated', label: 'Regulados' },
+                  ].map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setSelectedCategory(cat.id as any)}
+                      className={`px-2.5 py-1 rounded-lg text-[10.5px] font-medium whitespace-nowrap transition-all cursor-pointer ${
+                        selectedCategory === cat.id
+                          ? 'bg-white/15 text-white font-bold border border-white/20'
+                          : 'bg-white/5 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Venue Grid (Scrollable) */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-44 overflow-y-auto pr-1">
+                  {filteredVenues.map((venue) => {
                     const isSelected = venue.id === selectedVenueId;
                     return (
                       <button
                         key={venue.id}
                         type="button"
                         onClick={() => setSelectedVenueId(venue.id)}
-                        className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                        className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
                           isSelected 
-                            ? 'bg-white/10 border-white/40 shadow-lg' 
+                            ? 'bg-white/10 border-white/40 shadow-lg ring-1 ring-[#F472B6]/40' 
                             : 'bg-[#0A0B0F] border-white/5 hover:border-white/20'
                         }`}
                       >
@@ -459,7 +542,7 @@ export const ExchangeManager: React.FC = () => {
                             style={{ backgroundColor: venue.color }} 
                           />
                           {venue.requiresPassphrase && (
-                            <span className="text-[9px] font-mono text-slate-500">
+                            <span className="text-[8.5px] font-mono text-slate-500">
                               Passphrase
                             </span>
                           )}
@@ -477,7 +560,7 @@ export const ExchangeManager: React.FC = () => {
               </div>
 
               {/* Venue Specific Info Banner */}
-              <div className="bg-[#1A1C26] border border-white/5 rounded-2xl p-3.5 flex items-center justify-between text-xs">
+              <div className="bg-[#1A1C26] border border-white/5 rounded-2xl p-3 sm:p-3.5 flex items-center justify-between text-xs">
                 <div>
                   <div className="font-semibold text-white">{selectedVenueMeta.name}</div>
                   <div className="text-slate-400 text-[11px]">{selectedVenueMeta.tagline}</div>
@@ -486,7 +569,7 @@ export const ExchangeManager: React.FC = () => {
                   href={selectedVenueMeta.documentationUrl} 
                   target="_blank" 
                   rel="noreferrer"
-                  className="flex items-center gap-1 text-[#38BDF8] hover:underline text-[11px] shrink-0 font-medium"
+                  className="flex items-center gap-1 text-[#60A5FA] hover:underline text-[11px] shrink-0 font-medium ml-2"
                 >
                   <span>Doc API</span>
                   <ExternalLink className="w-3 h-3" />

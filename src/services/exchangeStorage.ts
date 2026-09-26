@@ -2,83 +2,45 @@ import { StoredExchangeAccount, VenueId, SUPPORTED_VENUES } from '../types/excha
 
 const STORAGE_KEY = 'globalcity_exchange_connections';
 
-const INITIAL_SEED_ACCOUNTS: StoredExchangeAccount[] = [
-  {
-    id: 'conn_bybit_v5_01',
-    venueId: 'bybit',
-    venueName: 'Bybit Unified V5',
-    label: 'Cuenta Institucional Alpha',
-    authType: 'api_keys',
-    apiKey: 'byb_live_79a2****************',
-    apiSecret: '********************************',
-    isTestnet: false,
-    permissions: ['read', 'trade'],
-    status: 'CONNECTED',
-    balanceUsd: 48250.00,
-    freeMarginUsd: 42100.00,
-    pingMs: 14,
-    lastSync: new Date().toISOString(),
-    createdAt: '2026-09-20T10:00:00.000Z'
-  },
-  {
-    id: 'conn_okx_dma_01',
-    venueId: 'okx',
-    venueName: 'OKX DMA Unified',
-    label: 'Subcuenta Cuantitativa DMA',
-    authType: 'api_keys',
-    apiKey: 'okx_dma_91c4****************',
-    apiSecret: '********************************',
-    passphrase: '****************',
-    isTestnet: false,
-    permissions: ['read', 'trade'],
-    status: 'CONNECTED',
-    balanceUsd: 36400.00,
-    freeMarginUsd: 33200.00,
-    pingMs: 18,
-    lastSync: new Date().toISOString(),
-    createdAt: '2026-09-21T14:30:00.000Z'
-  },
-  {
-    id: 'conn_hyperliquid_01',
-    venueId: 'hyperliquid',
-    venueName: 'Hyperliquid L1 (DEX)',
-    label: 'Agent Wallet Arbitrage Sub-20ms',
-    authType: 'web3_agent',
-    apiKey: '0x8B7a2F93C674E9D51b8D7F91Ac4d8f0A9e2Bc781',
-    apiSecret: '0x****************************************************************',
-    agentAddress: '0x8B7a2F93C674E9D51b8D7F91Ac4d8f0A9e2Bc781',
-    isTestnet: false,
-    permissions: ['read', 'trade'],
-    status: 'CONNECTED',
-    balanceUsd: 25100.00,
-    freeMarginUsd: 22800.00,
-    pingMs: 9,
-    lastSync: new Date().toISOString(),
-    createdAt: '2026-09-22T08:15:00.000Z'
-  }
-];
+const INITIAL_SEED_ACCOUNTS: StoredExchangeAccount[] = [];
 
 export const exchangeStorage = {
   getAccounts(): StoredExchangeAccount[] {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_SEED_ACCOUNTS));
-        return INITIAL_SEED_ACCOUNTS;
+        return [];
       }
-      return JSON.parse(raw);
+      const list: StoredExchangeAccount[] = JSON.parse(raw);
+      // Clean legacy fake demo accounts if present
+      const cleaned = list.filter(a => !['conn_bybit_v5_01', 'conn_okx_dma_01', 'conn_hyperliquid_01'].includes(a.id));
+      if (cleaned.length !== list.length) {
+        this.saveAccounts(cleaned);
+      }
+      return cleaned;
     } catch (err) {
       console.error('Error reading exchange connections from localStorage:', err);
-      return INITIAL_SEED_ACCOUNTS;
+      return [];
     }
   },
 
   saveAccounts(accounts: StoredExchangeAccount[]): void {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
+      window.dispatchEvent(new CustomEvent('globalcity_accounts_changed'));
     } catch (err) {
       console.error('Error saving exchange connections to localStorage:', err);
     }
+  },
+
+  subscribe(callback: () => void): () => void {
+    const handler = () => callback();
+    window.addEventListener('globalcity_accounts_changed', handler);
+    window.addEventListener('storage', handler);
+    return () => {
+      window.removeEventListener('globalcity_accounts_changed', handler);
+      window.removeEventListener('storage', handler);
+    };
   },
 
   addAccount(params: {
