@@ -9,6 +9,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { authService, AuthResult } from '../../services/authService';
 import presentationVideo from '../../assets/video/global_city_presentation_logo.mp4';
+import lastFrameLogo from '../../assets/video/global_city_presentation_logo_last_frame.png';
 
 interface AuthCardProps {
   onSuccess: () => void;
@@ -36,24 +37,35 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
 
   // Autoplay seguro con muted garantizado en DOM
   useEffect(() => {
-    if (videoRef.current) {
+    if (!isRevealed && videoRef.current) {
       videoRef.current.defaultMuted = true;
       videoRef.current.muted = true;
       videoRef.current.play().catch(() => {});
     }
-  }, []);
+  }, [isRevealed]);
 
-  // Al finalizar el video de presentación, se pausa en el último fotograma y se revela el login animado
-  const handleVideoEnded = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    e.currentTarget.pause();
+  // Al finalizar el video o pulsar continuar, se activa el login y se muestra fijado el último fotograma
+  const handleVideoEnded = () => {
     setIsRevealed(true);
   };
 
   const handleManualContinue = () => {
     if (videoRef.current) {
-      videoRef.current.pause();
+      try {
+        videoRef.current.pause();
+      } catch (_) {}
     }
     setIsRevealed(true);
+  };
+
+  const handleReplayVideo = () => {
+    setIsRevealed(false);
+    setTimeout(() => {
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().catch(() => {});
+      }
+    }, 50);
   };
 
   // Polling automático para cuando el usuario pulsa START en Telegram
@@ -144,23 +156,34 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
       <div 
         className={`relative flex flex-col items-center justify-center transition-all duration-700 ease-out select-none ${
           isRevealed 
-            ? 'w-[260px] sm:w-[300px] aspect-[9/16] max-h-[36vh] sm:max-h-[42vh]' 
+            ? 'w-[260px] sm:w-[300px] aspect-[9/16] max-h-[36vh] sm:max-h-[42vh] cursor-pointer' 
             : 'w-[280px] sm:w-[340px] md:w-[370px] aspect-[9/16] max-h-[72vh]'
         }`}
+        onClick={isRevealed ? handleReplayVideo : undefined}
+        title={isRevealed ? "Toca para reproducir el vídeo de nuevo" : undefined}
       >
-        <video
-          ref={videoRef}
-          src={presentationVideo}
-          autoPlay
-          muted
-          playsInline
-          preload="auto"
-          controlsList="nodownload nofullscreen noremoteplayback"
-          disablePictureInPicture
-          onContextMenu={(e) => e.preventDefault()}
-          onEnded={handleVideoEnded}
-          className="w-full h-full object-contain object-center pointer-events-none select-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)]"
-        />
+        {isRevealed ? (
+          <img
+            src={lastFrameLogo}
+            alt="Global City Logo"
+            onContextMenu={(e) => e.preventDefault()}
+            className="w-full h-full object-contain object-center pointer-events-none select-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)] animate-in fade-in duration-500 hover:scale-105 transition-transform"
+          />
+        ) : (
+          <video
+            ref={videoRef}
+            src={presentationVideo}
+            autoPlay
+            muted
+            playsInline
+            preload="auto"
+            controlsList="nodownload nofullscreen noremoteplayback"
+            disablePictureInPicture
+            onContextMenu={(e) => e.preventDefault()}
+            onEnded={handleVideoEnded}
+            className="w-full h-full object-contain object-center pointer-events-none select-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)]"
+          />
+        )}
 
         {/* Botón sutil para continuar al login antes de que termine el video */}
         {!isRevealed && (
