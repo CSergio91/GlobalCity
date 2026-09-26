@@ -35,6 +35,7 @@ import { verifyAndFetchExchangeBalance, fetchKuCoinRealBalance } from '../servic
 import { VenueChartViewer } from './VenueChartViewer';
 import { VenueOrderTicket } from './VenueOrderTicket';
 import { VenueLiveQuote } from '../services/realVenueQuotes';
+import { PlatformLogo } from './MarketIcons';
 
 export type MasterVenueTab = 'exchanges' | 'brokers' | 'futures';
 
@@ -620,17 +621,8 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
                                 <Star className={`w-4 h-4 ${isFav ? 'text-amber-400 fill-amber-400' : 'text-slate-600'}`} />
                               </button>
 
-                              {/* Venue Avatar / Emblem */}
-                              <div 
-                                className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white shrink-0 border shadow-sm"
-                                style={{ 
-                                  backgroundColor: (venue.color || '#38BDF8') + '25', 
-                                  borderColor: (venue.color || '#38BDF8') + '50',
-                                  color: venue.color || '#38BDF8'
-                                }}
-                              >
-                                {venue.name.substring(0, 2).toUpperCase()}
-                              </div>
+                              {/* Venue Official Vector Logo */}
+                              <PlatformLogo name={venue.name} className="w-8 h-8 rounded-xl shrink-0 shadow-sm" />
 
                               {/* Name & Badges (Clean, no description) */}
                               <div className="min-w-0">

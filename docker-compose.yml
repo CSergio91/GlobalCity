@@ -1,0 +1,20 @@
+services:
+  # Redis 7: Ultra-fast in-memory hot state, streams, distributed locks, and idempotency
+  redis:
+    image: redis:7.2-alpine
+    container_name: globalcity_redis
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  redis_data:
+    driver: local

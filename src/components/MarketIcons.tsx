@@ -68,6 +68,45 @@ export const PlatformLogo: React.FC<{ name: string; className?: string }> = ({ n
           <path d="M10 8V24M22 8V24M10 16H22" stroke="#52F1B0" strokeWidth="3" strokeLinecap="round" />
         </svg>
       );
+    case 'kucoin':
+      return (
+        <svg className={className} viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#0E1E1C" />
+          <path d="M10 8H14.5V14.5L19.5 8H24L17.5 15.5L24 24H19.5L14.5 17V24H10V8Z" fill="#24AE8F" />
+        </svg>
+      );
+    case 'gate.io':
+    case 'gateio':
+      return (
+        <svg className={className} viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#151A2E" />
+          <circle cx="16" cy="16" r="8" stroke="#2354E6" strokeWidth="2.5" />
+          <path d="M16 12V20M12 16H20" stroke="#00D092" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      );
+    case 'kraken':
+      return (
+        <svg className={className} viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#181335" />
+          <path d="M11 9H21C22.6569 9 24 10.3431 24 12V18C24 20.2091 22.2091 22 20 22C18.8954 22 18 21.1046 18 20V14H14V20C14 21.1046 13.1046 22 12 22C9.79086 22 8 20.2091 8 18V12C8 10.3431 9.34315 9 11 9Z" fill="#5741D9" />
+        </svg>
+      );
+    case 'bitget':
+      return (
+        <svg className={className} viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#0D1F2D" />
+          <path d="M9 16L15 10L17 12L13 16L17 20L15 22L9 16Z" fill="#00F0FF" />
+          <path d="M23 16L17 10L15 12L19 16L15 20L17 22L23 16Z" fill="#0080FF" />
+        </svg>
+      );
+    case 'deribit':
+      return (
+        <svg className={className} viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#0B1A24" />
+          <circle cx="16" cy="16" r="7" stroke="#00D09C" strokeWidth="2.5" />
+          <path d="M16 11V16L19 19" stroke="#00D09C" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      );
     default:
       return (
         <div className={`${className} rounded-lg bg-white/10 flex items-center justify-center text-[10px] font-bold text-white`}>

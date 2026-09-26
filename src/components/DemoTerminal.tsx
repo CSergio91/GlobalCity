@@ -616,8 +616,11 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
               </div>
             </div>
 
-            {/* Real-Time Searchable Pair Selector Dropdown & Live Venue Quotes */}
-            <div className="bg-[#0D0F17]/90 border border-white/10 rounded-2xl p-3 sm:p-4 mb-4 backdrop-blur-xl shadow-xl space-y-3 relative z-30">
+            {/* Active Trading Canvas Widgets (Rendered ONLY on trading overview/multiorder tabs, keeping Connections as a clean empty canvas) */}
+            {(activeTab === 'overview' || activeTab === 'multiorder') && (
+              <>
+                {/* Real-Time Searchable Pair Selector Dropdown & Live Venue Quotes */}
+                <div className="bg-[#0D0F17]/90 border border-white/10 rounded-2xl p-3 sm:p-4 mb-4 backdrop-blur-xl shadow-xl space-y-3 relative z-30">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 
                 {/* Searchable Pair Dropdown Selector */}
@@ -944,6 +947,8 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                 <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
               </div>
             </div>
+          </>
+        )}
 
             {/* Real Floating Web Toast Notification */}
             {notification && (
