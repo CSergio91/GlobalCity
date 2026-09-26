@@ -172,8 +172,12 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
     // KLineChart v10 native DataLoader architecture
     chart.setDataLoader({
       getBars: (params) => {
+        const span = params.period.span || 15;
+        const type = params.period.type;
+        const mins = type === 'minute' ? span : type === 'hour' ? span * 60 : type === 'day' ? 1440 : 15;
+        const bars = generateHistoricalBars(livePrice, 100, mins);
         if (params.type === 'init') {
-          params.callback(initialBars, { forward: false, backward: false });
+          params.callback(bars, { forward: false, backward: false });
         } else if (params.type === 'forward') {
           params.callback([], false);
         }
@@ -188,9 +192,16 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
 
     // Create sub-pane for Volume & Moving Average
     try {
-      chart.createIndicator({ name: 'VOL', paneId: 'vol_pane' }, false);
+      chart.createIndicator('VOL', false);
       chart.createIndicator('MA', true);
-    } catch {}
+    } catch (e) {
+      console.warn('Indicator initialization note:', e);
+    }
+
+    // Immediate resize via requestAnimationFrame
+    const rafId = requestAnimationFrame(() => {
+      chart.resize();
+    });
 
     // Attach ResizeObserver to keep canvas sharp on resizing
     const resizeObserver = new ResizeObserver(() => {
@@ -199,6 +210,7 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
     resizeObserver.observe(containerRef.current);
 
     return () => {
+      cancelAnimationFrame(rafId);
       resizeObserver.disconnect();
       if (containerRef.current) {
         dispose(containerRef.current);
@@ -317,8 +329,8 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
       </div>
 
       {/* Hardware Accelerated Canvas Container */}
-      <div className="flex-1 w-full relative">
-        <div ref={containerRef} className={className} />
+      <div className="flex-1 w-full min-h-[480px] relative">
+        <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: '480px' }} className={className} />
       </div>
 
     </div>

@@ -43,14 +43,29 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
   const [accounts, setAccounts] = useState<StoredExchangeAccount[]>(() => exchangeStorage.getAccounts());
   const connectedAccounts = useMemo(() => accounts.filter(a => a.status === 'CONNECTED'), [accounts]);
 
+  // Default Fallback Demo Venue when user hasn't connected a custom account yet
+  const defaultDemoVenue: StoredExchangeAccount = useMemo(() => ({
+    id: 'conn_binance_demo_feed',
+    venueId: 'binance',
+    venueName: 'Binance (Demo)',
+    apiKey: '',
+    apiSecret: '',
+    balanceUsd: 50000,
+    freeMarginUsd: 50000,
+    currency: 'USDT',
+    status: 'CONNECTED',
+    isTestnet: true,
+    connectedAt: new Date().toISOString()
+  }), []);
+
   // Selected Active Venue Account
   const [activeAccountId, setActiveAccountId] = useState<string | null>(() => {
-    return connectedAccounts[0]?.id || null;
+    return connectedAccounts[0]?.id || 'conn_binance_demo_feed';
   });
 
   const activeAccount = useMemo(() => {
-    return accounts.find(a => a.id === activeAccountId) || connectedAccounts[0] || null;
-  }, [accounts, activeAccountId, connectedAccounts]);
+    return accounts.find(a => a.id === activeAccountId) || connectedAccounts[0] || defaultDemoVenue;
+  }, [accounts, activeAccountId, connectedAccounts, defaultDemoVenue]);
 
   // Modal State for adding new connection
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -352,7 +367,27 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                   </div>
                 );
               })
-            ) : null}
+            ) : (
+              /* Default Demo Feed Pill when no custom private accounts are added yet */
+              <div
+                onClick={() => setActiveAccountId('conn_binance_demo_feed')}
+                className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl border bg-gradient-to-r from-[#0E1524] to-[#121E36] border-[#38BDF8]/40 shadow-lg shadow-[#38BDF8]/10 ring-1 ring-[#38BDF8]/30 text-white select-none cursor-pointer"
+                title="Conexión en modo demo con datos en tiempo real de Binance"
+              >
+                <PlatformLogo name="Binance" className="w-5 h-5 rounded-lg shadow-sm shrink-0" />
+                <div className="flex flex-col text-left">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-white truncate max-w-[120px]">
+                      Binance (Demo)
+                    </span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  </div>
+                  <div className="text-[10px] font-mono text-emerald-400 font-bold">
+                    $50,000.00 <span className="text-slate-400 font-normal text-[9px]">(Simulado)</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Always visible: Add Connection Button '+' */}
             <button
@@ -366,147 +401,127 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
             </button>
           </div>
 
-          {/* Right: Pair Selector Dropdown (When connected) */}
-          {activeAccount && (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setIsPairDropdownOpen(!isPairDropdownOpen)}
-                className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono font-bold text-white transition-all cursor-pointer"
-              >
-                <span>{selectedSymbol}</span>
-                <span className="text-emerald-400 font-bold">
-                  ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </span>
-                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isPairDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
+          {/* Right: Pair Selector Dropdown (Always visible) */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsPairDropdownOpen(!isPairDropdownOpen)}
+              className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono font-bold text-white transition-all cursor-pointer"
+            >
+              <span>{selectedSymbol}</span>
+              <span className="text-emerald-400 font-bold">
+                ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </span>
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isPairDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
 
-              {/* Pair dropdown */}
-              {isPairDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-[#0E1018] border border-white/15 rounded-2xl p-2.5 shadow-2xl z-40 backdrop-blur-2xl animate-in fade-in">
-                  <div className="relative mb-2">
-                    <Search className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      autoFocus
-                      value={pairSearchQuery}
-                      onChange={(e) => setPairSearchQuery(e.target.value)}
-                      placeholder="Buscar par..."
-                      className="w-full bg-black/60 border border-white/10 rounded-lg pl-7 pr-2 py-1 text-xs text-white focus:outline-none focus:border-[#38BDF8]"
-                    />
-                  </div>
-                  <div className="max-h-48 overflow-y-auto space-y-1">
-                    {filteredPairs.map(p => (
-                      <button
-                        key={p.symbol}
-                        type="button"
-                        onClick={() => {
-                          setSelectedSymbol(p.symbol);
-                          setIsPairDropdownOpen(false);
-                          setPairSearchQuery('');
-                        }}
-                        className={`w-full px-2.5 py-1.5 rounded-lg text-left text-xs font-mono flex items-center justify-between cursor-pointer ${
-                          selectedSymbol === p.symbol ? 'bg-white/15 text-white font-bold' : 'hover:bg-white/5 text-slate-300'
-                        }`}
-                      >
-                        <span>{p.symbol}</span>
-                        <span className="text-slate-400 font-sans text-[11px]">${Number(p.price || 0).toLocaleString()}</span>
-                      </button>
-                    ))}
-                  </div>
+            {/* Pair dropdown */}
+            {isPairDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 w-64 bg-[#0E1018] border border-white/15 rounded-2xl p-2.5 shadow-2xl z-40 backdrop-blur-2xl animate-in fade-in">
+                <div className="relative mb-2">
+                  <Search className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    autoFocus
+                    value={pairSearchQuery}
+                    onChange={(e) => setPairSearchQuery(e.target.value)}
+                    placeholder="Buscar par..."
+                    className="w-full bg-black/60 border border-white/10 rounded-lg pl-7 pr-2 py-1 text-xs text-white focus:outline-none focus:border-[#38BDF8]"
+                  />
                 </div>
-              )}
-            </div>
-          )}
+                <div className="max-h-48 overflow-y-auto space-y-1">
+                  {filteredPairs.map(p => (
+                    <button
+                      key={p.symbol}
+                      type="button"
+                      onClick={() => {
+                        setSelectedSymbol(p.symbol);
+                        setIsPairDropdownOpen(false);
+                        setPairSearchQuery('');
+                      }}
+                      className={`w-full px-2.5 py-1.5 rounded-lg text-left text-xs font-mono flex items-center justify-between cursor-pointer ${
+                        selectedSymbol === p.symbol ? 'bg-white/15 text-white font-bold' : 'hover:bg-white/5 text-slate-300'
+                      }`}
+                    >
+                      <span>{p.symbol}</span>
+                      <span className="text-slate-400 font-sans text-[11px]">${Number(p.price || 0).toLocaleString()}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
         </div>
 
-        {/* WORKSPACE CANVAS BODY */}
-        {connectedAccounts.length === 0 ? (
-          /* Empty Canvas State */
-          <div className="flex-1 flex flex-col items-center justify-center min-h-[500px] border border-dashed border-white/15 rounded-3xl p-8 text-center bg-[#070910]/60 backdrop-blur-sm relative overflow-hidden">
-            <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#38BDF8]/20 to-[#0284C7]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] mb-4 shadow-xl shadow-[#38BDF8]/10">
-              <Plus className="w-8 h-8 stroke-[2.5]" />
-            </div>
+        {/* WORKSPACE CANVAS BODY: Native KLineChart Canvas + Quick 1-Click Execution */}
+        <div className="flex-1 flex flex-col bg-[#070910] border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative min-h-[550px]">
+          
+          {/* Quick 1-Click Execution Header Bar */}
+          <div className="px-4 py-2.5 bg-[#090B12] border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleQuickTrade('BUY')}
+                className="py-1.5 px-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:brightness-110 text-black font-bold shadow-md shadow-emerald-500/20 flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all text-xs"
+              >
+                <ArrowUpRight className="w-3.5 h-3.5 text-black stroke-[3]" />
+                <span>COMPRAR (ASK: ${currentPrice.toFixed(2)})</span>
+              </button>
 
-            <h3 className="text-lg font-bold text-white mb-1.5">
-              Lienzo de Operaciones Vacío
-            </h3>
-            <p className="text-xs text-slate-400 max-w-md leading-relaxed mb-6">
-              No tienes ningún exchange, broker o terminal conectado actualmente. Conecta tu primera plataforma vía <strong>1-Click Auth</strong> o <strong>Claves API Oficiales</strong> para activar el gráfico interactivo KLineChart y el despacho de órdenes.
-            </p>
-
-            <button
-              type="button"
-              onClick={() => setIsAddModalOpen(true)}
-              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#38BDF8] to-[#0284C7] hover:brightness-110 text-white font-extrabold text-xs transition-all cursor-pointer shadow-lg shadow-[#38BDF8]/25 flex items-center gap-2 active:scale-95"
-            >
-              <Plus className="w-4 h-4 stroke-[3]" />
-              <span>Conectar Exchange o Broker</span>
-            </button>
-          </div>
-        ) : (
-          /* Connected State: Active KLineChart Canvas + 1-Click Execution */
-          <div className="flex-1 flex flex-col bg-[#070910] border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative min-h-[550px]">
-            
-            {/* Quick 1-Click Execution Header Bar */}
-            <div className="px-4 py-2.5 bg-[#090B12] border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleQuickTrade('BUY')}
-                  className="py-1.5 px-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:brightness-110 text-black font-bold shadow-md shadow-emerald-500/20 flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all text-xs"
-                >
-                  <ArrowUpRight className="w-3.5 h-3.5 text-black stroke-[3]" />
-                  <span>COMPRAR (ASK: ${currentPrice.toFixed(2)})</span>
-                </button>
-
-                <div className="flex items-center bg-black/60 border border-white/15 rounded-xl px-2.5 py-1 font-mono">
-                  <span className="text-slate-500 mr-1">$</span>
-                  <input
-                    type="number"
-                    value={orderAmountUsdt}
-                    onChange={(e) => setOrderAmountUsdt(e.target.value)}
-                    className="w-16 bg-transparent text-white text-xs font-bold focus:outline-none"
-                  />
-                  <span className="text-[10px] text-slate-400 ml-1">USDT</span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => handleQuickTrade('SELL')}
-                  className="py-1.5 px-3.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 hover:brightness-110 text-white font-bold shadow-md shadow-rose-500/20 flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all text-xs"
-                >
-                  <ArrowDownRight className="w-3.5 h-3.5 text-white stroke-[3]" />
-                  <span>VENDER (BID: ${(currentPrice * 0.9998).toFixed(2)})</span>
-                </button>
+              <div className="flex items-center bg-black/60 border border-white/15 rounded-xl px-2.5 py-1 font-mono">
+                <span className="text-slate-500 mr-1">$</span>
+                <input
+                  type="number"
+                  value={orderAmountUsdt}
+                  onChange={(e) => setOrderAmountUsdt(e.target.value)}
+                  className="w-16 bg-transparent text-white text-xs font-bold focus:outline-none"
+                />
+                <span className="text-[10px] text-slate-400 ml-1">USDT</span>
               </div>
 
-              <div className="flex items-center gap-2 font-mono text-[11px] text-slate-400">
+              <button
+                type="button"
+                onClick={() => handleQuickTrade('SELL')}
+                className="py-1.5 px-3.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 hover:brightness-110 text-white font-bold shadow-md shadow-rose-500/20 flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all text-xs"
+              >
+                <ArrowDownRight className="w-3.5 h-3.5 text-white stroke-[3]" />
+                <span>VENDER (BID: ${(currentPrice * 0.9998).toFixed(2)})</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3 font-mono text-[11px] text-slate-400">
+              <div className="flex items-center gap-1.5">
                 <span>Operando en:</span>
                 <span className="text-white font-bold flex items-center gap-1.5">
-                  <PlatformLogo name={activeAccount?.venueName || ''} className="w-4 h-4 rounded" />
-                  {activeAccount?.venueName}
+                  <PlatformLogo name={activeAccount?.venueName || 'Binance'} className="w-4 h-4 rounded" />
+                  {activeAccount?.venueName || 'Binance (Demo)'}
                 </span>
                 <span className="text-emerald-400 font-bold ml-1">
-                  (Disp: ${(activeAccount?.freeMarginUsd || 0).toLocaleString()})
+                  (Disp: ${(activeAccount?.freeMarginUsd || 50000).toLocaleString()})
                 </span>
               </div>
-            </div>
 
-            {/* Native KLineChart Hardware-Accelerated Canvas */}
-            <div className="flex-1 w-full min-h-[480px] relative">
-              <GlobalCityChart
-                symbol={selectedSymbol}
-                venueId={activeAccount?.venueId || 'binance'}
-                venueName={activeAccount?.venueName || 'Binance'}
-                livePrice={currentPrice}
-                className="w-full h-full min-h-[480px]"
-              />
+              {connectedAccounts.length === 0 && (
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-cyan-500/10 text-[#38BDF8] border border-[#38BDF8]/20 text-[10px] font-mono">
+                  Feed en Vivo / Modo Demo
+                </span>
+              )}
             </div>
-
           </div>
-        )}
+
+          {/* Native KLineChart Hardware-Accelerated Canvas */}
+          <div className="flex-1 w-full min-h-[480px] relative">
+            <GlobalCityChart
+              symbol={selectedSymbol}
+              venueId={activeAccount?.venueId || 'binance'}
+              venueName={activeAccount?.venueName || 'Binance'}
+              livePrice={currentPrice}
+              className="w-full h-full min-h-[480px]"
+            />
+          </div>
+
+        </div>
 
       </main>
 
