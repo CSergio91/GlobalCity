@@ -25,7 +25,8 @@ import {
   ArrowDownRight, 
   DollarSign, 
   Lock,
-  ExternalLink
+  ExternalLink,
+  Sparkles
 } from 'lucide-react';
 import { exchangeStorage } from '../services/exchangeStorage';
 import { StoredExchangeAccount, SUPPORTED_VENUES, VenueCategory, VenueMetadata } from '../types/exchange';
@@ -44,6 +45,7 @@ export interface ExchangeManagerProps {
   selectedSymbol?: string;
   onSymbolChange?: (symbol: string) => void;
   realQuotes?: Record<string, VenueLiveQuote>;
+  tradingMode?: 'demo' | 'real';
 }
 
 export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
@@ -52,7 +54,8 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
   hideInternalTabs = false,
   selectedSymbol = 'BTC/USDT',
   onSymbolChange,
-  realQuotes = {}
+  realQuotes = {},
+  tradingMode = 'demo'
 }) => {
   const { user } = useAuth();
   const [accounts, setAccounts] = useState<StoredExchangeAccount[]>([]);
@@ -239,7 +242,7 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
     }
 
     setExpandedVenueId(venue.id);
-    setAuthMode(venue.supportsOAuth ? 'oauth' : 'keys');
+    setAuthMode('keys'); // ALWAYS default to real API keys validation
     setLabelInput(`${venue.name} Principal`);
     setApiKeyInput('');
     setApiSecretInput('');
@@ -250,24 +253,25 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
   };
 
   const handleOAuthConnect = (venue: VenueMetadata) => {
-    setIsConnectingOAuth(true);
-    setTimeout(() => {
-      setIsConnectingOAuth(false);
-      const newAcc = exchangeStorage.addAccount({
-        venueId: venue.id,
-        label: labelInput.trim() || `${venue.name} (OAuth 2.0)`,
-        apiKey: `oauth_token_${venue.id}_${Math.random().toString(36).substring(2, 10)}`,
-        apiSecret: `oauth_sec_${Math.random().toString(36).substring(2, 16)}`,
-        isTestnet: false
-      });
-      newAcc.balanceUsd = 0; // Honest zero until traded or funded
-      newAcc.freeMarginUsd = 0;
-      exchangeStorage.saveAccounts([newAcc, ...exchangeStorage.getAccounts().filter(a => a.id !== newAcc.id)]);
-      
-      loadAccounts();
-      setExpandedVenueId(null);
-      showToast(`¡Conexión rápida exitosa con ${venue.name} vía OAuth 2.0!`, 'success');
-    }, 600);
+    showToast(`Para verificar tus fondos reales en ${venue.name}, ingresa tus Claves API Oficiales (Zero-Custody)`, 'info');
+    setAuthMode('keys');
+  };
+
+  const handleCreateDemoAccount = (venue: VenueMetadata) => {
+    const newAcc = exchangeStorage.addAccount({
+      venueId: venue.id,
+      label: `${venue.name} (Simulador Demo)`,
+      apiKey: `demo_sim_${venue.id}_${Date.now()}`,
+      apiSecret: `demo_sec_${Date.now()}`,
+      isTestnet: true
+    });
+    newAcc.balanceUsd = 10000;
+    newAcc.freeMarginUsd = 9800;
+    newAcc.status = 'CONNECTED';
+    exchangeStorage.saveAccounts([newAcc, ...exchangeStorage.getAccounts().filter(a => a.id !== newAcc.id)]);
+    loadAccounts();
+    setExpandedVenueId(null);
+    showToast(`¡Cuenta Demo Simulada de $10,000 activada para ${venue.name}!`, 'success');
   };
 
   const handleManualConnect = async (venue: VenueMetadata, e: React.FormEvent) => {
@@ -895,6 +899,7 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
                           onClose={() => setActiveChartVenueId(null)}
                           livePrice={venuePrice}
                           connectedAccount={connectedAccount}
+                          tradingMode={tradingMode}
                         />
                       </div>
                     )}
@@ -948,31 +953,58 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
                           )}
                         </div>
 
-                        {/* FLOW 1: OAUTH 2.0 (1-Click Fast Connect) */}
-                        {venue.supportsOAuth && authMode === 'oauth' ? (
-                          <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-950/40 via-black to-[#0A0B0F] border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        {/* DEMO MODE: 1-CLICK INSTANT SIMULATION */}
+                        {tradingMode === 'demo' && (
+                          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div>
-                              <div className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                                <Zap className="w-3.5 h-3.5" />
-                                <span>Autenticación Instantánea con {venue.name}</span>
+                              <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                                <span>Modo Demo Activo — Simulación de Trading en {venue.name}</span>
                               </div>
                               <p className="text-[11px] text-slate-300 mt-0.5">
-                                Conexión directa mediante tokens seguros OAuth 2.0 con permisos de lectura y trading.
+                                Puedes operar con cotizaciones en vivo y $10,000 de saldo virtual en gráficos reales sin ingresar claves de tu exchange.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleCreateDemoAccount(venue)}
+                              className="py-2 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 text-black text-xs font-bold shadow-md shadow-amber-500/20 cursor-pointer shrink-0"
+                            >
+                              Activar Simulación Demo ($10,000)
+                            </button>
+                          </div>
+                        )}
+
+                        {/* REAL MODE: STRICT AUTHENTICATION BANNER */}
+                        {tradingMode === 'real' && (
+                          <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-[11px] text-emerald-300 flex items-center gap-2">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <span>
+                              Modo Real Activo: Las credenciales son verificadas criptográficamente contra los servidores de {venue.name}. Claves falsas o no autorizadas son estrictamente rechazadas por el exchange.
+                            </span>
+                          </div>
+                        )}
+
+                        {/* FLOW 1: OAUTH 2.0 (Informational guidance) */}
+                        {venue.supportsOAuth && authMode === 'oauth' ? (
+                          <div className="p-4 rounded-xl bg-gradient-to-r from-amber-950/30 via-black to-[#0A0B0F] border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                              <div className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                                <Zap className="w-3.5 h-3.5" />
+                                <span>Conexión OAuth 2.0 — {venue.name}</span>
+                              </div>
+                              <p className="text-[11px] text-slate-300 mt-0.5">
+                                La autorización OAuth requiere registrar la aplicación en el portal de desarrolladores de {venue.name}. Para conexión peer-to-peer directa (Zero-Custody) sin intermediarios, introduce tus Claves API Oficiales.
                               </p>
                             </div>
 
                             <button
                               type="button"
-                              onClick={() => handleOAuthConnect(venue)}
-                              disabled={isConnectingOAuth}
-                              className="py-2 px-5 bg-gradient-to-r from-emerald-500 via-teal-500 to-[#38BDF8] hover:brightness-110 text-black font-bold rounded-xl text-xs shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50 shrink-0"
+                              onClick={() => setAuthMode('keys')}
+                              className="py-2 px-4 bg-gradient-to-r from-[#FBBF24] to-[#F472B6] hover:brightness-110 text-white font-bold rounded-xl text-xs shadow-md flex items-center gap-1.5 cursor-pointer shrink-0"
                             >
-                              {isConnectingOAuth ? (
-                                <RefreshCw className="w-3.5 h-3.5 animate-spin text-black" />
-                              ) : (
-                                <Zap className="w-3.5 h-3.5 text-black" />
-                              )}
-                              <span>{isConnectingOAuth ? 'Negociando...' : `Iniciar Sesión en ${venue.name}`}</span>
+                              <Key className="w-3.5 h-3.5" />
+                              <span>Configurar Claves API Reales</span>
                             </button>
                           </div>
                         ) : (

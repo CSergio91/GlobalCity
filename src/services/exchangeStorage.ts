@@ -12,8 +12,11 @@ export const exchangeStorage = {
         return [];
       }
       const list: StoredExchangeAccount[] = JSON.parse(raw);
-      // Clean legacy fake demo accounts if present
-      const cleaned = list.filter(a => !['conn_bybit_v5_01', 'conn_okx_dma_01', 'conn_hyperliquid_01'].includes(a.id));
+      // Clean legacy fake demo and mock oauth accounts if present
+      const cleaned = list.filter(a => 
+        !['conn_bybit_v5_01', 'conn_okx_dma_01', 'conn_hyperliquid_01'].includes(a.id) &&
+        !a.apiKey?.startsWith('oauth_token_')
+      );
       if (cleaned.length !== list.length) {
         this.saveAccounts(cleaned);
       }

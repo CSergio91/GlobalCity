@@ -106,6 +106,28 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
     };
   }, [selectedSymbol, (ticks.find(t => t?.symbol === selectedSymbol) || ticks[0])?.price]);
 
+  // Trading Mode: 'demo' (Virtual Simulation) vs 'real' (Verified Real Funds)
+  const [tradingMode, setTradingMode] = useState<'demo' | 'real'>(() => {
+    try {
+      return (localStorage.getItem('globalcity_trading_mode') as 'demo' | 'real') || 'real';
+    } catch {
+      return 'real';
+    }
+  });
+
+  const handleTradingModeChange = (mode: 'demo' | 'real') => {
+    setTradingMode(mode);
+    try {
+      localStorage.setItem('globalcity_trading_mode', mode);
+      window.dispatchEvent(new CustomEvent('globalcity_trading_mode_changed', { detail: mode }));
+    } catch {}
+    showNotification(
+      mode === 'demo'
+        ? 'Modo DEMO activado: Simulación de trading con cotizaciones en vivo en gráficos sin arriesgar capital.'
+        : 'Modo REAL activado: Solo cuentas con claves oficiales autenticadas directamente por el exchange.'
+    );
+  };
+
   // Master Venue Type Browser Tabs: 'exchanges' | 'brokers' | 'futures'
   const [masterVenueTab, setMasterVenueTab] = useState<'exchanges' | 'brokers' | 'futures'>(() => {
     try {
@@ -176,10 +198,13 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
     }
   }, [ticks, positions.length]);
 
-  // Aggregated Real Balances (Zero if no accounts connected)
+  // Aggregated Balances: in demo mode provide virtual capital if no balance, in real mode only verified exchange funds
   const connectedAccounts = accounts.filter(a => a.status === 'CONNECTED');
-  const totalBalance = connectedAccounts.reduce((acc, curr) => acc + (curr.balanceUsd || 0), 0);
-  const totalFreeMargin = connectedAccounts.reduce((acc, curr) => acc + (curr.freeMarginUsd || 0), 0);
+  const realBalance = connectedAccounts.reduce((acc, curr) => acc + (curr.balanceUsd || 0), 0);
+  const realFreeMargin = connectedAccounts.reduce((acc, curr) => acc + (curr.freeMarginUsd || 0), 0);
+
+  const totalBalance = tradingMode === 'demo' ? (realBalance > 0 ? realBalance : 50000) : realBalance;
+  const totalFreeMargin = tradingMode === 'demo' ? (realFreeMargin > 0 ? realFreeMargin : 48500) : realFreeMargin;
   const gasTankBalance = user ? 50.00 : 0.00;
 
   // Real-Time Consolidated Performance Metrics
@@ -559,12 +584,35 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                 </button>
               </div>
 
-              {/* Right Side: Active Category Context Info */}
-              <div className="hidden sm:flex items-center gap-2 pb-2 text-[10px] font-mono text-slate-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-slate-200 font-bold uppercase">
-                  {masterVenueTab}
-                </span>
+              {/* Right Side: Visual Toggle DEMO vs REAL */}
+              <div className="flex items-center gap-2 pb-1.5">
+                <div className="flex items-center p-0.5 rounded-xl bg-black/60 border border-white/15 shadow-inner">
+                  <button
+                    type="button"
+                    onClick={() => handleTradingModeChange('demo')}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      tradingMode === 'demo'
+                        ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-md shadow-amber-500/20'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>DEMO</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleTradingModeChange('real')}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      tradingMode === 'real'
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-black shadow-md shadow-emerald-500/20'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>REAL</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -915,6 +963,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                   selectedSymbol={selectedSymbol}
                   onSymbolChange={setSelectedSymbol}
                   realQuotes={realQuotes}
+                  tradingMode={tradingMode}
                 />
               </div>
             )}

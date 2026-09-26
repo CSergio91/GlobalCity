@@ -31,6 +31,7 @@ interface VenueChartViewerProps {
   onClose: () => void;
   livePrice?: number;
   connectedAccount?: StoredExchangeAccount;
+  tradingMode?: 'demo' | 'real';
 }
 
 export const VenueChartViewer: React.FC<VenueChartViewerProps> = ({
@@ -41,7 +42,8 @@ export const VenueChartViewer: React.FC<VenueChartViewerProps> = ({
   onSymbolChange,
   onClose,
   livePrice,
-  connectedAccount
+  connectedAccount,
+  tradingMode = 'demo'
 }) => {
   const { ticks } = useLiveMarketTicks();
   const [currentPair, setCurrentPair] = useState(selectedSymbol || 'BTC/USDT');
@@ -149,7 +151,8 @@ export const VenueChartViewer: React.FC<VenueChartViewerProps> = ({
       }));
     } catch {}
 
-    setExecutionMessage(`✓ Orden ${side} de $${numericAmount} en ${currentPair} ejecutada en ${venueName}`);
+    const prefix = tradingMode === 'demo' ? '[DEMO SIMULADO]' : '[REAL LIVE]';
+    setExecutionMessage(`✓ ${prefix} Orden ${side} de $${numericAmount} en ${currentPair} ejecutada en ${venueName}`);
     setTimeout(() => setExecutionMessage(null), 4000);
   };
 
@@ -396,6 +399,14 @@ export const VenueChartViewer: React.FC<VenueChartViewerProps> = ({
         <div className="px-4 py-2 bg-[#090B12] border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           {/* Left: Quick Execution Buttons (Buy Ask / Sell Bid) */}
           <div className="flex items-center gap-2">
+            <span className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-md border ${
+              tradingMode === 'demo'
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+            }`}>
+              {tradingMode === 'demo' ? 'SIMULADOR DEMO' : 'LIVE REAL'}
+            </span>
+
             <button
               type="button"
               onClick={() => handleQuickChartTrade('BUY')}
