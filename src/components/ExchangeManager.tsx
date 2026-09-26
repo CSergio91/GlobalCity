@@ -894,6 +894,7 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
                           onSymbolChange={onSymbolChange}
                           onClose={() => setActiveChartVenueId(null)}
                           livePrice={venuePrice}
+                          connectedAccount={connectedAccount}
                         />
                       </div>
                     )}
