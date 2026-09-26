@@ -18,6 +18,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { RouterProvider, useAppRouter } from './context/RouterContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { LoginPage } from './components/auth/LoginPage';
+import { ParallaxBackground } from './components/ParallaxBackground';
+import panoramicSkylineVisual from './assets/images/global_city_panoramic_skyline_1790347023744.jpg';
 
 function MainAppContent() {
   const { currentPath, navigate } = useAppRouter();
@@ -145,23 +147,27 @@ function MainAppContent() {
         </section>
 
         {/* Section 8: Final Call to Action */}
-        <section className="py-24 sm:py-32 px-4 sm:px-6 relative overflow-hidden bg-gradient-to-b from-[#06070B] via-[#0E1019] to-[#06070B] border-t border-white/5">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(236,72,153,0.12),transparent_70%)] pointer-events-none" />
+        <section className="py-24 sm:py-32 px-4 sm:px-6 relative overflow-hidden bg-[#05060A] border-t border-white/5 select-none">
+          {/* Panoramic Skyline Parallax Backdrop */}
+          <ParallaxBackground 
+            imageSrc={panoramicSkylineVisual} 
+            alt="Global City Panoramic Skyline Backdrop" 
+            opacity={0.30}
+            speed={0.14}
+          />
+
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(236,72,153,0.10),transparent_70%)] pointer-events-none" />
 
           <ScrollReveal direction="up" delay={50}>
             <div className="max-w-4xl mx-auto text-center relative z-10 space-y-6 sm:space-y-8">
-              <span className="text-xs uppercase tracking-widest text-[#F472B6] font-mono-nums font-bold">
-                {t.cta.badge}
-              </span>
-
-              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight text-shadow-hero">
+              <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.12] drop-shadow-md">
                 {t.cta.titleStart}{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA]">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] drop-shadow-[0_0_35px_rgba(244,114,182,0.45)]">
                   {t.cta.titleEnd}
                 </span>
               </h2>
 
-              <p className="text-sm sm:text-base lg:text-lg text-slate-300 max-w-2xl mx-auto font-light leading-relaxed">
+              <p className="mt-4 text-xs sm:text-sm lg:text-base text-slate-300 max-w-xl mx-auto font-light leading-relaxed">
                 {t.cta.subtitle}
               </p>
 
@@ -177,9 +183,10 @@ function MainAppContent() {
 
                 <button
                   onClick={() => handleNavigateSection('multi-venue')}
-                  className="btn-liquid w-full sm:w-auto px-8 sm:px-9 py-4 sm:py-5 text-xs sm:text-sm font-semibold text-white bg-black/40 hover:bg-black/60 rounded-2xl cursor-pointer border border-white/20 backdrop-blur-xl"
+                  className="w-full sm:w-auto px-8 sm:px-10 py-3.5 sm:py-4 text-xs sm:text-sm font-bold tracking-wider uppercase text-slate-200 hover:text-white bg-white/[0.04] hover:bg-white/[0.09] rounded-full cursor-pointer border border-white/15 hover:border-white/30 backdrop-blur-xl transition-all active:scale-95 flex items-center justify-center gap-2 group"
                 >
                   <span>{t.cta.exploreGatewaysBtn}</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
                 </button>
               </div>
             </div>
