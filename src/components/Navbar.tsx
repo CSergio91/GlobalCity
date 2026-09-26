@@ -51,35 +51,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 select-none ${
         scrolled 
           ? "bg-black/20 backdrop-blur-xl shadow-lg py-2.5 sm:py-3" 
-          : "bg-transparent py-3 sm:py-5"
+          : "bg-transparent py-3 sm:py-4"
       }`}
     >
-      <div className="w-full px-4 sm:px-6 lg:px-10 flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
+      <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 flex items-center justify-between gap-3 sm:gap-4">
         
-        {/* Left: Brand Logo (+ Mobile Right Controls) */}
-        <div className="w-full md:w-auto flex items-center justify-between md:justify-start shrink-0">
+        {/* 1. Left: Brand Logo */}
+        <div className="flex items-center shrink-0">
           <div 
             onClick={() => onNavigateSection("hero")}
             className="flex items-center cursor-pointer group shrink-0"
           >
             <BrandLogo size="md" />
           </div>
-
-          {/* Right Controls on Mobile (Language + Login) */}
-          <div className="flex md:hidden items-center gap-2 shrink-0">
-            <CandlestickLanguageSelector />
-            <button
-              onClick={handleLoginClick}
-              className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] text-white text-xs font-black tracking-wide uppercase shadow-md flex items-center gap-1 active:scale-95 cursor-pointer"
-            >
-              <LogIn className="w-3.5 h-3.5 text-white" />
-              <span>Login</span>
-            </button>
-          </div>
         </div>
 
-        {/* Center: Navigation Menu */}
-        <nav className="flex-1 flex items-center justify-center gap-3.5 sm:gap-5 md:gap-6 lg:gap-8 text-[11px] md:text-xs font-semibold tracking-widest uppercase text-slate-300 overflow-x-auto no-scrollbar py-0.5">
+        {/* 2. Center: Navigation Menu (Desktop & Tablets) */}
+        <nav className="hidden md:flex flex-1 items-center justify-center gap-3.5 lg:gap-6 xl:gap-8 text-[11px] lg:text-xs font-semibold tracking-widest uppercase text-slate-300 overflow-x-auto no-scrollbar py-0.5">
           {navItems.map((item) => (
             <button
               key={item.id}
@@ -92,14 +80,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           ))}
         </nav>
 
-        {/* Right on Desktop: Language Selector + Login */}
-        <div className="hidden md:flex items-center justify-end gap-3 shrink-0">
+        {/* 3. Right: Language Selector + Login (Strictly at the right) */}
+        <div className="flex items-center justify-end gap-2.5 sm:gap-3.5 shrink-0">
           <CandlestickLanguageSelector />
 
           {isAuthenticated && user ? (
             <button
               onClick={handleLoginClick}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#0088CC]/20 border border-[#0088CC]/40 text-white hover:bg-[#0088CC]/30 transition-all cursor-pointer group shadow-lg shadow-[#0088CC]/20"
+              className="flex items-center gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#0088CC]/20 border border-[#0088CC]/40 text-white hover:bg-[#0088CC]/30 transition-all cursor-pointer group shadow-lg shadow-[#0088CC]/20 shrink-0"
               title="Sesión de Telegram Activa"
             >
               <div className="w-5 h-5 rounded-full bg-[#0088CC] flex items-center justify-center text-white">
@@ -113,7 +101,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           ) : (
             <button
               onClick={handleLoginClick}
-              className="px-5 py-2 text-xs font-black tracking-wider uppercase text-white bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 rounded-full shadow-[0_4px_20px_rgba(244,114,182,0.4)] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 group"
+              className="px-4 sm:px-5 py-1.5 sm:py-2 text-xs font-black tracking-wider uppercase text-white bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 rounded-full shadow-[0_4px_20px_rgba(244,114,182,0.4)] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 group shrink-0"
             >
               <LogIn className="w-3.5 h-3.5 text-white" />
               <span>Login</span>
@@ -122,6 +110,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           )}
         </div>
 
+      </div>
+
+      {/* Mobile-only menu bar: sits cleanly below the main row without wrapping or breaking right controls */}
+      <div className="flex md:hidden w-full px-4 pt-2 pb-0.5 overflow-x-auto no-scrollbar justify-center items-center gap-4 text-[11px] font-semibold tracking-wider uppercase text-slate-300">
+        {navItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onNavigateSection(item.id)}
+            className="whitespace-nowrap hover:text-white transition-colors cursor-pointer py-0.5 shrink-0"
+          >
+            {item.label}
+          </button>
+        ))}
       </div>
     </header>
   );
