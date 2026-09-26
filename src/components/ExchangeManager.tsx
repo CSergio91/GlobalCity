@@ -395,24 +395,38 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
   return (
     <div className="space-y-4">
       
-      {/* Toast Notification */}
+      {/* Real Floating Web Toast Notification */}
       {notification && (
-        <div className={`p-3 rounded-2xl flex items-center justify-between text-xs animate-fade-in shadow-xl backdrop-blur-xl ${
+        <div className={`fixed bottom-6 right-6 z-50 max-w-sm sm:max-w-md p-3.5 rounded-2xl flex items-center justify-between text-xs animate-in fade-in slide-in-from-bottom-5 duration-200 shadow-2xl shadow-black/80 backdrop-blur-2xl ${
           notification.type === 'success' 
-            ? 'bg-emerald-950/80 border border-emerald-500/40 text-emerald-200' 
+            ? 'bg-[#0D0F17]/95 border border-emerald-500/40 text-emerald-200' 
             : notification.type === 'error'
-            ? 'bg-rose-950/80 border border-rose-500/40 text-rose-200'
-            : 'bg-sky-950/80 border border-sky-500/40 text-sky-200'
+            ? 'bg-[#0D0F17]/95 border border-rose-500/40 text-rose-200'
+            : 'bg-[#0D0F17]/95 border border-sky-500/40 text-sky-200'
         }`}>
-          <div className="flex items-center gap-2">
-            {notification.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            ) : (
-              <AlertTriangle className="w-4 h-4 shrink-0" />
-            )}
-            <span>{notification.message}</span>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border ${
+              notification.type === 'success'
+                ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                : notification.type === 'error'
+                ? 'bg-rose-500/20 border-rose-500/40 text-rose-400'
+                : 'bg-sky-500/20 border-sky-500/40 text-sky-400'
+            }`}>
+              {notification.type === 'success' ? (
+                <CheckCircle2 className="w-3.5 h-3.5" />
+              ) : (
+                <AlertTriangle className="w-3.5 h-3.5" />
+              )}
+            </div>
+            <span className="font-medium truncate">{notification.message}</span>
           </div>
-          <button onClick={() => setNotification(null)} className="text-white/60 hover:text-white text-xs cursor-pointer">✕</button>
+          <button 
+            type="button" 
+            onClick={() => setNotification(null)} 
+            className="p-1 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0 ml-2"
+          >
+            ✕
+          </button>
         </div>
       )}
 

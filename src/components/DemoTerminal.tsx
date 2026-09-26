@@ -945,11 +945,22 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
               </div>
             </div>
 
-            {/* Notification Toast */}
+            {/* Real Floating Web Toast Notification */}
             {notification && (
-              <div className="mb-4 p-3 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-3 animate-fade-in shadow-xl backdrop-blur-xl">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span className="font-medium">{notification}</span>
+              <div className="fixed bottom-6 right-6 z-50 max-w-sm sm:max-w-md p-3.5 rounded-2xl bg-[#0D0F17]/95 border border-emerald-500/40 text-emerald-200 text-xs flex items-center justify-between gap-3 shadow-2xl shadow-black/80 backdrop-blur-2xl animate-in fade-in slide-in-from-bottom-5 duration-200">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  </div>
+                  <span className="font-medium">{notification}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setNotification(null)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0"
+                >
+                  ✕
+                </button>
               </div>
             )}
 
