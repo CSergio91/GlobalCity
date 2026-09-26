@@ -150,6 +150,15 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
         </button>
       )}
 
+      {/* ═══════════════════════════════════════════════════════════════
+          DEGRADADO DE CONTRASTE PARA MÓVIL (cuando el login está activo)
+         ═══════════════════════════════════════════════════════════════ */}
+      <div 
+        className={`fixed md:hidden inset-0 pointer-events-none transition-opacity duration-700 bg-gradient-to-t from-[#06070B] via-[#06070B]/70 to-transparent z-10 ${
+          isRevealed ? 'opacity-95' : 'opacity-25'
+        }`} 
+      />
+
       {/* Contenedor Flex Animado con Motion Layout */}
       <motion.div 
         layout
@@ -163,15 +172,17 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
 
         {/* ═══════════════════════════════════════════════════════════════
             VIDEO / LOGO PRINCIPAL:
-            Primero centrado; al terminar, se desplaza suavemente a la izquierda
+            En móvil: Fondo completo vertical inmersivo
+            En escritorio: Centrado primero, luego se desplaza a la izquierda
            ═══════════════════════════════════════════════════════════════ */}
         <motion.div 
           layout
           transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
           className={`relative flex flex-col items-center justify-center select-none shrink-0 ${
+            // En móvil se expande a pantalla completa de fondo; en escritorio mantiene su tamaño elegante
             isRevealed 
-              ? 'w-[250px] sm:w-[280px] md:w-[320px] lg:w-[360px] aspect-[9/16] max-h-[35vh] sm:max-h-[40vh] md:max-h-[62vh] cursor-pointer' 
-              : 'w-[280px] sm:w-[340px] md:w-[380px] aspect-[9/16] max-h-[72vh]'
+              ? 'fixed md:relative inset-0 md:inset-auto w-full h-[100dvh] md:w-[320px] lg:w-[360px] md:aspect-[9/16] md:max-h-[62vh] z-0 md:z-10 cursor-pointer pointer-events-none md:pointer-events-auto' 
+              : 'fixed md:relative inset-0 md:inset-auto w-full h-[100dvh] md:w-[380px] md:aspect-[9/16] md:max-h-[72vh] z-0 md:z-10 pointer-events-none md:pointer-events-auto'
           }`}
           onClick={isRevealed ? handleReplayVideo : undefined}
           title={isRevealed ? "Toca para reproducir el vídeo de nuevo" : undefined}
@@ -184,7 +195,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
               src={lastFrameLogo}
               alt="Global City Logo"
               onContextMenu={(e) => e.preventDefault()}
-              className="w-full h-full object-contain object-center pointer-events-none select-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)] hover:scale-[1.02] transition-transform"
+              className="w-full h-full object-cover md:object-contain object-center md:drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)] hover:scale-[1.02] transition-transform"
             />
           ) : (
             <video
@@ -198,35 +209,38 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
               disablePictureInPicture
               onContextMenu={(e) => e.preventDefault()}
               onEnded={handleVideoEnded}
-              className="w-full h-full object-contain object-center pointer-events-none select-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)]"
+              className="w-full h-full object-cover md:object-contain object-center md:drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)]"
             />
           )}
 
-          {/* Botón sutil para continuar al login antes de que termine el video */}
+          {/* Botón sutil para continuar al login antes de que termine el video (centrado abajo en móvil) */}
           {!isRevealed && (
-            <button
-              onClick={handleManualContinue}
-              className="mt-4 px-5 py-2 rounded-full bg-black/70 hover:bg-black/95 backdrop-blur-md text-white/90 hover:text-white text-xs font-semibold tracking-wide flex items-center gap-1.5 transition-all shadow-2xl border border-white/15 group cursor-pointer active:scale-95"
-            >
-              <span>Continuar al Login</span>
-              <ChevronRight className="w-3.5 h-3.5 text-[#F472B6] group-hover:translate-x-0.5 transition-transform" />
-            </button>
+            <div className="fixed md:static bottom-8 inset-x-0 flex justify-center z-30 pointer-events-auto">
+              <button
+                onClick={handleManualContinue}
+                className="px-5 py-2.5 rounded-full bg-black/80 hover:bg-black/95 backdrop-blur-md text-white/95 text-xs font-semibold tracking-wide flex items-center gap-1.5 transition-all shadow-2xl border border-white/20 group cursor-pointer active:scale-95"
+              >
+                <span>Continuar al Login</span>
+                <ChevronRight className="w-3.5 h-3.5 text-[#F472B6] group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
           )}
         </motion.div>
 
         {/* ═══════════════════════════════════════════════════════════════
             LOGIN SIN CONTENEDOR: 
-            Aparece suavemente al lado derecho (escritorio) o abajo (móvil)
+            En móvil: Aparece deslizándose desde abajo encima del fondo
+            En escritorio: Aparece a la derecha suavemente
            ═══════════════════════════════════════════════════════════════ */}
         <AnimatePresence>
           {isRevealed && (
             <motion.div 
               key="login-controls"
-              initial={{ opacity: 0, x: 40, y: 0 }}
-              animate={{ opacity: 1, x: 0, y: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-xs sm:max-w-sm md:max-w-md flex flex-col items-center md:items-start text-center md:text-left space-y-4"
+              initial={{ opacity: 0, y: 50, x: 0 }}
+              animate={{ opacity: 1, y: 0, x: 0 }}
+              exit={{ opacity: 0, y: 30 }}
+              transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              className="fixed md:relative bottom-0 inset-x-0 md:inset-auto z-20 w-full px-6 pb-8 pt-4 md:p-0 max-w-sm md:max-w-md flex flex-col items-center md:items-start text-center md:text-left space-y-4 mx-auto md:mx-0"
             >
           
           {/* TÍTULO CON GRADIENTE SUNSET */}
