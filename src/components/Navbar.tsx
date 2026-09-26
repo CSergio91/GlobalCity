@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Send,
   ArrowRight,
   User,
   Menu,
@@ -82,11 +81,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 select-none ${
         scrolled 
-          ? "bg-black/60 backdrop-blur-xl shadow-lg border-b border-white/[0.06] h-16 sm:h-18" 
-          : "bg-transparent h-16 sm:h-20"
+          ? "bg-[#06070B]/90 backdrop-blur-xl shadow-lg border-b border-white/[0.08] h-16 sm:h-18" 
+          : "bg-[#06070B]/60 backdrop-blur-md border-b border-white/[0.04] h-16 sm:h-20"
       }`}
     >
-      <div className="w-full h-full px-3 sm:px-5 lg:px-8 xl:px-10 flex items-center justify-between relative">
+      <div className="w-full h-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between relative">
         
         {/* 1. Left: Brand Logo (Transparent optimized PNG, no circles) */}
         <div className="flex items-center shrink-0 z-10">
@@ -99,17 +98,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
         </div>
 
         {/* 2. Center: Prominent Superior Navigation (Always visible from 768px and up, desktop & tablet) */}
-        <nav className="hidden md:flex flex-1 items-center justify-center gap-1 lg:gap-2 xl:gap-3 text-[10.5px] lg:text-xs font-semibold tracking-wider uppercase text-slate-300 z-10 mx-1.5 lg:mx-4">
+        <nav className="hidden md:flex items-center justify-center gap-1 lg:gap-2 xl:gap-3 text-[10.5px] lg:text-xs font-semibold tracking-wider uppercase text-slate-300 z-10 mx-auto">
           {navItems.map((item) => {
             const isActive = activeSection === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`relative px-2 lg:px-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer group whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+                className={`relative px-2.5 lg:px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer group whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
                   isActive 
-                    ? "text-white font-bold bg-white/[0.08] border border-white/15 shadow-[0_0_15px_rgba(244,114,182,0.2)]" 
-                    : "text-slate-300 hover:text-white hover:bg-white/[0.04]"
+                    ? "text-white font-bold bg-white/[0.12] border border-white/20 shadow-[0_0_15px_rgba(244,114,182,0.25)]" 
+                    : "text-slate-300 hover:text-white hover:bg-white/[0.05]"
                 }`}
               >
                 {/* Luminous Active Signal Dot */}
@@ -132,34 +131,30 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           })}
         </nav>
 
-        {/* 3. Right: Candlestick Language Selector + Login (User Profile Icon) + Mobile Hamburger Toggle */}
-        <div className="flex items-center justify-end gap-1.5 sm:gap-2.5 shrink-0 z-10 ml-auto">
-          {/* Japanese Candlestick Selector (Responsive Compact) */}
+        {/* 3. Right: Candlestick Language Selector + Standard Login + Mobile Hamburger Toggle */}
+        <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0 z-10">
+          {/* Japanese Candlestick Selector (Responsive Compact, Borderless) */}
           <CandlestickLanguageSelector compactMobile />
 
-          {/* Login Button with User Avatar Icon (Never confusing with logout) */}
+          {/* Login / Terminal Button: Standardized, Clean, No Telegram Icon */}
           {isAuthenticated && user ? (
             <button
               onClick={handleLoginClick}
-              className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-[#0088CC]/20 border border-[#0088CC]/40 text-white hover:bg-[#0088CC]/30 transition-all cursor-pointer group shadow-lg shadow-[#0088CC]/20 shrink-0"
-              title="Sesión de Telegram Activa"
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] text-white hover:brightness-110 transition-all cursor-pointer group shadow-[0_2px_12px_rgba(244,114,182,0.35)] shrink-0 active:scale-95"
+              title="Terminal de Operaciones"
             >
-              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#0088CC] flex items-center justify-center text-white shrink-0">
-                <Send className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-              </div>
-              <div className="hidden xs:flex flex-col text-left leading-tight">
-                <span className="text-[10px] sm:text-xs font-bold text-white max-w-[65px] sm:max-w-none truncate">{user.firstName || user.username}</span>
-                <span className="text-[8.5px] sm:text-[10px] font-mono text-emerald-400">En Línea</span>
-              </div>
+              <User className="w-3.5 h-3.5 text-white" />
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider">{user.firstName || user.username || "TERMINAL"}</span>
+              <ArrowRight className="hidden sm:inline w-3 h-3 text-white group-hover:translate-x-0.5 transition-transform" />
             </button>
           ) : (
             <button
               onClick={handleLoginClick}
-              className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-black tracking-wider uppercase text-white bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 rounded-full shadow-[0_2px_12px_rgba(244,114,182,0.35)] flex items-center gap-1 sm:gap-1.5 cursor-pointer transition-all active:scale-95 group shrink-0"
+              className="px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-black tracking-wider uppercase text-white bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 rounded-full shadow-[0_2px_12px_rgba(244,114,182,0.35)] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 group shrink-0"
               title="Iniciar Sesión"
             >
               <User className="w-3.5 h-3.5 text-white" />
-              <span className="hidden xs:inline">Login</span>
+              <span>Login</span>
               <ArrowRight className="hidden sm:inline w-3 h-3 text-white group-hover:translate-x-0.5 transition-transform" />
             </button>
           )}

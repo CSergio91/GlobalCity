@@ -33,14 +33,10 @@ export const CandlestickLanguageSelector: React.FC<{ compactMobile?: boolean }> 
 
   return (
     <div ref={dropdownRef} className="relative select-none shrink-0">
-      {/* Candlestick Trading Selector Pill: Only Candlestick + Pair Acronym */}
+      {/* Candlestick Trading Selector: Borderless and Transparent */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center rounded-full bg-slate-950/90 hover:bg-slate-900 border border-white/20 hover:border-white/40 transition-all cursor-pointer shadow-lg active:scale-95 group ${
-          compactMobile 
-            ? 'px-2 py-1 gap-1 text-[11px]' 
-            : 'px-2.5 sm:px-3 py-1 sm:py-1.5 gap-1.5 sm:gap-2 text-[11px] sm:text-xs'
-        }`}
+        className="flex items-center gap-1.5 sm:gap-2 px-1.5 sm:px-2 py-1 bg-transparent hover:bg-white/[0.06] rounded-md border-0 shadow-none transition-all cursor-pointer active:scale-95 group text-[11px] sm:text-xs"
         title="Cambiar Par / Select Pair"
         aria-label="Seleccionar Par de Idioma"
       >
@@ -58,7 +54,7 @@ export const CandlestickLanguageSelector: React.FC<{ compactMobile?: boolean }> 
         </div>
 
         {/* Only Acronym (ES/BTC or EN/USD) */}
-        <span className="font-mono font-bold tracking-wider text-white">
+        <span className="font-mono font-bold tracking-wider text-slate-200 group-hover:text-white transition-colors">
           {currentOption.pair}
         </span>
 
