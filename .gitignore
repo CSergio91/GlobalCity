@@ -6,3 +6,5 @@ coverage/
 *.log
 .env*
 !.env.example
+*.mov
+src/assets/video/fondo.mov

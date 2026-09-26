@@ -23,6 +23,8 @@ import { CandlestickLanguageSelector } from './CandlestickLanguageSelector';
 import { MULTI_ASSET_MARKET_TICKS, INITIAL_CONNECTED_ACCOUNTS } from '../data/mockData';
 import { ExchangeManager } from './ExchangeManager';
 import { useAuth } from '../context/AuthContext';
+import fondoVideoMp4 from '../assets/video/fondo_bg.mp4';
+import fondoPosterWebp from '../assets/video/fondo_poster.webp';
 
 interface DemoTerminalProps {
   onBackToLanding: () => void;
@@ -45,10 +47,26 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
   };
 
   return (
-    <div className="min-h-screen bg-[#06070B] text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#06070B] text-slate-100 flex flex-col font-sans relative overflow-x-hidden">
       
+      {/* Dynamic Ambient Background Video (Hardware Decoded, 6.2 MB, Zero CPU Lag) */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden opacity-25">
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+          poster={fondoPosterWebp}
+          className="w-full h-full object-cover filter contrast-125 brightness-90"
+        >
+          <source src={fondoVideoMp4} type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#06070B] via-[#06070B]/80 to-[#06070B]/60" />
+      </div>
+
+      <div className="relative z-10 flex flex-col min-h-screen">
       {/* Terminal Top Bar */}
-      <header className="h-16 bg-[#0D0F17] border-b border-white/10 px-4 sm:px-8 flex items-center justify-between">
+      <header className="h-16 bg-[#0D0F17]/90 backdrop-blur-xl border-b border-white/10 px-4 sm:px-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button 
             onClick={onBackToLanding}
@@ -437,6 +455,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
         )}
 
       </main>
+      </div>
     </div>
   );
 };
