@@ -59,16 +59,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
     setIsRevealed(true);
   };
 
-  const handleReplayVideo = () => {
-    setIsRevealed(false);
-    setTimeout(() => {
-      if (videoRef.current) {
-        videoRef.current.currentTime = 0;
-        videoRef.current.play().catch(() => {});
-      }
-    }, 50);
-  };
-
   // Polling automático para cuando el usuario pulsa START en Telegram
   useEffect(() => {
     let intervalId: any;
@@ -170,11 +160,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
           transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
           className={`relative flex flex-col items-center justify-center select-none shrink-0 ${
             isRevealed 
-              ? 'w-[260px] sm:w-[290px] md:w-[340px] lg:w-[380px] aspect-[9/16] max-h-[36vh] sm:max-h-[40vh] md:max-h-[68vh] cursor-pointer' 
+              ? 'w-[260px] sm:w-[290px] md:w-[340px] lg:w-[380px] aspect-[9/16] max-h-[36vh] sm:max-h-[40vh] md:max-h-[68vh]' 
               : 'w-full max-w-[340px] sm:max-w-[400px] md:max-w-[440px] aspect-[9/16] max-h-[84vh]'
           }`}
-          onClick={isRevealed ? handleReplayVideo : undefined}
-          title={isRevealed ? "Toca para reproducir el vídeo de nuevo" : undefined}
         >
           {isRevealed ? (
             <motion.img
@@ -184,7 +172,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
               src={lastFrameLogo}
               alt="Global City Logo"
               onContextMenu={(e) => e.preventDefault()}
-              className="w-full h-full object-contain object-center bg-black hover:scale-[1.02] transition-transform"
+              className="w-full h-full object-contain object-center bg-black"
             />
           ) : (
             <video
