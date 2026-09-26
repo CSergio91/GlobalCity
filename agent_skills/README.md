@@ -10,6 +10,7 @@ Cada skill define con máxima rigurosidad técnica, matemática, regulatoria y d
 
 | Skill | Directorio | Ámbito Técnico y Funcional |
 | :--- | :--- | :--- |
+| **0. Arquitectura & Ingeniería del Trading OS** | [`global-city-architecture-and-engineering`](./global-city-architecture-and-engineering/SKILL.md) | **Fuente de verdad arquitectónica (88 directrices)**. Core desacoplado (Trading OS), despliegues Cloud y Self-Hosted, uso intensivo de Redis para memoria caliente/idempotencia, y arquitectura fan-out multiplexada para soportar miles de usuarios reales desde el día 1 sin ban de APIs. |
 | **1. Arquitectura Hexagonal del Core** | [`institutional-trading-core-architecture`](./institutional-trading-core-architecture/SKILL.md) | Principio de desacoplamiento *"el negocio prevalece sobre los adaptadores"*, puertos y adaptadores, modelos de dominio puros, base de datos relacional y jerarquía de excepciones canónicas. |
 | **2. Conectividad y Adaptadores** | [`multi-broker-connectivity-adapters`](./multi-broker-connectivity-adapters/SKILL.md) | Adaptadores de baja latencia para CCXT, MetaTrader 4, MetaTrader 5 (Windows Gateways), cTrader (Protobuf) y QuickFIX Engine (FIX 4.4/5.0) con normalización de símbolos. |
 | **3. Ciclo de Vida Transaccional** | [`trading-engine-oms-ems-risk`](./trading-engine-oms-ems-risk/SKILL.md) | Orquestación OMS vs EMS táctico, Smart Order Router (SOR) con VWAP L2, Pre-Trade Risk Engine síncrono en memoria (<1ms), reconciliación y cerrojos de idempotencia en Redis. |
