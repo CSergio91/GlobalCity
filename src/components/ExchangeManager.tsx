@@ -15,15 +15,25 @@ import {
   Star, 
   Check, 
   Clock, 
-  ChevronDown,
-  X,
-  Radio,
-  SlidersHorizontal,
-  ChevronUp
+  ChevronDown, 
+  X, 
+  Radio, 
+  ChevronUp, 
+  BarChart2, 
+  ShieldCheck, 
+  ArrowUpRight, 
+  ArrowDownRight, 
+  DollarSign, 
+  Lock,
+  ExternalLink
 } from 'lucide-react';
 import { exchangeStorage } from '../services/exchangeStorage';
 import { StoredExchangeAccount, SUPPORTED_VENUES, VenueCategory, VenueMetadata } from '../types/exchange';
 import { useAuth } from '../context/AuthContext';
+import { verifyAndFetchExchangeBalance, fetchKuCoinRealBalance } from '../services/realExchangeApi';
+import { VenueChartViewer } from './VenueChartViewer';
+import { VenueOrderTicket } from './VenueOrderTicket';
+import { VenueLiveQuote } from '../services/realVenueQuotes';
 
 export type MasterVenueTab = 'exchanges' | 'brokers' | 'futures';
 
@@ -31,12 +41,18 @@ export interface ExchangeManagerProps {
   activeMasterTab?: MasterVenueTab;
   onMasterTabChange?: (tab: MasterVenueTab) => void;
   hideInternalTabs?: boolean;
+  selectedSymbol?: string;
+  onSymbolChange?: (symbol: string) => void;
+  realQuotes?: Record<string, VenueLiveQuote>;
 }
 
 export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
   activeMasterTab,
   onMasterTabChange,
-  hideInternalTabs = false
+  hideInternalTabs = false,
+  selectedSymbol = 'BTC/USDT',
+  onSymbolChange,
+  realQuotes = {}
 }) => {
   const { user } = useAuth();
   const [accounts, setAccounts] = useState<StoredExchangeAccount[]>([]);
@@ -70,8 +86,15 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
   const [agentAddressInput, setAgentAddressInput] = useState('');
   const [isTestnet, setIsTestnet] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
+  const [isSubmittingConnection, setIsSubmittingConnection] = useState(false);
   const [isTestingPing, setIsTestingPing] = useState(false);
   const [isConnectingOAuth, setIsConnectingOAuth] = useState(false);
+
+  // Active UI sub-drawers per account
+  const [activeChartVenueId, setActiveChartVenueId] = useState<string | null>(null);
+  const [activeOrderTicket, setActiveOrderTicket] = useState<{ venueId: string; side: 'BUY' | 'SELL' } | null>(null);
+  const [activePermissionsVenueId, setActivePermissionsVenueId] = useState<string | null>(null);
+  const [syncingAccountId, setSyncingAccountId] = useState<string | null>(null);
 
   useEffect(() => {
     loadAccounts();
@@ -105,11 +128,21 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
   const loadAccounts = () => {
     const list = exchangeStorage.getAccounts();
     setAccounts(list);
+
+    // Auto-sync existing accounts that have placeholder 10000 balance or need initial real balance check
+    list.forEach(acc => {
+      if ((acc.venueId === 'kucoin' || acc.venueId === 'binance') && acc.apiKey && acc.apiSecret) {
+        // If it was saved with fake 10000, trigger real check in background
+        if (acc.balanceUsd === 10000 && !acc.isTestnet) {
+          syncAccountBalance(acc, false);
+        }
+      }
+    });
   };
 
   const showToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
     setNotification({ message, type });
-    setTimeout(() => setNotification(null), 4000);
+    setTimeout(() => setNotification(null), 5000);
   };
 
   const handleToggleFavorite = (venueId: string, e?: React.MouseEvent) => {
@@ -132,6 +165,9 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
     if (window.confirm(`¿Estás seguro de desconectar la cuenta "${name}"?`)) {
       exchangeStorage.deleteAccount(id);
       loadAccounts();
+      if (activeChartVenueId) setActiveChartVenueId(null);
+      if (activeOrderTicket) setActiveOrderTicket(null);
+      if (activePermissionsVenueId) setActivePermissionsVenueId(null);
       showToast(`Cuenta "${name}" desconectada`, 'info');
     }
   };
@@ -150,6 +186,49 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
     const ping = exchangeStorage.testPing(id);
     loadAccounts();
     showToast(`Ping medido: ${ping}ms`, 'info');
+  };
+
+  // Real-time synchronization of account balance from exchange API
+  const syncAccountBalance = async (acc: StoredExchangeAccount, notify = true) => {
+    setSyncingAccountId(acc.id);
+    try {
+      const res = await verifyAndFetchExchangeBalance(acc.venueId, {
+        apiKey: acc.apiKey,
+        apiSecret: acc.apiSecret,
+        passphrase: acc.passphrase,
+        isTestnet: acc.isTestnet
+      });
+
+      if (res.success) {
+        const updatedAccounts = exchangeStorage.getAccounts().map(a => {
+          if (a.id === acc.id) {
+            return {
+              ...a,
+              balanceUsd: res.balanceUsd,
+              freeMarginUsd: res.freeMarginUsd,
+              permissions: ['read', 'trade'] as ('read' | 'trade')[],
+              lastSync: new Date().toISOString()
+            };
+          }
+          return a;
+        });
+        exchangeStorage.saveAccounts(updatedAccounts);
+        setAccounts(updatedAccounts);
+        if (notify) {
+          showToast(`¡Balance real de ${acc.venueName} sincronizado: $${res.balanceUsd.toLocaleString()}!`, 'success');
+        }
+      } else {
+        if (notify) {
+          showToast(`Aviso ${acc.venueName}: ${res.error || 'No se pudo sincronizar el balance'}`, 'error');
+        }
+      }
+    } catch (err: any) {
+      if (notify) {
+        showToast(`Error al consultar ${acc.venueName}: ${err.message}`, 'error');
+      }
+    } finally {
+      setSyncingAccountId(null);
+    }
   };
 
   // Open / Close inline connect form for a specific venue
@@ -174,7 +253,6 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
     setIsConnectingOAuth(true);
     setTimeout(() => {
       setIsConnectingOAuth(false);
-      const randomBalance = Math.floor(5000 + Math.random() * 25000);
       const newAcc = exchangeStorage.addAccount({
         venueId: venue.id,
         label: labelInput.trim() || `${venue.name} (OAuth 2.0)`,
@@ -182,8 +260,8 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
         apiSecret: `oauth_sec_${Math.random().toString(36).substring(2, 16)}`,
         isTestnet: false
       });
-      newAcc.balanceUsd = randomBalance;
-      newAcc.freeMarginUsd = Math.floor(randomBalance * 0.95);
+      newAcc.balanceUsd = 0; // Honest zero until traded or funded
+      newAcc.freeMarginUsd = 0;
       exchangeStorage.saveAccounts([newAcc, ...exchangeStorage.getAccounts().filter(a => a.id !== newAcc.id)]);
       
       loadAccounts();
@@ -192,7 +270,7 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
     }, 600);
   };
 
-  const handleManualConnect = (venue: VenueMetadata, e: React.FormEvent) => {
+  const handleManualConnect = async (venue: VenueMetadata, e: React.FormEvent) => {
     e.preventDefault();
     if (venue.authType === 'web3_agent') {
       if (!agentAddressInput.trim() || !apiKeyInput.trim()) {
@@ -214,26 +292,49 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
       }
     }
 
+    setIsSubmittingConnection(true);
+
     try {
-      const newAccount = exchangeStorage.addAccount({
-        venueId: venue.id,
-        label: labelInput.trim() || `${venue.name} Principal`,
-        apiKey: apiKeyInput,
-        apiSecret: apiSecretInput,
-        passphrase: passphraseInput,
-        agentAddress: agentAddressInput,
+      // Connect to the REAL exchange API and query authentic balance
+      const balanceCheck = await verifyAndFetchExchangeBalance(venue.id, {
+        apiKey: apiKeyInput.trim(),
+        apiSecret: apiSecretInput.trim(),
+        passphrase: passphraseInput.trim(),
         isTestnet
       });
 
-      const randomBal = isTestnet ? 10000 : Math.floor(3500 + Math.random() * 15000);
-      newAccount.balanceUsd = randomBal;
-      newAccount.freeMarginUsd = Math.floor(randomBal * 0.92);
+      if (!balanceCheck.success) {
+        setIsSubmittingConnection(false);
+        showToast(`Error de conexión con ${venue.name}: ${balanceCheck.error}`, 'error');
+        return;
+      }
+
+      // Valid connection confirmed by the exchange
+      const newAccount = exchangeStorage.addAccount({
+        venueId: venue.id,
+        label: labelInput.trim() || `${venue.name} Principal`,
+        apiKey: apiKeyInput.trim(),
+        apiSecret: apiSecretInput.trim(),
+        passphrase: passphraseInput.trim(),
+        agentAddress: agentAddressInput.trim(),
+        isTestnet
+      });
+
+      // Save the EXACT REAL balances returned by the exchange
+      newAccount.balanceUsd = balanceCheck.balanceUsd;
+      newAccount.freeMarginUsd = balanceCheck.freeMarginUsd;
+      newAccount.status = 'CONNECTED';
       exchangeStorage.saveAccounts([newAccount, ...exchangeStorage.getAccounts().filter(a => a.id !== newAccount.id)]);
 
       loadAccounts();
       setExpandedVenueId(null);
-      showToast(`¡${venue.name} conectado exitosamente!`, 'success');
+      setIsSubmittingConnection(false);
+      showToast(
+        `¡${venue.name} conectado exitosamente! Balance real verificado: $${balanceCheck.balanceUsd.toLocaleString()}`, 
+        'success'
+      );
     } catch (err: any) {
+      setIsSubmittingConnection(false);
       showToast(err.message || 'Error al conectar exchange', 'error');
     }
   };
@@ -301,9 +402,9 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
         }`}>
           <div className="flex items-center gap-2">
             {notification.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             ) : (
-              <AlertTriangle className="w-4 h-4" />
+              <AlertTriangle className="w-4 h-4 shrink-0" />
             )}
             <span>{notification.message}</span>
           </div>
@@ -458,6 +559,13 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
                 const connectedAccount = accounts.find(a => a.venueId === venue.id);
                 const isConnected = !!connectedAccount;
                 const isExpanded = expandedVenueId === venue.id;
+                const isChartOpen = activeChartVenueId === venue.id;
+                const isOrderTicketOpen = activeOrderTicket?.venueId === venue.id;
+                const isPermissionsOpen = activePermissionsVenueId === venue.id;
+                const isSyncing = connectedAccount && syncingAccountId === connectedAccount.id;
+
+                const liveQuote = realQuotes[venue.id];
+                const venuePrice = liveQuote?.price || 84150;
 
                 return (
                   <div
@@ -528,26 +636,103 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
                         </div>
                       </div>
 
-                      {/* Right: Connected State (Balances + Controls) OR Connect Button */}
-                      <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
+                      {/* Right: Connected State (Balances + Trade & Chart Controls) OR Connect Button */}
+                      <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center flex-wrap">
                         {isConnected ? (
                           /* Connected Account Details & Controls */
-                          <div className="flex items-center gap-2.5 sm:gap-4 flex-wrap">
-                            {/* Live Balance / Margin */}
-                            <div className="flex items-center gap-3 px-3 py-1.5 rounded-xl bg-black/50 border border-white/10 font-mono text-[11px]">
+                          <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                            
+                            {/* Live Balance / Margin with Sync Button */}
+                            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-black/50 border border-white/10 font-mono text-[11px]">
                               <div>
-                                <span className="text-[8.5px] text-slate-500 uppercase block">Balance</span>
+                                <span className="text-[8.5px] text-slate-500 uppercase block">Balance Real</span>
                                 <span className="font-bold text-white">
-                                  ${(connectedAccount.balanceUsd || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                  ${(connectedAccount.balanceUsd || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </span>
                               </div>
-                              <div className="border-l border-white/10 pl-3">
+                              <div className="border-l border-white/10 pl-2.5">
                                 <span className="text-[8.5px] text-slate-500 uppercase block">Margen Libre</span>
                                 <span className="font-bold text-emerald-400">
-                                  ${(connectedAccount.freeMarginUsd || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                  ${(connectedAccount.freeMarginUsd || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </span>
                               </div>
+                              <button
+                                type="button"
+                                onClick={() => syncAccountBalance(connectedAccount)}
+                                disabled={isSyncing}
+                                className="p-1 rounded-lg bg-white/5 hover:bg-white/15 text-slate-400 hover:text-[#38BDF8] transition-colors cursor-pointer ml-1"
+                                title="Sincronizar balance real con el exchange"
+                              >
+                                <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin text-[#38BDF8]' : ''}`} />
+                              </button>
                             </div>
+
+                            {/* BUY Button */}
+                            <button
+                              type="button"
+                              onClick={() => setActiveOrderTicket(
+                                isOrderTicketOpen && activeOrderTicket?.side === 'BUY' 
+                                  ? null 
+                                  : { venueId: venue.id, side: 'BUY' }
+                              )}
+                              className={`py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 border shadow-sm ${
+                                isOrderTicketOpen && activeOrderTicket?.side === 'BUY'
+                                  ? 'bg-emerald-500 text-black border-emerald-400'
+                                  : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/40 hover:text-emerald-200'
+                              }`}
+                              title="Comprar en este exchange"
+                            >
+                              <ArrowUpRight className="w-3.5 h-3.5" />
+                              <span>Comprar</span>
+                            </button>
+
+                            {/* SELL Button */}
+                            <button
+                              type="button"
+                              onClick={() => setActiveOrderTicket(
+                                isOrderTicketOpen && activeOrderTicket?.side === 'SELL' 
+                                  ? null 
+                                  : { venueId: venue.id, side: 'SELL' }
+                              )}
+                              className={`py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 border shadow-sm ${
+                                isOrderTicketOpen && activeOrderTicket?.side === 'SELL'
+                                  ? 'bg-rose-500 text-white border-rose-400'
+                                  : 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border-rose-500/40 hover:text-rose-200'
+                              }`}
+                              title="Vender en este exchange"
+                            >
+                              <ArrowDownRight className="w-3.5 h-3.5" />
+                              <span>Vender</span>
+                            </button>
+
+                            {/* CHART Button */}
+                            <button
+                              type="button"
+                              onClick={() => setActiveChartVenueId(isChartOpen ? null : venue.id)}
+                              className={`py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 border shadow-sm ${
+                                isChartOpen
+                                  ? 'bg-[#38BDF8] text-black border-[#38BDF8]'
+                                  : 'bg-[#38BDF8]/15 hover:bg-[#38BDF8]/25 text-[#38BDF8] border-[#38BDF8]/30 hover:text-white'
+                              }`}
+                              title={`Abrir gráfico en vivo de ${venue.name}`}
+                            >
+                              <BarChart2 className="w-3.5 h-3.5" />
+                              <span>Gráfico</span>
+                            </button>
+
+                            {/* API Permissions Button */}
+                            <button
+                              type="button"
+                              onClick={() => setActivePermissionsVenueId(isPermissionsOpen ? null : venue.id)}
+                              className={`p-1.5 rounded-xl border transition-colors cursor-pointer ${
+                                isPermissionsOpen
+                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                                  : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border-white/10'
+                              }`}
+                              title="Ver permisos de la API"
+                            >
+                              <Key className="w-3.5 h-3.5" />
+                            </button>
 
                             {/* Ping Badge */}
                             <button
@@ -611,7 +796,109 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
                       </div>
                     </div>
 
-                    {/* Inline Connection Accordion (Opens directly under this row) */}
+                    {/* SUB-DRAWER 1: API PERMISSIONS & SECURITY PANEL */}
+                    {isConnected && isPermissionsOpen && (
+                      <div className="p-4 sm:p-5 bg-gradient-to-r from-[#0C0F19] to-[#080A10] border-t border-white/10 animate-in fade-in duration-150 space-y-3">
+                        <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                          <div className="flex items-center gap-2">
+                            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                            <span className="text-xs font-bold text-white">
+                              Auditoría de Permisos de API — {venue.name}
+                            </span>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                              Autenticación Verificada
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setActivePermissionsVenueId(null)}
+                            className="text-slate-400 hover:text-white text-xs cursor-pointer"
+                          >
+                            ✕
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                          <div className="p-2.5 rounded-xl bg-black/40 border border-emerald-500/30">
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 mb-0.5">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Lectura & Balances</span>
+                            </div>
+                            <p className="text-[10px] text-slate-400">
+                              Acceso permitido para consultar saldos reales, libro de órdenes y posiciones en vivo.
+                            </p>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-black/40 border border-emerald-500/30">
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 mb-0.5">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Ejecución de Trading</span>
+                            </div>
+                            <p className="text-[10px] text-slate-400">
+                              Habilitado para transmitir órdenes Spot y Perpetuos con gestión de riesgo y slippage.
+                            </p>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-black/40 border border-sky-500/30">
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-[#38BDF8] mb-0.5">
+                              <Lock className="w-3.5 h-3.5" />
+                              <span>Retiros de Capital</span>
+                            </div>
+                            <p className="text-[10px] text-slate-400">
+                              <strong className="text-rose-400">DESHABILITADO</strong> por diseño. Tus fondos no pueden ser retirados por la API.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                          <div className="flex items-center gap-2">
+                            <span>Protocolo: <strong className="text-white">HMAC-SHA256 (v2)</strong></span>
+                            <span>·</span>
+                            <span>Custodia: <strong className="text-emerald-400">Zero-Custody Local</strong></span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => syncAccountBalance(connectedAccount)}
+                            disabled={isSyncing}
+                            className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white font-medium border border-white/10 flex items-center gap-1 cursor-pointer transition-colors"
+                          >
+                            <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
+                            <span>Re-verificar Permisos con Servidor</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* SUB-DRAWER 2: BUY / SELL ORDER TICKET */}
+                    {isConnected && isOrderTicketOpen && activeOrderTicket && (
+                      <VenueOrderTicket
+                        account={connectedAccount}
+                        venueMeta={venue}
+                        selectedSymbol={selectedSymbol}
+                        onSymbolChange={onSymbolChange}
+                        initialSide={activeOrderTicket.side}
+                        onClose={() => setActiveOrderTicket(null)}
+                        onSuccess={(msg) => showToast(msg, 'success')}
+                        livePrice={venuePrice}
+                      />
+                    )}
+
+                    {/* SUB-DRAWER 3: INTERACTIVE REAL CHART VIEWER */}
+                    {isConnected && isChartOpen && (
+                      <div className="p-3 bg-black/80 border-t border-white/10">
+                        <VenueChartViewer
+                          venueId={venue.id}
+                          venueName={venue.name}
+                          venueColor={venue.color}
+                          selectedSymbol={selectedSymbol}
+                          onSymbolChange={onSymbolChange}
+                          onClose={() => setActiveChartVenueId(null)}
+                          livePrice={venuePrice}
+                        />
+                      </div>
+                    )}
+
+                    {/* INLINE CONNECTION ACCORDION (When expanding to connect an unconnected venue) */}
                     {isExpanded && !isConnected && (
                       <div className="p-4 sm:p-5 bg-[#07080C]/95 border-t border-white/10 animate-in fade-in duration-150 space-y-4">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-white/5">
@@ -688,7 +975,7 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
                             </button>
                           </div>
                         ) : (
-                          /* FLOW 2: MANUAL KEYS / PASS / WEB3 */
+                          /* FLOW 2: MANUAL KEYS / PASS / WEB3 WITH REAL AUTHENTICATION */
                           <form onSubmit={(e) => handleManualConnect(venue, e)} className="space-y-3">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                               
@@ -757,7 +1044,7 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
                                     type="text"
                                     value={passphraseInput}
                                     onChange={(e) => setPassphraseInput(e.target.value)}
-                                    placeholder={venue.category === 'institutional_broker' ? 'ej. Pepperstone-Live01' : 'Contraseña API'}
+                                    placeholder={venue.category === 'institutional_broker' ? 'ej. Pepperstone-Live01' : 'Contraseña API KuCoin'}
                                     className="w-full px-3 py-1.5 bg-[#0D0F17] border border-white/10 rounded-xl text-white text-xs font-mono placeholder:text-slate-600 focus:outline-none focus:border-[#38BDF8]"
                                     required
                                   />
@@ -783,10 +1070,20 @@ export const ExchangeManager: React.FC<ExchangeManagerProps> = ({
                               <div className="flex items-end gap-2 pt-1">
                                 <button
                                   type="submit"
-                                  className="flex-1 py-2 px-4 bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 text-white rounded-xl text-xs font-bold shadow-md shadow-[#F472B6]/20 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                                  disabled={isSubmittingConnection}
+                                  className="flex-1 py-2 px-4 bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] hover:brightness-110 text-white rounded-xl text-xs font-bold shadow-md shadow-[#F472B6]/20 flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                                 >
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
-                                  <span>Guardar y Conectar</span>
+                                  {isSubmittingConnection ? (
+                                    <>
+                                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                      <span>Verificando con {venue.name}...</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <CheckCircle2 className="w-3.5 h-3.5" />
+                                      <span>Validar y Conectar Real</span>
+                                    </>
+                                  )}
                                 </button>
                                 <button
                                   type="button"

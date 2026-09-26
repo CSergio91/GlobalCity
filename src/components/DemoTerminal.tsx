@@ -912,6 +912,9 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                   activeMasterTab={masterVenueTab} 
                   onMasterTabChange={setMasterVenueTab} 
                   hideInternalTabs={true} 
+                  selectedSymbol={selectedSymbol}
+                  onSymbolChange={setSelectedSymbol}
+                  realQuotes={realQuotes}
                 />
               </div>
             )}
