@@ -13,6 +13,8 @@ import { motion } from 'motion/react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppRouter } from '../context/RouterContext';
 import { useLiveMarketTicks } from '../services/liveMarketFeed';
+import { ParallaxBackground } from './ParallaxBackground';
+import globalCityHeroVisual from '../assets/images/global_city_hero_visual_1790346360975.jpg';
 
 export const TelegramOperations: React.FC = () => {
   const { t, language } = useLanguage();
@@ -29,6 +31,14 @@ export const TelegramOperations: React.FC = () => {
 
   return (
     <section id="telegram" className="w-full py-20 sm:py-28 bg-[#06070B] relative select-none overflow-hidden">
+      {/* Cinematic Parallax Global City Command Skyline Backdrop */}
+      <ParallaxBackground 
+        imageSrc={globalCityHeroVisual} 
+        alt="Global City Cyberpunk Skyline Backdrop" 
+        opacity={0.30}
+        speed={0.14}
+      />
+
       {/* Background Ambient Radial Lighting */}
       <div className="absolute top-1/2 left-1/3 w-[600px] h-[350px] bg-gradient-to-b from-[#0088CC]/10 via-transparent to-transparent blur-[140px] pointer-events-none" />
 

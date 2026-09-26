@@ -7,6 +7,8 @@ import {
 import { motion } from 'motion/react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppRouter } from '../context/RouterContext';
+import { ParallaxBackground } from './ParallaxBackground';
+import propFirmExecutionVisual from '../assets/images/prop_firm_execution_node_1790346394469.jpg';
 
 export const CrossCopyTrading: React.FC = () => {
   const { t } = useLanguage();
@@ -14,6 +16,14 @@ export const CrossCopyTrading: React.FC = () => {
 
   return (
     <section id="copy-trading" className="w-full py-20 sm:py-28 bg-[#05060A] relative select-none overflow-hidden">
+      {/* Cinematic Parallax Execution Node Backdrop */}
+      <ParallaxBackground 
+        imageSrc={propFirmExecutionVisual} 
+        alt="Prop Firm Execution Node Backdrop" 
+        opacity={0.30}
+        speed={0.14}
+      />
+
       {/* Background Radial Glow */}
       <div className="absolute top-1/2 right-1/3 w-[500px] h-[300px] bg-gradient-to-b from-[#F472B6]/10 via-transparent to-transparent blur-[120px] pointer-events-none" />
 

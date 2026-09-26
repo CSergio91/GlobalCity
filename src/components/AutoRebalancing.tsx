@@ -8,6 +8,8 @@ import {
 import { motion } from 'motion/react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppRouter } from '../context/RouterContext';
+import { ParallaxBackground } from './ParallaxBackground';
+import crossAssetRouterVisual from '../assets/images/cross_asset_router_mesh_1790347063084.jpg';
 
 export const AutoRebalancing: React.FC = () => {
   const { t } = useLanguage();
@@ -16,6 +18,14 @@ export const AutoRebalancing: React.FC = () => {
 
   return (
     <section id="rebalance" className="w-full py-20 sm:py-28 bg-[#06070B] relative select-none overflow-hidden">
+      {/* Cinematic Parallax Cross-Asset Router Mesh Backdrop */}
+      <ParallaxBackground 
+        imageSrc={crossAssetRouterVisual} 
+        alt="Cross Asset Liquidity Router Mesh Backdrop" 
+        opacity={0.32}
+        speed={0.15}
+      />
+
       {/* Subtle Ambient Radial Lighting */}
       <div className="absolute top-1/3 left-1/4 w-[500px] h-[300px] bg-gradient-to-b from-[#60A5FA]/10 via-transparent to-transparent blur-[120px] pointer-events-none" />
 

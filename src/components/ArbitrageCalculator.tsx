@@ -5,6 +5,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAppRouter } from '../context/RouterContext';
 import { useLiveMarketTicks } from '../services/liveMarketFeed';
 import { PlatformLogo } from './MarketIcons';
+import { ParallaxBackground } from './ParallaxBackground';
+import arbitrageRadarVisual from '../assets/images/arbitrage_radar_mesh_1790346379182.jpg';
 
 interface ArbitragePairConfig {
   pair: string;
@@ -161,6 +163,14 @@ export const ArbitrageCalculator: React.FC = () => {
 
   return (
     <section id="arbitrage" className="w-full py-20 sm:py-28 bg-[#05060A] relative select-none overflow-hidden">
+      {/* Cinematic Parallax Radar Mesh Backdrop */}
+      <ParallaxBackground 
+        imageSrc={arbitrageRadarVisual} 
+        alt="Arbitrage L2 Radar Mesh Backdrop" 
+        opacity={0.34}
+        speed={0.16}
+      />
+
       {/* Subtle Atmospheric Glow */}
       <div className="absolute top-1/3 right-1/4 w-[500px] h-[300px] bg-gradient-to-b from-[#F472B6]/10 via-transparent to-transparent blur-[120px] pointer-events-none" />
 
