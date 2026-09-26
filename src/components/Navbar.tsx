@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Menu, 
-  X,
   Send,
   ArrowRight,
   LogIn
@@ -19,7 +17,6 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
   const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { t } = useLanguage();
   const { user, isAuthenticated } = useAuth();
   const { navigate } = useAppRouter();
@@ -53,27 +50,41 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 select-none ${
         scrolled 
-          ? "bg-[#06070B]/85 backdrop-blur-xl border-b border-white/[0.06] shadow-2xl py-3" 
-          : "bg-transparent border-b border-transparent py-4 sm:py-5"
+          ? "bg-[#06070B]/90 backdrop-blur-2xl border-b border-white/[0.08] shadow-2xl py-2.5 sm:py-3" 
+          : "bg-gradient-to-b from-[#06070B]/95 via-[#06070B]/60 to-transparent border-b border-white/[0.04] py-3 sm:py-4"
       }`}
     >
-      <div className="w-full px-4 sm:px-6 lg:px-10 flex items-center justify-between">
+      <div className="w-full px-4 sm:px-6 lg:px-10 flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 md:gap-4">
         
-        {/* Zone 1: Sleek Brand Logo */}
-        <div 
-          onClick={() => onNavigateSection("hero")}
-          className="flex items-center cursor-pointer group shrink-0"
-        >
-          <BrandLogo size="md" />
+        {/* Top Row: Brand Logo + Mobile Actions */}
+        <div className="w-full md:w-auto flex items-center justify-between shrink-0">
+          <div 
+            onClick={() => onNavigateSection("hero")}
+            className="flex items-center cursor-pointer group shrink-0"
+          >
+            <BrandLogo size="md" />
+          </div>
+
+          {/* Direct Actions on Mobile (Language + Login, NO Hamburger) */}
+          <div className="flex md:hidden items-center gap-2 shrink-0">
+            <CandlestickLanguageSelector />
+            <button
+              onClick={handleLoginClick}
+              className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] text-white text-xs font-black tracking-wide uppercase shadow-md flex items-center gap-1 active:scale-95 cursor-pointer"
+            >
+              <LogIn className="w-3.5 h-3.5 text-white" />
+              <span>Login</span>
+            </button>
+          </div>
         </div>
 
-        {/* Zone 2: Visual Navigation Links (Visible on all desktop, laptops & tablets: sm:flex) */}
-        <nav className="hidden sm:flex items-center gap-3.5 md:gap-5 lg:gap-7 xl:gap-8 text-[11px] md:text-xs font-semibold tracking-widest uppercase text-slate-300">
+        {/* Visual Text Navigation: ALWAYS VISIBLE AT THE TOP ON ALL SCREENS */}
+        <nav className="flex items-center justify-start md:justify-center gap-3.5 sm:gap-5 md:gap-6 lg:gap-8 text-[11px] md:text-xs font-semibold tracking-widest uppercase text-slate-300 overflow-x-auto no-scrollbar py-1">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => onNavigateSection(item.id)}
-              className="relative py-1 hover:text-white transition-colors cursor-pointer group"
+              className="relative py-1 hover:text-white transition-colors cursor-pointer group whitespace-nowrap shrink-0"
             >
               <span>{item.label}</span>
               <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] group-hover:w-full transition-all duration-300 rounded-full" />
@@ -81,8 +92,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           ))}
         </nav>
 
-        {/* Zone 3: Language Selector & Login Action (Desktop, laptops & tablets: sm:flex) */}
-        <div className="hidden sm:flex items-center gap-2.5 sm:gap-3 shrink-0">
+        {/* Right Zone on Desktop (Language + Login) */}
+        <div className="hidden md:flex items-center gap-3 shrink-0">
           <CandlestickLanguageSelector />
 
           {isAuthenticated && user ? (
@@ -106,62 +117,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
             >
               <LogIn className="w-3.5 h-3.5 text-white" />
               <span>Login</span>
-              <ArrowRight className="w-3 h-3 text-white group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight className="w-3.5 h-3.5 text-white group-hover:translate-x-0.5 transition-transform" />
             </button>
           )}
         </div>
 
-        {/* Mobile Controls (Strictly for mobile phones < 640px) */}
-        <div className="sm:hidden flex items-center gap-2">
-          <CandlestickLanguageSelector />
-
-          <button
-            onClick={handleLoginClick}
-            className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] text-white text-xs font-black tracking-wide uppercase active:scale-95 shadow-md flex items-center gap-1"
-          >
-            <LogIn className="w-3 h-3 text-white" />
-            <span>Login</span>
-          </button>
-
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-1.5 text-slate-300 hover:text-white transition-colors"
-            aria-label="Abrir Menú"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
-
       </div>
-
-      {/* Mobile Drawer (Strictly for mobile phones < 640px) */}
-      {mobileMenuOpen && (
-        <div className="sm:hidden bg-[#07090F]/95 backdrop-blur-2xl border-b border-white/10 px-6 py-6 flex flex-col gap-4 animate-reveal">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => {
-                onNavigateSection(item.id);
-                setMobileMenuOpen(false);
-              }}
-              className="text-left text-sm py-2 font-semibold tracking-wide uppercase text-slate-300 hover:text-white transition-colors"
-            >
-              {item.label}
-            </button>
-          ))}
-          <button
-            onClick={() => {
-              setMobileMenuOpen(false);
-              handleLoginClick();
-            }}
-            className="w-full py-3 text-center text-xs font-black tracking-widest uppercase text-white bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] rounded-full mt-2 shadow-lg cursor-pointer flex items-center justify-center gap-2"
-          >
-            <LogIn className="w-3.5 h-3.5 text-white" />
-            <span>Login</span>
-            <ArrowRight className="w-3.5 h-3.5 text-white" />
-          </button>
-        </div>
-      )}
     </header>
   );
 };
