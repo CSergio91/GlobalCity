@@ -150,55 +150,41 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
         </button>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════
-          RESPLANDOR AMBIENTAL ENVOLVENTE (Rellena el fondo sin cortar el vídeo)
-         ═══════════════════════════════════════════════════════════════ */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 flex items-center justify-center">
-        <img 
-          src={lastFrameLogo} 
-          alt="" 
-          aria-hidden="true"
-          className="w-full h-full object-cover blur-[80px] opacity-20 scale-125 saturate-150 transition-opacity duration-1000" 
-        />
-        <div className="absolute inset-0 bg-[#06070B]/75 backdrop-blur-[1px]" />
-      </div>
-
       {/* Contenedor Flex Animado con Motion Layout */}
       <motion.div 
         layout
         transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
         className={`w-full flex ${
           isRevealed 
-            ? 'flex-col md:flex-row items-center justify-center gap-4 sm:gap-6 md:gap-12 lg:gap-16' 
+            ? 'flex-col md:flex-row items-center justify-center gap-6 sm:gap-8 md:gap-12 lg:gap-16' 
             : 'flex-col items-center justify-center'
         }`}
       >
 
         {/* ═══════════════════════════════════════════════════════════════
-            VIDEO / LOGO PRINCIPAL (100% object-contain, NUNCA CORTADO)
-            Primero centrado; al terminar, se desplaza suavemente a la izquierda 
-            en escritorio o arriba en móvil
+            VIDEO / LOGO PRINCIPAL (100% Integrado en Negro Puro #000000)
+            Cero bordes visibles, se funde por completo con el fondo
            ═══════════════════════════════════════════════════════════════ */}
         <motion.div 
           layout
           transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
           className={`relative flex flex-col items-center justify-center select-none shrink-0 ${
             isRevealed 
-              ? 'w-full max-w-[260px] sm:max-w-[290px] md:max-w-[330px] lg:max-w-[370px] aspect-[9/16] max-h-[32vh] sm:max-h-[38vh] md:max-h-[62vh] cursor-pointer' 
-              : 'w-full max-w-[280px] sm:max-w-[340px] md:max-w-[380px] aspect-[9/16] max-h-[72vh]'
+              ? 'w-[260px] sm:w-[290px] md:w-[340px] lg:w-[380px] aspect-[9/16] max-h-[36vh] sm:max-h-[40vh] md:max-h-[68vh] cursor-pointer' 
+              : 'w-full max-w-[340px] sm:max-w-[400px] md:max-w-[440px] aspect-[9/16] max-h-[84vh]'
           }`}
           onClick={isRevealed ? handleReplayVideo : undefined}
           title={isRevealed ? "Toca para reproducir el vídeo de nuevo" : undefined}
         >
           {isRevealed ? (
             <motion.img
-              initial={{ opacity: 0.85 }}
+              initial={{ opacity: 0.9 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.4 }}
               src={lastFrameLogo}
               alt="Global City Logo"
               onContextMenu={(e) => e.preventDefault()}
-              className="w-full h-full object-contain object-center drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)] hover:scale-[1.02] transition-transform"
+              className="w-full h-full object-contain object-center bg-black hover:scale-[1.02] transition-transform"
             />
           ) : (
             <video
@@ -212,7 +198,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
               disablePictureInPicture
               onContextMenu={(e) => e.preventDefault()}
               onEnded={handleVideoEnded}
-              className="w-full h-full object-contain object-center drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)]"
+              className="w-full h-full object-contain object-center bg-black"
             />
           )}
 
@@ -221,7 +207,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
             <div className="mt-4 flex justify-center z-30 pointer-events-auto">
               <button
                 onClick={handleManualContinue}
-                className="px-5 py-2.5 rounded-full bg-black/80 hover:bg-black/95 backdrop-blur-md text-white/95 text-xs font-semibold tracking-wide flex items-center gap-1.5 transition-all shadow-2xl border border-white/20 group cursor-pointer active:scale-95"
+                className="px-5 py-2.5 rounded-full bg-black/90 hover:bg-black text-white/90 hover:text-white text-xs font-semibold tracking-wide flex items-center gap-1.5 transition-all shadow-2xl border border-white/20 group cursor-pointer active:scale-95"
               >
                 <span>Continuar al Login</span>
                 <ChevronRight className="w-3.5 h-3.5 text-[#F472B6] group-hover:translate-x-0.5 transition-transform" />
