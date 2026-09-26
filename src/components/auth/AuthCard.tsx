@@ -3,8 +3,7 @@ import {
   Send, 
   CheckCircle2, 
   ExternalLink,
-  ArrowRight,
-  ChevronRight
+  ArrowRight
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { authService, AuthResult } from '../../services/authService';
@@ -23,7 +22,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
   const storedUser = user || authService.getCurrentUser();
   const hasExistingSession = !!storedUser;
 
-  const [isRevealed, setIsRevealed] = useState(false);
   const [isTelegramWaiting, setIsTelegramWaiting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState<AuthResult | null>(null);
@@ -41,15 +39,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
     }
   }, []);
 
-  // Al terminar el video se pausa y sale animado el login
+  // Pausa el video automáticamente en el último fotograma
   const handleVideoEnded = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     e.currentTarget.pause();
-    setIsRevealed(true);
-  };
-
-  // Al pulsar "Continuar" se revela el login sin pausar el video
-  const handleRevealWithoutPausing = () => {
-    setIsRevealed(true);
   };
 
   // Polling automático para cuando el usuario pulsa START en Telegram
@@ -117,123 +109,139 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
   };
 
   return (
-    <div className="w-full flex items-center justify-center relative">
+    <div className="w-full max-w-sm sm:max-w-md md:max-w-3xl rounded-3xl overflow-hidden bg-[#0C0E17]/90 backdrop-blur-2xl border border-white/10 shadow-[0_25px_80px_rgba(0,0,0,0.95)] flex flex-col md:flex-row relative">
       
       {/* Botón de Cierre Superior (si se abre en modal) */}
       {isModal && onClose && (
         <button 
           onClick={onClose}
           aria-label="Cerrar modal"
-          className="absolute top-0 right-0 p-2 rounded-xl bg-black/60 hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer z-50 border-0"
+          className="absolute top-3 right-3 p-1.5 rounded-xl bg-black/60 hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer z-50 border-0"
         >
           ✕
         </button>
       )}
 
-      {/* Contenedor Principal: Video y Login perfectamente coordinados en dimensiones */}
-      <div className="w-full max-w-4xl flex flex-col md:flex-row items-center justify-center gap-4 sm:gap-6 md:gap-12 transition-all duration-700 ease-out">
-        
-        {/* VIDEO DE PRESENTACIÓN 9:16 (En móvil se adapta de ancho y reduce altura al revelar login) */}
-        <div 
-          onClick={handleRevealWithoutPausing}
+      {/* ─────────────────────────────────────────────────────────────
+          PANEL SUPERIOR (Móvil) / PANEL IZQUIERDO (Desktop):
+          Video de Presentación 9:16 Enmarcado Limpiamente
+         ───────────────────────────────────────────────────────────── */}
+      <div 
+        onContextMenu={(e) => e.preventDefault()}
+        className="w-full md:w-[46%] h-48 sm:h-56 md:h-auto min-h-[190px] md:min-h-[500px] relative bg-black shrink-0 overflow-hidden select-none flex items-center justify-center"
+      >
+        <video
+          ref={videoRef}
+          src={presentationVideo}
+          autoPlay
+          muted
+          playsInline
+          preload="auto"
+          controlsList="nodownload nofullscreen noremoteplayback"
+          disablePictureInPicture
           onContextMenu={(e) => e.preventDefault()}
-          className={`relative rounded-3xl overflow-hidden shrink-0 transition-all duration-700 ease-out z-20 cursor-pointer select-none bg-transparent ${
-            isRevealed 
-              ? 'w-[280px] sm:w-[320px] md:w-[315px] h-[380px] sm:h-[430px] md:h-[530px]' 
-              : 'w-[280px] sm:w-[330px] md:w-[350px] h-[480px] sm:h-[540px] md:h-[600px] hover:scale-[1.01]'
-          }`}
-          title={isRevealed ? '' : 'Toca para continuar'}
-        >
-          <video
-            ref={videoRef}
-            src={presentationVideo}
-            autoPlay
-            muted
-            playsInline
-            preload="auto"
-            controlsList="nodownload nofullscreen noremoteplayback"
-            disablePictureInPicture
-            onContextMenu={(e) => e.preventDefault()}
-            onEnded={handleVideoEnded}
-            style={{
-              WebkitMaskImage: 'radial-gradient(ellipse 92% 88% at 50% 50%, black 55%, transparent 100%)',
-              maskImage: 'radial-gradient(ellipse 92% 88% at 50% 50%, black 55%, transparent 100%)'
-            }}
-            className="w-full h-full object-contain md:object-cover object-center pointer-events-none select-none mix-blend-screen filter contrast-115 brightness-105"
-          />
+          onEnded={handleVideoEnded}
+          className="w-full h-full object-cover object-center filter contrast-105 pointer-events-none select-none"
+        />
+        {/* Sutil viñeta para integrar suavemente el borde exterior */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 pointer-events-none" />
+      </div>
 
-          {/* Difuminado y degradado suave de bordes superior e inferior */}
-          <div className="absolute inset-x-0 top-0 h-16 sm:h-20 bg-gradient-to-b from-[#06070B] via-[#06070B]/50 to-transparent pointer-events-none z-10" />
-          <div className="absolute inset-x-0 bottom-0 h-16 sm:h-20 bg-gradient-to-t from-[#06070B] via-[#06070B]/50 to-transparent pointer-events-none z-10" />
-          <div className="absolute inset-y-0 left-0 w-8 sm:w-12 bg-gradient-to-r from-[#06070B]/60 to-transparent pointer-events-none z-10" />
-          <div className="absolute inset-y-0 right-0 w-8 sm:w-12 bg-gradient-to-l from-[#06070B]/60 to-transparent pointer-events-none z-10" />
-
-          {/* Botón discreto para continuar sin pausar el video */}
-          {!isRevealed && (
-            <div className="absolute bottom-5 inset-x-0 flex justify-center pointer-events-auto z-20">
-              <span className="px-4 py-1.5 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-md text-white text-xs font-semibold tracking-wide flex items-center gap-1.5 transition-all shadow-xl border border-white/20">
-                <span>Continuar</span>
-                <ChevronRight className="w-3.5 h-3.5 text-[#F472B6]" />
-              </span>
-            </div>
-          )}
+      {/* ─────────────────────────────────────────────────────────────
+          PANEL INFERIOR (Móvil) / PANEL DERECHO (Desktop):
+          Formulario de Login con Separador Orgánico de Nubes
+         ───────────────────────────────────────────────────────────── */}
+      <div className="w-full md:w-[54%] flex-1 relative flex flex-col justify-center items-center text-center p-6 sm:p-8 bg-[#0C0E17] z-20">
+        
+        {/* ─── SEPARADOR DE NUBES MULTICAPA (Desktop: Borde Izquierdo) ─── */}
+        <div className="hidden md:block absolute -left-12 top-0 bottom-0 w-14 pointer-events-none z-30 overflow-visible">
+          <svg viewBox="0 0 100 600" preserveAspectRatio="none" className="w-full h-full drop-shadow-[-6px_0_12px_rgba(0,0,0,0.6)]">
+            {/* Capa 1: Sombra Celeste Translúcida */}
+            <path 
+              d="M100,0 C65,15 20,40 35,90 C10,130 12,180 40,215 C6,255 10,310 42,335 C8,375 14,425 45,450 C12,490 20,535 52,560 C35,585 65,595 100,600 L100,0 Z" 
+              fill="rgba(56, 189, 248, 0.4)" 
+            />
+            {/* Capa 2: Sombra Azul Media */}
+            <path 
+              d="M100,0 C75,18 36,45 48,92 C24,132 26,182 52,216 C22,258 26,312 54,336 C24,378 28,426 56,451 C28,492 34,536 62,561 C48,586 75,596 100,600 L100,0 Z" 
+              fill="rgba(37, 99, 235, 0.6)" 
+            />
+            {/* Capa 3: Frente con color idéntico al panel (#0C0E17) */}
+            <path 
+              d="M100,0 C82,20 50,48 60,94 C38,134 40,184 64,217 C36,260 40,314 66,337 C38,380 42,428 68,452 C42,494 48,537 72,562 C60,587 84,597 100,600 L100,0 Z" 
+              fill="#0C0E17" 
+            />
+          </svg>
         </div>
 
-        {/* PANEL DE LOGIN: Mismo ancho exacto que el video en móvil (w-[280px] sm:w-[320px]) */}
-        <div 
-          className={`w-[280px] sm:w-[320px] md:w-full md:max-w-md flex flex-col items-center justify-center text-center space-y-3.5 sm:space-y-5 transition-all duration-700 ease-out z-10 relative ${
-            isRevealed 
-              ? 'opacity-100 translate-x-0 translate-y-0 pointer-events-auto' 
-              : 'opacity-0 md:-translate-x-16 translate-y-10 pointer-events-none hidden md:flex'
-          }`}
-        >
-          {/* Resplandor ambiental de color sutil detrás del Login */}
-          <div className="absolute -inset-4 bg-gradient-to-r from-[#229ED9]/15 via-[#EC4899]/10 to-[#FBBF24]/10 rounded-3xl blur-2xl pointer-events-none -z-10" />
+        {/* ─── SEPARADOR DE NUBES MULTICAPA (Móviles: Borde Superior sobre el Video) ─── */}
+        <div className="md:hidden absolute -top-7 left-0 right-0 h-9 pointer-events-none z-30 overflow-visible">
+          <svg viewBox="0 0 600 100" preserveAspectRatio="none" className="w-full h-full drop-shadow-[0_-6px_12px_rgba(0,0,0,0.6)]">
+            {/* Capa 1: Sombra Celeste Translúcida curvada hacia arriba */}
+            <path 
+              d="M0,100 L0,55 C30,15 90,8 140,48 C180,10 240,6 290,44 C330,8 390,10 440,46 C480,12 540,15 600,55 L600,100 Z" 
+              fill="rgba(56, 189, 248, 0.4)" 
+            />
+            {/* Capa 2: Sombra Azul Media */}
+            <path 
+              d="M0,100 L0,68 C32,28 92,22 140,58 C182,24 242,20 290,54 C332,22 392,24 440,56 C482,26 542,28 600,68 L600,100 Z" 
+              fill="rgba(37, 99, 235, 0.6)" 
+            />
+            {/* Capa 3: Frente con color idéntico al panel (#0C0E17) */}
+            <path 
+              d="M0,100 L0,78 C35,42 95,36 140,68 C184,36 244,32 290,64 C334,34 394,36 440,66 C484,38 544,40 600,78 L600,100 Z" 
+              fill="#0C0E17" 
+            />
+          </svg>
+        </div>
 
-          {/* TÍTULO CON GRADIENTE DE COLORES INSTITUCIONALES (Sunset Gradient) */}
+        {/* ─── CONTENIDO DEL LOGIN ─── */}
+        <div className="w-full max-w-xs sm:max-w-sm space-y-4">
+          
+          {/* TÍTULO CON GRADIENTE SUNSET */}
           <div className="space-y-1">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] drop-shadow-[0_0_35px_rgba(244,114,182,0.45)]">
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA] drop-shadow-[0_0_30px_rgba(244,114,182,0.4)]">
               Login
             </h1>
-            <p className="text-xs sm:text-sm md:text-base text-slate-200 font-medium drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
+            <p className="text-xs sm:text-sm text-slate-300 font-medium drop-shadow">
               {hasExistingSession 
                 ? `Bienvenido de nuevo, ${storedUser?.firstName || 'Trader'}` 
                 : 'Acceso directo con tu cuenta de Telegram'}
             </p>
           </div>
 
-          {/* ACCIÓN PRINCIPAL DE ACCESO CON COLORES VIBRANTES */}
-          <div className="w-full flex flex-col items-center space-y-2.5">
+          {/* ACCIÓN PRINCIPAL DE ACCESO */}
+          <div className="w-full flex flex-col items-center space-y-2.5 pt-1">
             {hasExistingSession ? (
-              // CASO 1: Sesión previa en localStorage -> Botón GRANDE "Ver Mi Dashboard" (Prioridad máxima)
+              // CASO 1: Sesión previa en localStorage -> Botón GRANDE "Ver Mi Dashboard"
               <div className="w-full flex flex-col items-center space-y-2.5">
                 <button
                   onClick={() => onSuccess()}
-                  className="w-full btn-liquid py-3.5 sm:py-4 px-4 sm:px-8 rounded-2xl bg-gradient-to-r from-[#0088CC] via-[#229ED9] to-[#00C2FF] hover:brightness-110 text-white text-sm sm:text-base md:text-lg font-black flex items-center justify-center gap-2.5 shadow-[0_10px_40px_rgba(0,136,204,0.65)] hover:shadow-cyan-400/40 transition-all cursor-pointer group"
+                  className="w-full btn-liquid py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#0088CC] via-[#229ED9] to-[#00C2FF] hover:brightness-110 text-white text-sm sm:text-base font-black flex items-center justify-center gap-2.5 shadow-[0_10px_35px_rgba(0,136,204,0.6)] hover:shadow-cyan-400/40 transition-all cursor-pointer group"
                 >
                   <span>Ver Mi Dashboard</span>
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:translate-x-1.5 transition-transform" />
                 </button>
 
-                {/* Tarjeta de estado de sesión con acento esmeralda */}
-                <div className="flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[11px] sm:text-xs font-mono text-emerald-300 shadow-md">
+                {/* Badge de estado verificado */}
+                <div className="flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[11px] sm:text-xs font-mono text-emerald-300 shadow-sm">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="truncate max-w-[200px]">Sesión: {storedUser?.username || storedUser?.firstName}</span>
+                  <span className="truncate max-w-[190px]">Sesión: {storedUser?.username || storedUser?.firstName}</span>
                 </div>
 
                 <button
                   onClick={handleLaunchTelegramOAuth}
-                  className="text-[11px] sm:text-xs text-slate-300 hover:text-white transition-colors cursor-pointer pt-1 hover:underline"
+                  className="text-[11px] text-slate-400 hover:text-white transition-colors cursor-pointer pt-1 hover:underline"
                 >
                   Conectar con otra cuenta de Telegram
                 </button>
               </div>
             ) : (
-              // CASO 2: Sin sesión previa -> Botón "Conectar con Telegram" con gradiente celeste neón
+              // CASO 2: Sin sesión previa -> Botón "Conectar con Telegram"
               <div className="w-full flex flex-col items-center space-y-2.5">
                 <button
                   onClick={handleLaunchTelegramOAuth}
-                  className="w-full btn-liquid py-3 sm:py-3.5 px-4 sm:px-6 rounded-2xl bg-gradient-to-r from-[#229ED9] to-[#0088CC] hover:brightness-110 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-[0_8px_35px_rgba(34,158,217,0.5)] transition-all cursor-pointer group"
+                  className="w-full btn-liquid py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#229ED9] to-[#0088CC] hover:brightness-110 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-[0_8px_30px_rgba(34,158,217,0.5)] transition-all cursor-pointer group"
                 >
                   <Send className="w-4 h-4 fill-white group-hover:translate-x-0.5 transition-transform" />
                   <span>Conectar con Telegram</span>
@@ -243,7 +251,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
                 <button
                   onClick={handleQuickTelegramSync}
                   disabled={isLoading}
-                  className="text-[11px] sm:text-xs text-slate-300 hover:text-white transition-colors cursor-pointer py-1 drop-shadow"
+                  className="text-[11px] text-slate-300 hover:text-white transition-colors cursor-pointer py-1 drop-shadow"
                 >
                   {isLoading ? 'Sincronizando...' : 'Sincronizar mi sesión verificada'}
                 </button>
@@ -261,7 +269,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
 
           {/* MENSAJE DE FEEDBACK */}
           {feedback && (
-            <div className={`p-2 sm:p-2.5 rounded-xl text-xs flex items-center justify-center gap-2 backdrop-blur-md shadow-xl w-full border ${
+            <div className={`p-2 rounded-xl text-xs flex items-center justify-center gap-2 backdrop-blur-md shadow-xl w-full border ${
               feedback.success 
                 ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-200' 
                 : 'bg-rose-500/20 border-rose-500/30 text-rose-200'
