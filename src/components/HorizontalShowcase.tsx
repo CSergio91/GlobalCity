@@ -90,10 +90,21 @@ export const HorizontalShowcase: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Monumental Headline */}
-                  <h2 className="text-xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white tracking-tight leading-tight mb-3 sm:mb-4 text-balance drop-shadow-md">
-                    {slide.title}
-                  </h2>
+                  {/* Monumental Headline with Signature Gradient */}
+                  {(() => {
+                    const words = slide.title.split(' ');
+                    const splitIdx = Math.max(1, Math.floor(words.length * 0.55));
+                    const startPart = words.slice(0, splitIdx).join(' ');
+                    const endPart = words.slice(splitIdx).join(' ');
+                    return (
+                      <h2 className="text-xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white tracking-tight leading-tight mb-3 sm:mb-4 text-balance drop-shadow-md">
+                        {startPart}{' '}
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA]">
+                          {endPart}
+                        </span>
+                      </h2>
+                    );
+                  })()}
 
                   {/* Narrative Body */}
                   <p className="text-xs sm:text-sm lg:text-base text-slate-300 font-light leading-relaxed max-w-2xl mb-5 sm:mb-7 text-balance">

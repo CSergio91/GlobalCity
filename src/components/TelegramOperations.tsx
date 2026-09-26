@@ -46,7 +46,7 @@ export const TelegramOperations: React.FC = () => {
             <div className="max-w-2xl">
               <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-md">
                 {t.telegram.titleStart}{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0088CC] via-[#38BDF8] to-[#F472B6]">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA]">
                   {t.telegram.titleEnd}
                 </span>
               </h2>

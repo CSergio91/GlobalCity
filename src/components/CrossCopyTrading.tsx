@@ -27,10 +27,10 @@ export const CrossCopyTrading: React.FC = () => {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="mb-10 sm:mb-14"
         >
-          <div className="max-w-3xl">
+          <div className="max-w-2xl">
             <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-md">
               {t.copyTrading.titleStart}{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F472B6] via-[#EC4899] to-[#60A5FA]">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA]">
                 {t.copyTrading.titleEnd}
               </span>
             </h2>

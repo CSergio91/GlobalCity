@@ -150,7 +150,7 @@ function MainAppContent() {
 
               <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight text-shadow-hero">
                 {t.cta.titleStart}{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F472B6] via-[#EC4899] to-[#818CF8]">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA]">
                   {t.cta.titleEnd}
                 </span>
               </h2>

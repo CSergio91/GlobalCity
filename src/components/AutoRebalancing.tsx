@@ -33,7 +33,7 @@ export const AutoRebalancing: React.FC = () => {
             <div className="max-w-2xl">
               <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-md">
                 {t.rebalancing.titleStart}{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#60A5FA] via-[#F472B6] to-[#FBBF24]">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FBBF24] via-[#F472B6] to-[#60A5FA]">
                   {t.rebalancing.titleEnd}
                 </span>
               </h2>
