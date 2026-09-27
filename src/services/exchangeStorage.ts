@@ -1,3 +1,10 @@
+/**
+ * @legacy
+ * @security-risk CRITICAL: Las claves privadas y secretos API no deben almacenarse en localStorage.
+ * @migration-required FASE 4 — Migrar hacia Backend ConnectionService & CredentialService (apps/api).
+ * Referencia: GLOBAL CITY — ARCHITECT & REFACTOR SKILL (Regla 11 y 82).
+ */
+
 import { StoredExchangeAccount, VenueId, SUPPORTED_VENUES } from '../types/exchange';
 
 const STORAGE_KEY = 'globalcity_exchange_connections';

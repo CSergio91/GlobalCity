@@ -1,4 +1,9 @@
 /**
+ * @legacy
+ * @security-risk CRITICAL: Las llamadas con firma HMAC y claves privadas nunca deben residir en el frontend.
+ * @migration-required FASE 5 — Migrar hacia connectors/src/binance/ (Backend Connectivity Plane).
+ * Referencia: GLOBAL CITY — ARCHITECT & REFACTOR SKILL (Reglas 4, 11, 82 y 118).
+ *
  * Real Exchange API Integration & Credential Verification Service
  * Zero-Custody architecture: Queries real balances, margin, and API key permissions directly
  * STRICT POLICY: Rejects ANY invalid, mock, or fake credentials with the exact error from the exchange.
