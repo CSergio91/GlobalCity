@@ -85,6 +85,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
 
   // Recuperar sesión pendiente si el usuario vuelve tras pulsar /start en Telegram
   useEffect(() => {
+    if (hasExistingSession) return;
+
     try {
       const savedNonce = localStorage.getItem('gc_pending_nonce');
       const savedTime = localStorage.getItem('gc_pending_nonce_time');
@@ -94,13 +96,21 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
           setAuthSessionNonce(savedNonce);
           setIsTelegramWaiting(true);
           setIsRevealed(true);
+          return;
         } else {
           localStorage.removeItem('gc_pending_nonce');
           localStorage.removeItem('gc_pending_nonce_time');
         }
       }
     } catch {}
-  }, []);
+
+    // Auto-detección inmediata si el usuario ya verificó en Telegram
+    authService.checkTelegramBotUpdates().then((u) => {
+      if (u) {
+        handleTelegramSuccess(u);
+      }
+    });
+  }, [hasExistingSession]);
 
   // Polling automático y escucha en tiempo real para cuando el usuario pulsa START en Telegram
   useEffect(() => {
