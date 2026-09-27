@@ -1,33 +1,25 @@
 ---
 name: global-city-architect-and-refactor
-description: SKILL SUPREMA Y PRIORITARIA DE ARQUITECTURA Y REFACTORIZACIÓN PARA GLOBAL CITY (Trading Operating System). Establece las 127 reglas inviolables de arquitectura, boundaries estrictos (Control Plane, Trading Plane, Connectivity Plane), separación frontend/backend, eliminación de secretos en browser, diseño por contratos internos y hoja de ruta de migración anti-big-bang.
-version: "3.0.0"
+description: SKILL SUPREMA Y PRIORITARIA DE ARQUITECTURA Y REFACTORIZACIÓN PARA GLOBAL CITY FUNDING (Trading Operating System & Prop Firm Platform). Establece las 127 reglas inviolables de arquitectura, boundaries estrictos (Control Plane, Trading Plane, Connectivity Plane), motor de fondeo y simulación de primera clase, herramientas de copy trading vía API a exchanges, terminal propia y hoja de ruta a APKs oficiales.
+version: "3.1.0"
 category: "Core Architecture & Engineering Governance"
 status: "Authoritative / Supreme Priority"
 ---
 
-# GLOBAL CITY — ARCHITECT & REFACTOR SKILL
+# GLOBAL CITY FUNDING — ARCHITECT & REFACTOR SKILL
+### *Trading Operating System + Prop Firm Platform + Multi-Venue Copy Trading Tools*
 
-## 0. PROPÓSITO
+## 0. PROPÓSITO Y ENFOQUE ESTRATÉGICO
 
-Esta skill define cómo debe trabajar el agente sobre el proyecto **Global City**.
+Esta skill define cómo debe trabajar el agente sobre el proyecto **Global City Funding**.
 
-Global City NO debe tratarse como una simple aplicación React de trading.
+Global City NO es una simple aplicación React ni un bot de trading, ni tampoco un revendedor (white-label) de MT5 o brokers de terceros.
 
-Global City es un sistema de infraestructura financiera/trading multi-venue.
-
-El objetivo principal de esta skill es:
-
-1. corregir la arquitectura actual sin destruir el trabajo existente;
-2. separar frontend, backend, trading core, market data y conectores;
-3. eliminar dependencias directas del frontend hacia exchanges/brokers;
-4. impedir que las credenciales de trading vivan en el navegador;
-5. establecer una arquitectura que pueda evolucionar desde MVP hasta producción;
-6. impedir que el agente añada nuevas features encima de una arquitectura incorrecta;
-7. hacer que cada cambio respete contratos, boundaries y responsabilidades;
-8. permitir Cloud y Self-Hosted usando el mismo Core;
-9. preparar Global City para múltiples usuarios, organizaciones, cuentas, estrategias y venues;
-10. mantener el producto visual actual cuando sea reutilizable.
+**Global City Funding es una Empresa de Fondeo (Prop Firm) de Próxima Generación con Terminal Propia (Trading OS)**:
+1. **Prioridad Estratégica #1:** Construcción y operación de **Global City Funding**, ofreciendo programas de evaluación, challenges y cuentas fondeadas operadas sobre nuestro propio motor de simulación (`SimulationExecutionProvider`) con datos reales de mercado.
+2. **Terminal Propietaria (Web & APKs Oficiales):** Plataforma de trading propia (KLineChart v10 Canvas a 60 FPS) sin depender de MT5 ni de cTrader, diseñada primero para Web responsive y con hoja de ruta directa a las **APKs oficiales para Android/Mobile**.
+3. **Herramientas de Exchange y Copy Trading como Servicio de Valor Añadido:** Todo el stack de conectividad con APIs de Exchanges (Binance, Bybit, Kraken) y arbitraje se integra como **herramientas internas de Global City Funding**, permitiendo a los usuarios y traders financiados **copiar operaciones en tiempo real desde el entorno de Global City hacia sus exchanges reales**.
+4. **Arquitectura sin Cambios Estructurales Destructivos:** La estructura del Trading Core permanece 100% agnóstica; la empresa de fondeo es un módulo de negocio superior y los conectores a exchanges son proveedores de ejecución secundaria.
 
 ---
 

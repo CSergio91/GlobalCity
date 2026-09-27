@@ -1,45 +1,39 @@
 ---
 name: biphasic-saas-to-propfirm-strategy
-description: "Estrategia de lanzamiento y producto bifásico: monetización desde el día 1 mediante Terminal SaaS B2C no custodial y transición modular del 85% del stack hacia una Prop Firm institucional."
-version: "2.0.0"
+description: "Estrategia unificada de Global City Funding: lanzamiento prioritario de Empresa de Fondeo (Prop Firm) con terminal propia independiente, complementada con herramientas internas de copy trading a exchanges (Binance/Bybit) vía API y hoja de ruta a APKs oficiales."
+version: "3.0.0"
 category: "Fintech Product Strategy & Phased Deployment"
 author: "AI Studio Fintech Systems Architect"
-status: "Production Ready / Institutional Standard"
+status: "Authoritative / Production Standard"
 ---
 
-# Biphasic Strategy: Multi-Exchange SaaS Hub to Prop Firm
+# Global City Funding — Unified Prop Firm & Multi-Venue Copy Strategy
 
-Esta skill define la hoja de ruta de producto, el modelo de monetización híbrido y la arquitectura de transición para validar, monetizar y blindar tecnológicamente una infraestructura de trading en dos fases estratégicas consecutivas.
+Esta skill define la estrategia de lanzamiento y producto unificado de **Global City Funding**, situando la **Empresa de Fondeo con Terminal Propia como Prioridad #1**, con herramientas internas de copia y trading real en Exchanges vía API.
 
 ---
 
-## 1. La Tesis del Enfoque Bifásico
+## 1. El Modelo Unificado de Global City Funding
 
-Lanzar una empresa de fondeo (*Prop Firm*) de forma inmediata impone barreras severas: capital inicial de respaldo, pasarelas de alto riesgo, escrutinio regulatorio y desconfianza de los usuarios.
+En lugar de lanzar una terminal SaaS desconectada para luego reconstruir una empresa de fondeo, **Global City Funding** nace como la **Empresa de Fondeo Tecnológica Definitiva con Terminal Propia (Trading OS)**:
 
-El **enfoque bifásico** resuelve este obstáculo:
-
+```text
+                        GLOBAL CITY FUNDING
+                                 │
+        ┌────────────────────────┴────────────────────────┐
+        ▼                                                 ▼
+[ NÚCLEO 1: EMPRESA DE FONDEO ]                [ NÚCLEO 2: HERRAMIENTAS DE EXCHANGE ]
+• Challenges de evaluación y cuentas fondeadas • Conexión no custodial vía API a CEX
+• Motor de simulación institucional (L2 data)  • Copy Trading desde Global City Funding
+• Cero dependencia de MT5 o cTrader            • Arbitraje y ejecución real en Binance/Bybit
+• Terminal Propia (Web & APKs oficiales)       • Diversificación y valor añadido para traders
 ```
-┌────────────────────────────────────────────────────────┐
-│      FASE 1: TERMINAL SAAS MULTI-EXCHANGE (B2C)        │
-│  • Modelo No Custodial: Usuarios conectan sus APIs     │
-│  • Fricción Legal CERO (Sin custodia, sin derivados)   │
-│  • Monetización Día 1: Suscripciones MRR (29€–79€/mes) │
-│  • Rebates de Afiliados de Exchanges (30%–50%)         │
-│  • Construye el 85% del Stack Tecnológico Crítico      │
-└──────────────────────────┬─────────────────────────────┘
-                           │
-             Transición Orgánica y Modular
-                           │
-                           ▼
-┌────────────────────────────────────────────────────────┐
-│        FASE 2: EMPRESA DE FONDEO CRIPTO (B2B/B2C)      │
-│  • Activación del Broker Program corporativo en CEX/DEX│
-│  • Emisión automatizada de subcuentas y retos de eval  │
-│  • Motor de riesgo, WebSockets y terminal ya auditados │
-│  • Base de usuarios fidelizada y costes de CAC reducidos│
-└────────────────────────────────────────────────────────┘
-```
+
+### Ventaja Competitiva frente a Prop Firms Tradicionales:
+1. **Tecnología Propia:** No pagamos licencias mensuales de $20,000+ a MetaQuotes (MT5) ni estamos a merced de sus bloqueos regulatorios.
+2. **Terminal Web & Mobile APKs:** KLineChart v10 nativo en Canvas acelerado por GPU a 60 FPS, con experiencia responsive y compilación a APKs Android oficiales.
+3. **Copy Trading Directo a CEX:** Los traders financiados e inversores pueden activar la copia de operaciones desde sus cuentas de Global City Funding hacia sus propias cuentas de Binance, Bybit o Kraken vía API.
+4. **Márgenes y Retención:** Margen bruto superior al 85% en challenges, complementado con retención récord gracias al ecosistema de herramientas de trading real.
 
 ---
 

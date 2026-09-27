@@ -1,54 +1,41 @@
 ---
 name: global-city-architecture-and-engineering
-description: Fuente de verdad arquitectónica y de ingeniería de Global City (Trading Operating System). Establece el Core agnóstico desacoplado, modelos Cloud y Self-Hosted, uso intensivo de Redis para memoria caliente e idempotencia, fan-out multiplexado para alta concurrencia masiva de usuarios reales desde el día 1, OMS/EMS/SOR, Risk Engine, reconciliación y protocolos de resiliencia.
-version: "2.0.0"
+description: Fuente de verdad arquitectónica y de ingeniería de Global City Funding (Trading Operating System & Prop Firm Platform). Establece el Core agnóstico desacoplado, empresa de fondeo con terminal propia y hoja de ruta de APKs oficiales, herramientas internas de copy trading a exchanges vía API, uso de Redis para estado caliente NOW, y contratos unificados de ejecución y mercado.
+version: "3.0.0"
 category: "Enterprise Fintech & Trading System Architecture"
 status: "Authoritative / Baseline"
 ---
 
-# Global City — Architecture & Engineering Skill
-### *Trading Operating System: Principios, Límites, Infraestructura y Criterios Técnicos*
+# Global City Funding — Architecture & Engineering Skill
+### *Trading Operating System + Prop Firm Platform + Multi-Venue Copy Trading Tools*
 
 ---
 
 ## 0. PROPÓSITO DE ESTA SKILL
 
-Esta skill define la arquitectura, principios, límites y criterios técnicos del proyecto **Global City**.
-Global City es una plataforma de trading multi-venue diseñada para evolucionar desde un MVP local hasta un producto **Cloud** y **Self-Hosted** de grado institucional, capaz de trabajar con múltiples exchanges, brokers, cuentas y estrategias en simultáneo.
+Esta skill define la arquitectura, principios, límites y criterios técnicos del proyecto **Global City Funding**.
 
-Esta skill debe considerarse una **fuente de verdad arquitectónica**.
-Antes de introducir una nueva tecnología, dependencia, broker, exchange, servicio externo o cambio estructural importante, se debe revisar esta skill y respetar rigurosamente sus principios.
+**Global City Funding** es una empresa de fondeo y plataforma tecnológica integral de trading (Trading OS) diseñada con:
+1. **Prioridad Número 1: Empresa de Fondeo (Global City Funding)** con terminal propia e independiente (sin licencias a terceros como MT5 o cTrader).
+2. **Terminal Institucional Propia:** Diseñada en Canvas acelerado por GPU (KLineChart v10), responsive para escritorio/web, y preparada para ser empaquetada en las **APKs oficiales de trading para dispositivos móviles**.
+3. **Herramientas de Exchange y Copy Trading Integradas:** Todo el módulo de conectividad API a exchanges (Binance, Bybit, Kraken) y arbitraje funciona como una suite de herramientas de alto valor dentro de Global City Funding para **copiar operaciones en tiempo real desde el entorno de fondeo hacia cuentas de exchange reales**.
+
+Esta skill debe considerarse una **fuente de verdad arquitectónica**. Antes de introducir una nueva tecnología, dependencia o cambio estructural, se debe respetar rigurosamente lo aquí estipulado.
 
 ---
 
-## 1. VISIÓN DEL PRODUCTO: *Trading Operating System*
+## 1. VISIÓN DEL PRODUCTO: *Global City Funding (Trading OS)*
 
-Global City **no debe construirse como un simple bot de trading**, script de arbitraje o frontend decorativo.
-Debe evolucionar hacia un **Trading Operating System (TOS)** integral.
-
-### Capacidades previstas en el roadmap:
-- **Multi-Exchange** (Binance, Bybit, OKX, Bitget, Coinbase, Kraken, Hyperliquid L1, etc.)
-- **Multi-Broker** (MetaTrader 4, MetaTrader 5, cTrader, FIX Protocol, BlackArrow, Tradovate, CQG, Rithmic)
-- **Multi-Account** (Cuentas personales, subcuentas corporativas, cuentas segregadas de inversores)
-- **Multi-Strategy** (Instancias paralelas independientes compartiendo motor de riesgo)
-- **Manual Trading** (Ejecución rápida 1-click, ladders L2, tickets avanzados)
-- **Algo Trading** (Ejecución cuantitativa basada en modelos estadísticos y feeds tick-by-tick)
-- **Arbitrage** (Arbitraje sintético y cross-venue con modelos prefondeados)
-- **Market Making** (Provisión de liquidez y gestión de inventario delta-neutral)
-- **Copy Trading** (Master-to-Followers multi-broker agnóstico de latencia ultra baja)
-- **Portfolio Management & Treasury** (Rebalanceo dinámico, tracking de colateral, cash management)
-- **Risk Management** (Pre-Trade Risk Engine síncrono sub-milisegundo con Circuit Breakers)
-- **OMS** (Order Management System con tracking integral de estados de orden)
-- **EMS** (Execution Management System táctico con Smart Order Routing)
-- **Reconciliation Engine** (Auditoría continua frente a la verdad del broker/exchange)
-- **Dashboard & Terminal** (Frontend de alto rendimiento con renderizado a 60 FPS)
-- **Telegram Integration** (Alertas, control de comando y Telegram Mini Apps)
-- **Prop Firm Infrastructure** (Gestión de challenges, drawdown EOD/intradía, reglas de consistencia y provisioning)
-- **Dual Deployment** (Global City Cloud y Global City Self-Hosted con el mismo Core)
+Global City Funding no es un intermediario comercial ni un broker revendedor. Es un ecosistema unificado que combina:
+- **Prop Firm Platform:** Programas de evaluación, challenges, verificación, cuentas fondeadas, gestión de drawdowns y reglas de consistencia 100% en backend (`FundingRuleEngine`).
+- **First-Class Simulation Engine:** Motor de ejecución simulada con fidelidad institucional (spreads dinámicos, comisiones, slippage, latencia, margin y swaps) con datos de mercado reales sin arriesgar capital en exchanges en las fases de evaluación.
+- **Copy Trading a Exchanges vía API:** Copia automática de operaciones desde cuentas maestras/financiadas de Global City Funding hacia exchanges reales conectados por el usuario (Binance, Bybit, Kraken).
+- **Herramientas de Trading Real y Arbitraje:** Módulo para traders que deseen operar su propio capital en exchanges desde la misma terminal.
+- **Terminal Web & Mobile APKs:** Experiencia fluida sin intermediarios, eliminando pagos de licencias a MT5 o plataformas de terceros.
 
 > **Principio Rector:**
 > **"Nuestro negocio y nuestro Core están por encima de los adapters."**
-> El Core nunca debe depender directamente de Binance, Bybit, OKX, MT5, cTrader, FIX, BlackArrow u otro proveedor externo.
+> Market Data Provider ≠ Execution Provider ≠ Trading Account ≠ Funding Account ≠ Broker ≠ Exchange ≠ Global City Funding.
 
 ---
 
