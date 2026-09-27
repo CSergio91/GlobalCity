@@ -97,51 +97,254 @@ Strategy -> Risk -> OMS -> EMS -> Smart Order Router -> Connector -> Provider
 
 ---
 
-# 3. ARQUITECTURA OBJETIVO
+# 3. ARQUITECTURA OBJETIVO: TRADING OPERATING SYSTEM + PROP/FUNDING + MULTI-VENUE
 
-La arquitectura objetivo es:
-
+Global City NO debe diseñarse como:
 ```text
-                         GLOBAL CITY
-
-┌─────────────────────────────────────────────────────────┐
-│                    CONTROL PLANE                        │
-│                                                         │
-│ Users / Organizations / Accounts / Connections          │
-│ Permissions / Strategies / Configuration / Billing      │
-└─────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────┐
-│                     TRADING PLANE                       │
-│                                                         │
-│ Strategy Runtime                                        │
-│        ↓                                                │
-│ Risk Engine                                             │
-│        ↓                                                │
-│ OMS                                                     │
-│        ↓                                                │
-│ EMS                                                     │
-│        ↓                                                │
-│ Smart Order Router                                      │
-│        ↓                                                │
-│ Portfolio / Treasury / Reconciliation                   │
-└─────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────┐
-│                  CONNECTIVITY PLANE                     │
-│                                                         │
-│ Binance / Bybit / OKX / Kraken / CCXT                   │
-│ MT5 / cTrader / FIX / BlackArrow                        │
-└─────────────────────────────────────────────────────────┘
+Prop Firm -> MT5 -> Broker
+```
+ni como:
+```text
+Trading Terminal -> Binance
 ```
 
-Market data funciona como un sistema transversal:
+Debe diseñarse como un **TRADING OPERATING SYSTEM**:
+```text
+                           GLOBAL CITY
+                                │
+                    ┌───────────┴───────────┐
+                    │                       │
+                 TERMINAL                 API
+                    │                       │
+                    └───────────┬───────────┘
+                                │
+                         GLOBAL CITY CORE
+                                │
+        ┌───────────────┬───────┼────────┬──────────────┐
+        ▼               ▼       ▼        ▼              ▼
+   MARKET DATA        STRATEGY  RISK     OMS          FUNDING
+        │                       │        │              │
+        ▼                       └────────┼──────────────┘
+      REDIS                            EMS
+        │                               │
+        ▼                               ▼
+ REALTIME GATEWAY                EXECUTION PROVIDER
+        │                               │
+        ▼                 ┌─────────────┼──────────────┐
+    FRONTEND              ▼             ▼              ▼
+                      SIMULATED       EXCHANGE       BROKER
+                          │              │              │
+                          ▼              ▼              ▼
+                    PROP ACCOUNTS    API ACCOUNTS   MT5/cTrader
+                          │
+                          ▼
+                       PAYOUTS
+
+                        SUPABASE
+                           │
+                           ▼
+                    DURABLE SYSTEM STATE
+```
+
+La empresa de fondeo es un módulo de negocio construido sobre el mismo Trading Core. Las conexiones a exchanges/brokers son infraestructura reutilizable.
+
+---
+
+# 3.1. PRINCIPIO DEFINITIVO DE SEPARACIÓN DE CONCEPTOS
 
 ```text
-Providers -> Market Data Engine -> Normalizer -> Redis / Memory -> Strategy / Arbitrage / UI
+Market Data Provider ≠ Execution Provider ≠ Trading Account ≠ Funding Account ≠ Broker ≠ Exchange ≠ Global City
 ```
+
+- Global City se encuentra por encima de todos ellos.
+- El negocio y el Core pertenecen a Global City.
+- Los proveedores son intercambiables.
+- La arquitectura no debe asumir Binance, MT5, cTrader ni ningún exchange específico como dependencia central.
+
+---
+
+# 3.2. MARKET DATA MULTI-VENUE INDEPENDIENTE
+
+Binance NO es la fuente de datos exclusiva de Global City; es únicamente uno de los proveedores posibles.
+
+```text
+                    MARKET DATA
+                         │
+        ┌────────────────┼──────────────────┐
+        │                │                  │
+        ▼                ▼                  ▼
+ Crypto Providers    FX Providers     Futures Providers
+   (Binance/Bybit/     (Provider A/       (Provider A/
+    Kraken/Coinbase)    Provider B)        Provider B)
+                         │
+                         ▼
+                  Market Data Adapters
+                         │
+                         ▼
+                    Normalizer
+                         │
+                         ▼
+                Global Market Model
+                         │
+                         ▼
+                Market Data Engine
+                         │
+                 ┌───────┴───────┐
+                 ▼               ▼
+               Redis       Candle Engine
+                 │
+                 ▼
+         Realtime Gateway (WebSocket)
+                 │
+                 ▼
+          Frontend / KLineChart
+```
+
+El Core nunca debe preguntar "¿Esto viene de Binance?". Recibe `MarketTick`, `MarketTrade`, `OrderBookUpdate`, `Candle`, `FundingRate`, `OpenInterest` con `venue` e `instrument` normalizados.
+
+### Abstracción de Proveedores:
+- `MarketDataProvider` (Interface base)
+- `BinanceMarketDataProvider`, `BybitMarketDataProvider`, `KrakenMarketDataProvider`, `CoinbaseMarketDataProvider`
+- `FXMarketDataProvider`, `FuturesMarketDataProvider`, `EquitiesMarketDataProvider`, `CFDMarketDataProvider`
+- `AggregatedMarketDataProvider` (Combinación y arbitraje de fuentes)
+
+El gráfico, AI, estrategias y Risk nunca conocen el proveedor concreto.
+
+---
+
+# 3.3. DUALIDAD DE ALMACENAMIENTO: REDIS (NOW) + SUPABASE POSTGRESQL (TRUTH)
+
+- **Redis Cloud = NOW (Estado Caliente y Distribución Realtime):**
+  `market state`, `tickers`, `candles`, `orderbooks`, `trades`, `venue health`, `subscriptions`, `pub/sub`, `streams`, `locks (Redlock)`, `rate limits`, `idempotency`, `temporary state`.
+- **Supabase PostgreSQL = TRUTH / HISTORY (Fuente Durable ACID):**
+  `organizations`, `users`, `accounts`, `instruments`, `market history`, `candles`, `trades`, `orders`, `fills`, `positions`, `balances`, `strategies`, `funding programs`, `challenges`, `evaluations`, `payouts`, `audit logs`.
+
+> **REGLA:** Redis = NOW. PostgreSQL = HISTORY / TRUTH.
+> Jamás usar Supabase Realtime como canal para cada tick de mercado (saturaría la conexión). Supabase Realtime se reserva para eventos de aplicación de baja frecuencia (`order status`, `position updates`, `funding events`).
+
+---
+
+# 3.4. SIMULATION ENGINE COMO CIUDADANO DE PRIMERA CLASE (PROP & PAPER)
+
+El modelo Prop/Funding y Paper utiliza:
+```text
+Real Market Data -> Simulation Engine -> Virtual Account
+```
+No se envía la orden al mercado real.
+El **Simulation Engine** debe soportar con fidelidad institucional:
+- Market, Limit, Stop, Stop Loss, Take Profit
+- Partial fills, Spread dinámico, Comisión configurable, Slippage realista, Latencia simulada, Gaps de sesión
+- Liquidity model, Reglas de sesión horaria, Apalancamiento y Margen, Swap / Funding rates nocturnos
+
+**Eventos Internos Idénticos:**
+Genera exactamente los mismos eventos que una ejecución real:
+`OrderCreated`, `OrderSubmitted`, `OrderFilled`, `PositionOpened`, `PositionUpdated`, `PositionClosed`, `PnLUpdated`.
+Esto permite que la misma arquitectura sirva idénticamente para:
+`PAPER` | `PROP` | `BACKTEST` | `REPLAY` | `LIVE`.
+
+---
+
+# 3.5. TAXONOMÍA UNIFICADA DE CUENTAS (`TradingAccount`)
+
+Abstracción independiente de MT5/cTrader/Binance:
+- `PAPER_ACCOUNT`
+- `PROP_CHALLENGE`
+- `PROP_VERIFICATION`
+- `PROP_FUNDED`
+- `EXCHANGE_ACCOUNT`
+- `BROKER_ACCOUNT`
+- `LIVE_ACCOUNT`
+
+Cada cuenta gestiona: `balance`, `equity`, `margin`, `free_margin`, `positions`, `orders`, `realized_pnl`, `unrealized_pnl`, `fees`, `funding`, `drawdown`, `daily_loss`, `leverage`, `risk_limits`, `status`.
+
+---
+
+# 3.6. FUNDING & PROP ENGINE + FUNDING RULE ENGINE
+
+El negocio de fondeo es un dominio de negocio sobre el Trading Core:
+```text
+Funding Program -> Challenge -> Evaluation -> Funded Account -> Performance -> Payout
+```
+
+Entidades Core:
+`FundingProgram`, `Challenge`, `Evaluation`, `FundingAccount`, `FundingRule`, `RiskRule`, `Payout`, `TraderPerformance`, `AccountState`.
+
+### FundingRuleEngine (Evaluación 100% en Backend):
+Evalúa de forma determinista y sin interferencia del frontend:
+- Profit target
+- Max drawdown (Trailing / Balance / Equity based)
+- Daily loss limit (calculado a medianoche UTC o hora de reset de broker)
+- Max position size & Max leverage
+- Minimum trading days
+- Consistency rule (ningún día puede representar > X% de la ganancia total)
+- News restrictions, Overnight restrictions, Weekend restrictions, Symbol restrictions
+
+**Resultados del Engine:** `PASS` | `WARNING` | `BREACH`.
+
+### Ciclo de Vida del Trader:
+```text
+CREATED -> ACTIVE -> CHALLENGE -> PASSED -> VERIFICATION -> FUNDED -> PAYOUT_ELIGIBLE -> PAYOUT -> SCALING
+(Estados terminales o de excepción: FAILED | BREACHED | SUSPENDED | CLOSED)
+```
+
+---
+
+# 3.7. TERMINAL PROPIA (KLINECHART v10 + REACT TRADING ENGINE)
+
+Global City funciona con su **Terminal Propia**, sin depender de MT5 ni de cTrader como interfaz.
+- La terminal es una vista institucional sobre Global City Core.
+- El gráfico consume `MarketDataSource` (Live, Historical, Replay, Paper) a través del Realtime Gateway.
+- Soporta `LIVE`, `PAPER`, `PROP`, `BACKTEST`, `REPLAY` sin alterar el componente visual ni un solo pixel.
+
+---
+
+# 3.8. CONECTIVIDAD MULTI-VENUE, COPY TRADING & CUENTAS EXTERNAS
+
+Coexisten dos mundos armónicamente sobre el mismo Trading OS:
+```text
+                    GLOBAL CITY
+                         │
+          ┌──────────────┴──────────────┐
+          ▼                             ▼
+   GLOBAL CITY ACCOUNTS          EXTERNAL ACCOUNTS
+   (Simulated / Prop)            (Real API / Broker)
+          │                             │
+          ▼                             ▼
+  Funding / Prop Platform        Trading / Copy / Arbitrage / Treasury
+```
+
+### Abstracción `ExecutionProvider`:
+```text
+ExecutionProvider
+├── SimulationExecutionProvider (Paper / Prop / Backtest)
+├── BinanceExecutionProvider
+├── BybitExecutionProvider
+├── cTraderExecutionProvider
+├── MT5ExecutionProvider
+└── FIXExecutionProvider
+```
+
+### Copy Trading Unificado:
+No depende de MT5. Utiliza el pipeline `Master -> Copy Engine -> ExecutionIntent -> Risk -> OMS -> EMS -> Connector`.
+Puede copiar:
+- Global City (Prop/Simulated) → Global City
+- Global City → Exchange API (Binance, Bybit)
+- Global City → MT5 / cTrader
+- Master Externo → Cuentas Global City
+
+---
+
+# 3.9. HOJA DE RUTA DE CONSTRUCCIÓN EN 7 FASES (ANTI-BIG-BANG)
+
+1. **PHASE 1:** Global City Core + Market Data Abstraction + Redis + Supabase + Realtime Gateway + Own Web Terminal.
+2. **PHASE 2:** Simulation Engine + Virtual Accounts + Risk Engine + OMS + PnL + Execution Simulation.
+3. **PHASE 3:** Funding Engine + Challenges + Evaluations + Funding Rules + Payouts + Trader Lifecycle.
+4. **PHASE 4:** External Connections + Exchange APIs (Binance/Bybit/Kraken) + cTrader + MT5 + FIX.
+5. **PHASE 5:** Copy Trading + Portfolio Aggregation + Arbitrage + Rebalancing + Treasury.
+6. **PHASE 6:** AI Strategy Engine + Features Extraction + Automation + Advanced Quant Analytics.
+7. **PHASE 7:** Institutional Prime Brokerage & Live Infrastructure.
+
+> **REGLA DE CONSTRUCCIÓN:** Ninguna fase debe obligar a reescribir el Core. Cada fase amplía las implementaciones de los contratos existentes (`MarketDataProvider`, `ExecutionProvider`, `TradingAccount`).
 
 ---
 
