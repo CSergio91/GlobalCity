@@ -144,7 +144,8 @@ export const authService = {
     if (authNonce) {
       try {
         const res = await fetch(`/api/auth/telegram-status?nonce=${encodeURIComponent(authNonce)}`);
-        if (res.ok) {
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
           const json = await res.json();
           if (json.authenticated && json.user) {
             return json.user;
@@ -155,7 +156,7 @@ export const authService = {
       }
     }
 
-    // 2. Consultar en Supabase Cloud / Local
+    // 2. Consultar en Supabase Cloud / Local por nonce
     if (isSupabaseConfigured && supabase && authNonce) {
       try {
         const { data } = await supabase
@@ -165,6 +166,34 @@ export const authService = {
           .maybeSingle();
 
         if (data && data.status === 'authenticated') {
+          return {
+            id: data.telegram_id,
+            first_name: data.first_name,
+            last_name: data.last_name,
+            username: data.username,
+            photo_url: data.photo_url,
+            auth_date: data.auth_date || Math.floor(Date.now() / 1000)
+          };
+        }
+      } catch {
+        // Continuar con fallback
+      }
+    }
+
+    // 2b. Consultar en Supabase Cloud cualquier sesión autorizada en los últimos 5 minutos
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const fiveMinAgo = new Date(Date.now() - 300000).toISOString();
+        const { data } = await supabase
+          .from('telegram_auth_sessions')
+          .select('*')
+          .eq('status', 'authenticated')
+          .gte('authenticated_at', fiveMinAgo)
+          .order('authenticated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (data && data.telegram_id) {
           return {
             id: data.telegram_id,
             first_name: data.first_name,

@@ -42,7 +42,8 @@ export function telegramAuthPlugin(): Plugin {
             text,
             parse_mode: 'Markdown'
           };
-          if (returnUrl) {
+          // Telegram rechaza URLs con protocolo http o localhost en inline_keyboard
+          if (returnUrl && returnUrl.startsWith('https://')) {
             body.reply_markup = {
               inline_keyboard: [
                 [
@@ -51,11 +52,24 @@ export function telegramAuthPlugin(): Plugin {
               ]
             };
           }
-          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
           });
+          const data = await res.json();
+          if (!data.ok) {
+            console.warn('[TelegramBot] Advertencia al enviar mensaje:', data.description);
+            // Reintento sin reply_markup si fue error de URL
+            if (body.reply_markup) {
+              delete body.reply_markup;
+              await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+              });
+            }
+          }
         } catch (err: any) {
           console.warn('[TelegramBot] No se pudo enviar mensaje:', err?.message || err);
         }
