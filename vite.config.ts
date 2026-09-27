@@ -3,10 +3,11 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
 import { telegramAuthPlugin } from './src/server/telegramAuthPlugin.ts';
+import { marketDataGatewayPlugin } from './src/server/marketDataGatewayPlugin.ts';
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss(), telegramAuthPlugin()],
+    plugins: [react(), tailwindcss(), telegramAuthPlugin(), marketDataGatewayPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(import.meta.dirname, '.'),

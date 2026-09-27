@@ -9,65 +9,33 @@ const isSupportedBinanceCrypto = (sym: string): boolean => {
 
 export async function fetchRealHistoricalKlines(
   symbol: string,
-  interval: '1m' | '5m' | '15m' | '1h' | '4h' | '1D' = '15m',
+  interval: string = '15m',
   limit = 200,
   fallbackPrice = 84500,
   endTime?: number
 ): Promise<KLineData[]> {
   const cleanSymbol = symbol.replace(/[\/\-\s]/g, '').toUpperCase();
-  const intervalMap: Record<string, string> = {
-    '1m': '1m',
-    '5m': '5m',
-    '15m': '15m',
-    '1h': '1h',
-    '4h': '4h',
-    '1D': '1d'
-  };
-  const apiInterval = intervalMap[interval] || '15m';
   const endParam = endTime ? `&endTime=${endTime}` : '';
 
-  // Si es un activo no cripto (Forex / Metales como XAUUSD o Futuros de índices), no enviar a Binance para evitar 400 Bad Request / CORS
-  if (!isSupportedBinanceCrypto(cleanSymbol)) {
-    return generateFallbackHistoricalBars(fallbackPrice, limit, interval, endTime);
-  }
+  // 1. Invocar el Realtime Market Data Gateway interno de Global City (Arquitectura Canónica)
+  // El frontend NUNCA se conecta directamente a Binance ni expone endpoints externos.
+  const gatewayUrl = `/api/market/klines?symbol=${cleanSymbol}&interval=${interval}&limit=${limit}${endParam}`;
 
-  // Lista de endpoints: primero el proxy local Vite para evitar CORS, luego espejos públicos
-  const candidateUrls = [
-    `/api-binance/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}${endParam}`,
-    `https://data-api.binance.vision/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}${endParam}`,
-    `https://api.binance.com/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}${endParam}`
-  ];
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
 
-  for (const url of candidateUrls) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2800);
+    const res = await fetch(gatewayUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
 
-      const res = await fetch(url, { signal: controller.signal });
-      clearTimeout(timeoutId);
-
-      const contentType = res.headers.get('content-type') || '';
-      if (!res.ok || !contentType.includes('application/json')) continue;
-
-      const rawData = await res.json();
-      if (!Array.isArray(rawData) || rawData.length === 0) continue;
-
-      // Mapear el array crudo al formato canónico KLineData
-      const bars: KLineData[] = rawData.map((item: any[]) => ({
-        timestamp: Number(item[0]),
-        open: parseFloat(item[1]),
-        high: parseFloat(item[2]),
-        low: parseFloat(item[3]),
-        close: parseFloat(item[4]),
-        volume: parseFloat(item[5]),
-        turnover: parseFloat(item[7])
-      }));
-
-      return bars;
-    } catch {
-      // Intentar siguiente endpoint espejo
-      continue;
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return data as KLineData[];
+      }
     }
+  } catch (err) {
+    // Si la red o el gateway están temporalmente no disponibles
   }
 
   // Si se pedían velas históricas anteriores (endTime) y no se obtuvieron por red, devolver array vacío para no duplicar velas
@@ -75,9 +43,8 @@ export async function fetchRealHistoricalKlines(
     return [];
   }
 
-  // Si todos los endpoints de red fallaron por estar offline en la carga inicial
-  console.warn(`[KLineFeed] Sin conexión con endpoints públicos para ${symbol}. Usando velas locales de contingencia.`);
-  return generateFallbackHistoricalBars(fallbackPrice, limit, interval);
+  // Generador de contingencia si el backend está offline o sin conexión
+  return generateFallbackHistoricalBars(fallbackPrice, limit, interval, endTime);
 }
 
 // Fallback generator if offline, network error or non-crypto asset (Forex/Metals/Futures)

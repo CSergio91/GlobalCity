@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { init, dispose, Chart, KLineData, DeepPartial, Styles, Period } from 'klinecharts';
+import { ChevronDown, Star } from 'lucide-react';
 import { fetchRealHistoricalKlines } from '../services/realKlineData';
 
 export interface GlobalCityChartProps {
@@ -10,6 +11,47 @@ export interface GlobalCityChartProps {
   change24h?: number;
   className?: string;
 }
+
+export interface TimeframeItem {
+  id: string;
+  label: string;
+  category: 'seconds' | 'minutes' | 'hours' | 'days';
+  span: number;
+  type: 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month';
+}
+
+export const ALL_TIMEFRAMES: TimeframeItem[] = [
+  // Segundos
+  { id: '1s', label: '1s', category: 'seconds', span: 1, type: 'second' },
+  { id: '5s', label: '5s', category: 'seconds', span: 5, type: 'second' },
+  { id: '15s', label: '15s', category: 'seconds', span: 15, type: 'second' },
+  { id: '30s', label: '30s', category: 'seconds', span: 30, type: 'second' },
+
+  // Minutos
+  { id: '1m', label: '1m', category: 'minutes', span: 1, type: 'minute' },
+  { id: '3m', label: '3m', category: 'minutes', span: 3, type: 'minute' },
+  { id: '5m', label: '5m', category: 'minutes', span: 5, type: 'minute' },
+  { id: '15m', label: '15m', category: 'minutes', span: 15, type: 'minute' },
+  { id: '30m', label: '30m', category: 'minutes', span: 30, type: 'minute' },
+  { id: '45m', label: '45m', category: 'minutes', span: 45, type: 'minute' },
+
+  // Horas
+  { id: '1h', label: '1h', category: 'hours', span: 1, type: 'hour' },
+  { id: '2h', label: '2h', category: 'hours', span: 2, type: 'hour' },
+  { id: '3h', label: '3h', category: 'hours', span: 3, type: 'hour' },
+  { id: '4h', label: '4h', category: 'hours', span: 4, type: 'hour' },
+  { id: '6h', label: '6h', category: 'hours', span: 6, type: 'hour' },
+  { id: '8h', label: '8h', category: 'hours', span: 8, type: 'hour' },
+  { id: '12h', label: '12h', category: 'hours', span: 12, type: 'hour' },
+
+  // Días, Semanas, Meses
+  { id: '1D', label: '1D', category: 'days', span: 1, type: 'day' },
+  { id: '3D', label: '3D', category: 'days', span: 3, type: 'day' },
+  { id: '1W', label: '1S', category: 'days', span: 1, type: 'week' },
+  { id: '1M', label: '1M', category: 'days', span: 1, type: 'month' },
+];
+
+const DEFAULT_FAVORITE_TIMEFRAMES = ['1m', '5m', '15m', '1h', '4h', '1D'];
 
 // Pro Dark Theme tailored for Global City Institutional Terminal
 const GLOBAL_CITY_CHART_THEME: DeepPartial<Styles> = {
@@ -117,10 +159,46 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const chartInstanceRef = useRef<Chart | null>(null);
 
-  // Active Timeframe Pill state
-  const [activeInterval, setActiveInterval] = useState<'1m' | '5m' | '15m' | '1h' | '4h' | '1D'>('15m');
-  const activeIntervalRef = useRef<'1m' | '5m' | '15m' | '1h' | '4h' | '1D'>('15m');
+  // Active Timeframe state
+  const [activeInterval, setActiveInterval] = useState<string>('15m');
+  const activeIntervalRef = useRef<string>('15m');
   activeIntervalRef.current = activeInterval;
+
+  // Favorite Timeframes saved in localStorage
+  const [favoriteTimeframes, setFavoriteTimeframes] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('globalcity_favorite_timeframes');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return DEFAULT_FAVORITE_TIMEFRAMES;
+  });
+
+  const [isTfDropdownOpen, setIsTfDropdownOpen] = useState(false);
+
+  const toggleFavorite = (tfId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFavoriteTimeframes(prev => {
+      let next: string[];
+      if (prev.includes(tfId)) {
+        if (prev.length <= 1) return prev; // Mantener al menos una favorita
+        next = prev.filter(t => t !== tfId);
+      } else {
+        next = [...prev, tfId];
+      }
+      try {
+        localStorage.setItem('globalcity_favorite_timeframes', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const handleSelectTimeframe = (tfId: string) => {
+    setActiveInterval(tfId);
+    setIsTfDropdownOpen(false);
+  };
 
   const [activeIndicators, setActiveIndicators] = useState<{ ma: boolean; ema: boolean; boll: boolean; rsi: boolean }>({
     ma: true,
@@ -131,33 +209,27 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
 
   // Calculate timeframe period object
   const getPeriod = useCallback((intervalStr: string): Period => {
-    switch (intervalStr) {
-      case '1m': return { type: 'minute', span: 1 };
-      case '5m': return { type: 'minute', span: 5 };
-      case '15m': return { type: 'minute', span: 15 };
-      case '1h': return { type: 'hour', span: 1 };
-      case '4h': return { type: 'hour', span: 4 };
-      case '1D': return { type: 'day', span: 1 };
-      default: return { type: 'minute', span: 15 };
+    const item = ALL_TIMEFRAMES.find(t => t.id === intervalStr);
+    if (item) {
+      return { type: item.type, span: item.span };
     }
+    return { type: 'minute', span: 15 };
   }, []);
 
-  const periodToInterval = useCallback((p?: Period): '1m' | '5m' | '15m' | '1h' | '4h' | '1D' => {
+  const periodToInterval = useCallback((p?: Period): string => {
     if (!p) return activeIntervalRef.current;
-    if (p.type === 'minute') {
-      if (p.span === 1) return '1m';
-      if (p.span === 5) return '5m';
-      return '15m';
-    }
-    if (p.type === 'hour') {
-      if (p.span === 1) return '1h';
-      return '4h';
-    }
-    if (p.type === 'day') return '1D';
-    return activeIntervalRef.current;
+    const item = ALL_TIMEFRAMES.find(t => t.type === p.type && t.span === p.span);
+    return item ? item.id : activeIntervalRef.current;
   }, []);
 
   const subscriberCallbackRef = useRef<((bar: KLineData) => void) | null>(null);
+
+  // Reaccionar inmediatamente al cambio de temporalidad activa
+  useEffect(() => {
+    if (chartInstanceRef.current) {
+      chartInstanceRef.current.setPeriod(getPeriod(activeInterval));
+    }
+  }, [activeInterval, getPeriod]);
 
   // Initialize KLineChart Canvas on DOM Mount
   useEffect(() => {
@@ -192,7 +264,16 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
       getBars: async (params) => {
         try {
           const reqInterval = periodToInterval(params.period);
-          const intervalMins = reqInterval === '1m' ? 1 : reqInterval === '5m' ? 5 : reqInterval === '1h' ? 60 : reqInterval === '4h' ? 240 : reqInterval === '1D' ? 1440 : 15;
+          const tfItem = ALL_TIMEFRAMES.find(t => t.id === reqInterval);
+          let intervalMins = 15;
+          if (tfItem) {
+            if (tfItem.type === 'second') intervalMins = Math.max(0.1, tfItem.span / 60);
+            else if (tfItem.type === 'minute') intervalMins = tfItem.span;
+            else if (tfItem.type === 'hour') intervalMins = tfItem.span * 60;
+            else if (tfItem.type === 'day') intervalMins = tfItem.span * 1440;
+            else if (tfItem.type === 'week') intervalMins = 7 * 1440;
+            else if (tfItem.type === 'month') intervalMins = 30 * 1440;
+          }
 
           // Si KLineChart solicita velas históricas anteriores (hacia la izquierda del gráfico)
           if (params.type === 'forward') {
@@ -405,22 +486,114 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
         {/* Right: TradingView Timeframe Selector + Indicator Toggles */}
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           
-          {/* Timeframe Buttons */}
-          <div className="flex items-center p-0.5 rounded-lg bg-black/60 border border-white/10 shadow-inner">
-            {(['1m', '5m', '15m', '1h', '4h', '1D'] as const).map(tf => (
+          {/* Timeframe Selector with User Favorites & TradingView Style Dropdown */}
+          <div className="relative flex items-center p-0.5 rounded-lg bg-black/60 border border-white/10 shadow-inner">
+            {/* Quick Favorite Buttons */}
+            {favoriteTimeframes.map(tfId => (
               <button
-                key={tf}
+                key={tfId}
                 type="button"
-                onClick={() => setActiveInterval(tf)}
+                onClick={() => setActiveInterval(tfId)}
                 className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer ${
-                  activeInterval === tf
+                  activeInterval === tfId
                     ? 'bg-[#38BDF8] text-black font-extrabold shadow-sm'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
+                title={`Cambiar a ${tfId}`}
               >
-                {tf}
+                {tfId}
               </button>
             ))}
+
+            {/* If active interval is not in favorites, show it highlighted */}
+            {!favoriteTimeframes.includes(activeInterval) && (
+              <button
+                type="button"
+                className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] font-mono font-extrabold bg-[#38BDF8] text-black shadow-sm"
+              >
+                {activeInterval}
+              </button>
+            )}
+
+            {/* Dropdown Toggle Chevron */}
+            <button
+              type="button"
+              onClick={() => setIsTfDropdownOpen(!isTfDropdownOpen)}
+              className={`px-1 py-0.5 rounded text-slate-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer flex items-center ${
+                isTfDropdownOpen ? 'bg-white/10 text-white' : ''
+              }`}
+              title="Más temporalidades y configuración de favoritos"
+            >
+              <ChevronDown className={`w-3 h-3 transition-transform ${isTfDropdownOpen ? 'rotate-180 text-[#38BDF8]' : ''}`} />
+            </button>
+
+            {/* TradingView-Style Categorized Dropdown Menu */}
+            {isTfDropdownOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setIsTfDropdownOpen(false)} 
+                />
+                <div className="absolute right-0 top-full mt-1.5 w-60 bg-[#0B0D16]/98 border border-white/15 rounded-xl shadow-2xl backdrop-blur-2xl z-50 p-2 text-xs font-mono animate-in fade-in zoom-in-95 duration-150">
+                  <div className="text-[9px] uppercase tracking-wider text-slate-400 font-bold px-2 py-1 border-b border-white/10 flex justify-between items-center">
+                    <span>Temporalidades</span>
+                    <span className="text-[8px] text-amber-400 font-normal">★ Favorito</span>
+                  </div>
+
+                  <div className="max-h-72 overflow-y-auto space-y-2 py-1 no-scrollbar">
+                    {[
+                      { title: 'Segundos', category: 'seconds' as const },
+                      { title: 'Minutos', category: 'minutes' as const },
+                      { title: 'Horas', category: 'hours' as const },
+                      { title: 'Días / Semanas / Meses', category: 'days' as const }
+                    ].map(group => {
+                      const items = ALL_TIMEFRAMES.filter(t => t.category === group.category);
+                      if (items.length === 0) return null;
+
+                      return (
+                        <div key={group.category} className="space-y-0.5">
+                          <div className="text-[8px] font-bold uppercase text-slate-500 px-2 pt-1">
+                            {group.title}
+                          </div>
+                          <div className="grid grid-cols-2 gap-1">
+                            {items.map(item => {
+                              const isFav = favoriteTimeframes.includes(item.id);
+                              const isSelected = activeInterval === item.id;
+
+                              return (
+                                <div
+                                  key={item.id}
+                                  onClick={() => handleSelectTimeframe(item.id)}
+                                  className={`flex items-center justify-between px-2 py-1 rounded-lg cursor-pointer transition-colors ${
+                                    isSelected 
+                                      ? 'bg-white/15 text-white font-bold ring-1 ring-[#38BDF8]/40' 
+                                      : 'hover:bg-white/5 text-slate-300'
+                                  }`}
+                                >
+                                  <span className="text-[11px] font-bold">{item.label}</span>
+
+                                  {/* Star favorite toggle */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => toggleFavorite(item.id, e)}
+                                    className={`p-0.5 rounded transition-transform active:scale-125 cursor-pointer ${
+                                      isFav ? 'text-amber-400' : 'text-slate-600 hover:text-slate-400'
+                                    }`}
+                                    title={isFav ? 'Quitar de favoritos' : 'Añadir a favoritos'}
+                                  >
+                                    <Star className={`w-3 h-3 ${isFav ? 'fill-amber-400' : ''}`} />
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Indicators Toggles */}
