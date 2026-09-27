@@ -238,15 +238,15 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
   return (
     <div className="min-h-screen bg-[#06070B] text-slate-100 flex flex-col font-sans selection:bg-[#EC4899]/30">
       
-      {/* Top Navigation Bar: Minimalist, clean, zero noise */}
-      <header className="sticky top-0 z-30 w-full bg-[#08090E]/95 backdrop-blur-xl border-b border-white/10 px-3 sm:px-6 py-2 transition-all">
-        <div className="w-full flex items-center justify-between gap-3">
+      {/* Top Navigation Bar: Mobile-First, Minimalist, clean */}
+      <header className="sticky top-0 z-30 w-full bg-[#08090E]/95 backdrop-blur-xl border-b border-white/10 px-2 sm:px-6 py-1.5 sm:py-2 transition-all">
+        <div className="w-full flex items-center justify-between gap-2 sm:gap-3">
           
           {/* Left: Brand + Back to Web */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3">
             <button 
               onClick={onBackToLanding}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all flex items-center gap-1.5 text-xs font-medium cursor-pointer border border-white/5 hover:border-white/15"
+              className="p-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all flex items-center gap-1 text-xs font-medium cursor-pointer border border-white/5 hover:border-white/15"
               title="Volver a la Web Principal"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
@@ -255,41 +255,41 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
 
             <div className="h-4 w-[1px] bg-white/10 hidden sm:block" />
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <BrandLogo size="sm" />
             </div>
           </div>
 
-          {/* Center: Clean Connection Status */}
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/5 text-[11px] font-mono">
+          {/* Center: Clean Connection Status (Desktop only) */}
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/5 text-[11px] font-mono">
             <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'}`} />
             <span className="text-slate-400">
               {wsConnected ? 'Conectado' : 'Reconectando...'}
             </span>
           </div>
 
-          {/* Right: Telegram User Profile + Visual DEMO/REAL Switch + Language */}
-          <div className="flex items-center gap-2 sm:gap-3 text-xs">
+          {/* Right: Telegram User Profile + Visual DEMO/REAL Switch */}
+          <div className="flex items-center gap-1.5 sm:gap-3 text-xs">
             
             {/* DEMO / REAL Switch */}
             <div className="flex items-center p-0.5 rounded-xl bg-black/60 border border-white/15 shadow-inner">
               <button
                 type="button"
                 onClick={() => handleTradingModeChange('demo')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
                   tradingMode === 'demo'
                     ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-md shadow-amber-500/20'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <Sparkles className="w-3 h-3" />
+                <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 <span className="text-[10px]">DEMO</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleTradingModeChange('real')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
                   tradingMode === 'real'
                     ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-black shadow-md shadow-emerald-500/20'
                     : 'text-slate-400 hover:text-white'
@@ -302,9 +302,9 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
 
             {/* Telegram Profile */}
             {user ? (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#229ED9]/15 border border-[#229ED9]/30 hover:border-[#229ED9]/60 transition-colors shadow-sm">
-                <div className="w-5 h-5 rounded-md bg-[#229ED9]/30 flex items-center justify-center text-[#229ED9] shrink-0">
-                  <Send className="w-3 h-3" />
+              <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-[#229ED9]/15 border border-[#229ED9]/30 hover:border-[#229ED9]/60 transition-colors shadow-sm">
+                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-md bg-[#229ED9]/30 flex items-center justify-center text-[#229ED9] shrink-0">
+                  <Send className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 </div>
                 <div className="hidden sm:flex flex-col text-left font-mono">
                   <span className="text-[11px] font-bold text-white leading-none truncate max-w-[90px]">
@@ -317,7 +317,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                     onBackToLanding();
                   }}
                   title="Cerrar Sesión"
-                  className="p-1 rounded text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
+                  className="p-0.5 rounded text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3 h-3" />
                 </button>
@@ -325,15 +325,17 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
             ) : (
               <button
                 onClick={onOpenAuth}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#229ED9] to-[#0284C7] hover:brightness-110 text-white text-xs font-bold transition-all cursor-pointer shadow-md shadow-[#229ED9]/25 active:scale-95"
+                className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gradient-to-r from-[#229ED9] to-[#0284C7] hover:brightness-110 text-white text-xs font-bold transition-all cursor-pointer shadow-md shadow-[#229ED9]/25 active:scale-95"
               >
                 <Send className="w-3 h-3 fill-white/20" />
-                <span className="hidden sm:inline text-[11px]">Telegram</span>
+                <span className="text-[10px] sm:text-[11px]">Login</span>
               </button>
             )}
 
-            {/* Candlestick Language Selector */}
-            <CandlestickLanguageSelector />
+            {/* Candlestick Language Selector (Desktop only) */}
+            <div className="hidden md:block">
+              <CandlestickLanguageSelector />
+            </div>
           </div>
         </div>
       </header>
@@ -513,19 +515,20 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
         </div>
 
         {/* WORKSPACE CANVAS BODY: Fullscreen KLineChart Canvas with Floating Execution Dock */}
-        <div className="flex-1 flex flex-col bg-[#070910] border border-white/10 rounded-2xl overflow-hidden shadow-2xl relative min-h-[520px]">
+        <div className="flex-1 flex flex-col bg-[#070910] border border-white/10 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl relative min-h-0">
           
           {/* Native KLineChart Hardware-Accelerated Canvas (Full-bleed) */}
-          <div className="flex-1 w-full h-full relative min-h-[480px]">
+          <div className="flex-1 w-full h-full relative min-h-0">
             <GlobalCityChart
               symbol={selectedSymbol}
               venueId={activeAccount?.venueId || 'binance'}
               venueName={activeAccount?.venueName || 'Binance'}
               livePrice={currentPrice}
             />
+          </div>
 
-            {/* Floating Order Ticket / Execution Widget (Bottom Right Overlay) */}
-            <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-20 max-w-[340px] w-[calc(100%-24px)] sm:w-[320px]">
+          {/* DOCKED BOTTOM EXECUTION PANEL FOR MOBILE (w-full) / FLOATING TICKET FOR DESKTOP (sm:absolute sm:bottom-4 sm:right-4 sm:w-[320px]) */}
+          <div className="w-full sm:absolute sm:bottom-4 sm:right-4 z-20 sm:w-[320px] shrink-0">
               {isTradePanelOpen ? (
                 <div className="bg-[#090B12]/92 backdrop-blur-2xl border border-white/15 rounded-2xl p-3 sm:p-3.5 shadow-2xl shadow-black/80 space-y-2.5 animate-in fade-in slide-in-from-bottom-3 duration-200">
                   {/* Header: Venue + Margin + Collapse toggle */}
@@ -681,8 +684,6 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                 </button>
               )}
             </div>
-
-          </div>
 
         </div>
 

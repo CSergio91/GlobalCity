@@ -195,48 +195,35 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
     if (!chart) return;
     chartInstanceRef.current = chart;
 
-    const precision = symbol.includes('USDT') || symbol.includes('USD') || symbol.includes('EUR') ? 2 : 5;
-
-    chart.setSymbol({
-      ticker: `${venueId.toUpperCase()}:${symbol}`,
-      pricePrecision: precision,
-      volumePrecision: 2
-    });
-
-    chart.setPeriod(getPeriod(activeIntervalRef.current));
-
-    // KLineChart v10 native DataLoader architecture with real historical market feeds
+    // 1. Registrar DataLoader canónico de KLineChart v10 ANTES de setSymbol y setPeriod
     chart.setDataLoader({
       getBars: async (params) => {
         try {
           const reqInterval = periodToInterval(params.period);
           const intervalMins = reqInterval === '1m' ? 1 : reqInterval === '5m' ? 5 : reqInterval === '1h' ? 60 : reqInterval === '4h' ? 240 : reqInterval === '1D' ? 1440 : 15;
 
-          // 1. Inyectar inmediatamente velas base de alta fidelidad para que el lienzo NUNCA esté en blanco
-          if (params.type === 'init') {
-            const initialBaseline = generateHistoricalBars(livePrice, 120, intervalMins);
-            params.callback(initialBaseline, false);
-            setTimeout(() => {
-              if (chartInstanceRef.current) {
-                chartInstanceRef.current.resize();
-                chartInstanceRef.current.scrollToRealTime();
-              }
-            }, 30);
+          // 1. Inyectar de inmediato velas sintéticas de alta precisión para que el usuario NUNCA vea el lienzo vacío
+          const initialBaseline = generateHistoricalBars(livePrice, 150, intervalMins);
+          params.callback(initialBaseline, { forward: true, backward: false });
+
+          // 2. Traer en segundo plano las velas reales oficiales del exchange y actualizar
+          try {
+            const realBars = await fetchRealHistoricalKlines(symbol, reqInterval, 200, livePrice);
+            if (realBars && realBars.length > 0) {
+              params.callback(realBars, { forward: true, backward: false });
+            }
+          } catch (e) {
+            console.warn('[DataLoader] Fallback baseline bars active:', e);
           }
 
-          // 2. Cargar en segundo plano las velas reales oficiales del exchange y actualizar
-          const realBars = await fetchRealHistoricalKlines(symbol, reqInterval, 200, livePrice);
-          if (realBars && realBars.length > 0) {
-            params.callback(realBars, false);
-            setTimeout(() => {
-              if (chartInstanceRef.current) {
-                chartInstanceRef.current.resize();
-                chartInstanceRef.current.scrollToRealTime();
-              }
-            }, 50);
-          }
+          requestAnimationFrame(() => {
+            if (chartInstanceRef.current) {
+              chartInstanceRef.current.resize();
+              chartInstanceRef.current.scrollToRealTime();
+            }
+          });
         } catch (err) {
-          console.warn('[DataLoader] Error loading real historical bars:', err);
+          console.warn('[DataLoader] Error loading historical bars:', err);
         }
       },
       subscribeBar: (params) => {
@@ -247,7 +234,18 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
       }
     });
 
-    // Create sub-pane for Volume & Moving Average in candle pane
+    // 2. Configurar el símbolo y temporalidad (dispara getBars con type: 'init')
+    const precision = symbol.includes('USDT') || symbol.includes('USD') || symbol.includes('EUR') ? 2 : 5;
+
+    chart.setSymbol({
+      ticker: `${venueId.toUpperCase()}:${symbol}`,
+      pricePrecision: precision,
+      volumePrecision: 2
+    });
+
+    chart.setPeriod(getPeriod(activeIntervalRef.current));
+
+    // 3. Crear indicadores en subpaneles
     try {
       chart.createIndicator({ name: 'VOL' }, false);
       chart.createIndicator({ name: 'SMA', paneId: 'candle_pane' }, true);
@@ -255,7 +253,7 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
       console.warn('Indicator initialization note:', e);
     }
 
-    // Immediate resize calls to synchronize with browser layout
+    // 4. Sincronizar dimensiones con el layout
     const rafId = requestAnimationFrame(() => {
       chart.resize();
       chart.scrollToRealTime();
@@ -263,9 +261,8 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
     const timerId = setTimeout(() => {
       chart.resize();
       chart.scrollToRealTime();
-    }, 100);
+    }, 80);
 
-    // Attach ResizeObserver to keep canvas sharp on resizing
     const resizeObserver = new ResizeObserver(() => {
       chart.resize();
     });
@@ -348,13 +345,13 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
   };
 
   return (
-    <div className="flex flex-col w-full h-full bg-[#06070B] select-none rounded-2xl overflow-hidden min-h-[520px]">
+    <div className="flex flex-col w-full h-full bg-[#06070B] select-none rounded-xl sm:rounded-2xl overflow-hidden relative min-h-[320px] sm:min-h-[440px]">
       
       {/* Chart Control Toolbar */}
-      <div className="flex items-center justify-between px-3 py-1.5 h-[38px] bg-[#090A10] border-b border-white/10 text-xs shrink-0">
+      <div className="flex items-center justify-between px-2.5 sm:px-3 py-1.5 h-[36px] bg-[#090A10] border-b border-white/10 text-xs shrink-0">
         
         {/* Left: Timeframe Switcher Pills */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
           <span className="text-[10px] font-mono text-slate-500 uppercase mr-1 hidden sm:inline">TF:</span>
           {(['1m', '5m', '15m', '1h', '4h', '1D'] as const).map(tf => (
             <button
@@ -373,14 +370,14 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
         </div>
 
         {/* Right: Pro Indicators Quick Toggles */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <span className="text-[10px] font-mono text-slate-500 uppercase mr-1 hidden md:inline">Indicadores:</span>
           {(['ma', 'ema', 'boll', 'rsi'] as const).map(ind => (
             <button
               key={ind}
               type="button"
               onClick={() => toggleIndicator(ind)}
-              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase transition-all cursor-pointer border ${
+              className={`px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-mono font-bold uppercase transition-all cursor-pointer border ${
                 activeIndicators[ind]
                   ? 'bg-white/15 text-white border-white/20'
                   : 'text-slate-500 border-white/5 hover:text-slate-300 hover:bg-white/5'
@@ -391,15 +388,15 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
           ))}
 
           {/* Engine Badge */}
-          <span className="ml-2 hidden lg:inline-flex text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            KLineChart v10 Native Canvas 60 FPS
+          <span className="ml-1.5 hidden xl:inline-flex text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            60 FPS GPU
           </span>
         </div>
       </div>
 
       {/* Hardware Accelerated Canvas Container */}
-      <div className="w-full relative flex-1 min-h-[480px]">
-        <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: '480px' }} className="w-full h-full min-h-[480px]" />
+      <div className="w-full relative flex-1 min-h-[280px] sm:min-h-[400px]">
+        <div ref={containerRef} style={{ width: '100%', height: '100%' }} className="w-full h-full min-h-[280px] sm:min-h-[400px]" />
       </div>
 
     </div>
