@@ -37,33 +37,33 @@ export const HorizontalShowcase: React.FC = () => {
     <section 
       id="horizontal-showcase" 
       ref={containerRef} 
-      className="relative h-[380vh] bg-[#F8F9FE] select-none"
+      className="relative h-[380vh] bg-[#F1F3FA] select-none"
     >
       {/* Sticky Full-Viewport Stage */}
       <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-between">
         
-        {/* Parallax High-Contrast Background Canvas */}
+        {/* Parallax High-Contrast Background Canvas (Clean, visible, not washed out) */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
           <img 
             src={commandDeckVisualPath} 
             alt="Global City Command Deck Parallax Horizon" 
-            className="w-[130vw] h-full object-cover object-center filter brightness-[1.02] contrast-[1.05] opacity-20 transition-transform duration-100 ease-out will-change-transform"
+            className="w-[130vw] h-full object-cover object-center filter brightness-[1.05] contrast-[1.12] opacity-40 transition-transform duration-100 ease-out will-change-transform"
             style={{
               transform: `scale(1.08) translateX(-${bgTranslateX}%)`
             }}
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#F8F9FE]/90 via-transparent to-[#F8F9FE]/90" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#F8F9FE] via-transparent to-[#F8F9FE]/80" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.06),transparent_70%)]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#F1F3FA]/70 via-transparent to-[#F1F3FA]/70" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#F1F3FA]/80 via-transparent to-[#F1F3FA]/60" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.08),transparent_70%)]" />
         </div>
 
-        {/* Minimal Navigation Counter */}
+        {/* Minimal Retro Monospace Navigation Counter */}
         <div className="relative z-10 w-full px-6 sm:px-12 lg:px-20 pt-6 sm:pt-8 flex items-center justify-end">
-          <div className="flex items-center gap-2 font-mono text-xs sm:text-sm bg-white/90 backdrop-blur-md px-3.5 py-1 rounded-full border border-purple-200/80 shadow-sm">
-            <span className="text-[#090A10] font-black">0{currentSlideIndex}</span>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-500">0{totalSlides}</span>
+          <div className="flex items-center gap-2 font-mono text-xs sm:text-sm bg-white/90 backdrop-blur-xl px-4 py-1.5 rounded-xl border-2 border-slate-900/15 shadow-[3px_3px_0px_#090A10]">
+            <span className="text-[#090A10] font-black tracking-wider">[ 0{currentSlideIndex}</span>
+            <span className="text-slate-400">/</span>
+            <span className="text-slate-500 font-bold">0{totalSlides} ]</span>
           </div>
         </div>
 
@@ -81,15 +81,15 @@ export const HorizontalShowcase: React.FC = () => {
                 key={idx} 
                 className="w-screen h-full flex flex-col justify-center px-4 sm:px-12 lg:px-24 xl:px-32 flex-shrink-0 py-8 sm:py-0 overflow-y-auto sm:overflow-visible"
               >
-                {/* Borderless Floating Stage Box */}
-                <div className="max-w-4xl mx-auto w-full p-6 sm:p-10 lg:p-12 rounded-3xl bg-white/95 border border-purple-200/80 backdrop-blur-2xl shadow-[0_25px_70px_rgba(124,58,237,0.10)] my-auto relative overflow-hidden">
+                {/* Retro-Brutalist Light Glass Console Box */}
+                <div className="max-w-4xl mx-auto w-full p-6 sm:p-10 lg:p-12 rounded-2xl bg-white/85 border-2 border-slate-900/20 backdrop-blur-2xl shadow-[8px_8px_0px_#090A10,0_20px_50px_rgba(0,0,0,0.06)] my-auto relative overflow-hidden">
                   
-                  {/* Subtle Corner Ambient Mesh */}
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-purple-100/60 via-transparent to-transparent pointer-events-none rounded-tr-3xl" />
-
-                  {/* Watermark Number */}
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="font-mono text-2xl sm:text-4xl lg:text-5xl font-black text-[#7C3AED]/25 tracking-tighter select-none">
+                  {/* Watermark Index + Top Stamp */}
+                  <div className="flex items-center justify-between mb-4 border-b-2 border-slate-900/10 pb-3">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-purple-50 border border-purple-300 text-[10.5px] font-mono font-bold text-[#6D28D9] uppercase tracking-wider">
+                      <span>[ 0{idx + 1} // ECOSYSTEM SPEC ]</span>
+                    </div>
+                    <div className="font-mono text-2xl sm:text-3xl font-black text-slate-900/20 tracking-tighter select-none">
                       {slide.index}
                     </div>
                   </div>
@@ -111,23 +111,23 @@ export const HorizontalShowcase: React.FC = () => {
                   })()}
 
                   {/* Narrative Body */}
-                  <p className="text-xs sm:text-sm lg:text-base text-slate-600 font-normal leading-relaxed max-w-2xl mb-5 sm:mb-7 text-balance">
+                  <p className="text-xs sm:text-sm lg:text-base text-slate-700 font-normal leading-relaxed max-w-2xl mb-6 sm:mb-8 text-balance">
                     {slide.description}
                   </p>
 
-                  {/* Highlights & Tags */}
-                  <div className="pt-4 border-t border-purple-100 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 items-center">
-                    <div>
-                      <div className="text-xl sm:text-2xl lg:text-3xl font-black text-[#7C3AED] font-mono-nums drop-shadow-[0_0_15px_rgba(124,58,237,0.2)] truncate">
+                  {/* Highlights & Tags: Retro Brutalist Stamped Cells */}
+                  <div className="pt-4 border-t-2 border-slate-900/10 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 items-stretch">
+                    <div className="p-3 rounded-xl bg-purple-50/70 border border-purple-200">
+                      <div className="text-xl sm:text-2xl font-black text-[#7C3AED] font-mono truncate">
                         {slide.highlightStat}
                       </div>
-                      <div className="text-[10px] sm:text-xs text-slate-500 mt-0.5 font-medium truncate">
+                      <div className="text-[10px] sm:text-xs text-slate-600 mt-0.5 font-mono uppercase font-bold truncate">
                         {slide.highlightLabel}
                       </div>
                     </div>
 
                     {slide.tags.map((tag, tIdx) => (
-                      <div key={tIdx} className="border-l border-purple-100 pl-3 group">
+                      <div key={tIdx} className="p-3 rounded-xl bg-slate-50/80 border border-slate-200 group">
                         <div className="text-[10px] font-mono uppercase tracking-wider text-[#6D28D9] font-bold truncate">
                           {tag.label}
                         </div>
@@ -138,15 +138,15 @@ export const HorizontalShowcase: React.FC = () => {
                     ))}
                   </div>
 
-                  {/* Button CTA */}
-                  <div className="mt-5 sm:mt-7 pt-4 border-t border-purple-100 flex items-center justify-between">
+                  {/* Button CTA: Tactile Retro Pill */}
+                  <div className="mt-6 sm:mt-8 pt-4 border-t border-slate-200 flex items-center justify-between">
                     <button
                       onClick={() => navigate('/login')}
-                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-[#7C3AED] via-[#9333EA] to-[#6366F1] text-xs font-bold uppercase tracking-wider text-white shadow-[0_8px_20px_rgba(124,58,237,0.3)] hover:brightness-105 cursor-pointer transition-all active:scale-95"
+                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#7C3AED] via-[#9333EA] to-[#6366F1] text-xs font-mono font-bold uppercase tracking-wider text-white border border-purple-300/40 shadow-[4px_4px_0px_#090A10] hover:brightness-110 cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5"
                     >
                       <LogIn className="w-3.5 h-3.5 text-white" />
                       <span>{t.showcase.ctaBtn}</span>
-                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
@@ -158,7 +158,7 @@ export const HorizontalShowcase: React.FC = () => {
 
         {/* Minimal Progress Line at Bottom */}
         <div className="relative z-10 w-full px-6 sm:px-12 lg:px-20 pb-6 sm:pb-8 flex items-center gap-6">
-          <div className="flex-1 h-[2px] bg-purple-100 rounded-full overflow-hidden">
+          <div className="flex-1 h-[3px] bg-slate-200 rounded-full overflow-hidden border border-slate-300">
             <div 
               className="h-full bg-gradient-to-r from-[#7C3AED] via-[#9333EA] to-[#6366F1] transition-all duration-100 rounded-full"
               style={{ width: `${Math.max(6, scrollProgress * 100)}%` }}

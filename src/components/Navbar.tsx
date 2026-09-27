@@ -109,8 +109,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 select-none ${
         scrolled 
-          ? "bg-white/95 backdrop-blur-xl shadow-[0_4px_25px_rgba(124,58,237,0.08)] border-b border-purple-500/15 h-16 sm:h-18" 
-          : "bg-white/80 backdrop-blur-md border-b border-purple-500/10 h-16 sm:h-20"
+          ? "bg-slate-950/60 backdrop-blur-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.45)] border-b border-white/15 h-16 sm:h-18" 
+          : "bg-slate-950/35 backdrop-blur-xl border-b border-white/10 h-16 sm:h-20"
       }`}
     >
       <div className="w-full h-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between relative">
@@ -121,39 +121,30 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
             onClick={() => handleNavClick("hero")}
             className="flex items-center cursor-pointer group shrink-0"
           >
-            <BrandLogo size="md" lightMode={true} />
+            <BrandLogo size="md" lightMode={false} />
           </div>
         </div>
 
-        {/* 2. Center: Prominent Superior Navigation (Always visible from 768px and up, desktop & tablet) */}
-        <nav className="global-desktop-nav items-center justify-center gap-1 lg:gap-2 xl:gap-3 text-[10.5px] lg:text-xs font-semibold tracking-wider uppercase text-slate-700 z-10 mx-auto">
+        {/* 2. Center: Prominent Superior Navigation in Floating Glass Capsule */}
+        <nav className="global-desktop-nav items-center justify-center gap-1 lg:gap-1.5 text-[10.5px] lg:text-[11px] font-mono tracking-wider uppercase z-10 mx-auto bg-slate-900/50 backdrop-blur-xl border border-white/15 px-3 py-1.5 rounded-full shadow-inner">
           {navItems.map((item) => {
             const isActive = activeSection === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`relative px-2.5 lg:px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer group whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+                className={`relative px-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer group whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
                   isActive 
-                    ? "text-[#5B21B6] font-bold bg-purple-100/80 border border-purple-300/60 shadow-[0_2px_12px_rgba(124,58,237,0.15)]" 
-                    : "text-slate-600 hover:text-[#5B21B6] hover:bg-purple-50/70"
+                    ? "text-white font-bold bg-[#7C3AED]/80 border border-purple-300/40 shadow-[0_0_12px_rgba(124,58,237,0.6)]" 
+                    : "text-white/80 hover:text-white hover:bg-white/10"
                 }`}
               >
                 {/* Luminous Active Signal Dot */}
                 {isActive && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-[#7C3AED] to-[#9333EA] shadow-[0_0_8px_rgba(124,58,237,0.8)] animate-pulse shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-pulse shrink-0" />
                 )}
 
                 <span>{item.label}</span>
-
-                {/* Bottom Luminous Indicator Bar (Hover & Active) */}
-                <span 
-                  className={`absolute -bottom-0.5 left-2 right-2 h-[2px] rounded-full bg-gradient-to-r from-[#7C3AED] via-[#9333EA] to-[#6366F1] transition-all duration-300 ${
-                    isActive 
-                      ? "opacity-100 scale-x-100 shadow-[0_0_10px_rgba(124,58,237,0.6)]" 
-                      : "opacity-0 scale-x-0 group-hover:opacity-100 group-hover:scale-x-100"
-                  }`} 
-                />
               </button>
             );
           })}
@@ -169,7 +160,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           {/* Action Button: Dashboard if connection detected in localStorage, otherwise Start Challenge / Login */}
           <button
             onClick={handleLoginClick}
-            className="px-3.5 sm:px-5 py-2 text-[11px] sm:text-xs font-black tracking-wider uppercase text-white bg-gradient-to-r from-[#090A10] via-[#1E1B4B] to-[#7C3AED] hover:brightness-110 rounded-full shadow-[0_2px_14px_rgba(124,58,237,0.25)] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 group shrink-0"
+            className="px-4 sm:px-5 py-2 text-[11px] sm:text-xs font-mono font-black tracking-wider uppercase text-white bg-gradient-to-r from-[#7C3AED] via-[#9333EA] to-[#6366F1] hover:brightness-110 rounded-xl border border-purple-300/40 shadow-[2px_2px_0px_#090A10,0_0_15px_rgba(124,58,237,0.35)] flex items-center gap-1.5 cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5 group shrink-0"
             title={hasConnection ? "Ir al Dashboard de Operaciones" : "Empezar Reto de Fondeo"}
           >
             {hasConnection ? (
@@ -184,13 +175,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
           {/* Hamburger Toggle Button (Mobile phones < 768px) */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="global-mobile-menu-btn p-1.5 sm:p-2 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-slate-700 hover:text-[#5B21B6] transition-all cursor-pointer shrink-0 active:scale-95 shadow-sm"
+            className="global-mobile-menu-btn p-1.5 sm:p-2 rounded-xl bg-slate-900/60 hover:bg-slate-900/80 border border-white/20 text-white transition-all cursor-pointer shrink-0 active:scale-95 shadow-sm"
             aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú de navegación"}
           >
             {isMobileMenuOpen ? (
-              <X className="w-5 h-5 text-purple-700" />
+              <X className="w-5 h-5 text-purple-400" />
             ) : (
-              <Menu className="w-5 h-5 text-slate-800" />
+              <Menu className="w-5 h-5 text-white" />
             )}
           </button>
         </div>
@@ -199,7 +190,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
 
       {/* Slide-Down Navigation Menu (Mobile Phones < 768px) */}
       {isMobileMenuOpen && (
-        <div className="global-mobile-menu fixed inset-x-0 top-16 sm:top-18 bg-white/98 backdrop-blur-2xl border-b border-purple-200 shadow-[0_20px_50px_rgba(124,58,237,0.12)] px-4 sm:px-6 py-5 space-y-3.5 z-40 animate-reveal max-h-[calc(100vh-4rem)] overflow-y-auto">
+        <div className="global-mobile-menu fixed inset-x-0 top-16 sm:top-18 bg-slate-950/95 backdrop-blur-2xl border-b border-purple-400/30 shadow-[0_20px_50px_rgba(0,0,0,0.8)] px-4 sm:px-6 py-5 space-y-3.5 z-40 animate-reveal max-h-[calc(100vh-4rem)] overflow-y-auto">
           {/* Header Row: Ecosystem + Status */}
           <div className="text-[10px] font-mono uppercase tracking-widest text-slate-500 px-2 pb-1 border-b border-purple-100 flex justify-between items-center">
             <span>Global City Funding</span>

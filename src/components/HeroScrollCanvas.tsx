@@ -179,10 +179,10 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
         style={{ opacity: isLoaded ? 1 : 0 }}
       />
 
-      {/* Balanced Atmospheric Overlays: Keeps the canvas cinematic while transitioning seamlessly into the luminous page */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#F8F9FE] via-[#F8F9FE]/20 to-[#F8F9FE]/50 pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-r from-[#F8F9FE]/70 via-transparent to-[#F8F9FE]/70 pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_35%,rgba(124,58,237,0.08),transparent_75%)] pointer-events-none" />
+      {/* Crisp Cinematic Contrast: Allows the futuristic 3D city sequence to stand out vividly */}
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-slate-950/30 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/40 via-transparent to-slate-950/40 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_75%_60%_at_50%_35%,rgba(124,58,237,0.14),transparent_75%)] pointer-events-none" />
     </div>
   );
 };

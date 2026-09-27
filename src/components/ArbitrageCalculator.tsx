@@ -162,17 +162,17 @@ export const ArbitrageCalculator: React.FC = () => {
   };
 
   return (
-    <section id="arbitrage" className="w-full py-20 sm:py-28 bg-[#F8F9FE] border-t border-purple-100 relative select-none overflow-hidden">
-      {/* Cinematic Parallax Radar Mesh Backdrop */}
+    <section id="arbitrage" className="w-full py-20 sm:py-28 bg-[#090A12] border-t border-white/10 relative select-none overflow-hidden">
+      {/* Cinematic Parallax Radar Mesh Backdrop (Vivid & Clear) */}
       <ParallaxBackground 
         imageSrc={arbitrageRadarVisual} 
         alt="Arbitrage L2 Radar Mesh Backdrop" 
-        opacity={0.12}
+        opacity={0.35}
         speed={0.16}
       />
 
-      {/* Subtle Atmospheric Glow */}
-      <div className="absolute top-1/3 right-1/4 w-[500px] h-[300px] bg-gradient-to-b from-[#7C3AED]/10 via-transparent to-transparent blur-[120px] pointer-events-none" />
+      {/* Atmospheric Glow */}
+      <div className="absolute top-1/3 right-1/4 w-[600px] h-[350px] bg-gradient-to-b from-[#7C3AED]/20 via-transparent to-transparent blur-[140px] pointer-events-none" />
 
       <div className="w-full px-4 sm:px-8 lg:px-16 xl:px-20 max-w-[1360px] mx-auto relative z-10">
         
@@ -186,18 +186,18 @@ export const ArbitrageCalculator: React.FC = () => {
         >
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 sm:gap-8">
             <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 border border-purple-200/80 text-[11px] font-mono font-bold text-[#6D28D9] tracking-wider uppercase mb-3 shadow-sm">
-                <span>HERRAMIENTA INTERNA</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED]" />
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-950/70 border border-purple-400/40 text-[11px] font-mono font-bold text-purple-300 tracking-wider uppercase mb-3 shadow-[0_0_15px_rgba(124,58,237,0.25)]">
+                <span>[ 04 // HERRAMIENTA INTERNA ]</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
                 <span>ARBITRAJE SINTÉTICO L2</span>
               </div>
-              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-[#090A10] tracking-tight leading-tight">
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
                 {t.calculator.titleStart}{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C3AED] via-[#9333EA] to-[#6366F1]">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-fuchsia-300 to-indigo-300">
                   {t.calculator.titleEnd}
                 </span>
               </h2>
-              <p className="mt-3 text-xs sm:text-sm lg:text-base text-slate-600 font-normal leading-relaxed">
+              <p className="mt-3 text-xs sm:text-sm lg:text-base text-slate-300 font-normal leading-relaxed">
                 {t.calculator.subtitle}
               </p>
             </div>
@@ -208,10 +208,10 @@ export const ArbitrageCalculator: React.FC = () => {
                 <button
                   key={pairKey}
                   onClick={() => setSelectedPair(pairKey)}
-                  className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer font-bold text-xs ${
+                  className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer font-mono font-bold text-xs border ${
                     selectedPair === pairKey 
-                      ? 'bg-[#7C3AED] text-white shadow-sm' 
-                      : 'bg-white border border-purple-200/80 text-slate-600 hover:text-[#090A10] hover:bg-purple-50'
+                      ? 'bg-[#7C3AED] text-white border-purple-300/50 shadow-[2px_2px_0px_#090A10]' 
+                      : 'bg-slate-900/70 border-white/10 text-slate-300 hover:text-white hover:bg-slate-800'
                   }`}
                 >
                   {pairKey}
@@ -230,23 +230,26 @@ export const ArbitrageCalculator: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:col-span-6 rounded-3xl p-5 sm:p-8 bg-white/95 border border-purple-200/80 backdrop-blur-2xl shadow-[0_20px_60px_rgba(124,58,237,0.08)] flex flex-col justify-between"
+            className="lg:col-span-6 rounded-2xl p-5 sm:p-8 bg-slate-950/70 border-2 border-white/15 backdrop-blur-2xl shadow-[6px_6px_0px_rgba(124,58,237,0.3),0_20px_50px_rgba(0,0,0,0.5)] flex flex-col justify-between"
           >
             <div>
-              <div className="flex items-center justify-between border-b border-purple-100 pb-4 mb-6">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
                 <div>
-                  <h3 className="text-base font-bold text-[#090A10] tracking-tight">{t.calculator.capitalParamsTitle}</h3>
-                  <p className="text-[11px] text-slate-500 mt-0.5">{t.calculator.capitalParamsSubtitle}</p>
+                  <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                    <span className="text-purple-400 font-mono text-xs">[ PARAMS ]</span>
+                    <span>{t.calculator.capitalParamsTitle}</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400 font-mono mt-0.5">{t.calculator.capitalParamsSubtitle}</p>
                 </div>
-                <Sliders className="w-5 h-5 text-[#7C3AED]" />
+                <Sliders className="w-5 h-5 text-purple-400" />
               </div>
 
               {/* Capital Slider */}
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-2.5">
-                  <span className="text-xs uppercase font-mono tracking-wider text-slate-500 font-semibold">{t.calculator.assignedCapital}</span>
-                  <span className="text-xl sm:text-2xl font-black font-mono-nums text-[#090A10]">
-                    ${capitalUsdt.toLocaleString()} <span className="text-xs font-normal text-slate-500">USDT</span>
+                  <span className="text-xs uppercase font-mono tracking-wider text-slate-400 font-semibold">{t.calculator.assignedCapital}</span>
+                  <span className="text-xl sm:text-2xl font-black font-mono text-white">
+                    ${capitalUsdt.toLocaleString()} <span className="text-xs font-normal text-slate-400">USDT</span>
                   </span>
                 </div>
                 <input 
@@ -256,9 +259,9 @@ export const ArbitrageCalculator: React.FC = () => {
                   step="1000"
                   value={capitalUsdt}
                   onChange={(e) => setCapitalUsdt(Number(e.target.value))}
-                  className="w-full accent-[#7C3AED] cursor-pointer h-2 bg-purple-100 rounded-lg appearance-none"
+                  className="w-full accent-[#7C3AED] cursor-pointer h-2 bg-slate-800 rounded-lg appearance-none"
                 />
-                <div className="flex justify-between text-[10px] font-mono text-slate-500 mt-1.5">
+                <div className="flex justify-between text-[10px] font-mono text-slate-400 mt-1.5">
                   <span>$1,000</span>
                   <span>$50,000</span>
                   <span>$100,000</span>
@@ -266,10 +269,10 @@ export const ArbitrageCalculator: React.FC = () => {
               </div>
 
               {/* Venue Real-time Price Matrix with Live Brecha */}
-              <div className="p-4 rounded-2xl bg-purple-50/40 border border-purple-200/80 mb-5">
+              <div className="p-4 rounded-xl bg-slate-900/70 border border-white/10 mb-5">
                 <div className="flex items-center justify-between mb-3 text-xs font-mono">
-                  <span className="text-slate-600 uppercase tracking-wider font-semibold">Brecha Cross-Exchange Detectada</span>
-                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">
+                  <span className="text-slate-300 uppercase tracking-wider font-semibold">Brecha Cross-Exchange Detectada</span>
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 font-bold">
                     <TrendingUp className="w-3.5 h-3.5" />
                     <span>+${spreadGapUsdt.toFixed(2)} USDT ({grossSpreadPct > 0 ? `+${grossSpreadPct.toFixed(3)}%` : '0%'})</span>
                   </div>
@@ -277,46 +280,46 @@ export const ArbitrageCalculator: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* Buy Venue */}
-                  <div className="p-3.5 rounded-xl bg-white border border-emerald-300 shadow-sm">
+                  <div className="p-3.5 rounded-xl bg-slate-900/90 border border-emerald-500/40 shadow-sm">
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <PlatformLogo name={config.buyVenueKey} size={18} />
-                        <span className="text-xs font-bold text-[#090A10]">{config.buyVenue}</span>
+                        <span className="text-xs font-bold text-white">{config.buyVenue}</span>
                       </div>
-                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-500/40">
                         COMPRA
                       </span>
                     </div>
-                    <div className="text-lg sm:text-xl font-black font-mono-nums text-emerald-700 mt-1">
+                    <div className="text-lg sm:text-xl font-black font-mono text-emerald-400 mt-1">
                       ${buyPrice.toLocaleString()}
                     </div>
-                    <div className="text-[10px] text-slate-500 font-mono mt-0.5">Taker fee: {config.buyFee}%</div>
+                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">Taker fee: {config.buyFee}%</div>
                   </div>
 
                   {/* Sell Venue */}
-                  <div className="p-3.5 rounded-xl bg-white border border-purple-300 shadow-sm">
+                  <div className="p-3.5 rounded-xl bg-slate-900/90 border border-purple-500/40 shadow-sm">
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <PlatformLogo name={config.sellVenueKey} size={18} />
-                        <span className="text-xs font-bold text-[#090A10]">{config.sellVenue}</span>
+                        <span className="text-xs font-bold text-white">{config.sellVenue}</span>
                       </div>
-                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-50 text-[#7C3AED] border border-purple-200">
+                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-500/40">
                         VENTA
                       </span>
                     </div>
-                    <div className="text-lg sm:text-xl font-black font-mono-nums text-[#7C3AED] mt-1">
+                    <div className="text-lg sm:text-xl font-black font-mono text-purple-300 mt-1">
                       ${sellPrice.toLocaleString()}
                     </div>
-                    <div className="text-[10px] text-slate-500 font-mono mt-0.5">Taker fee: {config.sellFee}%</div>
+                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">Taker fee: {config.sellFee}%</div>
                   </div>
                 </div>
               </div>
 
               {/* Comparative Multi-Exchange Book Table */}
-              <div className="border-t border-purple-100 pt-4">
-                <div className="text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold mb-2.5 flex items-center justify-between">
+              <div className="border-t border-white/10 pt-4">
+                <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold mb-2.5 flex items-center justify-between">
                   <span>Libros L2 en Tiempo Real</span>
-                  <span className="text-[10px] text-slate-400">Live Tick Stream</span>
+                  <span className="text-[10px] text-purple-400">Live Tick Stream</span>
                 </div>
                 
                 <div className="space-y-1.5 font-mono text-xs">
@@ -331,21 +334,21 @@ export const ArbitrageCalculator: React.FC = () => {
                         key={ex.venue} 
                         className={`flex items-center justify-between px-3 py-2 rounded-xl transition-all ${
                           isBestBuy 
-                            ? 'bg-emerald-50/80 border border-emerald-200' 
+                            ? 'bg-emerald-950/40 border border-emerald-500/40' 
                             : isBestSell 
-                            ? 'bg-purple-50/80 border border-purple-200' 
-                            : 'bg-slate-50/80 hover:bg-purple-50/40 border border-slate-100'
+                            ? 'bg-purple-950/40 border border-purple-500/40' 
+                            : 'bg-slate-900/60 hover:bg-slate-900/90 border border-white/10'
                         }`}
                       >
                         <div className="flex items-center gap-2">
                           <PlatformLogo name={ex.venueKey} size={16} />
-                          <span className="font-semibold text-[#090A10] text-xs">{ex.venue}</span>
+                          <span className="font-semibold text-white text-xs">{ex.venue}</span>
                         </div>
 
                         <div className="flex items-center gap-3">
                           <div className="text-right">
-                            <span className="text-[10px] text-slate-500 block leading-tight">Bid: ${Number(exBid).toLocaleString()}</span>
-                            <span className="text-[10px] text-slate-500 block leading-tight">Ask: ${Number(exAsk).toLocaleString()}</span>
+                            <span className="text-[10px] text-slate-400 block leading-tight">Bid: ${Number(exBid).toLocaleString()}</span>
+                            <span className="text-[10px] text-slate-400 block leading-tight">Ask: ${Number(exAsk).toLocaleString()}</span>
                           </div>
                           <span className="text-[10px] text-slate-400 font-mono">{ex.latencyMs}ms</span>
                         </div>
@@ -358,11 +361,11 @@ export const ArbitrageCalculator: React.FC = () => {
             </div>
 
             {/* Simulated Action */}
-            <div className="mt-6 pt-5 border-t border-purple-100">
+            <div className="mt-6 pt-5 border-t border-white/10">
               <button
                 onClick={handleSimulateDispatch}
                 disabled={isSimulating}
-                className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#7C3AED] via-[#9333EA] to-[#6366F1] text-white text-xs font-black font-mono uppercase tracking-wider flex items-center justify-center gap-2 hover:brightness-105 shadow-[0_8px_20px_rgba(124,58,237,0.25)] cursor-pointer transition-all active:scale-95"
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#7C3AED] via-[#9333EA] to-[#6366F1] text-white text-xs font-black font-mono uppercase tracking-wider flex items-center justify-center gap-2 hover:brightness-110 shadow-[4px_4px_0px_#090A10,0_0_20px_rgba(124,58,237,0.35)] cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5"
               >
                 <Zap className="w-4 h-4 text-white" />
                 <span>{isSimulating ? t.calculator.simulatingBtn : t.calculator.simulateBtn}</span>
@@ -376,67 +379,70 @@ export const ArbitrageCalculator: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:col-span-6 rounded-3xl p-5 sm:p-8 bg-white/95 border border-purple-200/80 backdrop-blur-2xl shadow-[0_20px_60px_rgba(124,58,237,0.08)] flex flex-col justify-between"
+            className="lg:col-span-6 rounded-2xl p-5 sm:p-8 bg-slate-950/70 border-2 border-white/15 backdrop-blur-2xl shadow-[6px_6px_0px_rgba(124,58,237,0.3),0_20px_50px_rgba(0,0,0,0.5)] flex flex-col justify-between"
           >
             <div>
-              <div className="flex items-center justify-between border-b border-purple-100 pb-4 mb-6">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
                 <div>
-                  <h3 className="text-base font-bold text-[#090A10] tracking-tight">{t.calculator.breakdownTitle}</h3>
-                  <p className="text-[11px] text-slate-500 mt-0.5">{t.calculator.breakdownSubtitle}</p>
+                  <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                    <span className="text-purple-400 font-mono text-xs">[ TELEMETRY ]</span>
+                    <span>{t.calculator.breakdownTitle}</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400 font-mono mt-0.5">{t.calculator.breakdownSubtitle}</p>
                 </div>
-                <div className="text-xs font-mono font-bold text-[#059669] flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#059669] animate-pulse" />
+                <div className="text-xs font-mono font-bold text-emerald-400 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   <span>{t.calculator.positiveSpread}</span>
                 </div>
               </div>
 
               {/* Return Metric */}
               <div className="mb-6">
-                <div className="text-[11px] uppercase font-mono tracking-wider text-slate-500 font-bold">{t.calculator.netProfitLabel}</div>
-                <div className="text-3xl sm:text-4xl lg:text-5xl font-black font-mono-nums text-[#059669] mt-1.5 truncate">
+                <div className="text-[11px] uppercase font-mono tracking-wider text-slate-400 font-bold">{t.calculator.netProfitLabel}</div>
+                <div className="text-3xl sm:text-4xl lg:text-5xl font-black font-mono text-emerald-400 mt-1.5 truncate">
                   +${traderProfitUsdt.toFixed(2)}{' '}
-                  <span className="text-xs sm:text-sm font-normal text-slate-500 font-sans">USDT</span>
+                  <span className="text-xs sm:text-sm font-normal text-slate-400 font-sans">USDT</span>
                 </div>
-                <div className="text-xs font-mono text-slate-500 mt-1 font-normal">
-                  {t.calculator.netSpreadEffective}: <strong className="text-[#090A10]">+{netSpreadPct.toFixed(3)}%</strong> {t.calculator.afterFees}
+                <div className="text-xs font-mono text-slate-400 mt-1 font-normal">
+                  {t.calculator.netSpreadEffective}: <strong className="text-white">+{netSpreadPct.toFixed(3)}%</strong> {t.calculator.afterFees}
                 </div>
               </div>
 
               {/* Telemetry Breakdown Lines */}
               <div className="space-y-2.5 font-mono text-xs">
-                <div className="flex justify-between py-1.5 border-b border-purple-100">
-                  <span className="text-slate-500">{t.calculator.grossSpread}</span>
-                  <span className="text-[#090A10] font-bold">+{grossSpreadPct.toFixed(3)}%</span>
+                <div className="flex justify-between py-1.5 border-b border-white/10">
+                  <span className="text-slate-400">{t.calculator.grossSpread}</span>
+                  <span className="text-white font-bold">+{grossSpreadPct.toFixed(3)}%</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-purple-100">
-                  <span className="text-slate-500">{t.calculator.takerFees}</span>
-                  <span className="text-rose-600 font-bold">-${totalFeesUsdt.toFixed(2)} USDT</span>
+                <div className="flex justify-between py-1.5 border-b border-white/10">
+                  <span className="text-slate-400">{t.calculator.takerFees}</span>
+                  <span className="text-rose-400 font-bold">-${totalFeesUsdt.toFixed(2)} USDT</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-purple-100">
-                  <span className="text-slate-500">{t.calculator.traderShare}</span>
-                  <span className="text-[#7C3AED] font-bold">${traderProfitUsdt.toFixed(2)} USDT</span>
+                <div className="flex justify-between py-1.5 border-b border-white/10">
+                  <span className="text-slate-400">{t.calculator.traderShare}</span>
+                  <span className="text-purple-300 font-bold">${traderProfitUsdt.toFixed(2)} USDT</span>
                 </div>
                 <div className="flex justify-between py-1.5">
-                  <span className="text-slate-500">{t.calculator.infraFee}</span>
-                  <span className="text-slate-600 font-bold">${platformFeeUsdt.toFixed(2)} USDT</span>
+                  <span className="text-slate-400">{t.calculator.infraFee}</span>
+                  <span className="text-slate-400 font-bold">${platformFeeUsdt.toFixed(2)} USDT</span>
                 </div>
               </div>
             </div>
 
             {/* Execution Confirmation Toast */}
             {simulatedExecution ? (
-              <div className="mt-5 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center gap-2.5 text-xs text-emerald-700 font-bold">
+              <div className="mt-5 p-3.5 rounded-xl bg-emerald-950/80 border border-emerald-500/40 flex items-center gap-2.5 text-xs text-emerald-300 font-bold">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span className="truncate">{t.calculator.successToast(config.buyVenue, config.sellVenue)}</span>
               </div>
             ) : (
-              <div className="mt-5 pt-4 border-t border-purple-100">
+              <div className="mt-5 pt-4 border-t border-white/10">
                 <button
                   onClick={() => navigate('/login')}
-                  className="w-full py-3 rounded-full bg-white hover:bg-purple-50 text-[#090A10] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer border border-purple-200/80 shadow-sm active:scale-95"
+                  className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer border border-white/15 shadow-[3px_3px_0px_#090A10] active:translate-x-0.5 active:translate-y-0.5"
                 >
                   <span>Ejecutar en Cuenta Real</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-slate-500" />
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
                 </button>
               </div>
             )}

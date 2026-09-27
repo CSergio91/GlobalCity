@@ -83,7 +83,7 @@ function MainAppContent() {
 
   // Otherwise, render the Landing Page
   return (
-    <div className="min-h-screen bg-[#F8F9FE] text-[#090A10] flex flex-col selection:bg-[#7C3AED]/20 selection:text-[#5B21B6] relative">
+    <div className="min-h-screen bg-[#090A10] text-[#090A10] flex flex-col selection:bg-[#7C3AED]/20 selection:text-[#5B21B6] relative">
       
       {/* Dynamic Immersive Navbar with Candlestick Pair Language Selector */}
       <Navbar 
@@ -136,41 +136,41 @@ function MainAppContent() {
         </section>
 
         {/* Section 8: Final Call to Action */}
-        <section className="py-24 sm:py-32 px-4 sm:px-6 relative overflow-hidden bg-gradient-to-b from-[#F8F9FE] via-white to-[#F3F4FB] border-t border-purple-100 select-none">
+        <section className="py-24 sm:py-32 px-4 sm:px-6 relative overflow-hidden bg-[#090A12] border-t border-white/10 select-none">
           {/* Ambient Purple Lighting Glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-gradient-to-r from-[#7C3AED]/10 via-[#9333EA]/10 to-[#6366F1]/10 blur-[130px] pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gradient-to-r from-[#7C3AED]/20 via-[#9333EA]/15 to-[#6366F1]/15 blur-[150px] pointer-events-none" />
 
-          {/* Panoramic Skyline Parallax Backdrop */}
+          {/* Panoramic Skyline Parallax Backdrop (Vivid & Crisp) */}
           <ParallaxBackground 
             imageSrc={panoramicSkylineVisual} 
             alt="Global City Panoramic Skyline Backdrop" 
-            opacity={0.12}
+            opacity={0.32}
             speed={0.14}
           />
 
           <ScrollReveal direction="up" delay={50}>
             <div className="max-w-4xl mx-auto text-center relative z-10 space-y-6 sm:space-y-8">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-50 border border-purple-200/80 text-[11px] font-mono font-bold text-[#6D28D9] tracking-wider uppercase shadow-sm">
-                <span>GLOBAL CITY FUNDING</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED]" />
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-950/70 border border-purple-400/40 text-[11px] font-mono font-bold text-purple-300 tracking-wider uppercase shadow-[0_0_15px_rgba(124,58,237,0.25)]">
+                <span>[ 08 // GLOBAL CITY FUNDING ]</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
                 <span>TERMINAL PROPIA V10</span>
               </div>
 
-              <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-[#090A10] tracking-tight leading-[1.12]">
+              <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.12]">
                 {t.cta.titleStart}{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C3AED] via-[#9333EA] to-[#6366F1]">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-fuchsia-300 to-indigo-300">
                   {t.cta.titleEnd}
                 </span>
               </h2>
 
-              <p className="mt-4 text-xs sm:text-sm lg:text-base text-slate-600 max-w-xl mx-auto font-normal leading-relaxed">
+              <p className="mt-4 text-xs sm:text-sm lg:text-base text-slate-300 max-w-xl mx-auto font-normal leading-relaxed">
                 {t.cta.subtitle}
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
                 <button 
                   onClick={handleOpenTerminal}
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-full text-xs font-black tracking-widest uppercase text-white bg-gradient-to-r from-[#7C3AED] via-[#9333EA] to-[#6366F1] hover:brightness-105 shadow-[0_10px_30px_rgba(124,58,237,0.35)] transition-all cursor-pointer flex items-center justify-center gap-2 group active:scale-95"
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-xs font-mono font-black tracking-widest uppercase text-white bg-gradient-to-r from-[#7C3AED] via-[#9333EA] to-[#6366F1] hover:brightness-110 shadow-[4px_4px_0px_#000,0_0_25px_rgba(124,58,237,0.4)] transition-all cursor-pointer flex items-center justify-center gap-2 group active:translate-x-0.5 active:translate-y-0.5"
                 >
                   <Terminal className="w-4 h-4 text-white" />
                   <span>{t.cta.accessTerminalBtn}</span>
@@ -179,7 +179,7 @@ function MainAppContent() {
 
                 <a 
                   href="#multi-venue"
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-full text-xs font-bold tracking-wider uppercase text-[#090A10] hover:text-[#7C3AED] bg-white hover:bg-purple-50 border border-purple-200/80 shadow-sm transition-all text-center"
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-xs font-mono font-bold tracking-wider uppercase text-white hover:text-purple-300 bg-slate-900/80 hover:bg-slate-800 border border-white/15 shadow-[3px_3px_0px_#000] transition-all text-center active:translate-x-0.5 active:translate-y-0.5"
                 >
                   {t.cta.exploreGatewaysBtn}
                 </a>
