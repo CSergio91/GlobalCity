@@ -169,11 +169,12 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
     } catch {}
 
     const chart = init(containerRef.current, {
-      styles: GLOBAL_CITY_CHART_THEME
+      styles: 'dark'
     });
 
     if (!chart) return;
     chartInstanceRef.current = chart;
+    chart.setStyles(GLOBAL_CITY_CHART_THEME);
 
     // 1. Configurar el símbolo y temporalidad ANTES de setDataLoader
     const precision = symbol.includes('USDT') || symbol.includes('USD') || symbol.includes('EUR') ? 2 : 5;
@@ -186,26 +187,26 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
 
     chart.setPeriod(getPeriod(activeIntervalRef.current));
 
-    // 2. Registrar DataLoader canónico de KLineChart v10
+    // 2. Registrar DataLoader canónico de KLineChart v10 (Invocación atómica y segura)
     chart.setDataLoader({
       getBars: async (params) => {
         try {
           const reqInterval = periodToInterval(params.period);
           const intervalMins = reqInterval === '1m' ? 1 : reqInterval === '5m' ? 5 : reqInterval === '1h' ? 60 : reqInterval === '4h' ? 240 : reqInterval === '1D' ? 1440 : 15;
 
-          // Inyectar de inmediato velas sintéticas para que el usuario NUNCA vea el lienzo vacío
-          const initialBaseline = generateHistoricalBars(livePrice, 150, intervalMins);
-          params.callback(initialBaseline, { forward: true, backward: false });
-
-          // Traer en segundo plano las velas reales oficiales del exchange y actualizar
+          // Traer datos reales con timeout rápido o fallback instantáneo
+          let bars: KLineData[] = [];
           try {
-            const realBars = await fetchRealHistoricalKlines(symbol, reqInterval, 200, livePrice);
-            if (realBars && realBars.length > 0) {
-              params.callback(realBars, { forward: true, backward: false });
-            }
-          } catch (e) {
-            console.warn('[DataLoader] Fallback baseline bars active:', e);
+            bars = await fetchRealHistoricalKlines(symbol, reqInterval, 180, livePrice);
+          } catch {
+            bars = [];
           }
+
+          if (!bars || bars.length === 0) {
+            bars = generateHistoricalBars(livePrice, 150, intervalMins);
+          }
+
+          params.callback(bars, { forward: true, backward: false });
 
           requestAnimationFrame(() => {
             if (chartInstanceRef.current) {
@@ -215,6 +216,7 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
           });
         } catch (err) {
           console.warn('[DataLoader] Error loading historical bars:', err);
+          params.callback(generateHistoricalBars(livePrice, 150, 15), { forward: true, backward: false });
         }
       },
       subscribeBar: (params) => {
@@ -225,10 +227,10 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
       }
     });
 
-    // 3. Crear indicadores en subpaneles
+    // 3. Crear indicadores en subpaneles de forma canónica
     try {
-      chart.createIndicator({ name: 'VOL' }, false);
-      chart.createIndicator({ name: 'SMA', paneId: 'candle_pane' }, true);
+      chart.createIndicator('VOL', false);
+      chart.createIndicator('SMA', true);
     } catch (e) {
       console.warn('Indicator initialization note:', e);
     }
@@ -241,7 +243,7 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
     const timerId = setTimeout(() => {
       chart.resize();
       chart.scrollToRealTime();
-    }, 60);
+    }, 80);
 
     const resizeObserver = new ResizeObserver(() => {
       chart.resize();
@@ -407,8 +409,12 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
       </div>
 
       {/* Hardware Accelerated Canvas Container */}
-      <div className="w-full relative flex-1 min-h-[280px] sm:min-h-[400px]">
-        <div ref={containerRef} style={{ width: '100%', height: '100%' }} className="w-full h-full min-h-[280px] sm:min-h-[400px]" />
+      <div className="w-full relative flex-1 min-h-[340px] sm:min-h-[420px]">
+        <div 
+          ref={containerRef} 
+          style={{ width: '100%', height: '100%', minHeight: '340px', position: 'relative' }} 
+          className="w-full h-full min-h-[340px] sm:min-h-[420px]" 
+        />
       </div>
 
     </div>

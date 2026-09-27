@@ -19,21 +19,22 @@ export async function fetchRealHistoricalKlines(
 
   // Lista de endpoints espejo públicos para garantizar datos reales sin bloqueos de IP
   const candidateUrls = [
-    `/api-binance/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`,
     `https://data-api.binance.vision/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`,
     `https://api.binance.com/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`,
-    `https://api1.binance.com/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`
+    `https://api1.binance.com/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`,
+    `/api-binance/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`
   ];
 
   for (const url of candidateUrls) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4500);
+      const timeoutId = setTimeout(() => controller.abort(), 2800);
 
       const res = await fetch(url, { signal: controller.signal });
       clearTimeout(timeoutId);
 
-      if (!res.ok) continue;
+      const contentType = res.headers.get('content-type') || '';
+      if (!res.ok || !contentType.includes('application/json')) continue;
 
       const rawData = await res.json();
       if (!Array.isArray(rawData) || rawData.length === 0) continue;

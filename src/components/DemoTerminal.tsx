@@ -358,7 +358,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
       </header>
 
       {/* Main Operations Canvas (Lienzo Vacío) Edge-to-Edge Fullscreen */}
-      <main className="flex-1 w-full px-1.5 sm:px-4 py-1 sm:py-2 flex flex-col gap-1.5 sm:gap-2 h-[calc(100vh-50px)] overflow-hidden">
+      <main className="flex-1 w-full px-1.5 sm:px-4 py-1 sm:py-2 flex flex-col gap-1.5 sm:gap-2 min-h-0 h-auto sm:h-[calc(100vh-50px)] overflow-y-auto sm:overflow-hidden">
         
         {/* Connected Venues & Pair Bar */}
         <div className="flex items-center justify-between gap-2 shrink-0 py-0.5">
@@ -542,7 +542,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
         <div className="flex-1 flex flex-col bg-[#070910] border border-white/10 rounded-2xl overflow-hidden shadow-2xl relative min-h-0">
           
           {/* Native KLineChart Hardware-Accelerated Canvas (Full-bleed) */}
-          <div className="flex-1 w-full h-full relative min-h-0">
+          <div className="w-full h-[380px] sm:h-full sm:flex-1 relative min-h-[340px]">
             <GlobalCityChart
               symbol={selectedSymbol}
               venueId={activeAccount?.venueId || 'binance'}
