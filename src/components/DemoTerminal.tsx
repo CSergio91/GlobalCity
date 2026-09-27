@@ -150,15 +150,19 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
     showNotification(`¡Conexión establecida con éxito en ${newAccount.venueName}! Alerta de seguridad enviada al bot de Telegram.`);
   };
 
-  const handleDeleteAccount = (acc: StoredExchangeAccount, e: React.MouseEvent) => {
-    e.stopPropagation();
-    exchangeStorage.removeAccount(acc.id);
-    setAccounts(exchangeStorage.getAccounts());
-    if (activeAccountId === acc.id) {
-      const remaining = accounts.filter(a => a.id !== acc.id);
-      setActiveAccountId(remaining[0]?.id || null);
+  const [accountToDelete, setAccountToDelete] = useState<StoredExchangeAccount | null>(null);
+
+  const confirmDeleteAccount = () => {
+    if (!accountToDelete) return;
+    exchangeStorage.deleteAccount(accountToDelete.id);
+    const updated = exchangeStorage.getAccounts();
+    setAccounts(updated);
+    if (activeAccountId === accountToDelete.id) {
+      const remaining = updated.filter(a => a.id !== accountToDelete.id);
+      setActiveAccountId(remaining[0]?.id || 'conn_binance_demo_feed');
     }
-    showNotification(`Conexión con ${acc.venueName} desvinculada.`);
+    showNotification(`Conexión con ${accountToDelete.venueName} desvinculada.`);
+    setAccountToDelete(null);
   };
 
   const handleSyncBalance = async (acc: StoredExchangeAccount, e: React.MouseEvent) => {
@@ -355,10 +359,13 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                       <RefreshCw className={`w-3 h-3 ${syncingId === acc.id ? 'animate-spin text-[#38BDF8]' : ''}`} />
                     </button>
 
-                    {/* Disconnect Button */}
+                    {/* Disconnect Button (triggers confirmation dialog) */}
                     <button
                       type="button"
-                      onClick={(e) => handleDeleteAccount(acc, e)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAccountToDelete(acc);
+                      }}
                       className="p-1 rounded-lg text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
                       title="Desvincular cuenta"
                     >
@@ -454,11 +461,21 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
 
         </div>
 
-        {/* WORKSPACE CANVAS BODY: Native KLineChart Canvas + Quick 1-Click Execution */}
-        <div className="flex-1 flex flex-col bg-[#070910] border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative min-h-[550px]">
+        {/* WORKSPACE CANVAS BODY: Fullscreen KLineChart Canvas with Bottom Execution Dock */}
+        <div className="flex-1 flex flex-col bg-[#070910] border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative min-h-[600px] h-[calc(100vh-190px)]">
           
-          {/* Quick 1-Click Execution Header Bar */}
-          <div className="px-4 py-2.5 bg-[#090B12] border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          {/* Native KLineChart Hardware-Accelerated Canvas (Full-bleed) */}
+          <div className="flex-1 w-full relative min-h-[480px]">
+            <GlobalCityChart
+              symbol={selectedSymbol}
+              venueId={activeAccount?.venueId || 'binance'}
+              venueName={activeAccount?.venueName || 'Binance'}
+              livePrice={currentPrice}
+            />
+          </div>
+
+          {/* Quick 1-Click Execution Footer Dock (Down below the chart) */}
+          <div className="px-4 py-2.5 bg-[#090B12] border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shrink-0 z-10">
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -510,19 +527,45 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
             </div>
           </div>
 
-          {/* Native KLineChart Hardware-Accelerated Canvas */}
-          <div className="w-full h-[560px] relative">
-            <GlobalCityChart
-              symbol={selectedSymbol}
-              venueId={activeAccount?.venueId || 'binance'}
-              venueName={activeAccount?.venueName || 'Binance'}
-              livePrice={currentPrice}
-            />
-          </div>
-
         </div>
 
       </main>
+
+      {/* Disconnect Account Confirmation Modal */}
+      {accountToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+          <div className="w-full max-w-sm bg-[#0E1018] border border-white/15 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <PlatformLogo name={accountToDelete.venueName} className="w-8 h-8 rounded-xl shrink-0" />
+              <div>
+                <h3 className="text-base font-bold text-white">¿Desvincular {accountToDelete.venueName}?</h3>
+                <p className="text-xs text-slate-400">Esta acción cerrará la sesión de esta plataforma.</p>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-[11px] text-rose-300 leading-relaxed">
+              Se eliminarán las claves y credenciales almacenadas localmente. No podrás despachar órdenes en este exchange hasta que vuelvas a vincularlo.
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setAccountToDelete(null)}
+                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteAccount}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:brightness-110 text-xs font-bold text-white shadow-lg shadow-rose-600/30 transition-all cursor-pointer"
+              >
+                Sí, Desvincular
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Connection Modal */}
       <AddConnectionModal

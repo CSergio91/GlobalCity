@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { init, dispose, registerLocale, Chart, KLineData, DeepPartial, Styles, Period } from 'klinecharts';
+import { fetchRealHistoricalKlines } from '../services/realKlineData';
 
 // Register full Spanish dictionary for KLineChart v10 engine
 try {
@@ -186,20 +187,18 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
 
     chart.setPeriod(getPeriod(activeInterval));
 
-    // Generate initial historical candles
-    const intervalMinutes = activeInterval === '1m' ? 1 : activeInterval === '5m' ? 5 : activeInterval === '1h' ? 60 : activeInterval === '4h' ? 240 : activeInterval === '1D' ? 1440 : 15;
-    const initialBars = generateHistoricalBars(livePrice, 100, intervalMinutes);
-
-    // KLineChart v10 native DataLoader architecture
+    // KLineChart v10 native DataLoader architecture with real historical market feeds
     chart.setDataLoader({
-      getBars: (params) => {
-        const span = params.period.span || 15;
-        const type = params.period.type;
-        const mins = type === 'minute' ? span : type === 'hour' ? span * 60 : type === 'day' ? 1440 : 15;
-        const bars = generateHistoricalBars(livePrice, 100, mins);
-        if (params.type === 'init') {
-          params.callback(bars, { forward: false, backward: false });
-        } else if (params.type === 'forward') {
+      getBars: async (params) => {
+        try {
+          const bars = await fetchRealHistoricalKlines(symbol, activeInterval, 200, livePrice);
+          if (params.type === 'init') {
+            params.callback(bars, { forward: false, backward: false });
+          } else if (params.type === 'forward') {
+            params.callback([], false);
+          }
+        } catch (err) {
+          console.warn('[DataLoader] Error loading real historical bars:', err);
           params.callback([], false);
         }
       },
@@ -304,7 +303,7 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
   };
 
   return (
-    <div className="flex flex-col w-full bg-[#06070B] select-none rounded-2xl overflow-hidden" style={{ width: '100%', height: '560px' }}>
+    <div className="flex flex-col w-full h-full bg-[#06070B] select-none rounded-2xl overflow-hidden min-h-[520px]">
       
       {/* Chart Control Toolbar */}
       <div className="flex items-center justify-between px-3 py-1.5 h-[38px] bg-[#090A10] border-b border-white/10 text-xs shrink-0">
@@ -354,8 +353,8 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
       </div>
 
       {/* Hardware Accelerated Canvas Container */}
-      <div className="w-full relative flex-1" style={{ width: '100%', height: '522px' }}>
-        <div ref={containerRef} style={{ width: '100%', height: '522px' }} className="w-full h-full" />
+      <div className="w-full relative flex-1 min-h-[480px]">
+        <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: '480px' }} className="w-full h-full min-h-[480px]" />
       </div>
 
     </div>
