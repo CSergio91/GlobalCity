@@ -19,8 +19,9 @@ export async function fetchRealHistoricalKlines(
 
   // Lista de endpoints espejo públicos para garantizar datos reales sin bloqueos de IP
   const candidateUrls = [
-    `https://api.binance.com/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`,
+    `/api-binance/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`,
     `https://data-api.binance.vision/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`,
+    `https://api.binance.com/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`,
     `https://api1.binance.com/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`
   ];
 

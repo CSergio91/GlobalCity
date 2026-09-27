@@ -210,15 +210,33 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
       getBars: async (params) => {
         try {
           const reqInterval = periodToInterval(params.period);
-          const bars = await fetchRealHistoricalKlines(symbol, reqInterval, 200, livePrice);
+          const intervalMins = reqInterval === '1m' ? 1 : reqInterval === '5m' ? 5 : reqInterval === '1h' ? 60 : reqInterval === '4h' ? 240 : reqInterval === '1D' ? 1440 : 15;
+
+          // 1. Inyectar inmediatamente velas base de alta fidelidad para que el lienzo NUNCA esté en blanco
           if (params.type === 'init') {
-            params.callback(bars, { forward: false, backward: false });
-          } else if (params.type === 'forward') {
-            params.callback([], false);
+            const initialBaseline = generateHistoricalBars(livePrice, 120, intervalMins);
+            params.callback(initialBaseline, false);
+            setTimeout(() => {
+              if (chartInstanceRef.current) {
+                chartInstanceRef.current.resize();
+                chartInstanceRef.current.scrollToRealTime();
+              }
+            }, 30);
+          }
+
+          // 2. Cargar en segundo plano las velas reales oficiales del exchange y actualizar
+          const realBars = await fetchRealHistoricalKlines(symbol, reqInterval, 200, livePrice);
+          if (realBars && realBars.length > 0) {
+            params.callback(realBars, false);
+            setTimeout(() => {
+              if (chartInstanceRef.current) {
+                chartInstanceRef.current.resize();
+                chartInstanceRef.current.scrollToRealTime();
+              }
+            }, 50);
           }
         } catch (err) {
           console.warn('[DataLoader] Error loading real historical bars:', err);
-          params.callback([], false);
         }
       },
       subscribeBar: (params) => {
@@ -240,10 +258,12 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
     // Immediate resize calls to synchronize with browser layout
     const rafId = requestAnimationFrame(() => {
       chart.resize();
+      chart.scrollToRealTime();
     });
     const timerId = setTimeout(() => {
       chart.resize();
-    }, 80);
+      chart.scrollToRealTime();
+    }, 100);
 
     // Attach ResizeObserver to keep canvas sharp on resizing
     const resizeObserver = new ResizeObserver(() => {
@@ -263,12 +283,17 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
     };
   }, [venueId, symbol, getPeriod, periodToInterval]);
 
-  // Update timeframe period and reload bars when activeInterval changes
+  const isFirstMountRef = useRef(true);
+
+  // Update timeframe period when activeInterval changes (skips redundant first mount)
   useEffect(() => {
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      return;
+    }
     const chart = chartInstanceRef.current;
     if (!chart) return;
     chart.setPeriod(getPeriod(activeInterval));
-    chart.resetData();
   }, [activeInterval, getPeriod]);
 
   // Real-time Tick-by-Tick streaming update via v10 subscriber callback

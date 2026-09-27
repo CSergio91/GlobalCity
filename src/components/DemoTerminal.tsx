@@ -78,6 +78,18 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
   const [orderAmountUsdt, setOrderAmountUsdt] = useState<string>("500");
   const [syncingId, setSyncingId] = useState<string | null>(null);
 
+  const [selectedRiskPercent, setSelectedRiskPercent] = useState<number>(1);
+  const [leverage, setLeverage] = useState<number>(1);
+  const [isTradePanelOpen, setIsTradePanelOpen] = useState<boolean>(true);
+
+  // Auto-calcular monto en USDT al seleccionar porcentaje de riesgo
+  const handleRiskPercentClick = (pct: number) => {
+    setSelectedRiskPercent(pct);
+    const balance = activeAccount?.freeMarginUsd || 50000;
+    const computedAmount = Math.max(10, Math.round((balance * pct) / 100));
+    setOrderAmountUsdt(computedAmount.toString());
+  };
+
   // Pair selector dropdown
   const [isPairDropdownOpen, setIsPairDropdownOpen] = useState(false);
   const [pairSearchQuery, setPairSearchQuery] = useState('');
@@ -495,84 +507,176 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
 
         </div>
 
-        {/* WORKSPACE CANVAS BODY: Fullscreen KLineChart Canvas with Bottom Execution Dock */}
+        {/* WORKSPACE CANVAS BODY: Fullscreen KLineChart Canvas with Floating Execution Dock */}
         <div className="flex-1 flex flex-col bg-[#070910] border border-white/10 rounded-2xl overflow-hidden shadow-2xl relative min-h-[520px]">
           
           {/* Native KLineChart Hardware-Accelerated Canvas (Full-bleed) */}
-          <div className="flex-1 w-full relative min-h-[460px]">
+          <div className="flex-1 w-full h-full relative min-h-[480px]">
             <GlobalCityChart
               symbol={selectedSymbol}
               venueId={activeAccount?.venueId || 'binance'}
               venueName={activeAccount?.venueName || 'Binance'}
               livePrice={currentPrice}
             />
-          </div>
 
-          {/* Quick 1-Click Execution Footer Dock (Down below the chart) */}
-          <div className="px-4 py-2 bg-[#090B12] border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shrink-0 z-10">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickTrade('BUY')}
-                className="py-1.5 px-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:brightness-110 text-black font-bold shadow-md shadow-emerald-500/20 flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all text-xs"
-              >
-                <ArrowUpRight className="w-3.5 h-3.5 text-black stroke-[3]" />
-                <span>COMPRAR (ASK: ${currentPrice.toFixed(2)})</span>
-              </button>
+            {/* Floating Order Ticket / Execution Widget (Bottom Right Overlay) */}
+            <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-20 max-w-[340px] w-[calc(100%-24px)] sm:w-[320px]">
+              {isTradePanelOpen ? (
+                <div className="bg-[#090B12]/92 backdrop-blur-2xl border border-white/15 rounded-2xl p-3 sm:p-3.5 shadow-2xl shadow-black/80 space-y-2.5 animate-in fade-in slide-in-from-bottom-3 duration-200">
+                  {/* Header: Venue + Margin + Collapse toggle */}
+                  <div className="flex items-center justify-between pb-2 border-b border-white/10 text-xs">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <PlatformLogo name={activeAccount?.venueName || 'Binance'} className="w-4 h-4 rounded shrink-0" />
+                      <span className="font-bold text-white text-[11px] truncate">
+                        {activeAccount?.venueName || (isDemoFeedEnabled ? 'Binance (Demo)' : 'Desconectado')}
+                      </span>
+                      <span className="text-[10px] font-mono text-emerald-400 font-bold shrink-0">
+                        ${(activeAccount?.freeMarginUsd || 50000).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      </span>
+                    </div>
 
-              <div className="flex items-center bg-black/60 border border-white/15 rounded-xl px-2.5 py-1 font-mono">
-                <span className="text-slate-500 mr-1">$</span>
-                <input
-                  type="number"
-                  value={orderAmountUsdt}
-                  onChange={(e) => setOrderAmountUsdt(e.target.value)}
-                  className="w-16 bg-transparent text-white text-xs font-bold focus:outline-none"
-                />
-                <span className="text-[10px] text-slate-400 ml-1">USDT</span>
-              </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {activeAccount && (
+                        <button
+                          type="button"
+                          onClick={() => setAccountToDelete(activeAccount)}
+                          className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                          title="Desconectar esta conexión"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setIsTradePanelOpen(false)}
+                        className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer sm:hidden"
+                        title="Minimizar panel"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
 
-              <button
-                type="button"
-                onClick={() => handleQuickTrade('SELL')}
-                className="py-1.5 px-3.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 hover:brightness-110 text-white font-bold shadow-md shadow-rose-500/20 flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all text-xs"
-              >
-                <ArrowDownRight className="w-3.5 h-3.5 text-white stroke-[3]" />
-                <span>VENDER (BID: ${(currentPrice * 0.9998).toFixed(2)})</span>
-              </button>
-            </div>
+                  {/* Buy & Sell Buttons Row */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleQuickTrade('BUY')}
+                      className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:brightness-110 text-black font-extrabold shadow-lg shadow-emerald-500/25 flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-all"
+                    >
+                      <div className="flex items-center gap-1 text-xs">
+                        <ArrowUpRight className="w-3.5 h-3.5 stroke-[3]" />
+                        <span>COMPRAR</span>
+                      </div>
+                      <span className="text-[10px] font-mono opacity-90 font-bold">
+                        ${currentPrice.toFixed(2)}
+                      </span>
+                    </button>
 
-            <div className="flex items-center gap-3 font-mono text-[11px] text-slate-400">
-              <div className="flex items-center gap-1.5">
-                <span>Operando en:</span>
-                <span className="text-white font-bold flex items-center gap-1.5">
-                  <PlatformLogo name={activeAccount?.venueName || 'Binance'} className="w-4 h-4 rounded" />
-                  {activeAccount?.venueName || (isDemoFeedEnabled ? 'Binance (Demo)' : 'Desconectado')}
-                </span>
-                {activeAccount && (
-                  <span className="text-emerald-400 font-bold ml-1">
-                    (Disp: ${(activeAccount?.freeMarginUsd || 50000).toLocaleString()})
+                    <button
+                      type="button"
+                      onClick={() => handleQuickTrade('SELL')}
+                      className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 hover:brightness-110 text-white font-extrabold shadow-lg shadow-rose-500/25 flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-all"
+                    >
+                      <div className="flex items-center gap-1 text-xs">
+                        <ArrowDownRight className="w-3.5 h-3.5 stroke-[3]" />
+                        <span>VENDER</span>
+                      </div>
+                      <span className="text-[10px] font-mono opacity-90 font-bold">
+                        ${(currentPrice * 0.9998).toFixed(2)}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Amount & Risk Section (Below the buttons) */}
+                  <div className="space-y-2 pt-1">
+                    
+                    {/* Amount USDT Input + Crypto Equivalent */}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-mono text-slate-400 uppercase">Monto:</span>
+                      <div className="flex items-center bg-black/60 border border-white/15 rounded-xl px-2.5 py-1 font-mono flex-1 justify-end">
+                        <span className="text-slate-500 mr-1 text-xs">$</span>
+                        <input
+                          type="number"
+                          value={orderAmountUsdt}
+                          onChange={(e) => {
+                            setOrderAmountUsdt(e.target.value);
+                            setSelectedRiskPercent(0);
+                          }}
+                          className="w-20 bg-transparent text-white text-xs font-bold text-right focus:outline-none"
+                        />
+                        <span className="text-[10px] text-slate-400 ml-1">USDT</span>
+                      </div>
+                    </div>
+
+                    {/* Equivalent Crypto Size */}
+                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 px-0.5">
+                      <span>Tamaño estimado:</span>
+                      <span className="text-slate-300 font-bold">
+                        {((parseFloat(orderAmountUsdt) || 0) * leverage / currentPrice).toFixed(4)} {selectedSymbol.split('/')[0]}
+                      </span>
+                    </div>
+
+                    {/* Risk % Quick Selectors */}
+                    <div className="flex items-center justify-between gap-1 pt-0.5">
+                      <span className="text-[9px] font-mono text-slate-400 uppercase">Riesgo:</span>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 5, 10, 25].map(pct => (
+                          <button
+                            key={pct}
+                            type="button"
+                            onClick={() => handleRiskPercentClick(pct)}
+                            className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold transition-all cursor-pointer ${
+                              selectedRiskPercent === pct
+                                ? 'bg-gradient-to-r from-[#38BDF8] to-[#0284C7] text-white shadow-sm'
+                                : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/5'
+                            }`}
+                          >
+                            {pct}%
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Leverage Selector */}
+                    <div className="flex items-center justify-between gap-1 pt-0.5">
+                      <span className="text-[9px] font-mono text-slate-400 uppercase">Apalancamiento:</span>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 5, 10, 20].map(lev => (
+                          <button
+                            key={lev}
+                            type="button"
+                            onClick={() => setLeverage(lev)}
+                            className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold transition-all cursor-pointer ${
+                              leverage === lev
+                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
+                                : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/5'
+                            }`}
+                          >
+                            {lev}x
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+              ) : (
+                /* Minimized Floating Button (Clean in Mobile) */
+                <button
+                  type="button"
+                  onClick={() => setIsTradePanelOpen(true)}
+                  className="ml-auto flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:brightness-110 text-black font-extrabold text-xs shadow-xl shadow-emerald-500/30 transition-all cursor-pointer active:scale-95"
+                >
+                  <span>⚡ Operar</span>
+                  <span className="font-mono font-bold text-[11px] bg-black/20 px-1.5 py-0.5 rounded">
+                    ${currentPrice.toFixed(2)}
                   </span>
-                )}
-                {/* Desconectar conexión activa desde el dock */}
-                {activeAccount && (
-                  <button
-                    type="button"
-                    onClick={() => setAccountToDelete(activeAccount)}
-                    className="ml-1 px-1.5 py-0.5 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all cursor-pointer flex items-center gap-1 text-[10px]"
-                    title="Desconectar esta conexión"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                    <span>Cerrar</span>
-                  </button>
-                )}
-              </div>
-
-              {connectedAccounts.length === 0 && isDemoFeedEnabled && (
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-cyan-500/10 text-[#38BDF8] border border-[#38BDF8]/20 text-[10px] font-mono">
-                  Feed en Vivo / Modo Demo
-                </span>
+                </button>
               )}
             </div>
+
           </div>
 
         </div>
