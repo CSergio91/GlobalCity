@@ -127,10 +127,13 @@ export function telegramAuthPlugin(): Plugin {
           }
 
           // 3. Responder al chat de Telegram con botón interactivo
-          const host = server.config.server.host || 'localhost';
-          const port = server.config.server.port || 3000;
-          const hostHeader = typeof host === 'string' && host !== '0.0.0.0' ? host : 'localhost';
-          const returnUrl = `http://${hostHeader}:${port}/?tg_auth=1&tg_id=${userId}&tg_user=${encodeURIComponent(username)}&tg_first=${encodeURIComponent(firstName)}${nonce ? `&tg_nonce=${nonce}` : ''}`;
+          const appUrl = process.env.APP_URL && process.env.APP_URL.startsWith('https://') 
+            ? process.env.APP_URL 
+            : 'https://globalcitytrading.com/operaciones';
+
+          const returnUrl = appUrl.includes('?') 
+            ? `${appUrl}&tg_auth=1&tg_id=${userId}&tg_user=${encodeURIComponent(username)}`
+            : `${appUrl}?tg_auth=1&tg_id=${userId}&tg_user=${encodeURIComponent(username)}`;
 
           console.log(`[TelegramBot] ✅ Usuario autenticado: ${firstName} (${username}, ID: ${userId})`);
 
@@ -141,7 +144,7 @@ export function telegramAuthPlugin(): Plugin {
             `¡Hola *${firstName}*! Tu cuenta de Telegram ha sido verificada con éxito.\n\n` +
             `⚡ *ID de Operador:* \`${userId}\`\n` +
             `🛡️ *Nivel de Conexión:* Control Plane Verificado\n\n` +
-            `Haz clic en el botón de abajo para acceder inmediatamente a la Sala de Operaciones:`,
+            `Tu sesión se ha sincronizado en tiempo real. Pulsa el botón de abajo o regresa a tu navegador:`,
             returnUrl
           );
         }
