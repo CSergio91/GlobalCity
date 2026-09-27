@@ -9,4 +9,5 @@ coverage/
 *.mov
 src/assets/video/fondo.mov
 supabase/.temp/
+.agents/mcp_config.json
 
