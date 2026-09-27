@@ -1,49 +1,49 @@
 ---
 name: global-city-design-system-and-landing-spec
-description: "Sistema de diseño visual, lenguaje estético, tipografía, iconografía, paleta de colores y especificación arquitectónica de la Landing Page de Global City, inspirada en trading institucional oscuro con acentos rose-mauve y terminología no genérica."
-version: "1.0.0"
+description: "Sistema de diseño visual, lenguaje estético, tipografía, iconografía, paleta cromática (Morado, Blanco, Negro en tonalidad clara) y especificación de la Landing Page de Global City Funding (Empresa de Fondeo con Terminal Propia, Copy a Exchanges y APKs oficiales)."
+version: "3.0.0"
 category: "Design System & Landing Page Specification"
-author: "AI Studio Fintech Systems Architect"
-status: "Approved Specification"
+author: "Global City Design & Fintech Architect"
+status: "Authoritative / Supreme Standard"
 ---
 
-# Global City: Design System & Landing Page Specification
+# Global City Funding: Design System & Landing Page Specification
+### *Estética Institucional Clara: Morado Eléctrico, Blanco Puro y Negro Ónix*
 
-Esta skill codifica el **sistema de diseño estético, la dirección tipográfica, la paleta cromática, la iconografía y la estructura de componentes** para la plataforma **Global City**, fundamentada en las referencias visuales de terminales fintech oscuras de última generación y los 8 módulos de arquitectura institucional estudiados.
+Esta skill codifica el **sistema de diseño visual, la paleta cromática clara (Morado, Blanco, Negro), la dirección tipográfica y el copywriting de alta fidelidad** para la Landing Page de **Global City Funding**, enfocada en la Empresa de Fondeo de Próxima Generación con Terminal Propia, retos transparentes, herramientas de copy trading a exchanges vía API y hoja de ruta a APKs oficiales.
 
 ---
 
-## 1. Deconstrucción Estética de las Referencias Visuales
+## 1. Deconstrucción Estética: Atmósfera Clara, Lujosa y No Genérica
 
-A partir del análisis forense de las capturas proporcionadas:
+Rechazamos los fondos oscuros genéricos de templates tanto como los sitios blancos planos y aburridos. **Global City Funding** adopta una **tonalidad clara de grado institucional suizo/cuantitativo**:
 
 ### A. Atmósfera y Composición Espacial
-- **Lienzo Principal (Canvas):** Fondo profundo ultra-oscuro `#0B0C10` / `#0E0F14` con sutiles gradientes ambientales verticales tipo cortina lumínica o aurora difusa (*mauve/rosewood/copper sheen*) en el cuadrante superior o tras el hero.
-- **Tarjetas y Superficies Bento:**
-  - Fondo de tarjeta: `#13141B` o `#171822` con `border: 1px solid rgba(255, 255, 255, 0.07)`.
-  - Radio de curvatura de contenedores: `rounded-2xl` a `rounded-3xl` (16px a 24px).
-  - Efecto de iluminación interna: sutil resplandor superior (*subtle inner highlight border*).
-- **Tratamiento Tipográfico de Alto Impacto:**
-  - Titulares masivos, condensados o geométricos con tracking ajustado (`tracking-tight`).
-  - Intercalado de etiquetas contextuales sobrias sin encapsulamiento chillón.
-  - Cero pills genéricas: el texto informativo es limpio con separadores sutiles (`·` o `/`).
+- **Lienzo Base (Canvas Claro):** Fondo ultra-limpio con ligera refracción perlada `#F8F9FE` / `#FFFFFF` con sutiles mallas de resplandor morado/amatista ambiental (`rgba(124, 58, 237, 0.06)` a `rgba(168, 85, 247, 0.12)`).
+- **Tarjetas y Superficies Bento Ligeras (Frosted Glassmorphism):**
+  - Fondo de tarjeta: Blanco puro translúcido `rgba(255, 255, 255, 0.88)` o `#FFFFFF` sólido con sutil relieve de sombra arquitectónica (`box-shadow: 0 10px 30px -5px rgba(124, 58, 237, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05)`).
+  - Borde de contenedor: `1px solid rgba(124, 58, 237, 0.14)` o `1px solid rgba(15, 23, 42, 0.08)`.
+  - Radio de curvatura de contenedores: `rounded-2xl` a `rounded-3xl` (16px a 24px) con transiciones suaves `duration-300`.
+- **Estructura de Contraste Negro & Morado:**
+  - Los elementos de mayor jerarquía estructural (botones primarios, badges de tecnología, títulos dominantes) usan **Negro Ónix `#090A10`** o **Morado Eléctrico `#7C3AED`**.
+  - Los acentos de acción, estados activos y resplandores usan gradientes violeta-amatista (`from-[#7C3AED] via-[#9333EA] to-[#6366F1]`).
 
-### B. Paleta de Color Institucional Global City
-| Token | Valor Hex | Uso Semántico |
+### B. Paleta de Color Institucional Global City Funding
+| Token | Valor Hex / RGBA | Uso Semántico |
 | :--- | :--- | :--- |
-| `--bg-canvas` | `#0A0B0F` | Fondo general de la página y terminal. |
-| `--bg-surface` | `#12131A` | Superficie de tarjetas bento, tablas y paneles. |
-| `--bg-surface-elevated` | `#1A1C26` | Hover states, inputs, modales y headers de tabla. |
-| `--border-subtle` | `rgba(255, 255, 255, 0.08)` | Líneas divisorias de 1px y bordes de tarjetas. |
-| `--accent-rose` | `#E06D8A` | Acento primario de marca, CTAs principales y resplandores. |
-| `--accent-rose-hover` | `#ED7D9A` | Estado hover de acciones primarias. |
-| `--accent-rose-subtle` | `rgba(224, 109, 138, 0.12)` | Fondos secundarios y micro-badges funcionales. |
-| `--accent-cyan` | `#2DD4BF` / `#38BDF8` | Mapeo de liquidez, WebSockets y telemetría de red. |
-| `--status-positive` | `#10B981` | Velas alcistas, PnL positivo y estados Online. |
-| `--status-negative` | `#F43F5E` | Velas bajistas, Drawdown y alertas de riesgo. |
-| `--text-primary` | `#F8FAFC` | Titulares y datos numéricos principales. |
-| `--text-secondary` | `#94A3B8` | Descripciones y etiquetas de segundo nivel. |
-| `--text-muted` | `#64748B` | Metadatos y notas al pie. |
+| `--bg-canvas-light` | `#F8F9FE` | Fondo general de la página con sensación abierta y limpia. |
+| `--bg-card-light` | `#FFFFFF` | Superficie blanca de tarjetas bento, tablas y paneles. |
+| `--bg-card-glass` | `rgba(255, 255, 255, 0.82)` | Paneles flotantes con `backdrop-blur(16px)`. |
+| `--border-light-subtle` | `rgba(15, 23, 42, 0.08)` | Bordes sutiles de separación y estructuras de tabla. |
+| `--border-purple-accent` | `rgba(124, 58, 237, 0.22)` | Bordes activos, focus rings y contornos de tarjetas destacadas. |
+| `--purple-primary` | `#7C3AED` | Morado institucional primario, CTAs principales e iconos clave. |
+| `--purple-vibrant` | `#8B5CF6` | Estados hover, gradientes lumínicos y barras de progreso. |
+| `--purple-deep` | `#5B21B6` | Texto morado sobre fondo claro para máxima legibilidad WCAG AAA. |
+| `--purple-subtle` | `rgba(124, 58, 237, 0.08)` | Fondos de badges, chips de temporalidad y píldoras de estado. |
+| `--black-obsidian` | `#090A10` | Tipografía principal, botones estructurados y elementos de máximo contraste. |
+| `--black-slate` | `#1E293B` | Subtítulos ejecutivos y textos descriptivos con nitidez. |
+| `--status-positive` | `#059669` | Métricas de beneficio, pagos confirmados y PnL verde esmeralda. |
+| `--status-risk` | `#DC2626` | Drawdown, alertas de pérdida diaria y límites de riesgo. |
 
 ---
 
@@ -68,41 +68,45 @@ Se utilizará una biblioteca de iconos limpia y unificada con trazo consistente 
 Se prohiben expresamente frases vacías de IA ("la plataforma definitiva", "potencia tus finanzas", "revoluciona tu trading"). El lenguaje de **Global City** habla como una firma cuantitativa e institucional:
 
 ### Contrastes de Copywriting
-- ❌ **Evitar:** *"Opera como un profesional con nuestra potente plataforma todo en uno impulsada por IA."*
-- ✅ **Global City:** *"Infraestructura de ejecución multi-venue y protocolo de fondeo híbrido. Ejecución directa en libros de órdenes institucionales sin simulación encubierta."*
-- ❌ **Evitar:** *"Gana mucho dinero con nuestros retos fáciles y cobros rápidos."*
-- ✅ **Global City:** *"Evaluación cuantitativa disciplinada y asignación de subcuentas corporativas vía Broker API. Respaldo de solvencia con ratio de reserva $R \ge 2,0$."*
+- ❌ **Evitar:** *"Pasa tu reto de fondeo fácil y gana miles de dólares con el mejor broker."*
+- ✅ **Global City Funding:** *"Programas de evaluación de capital institucional y cuentas fondeadas hasta $500,000. Terminal propia en Canvas acelerada por GPU, reglas objetivas sin trampas de trailing intradía y liquidación de beneficios en 24 horas."*
+- ❌ **Evitar:** *"Usa MT5 y copia señales de trading con nosotros."*
+- ✅ **Global City Funding:** *"Independencia tecnológica total: opera en nuestra propia terminal de trading sin intermediarios ni latencias de terceros, y replica tus operaciones automáticamente a tus cuentas de Binance y Bybit vía API."*
 
 ---
 
 ## 4. Arquitectura de Secciones de la Landing Page
 
-La landing page se estructura como un argumento técnico y de confianza sin fisuras:
+La landing page de Global City Funding se estructura con máxima claridad visual y elegancia:
 
-```
-[ 1. Top Navigation Bar ] (Logo Global City, 5 enlaces esenciales, botón de acceso al Terminal)
+```text
+[ 1. Top Navigation Bar ] (Logo Global City Funding, Programas de Fondeo, Terminal Propia, Copy a CEX, Reglas, Botón "Empezar Reto")
             │
             ▼
-[ 2. Hero Section ] (Titular masivo + Subtítulo de ejecución real + CTA dual + Preview interactiva de la terminal)
+[ 2. Hero Section ] (Titular dominante: Empresa de Fondeo con Terminal Propia + Reparto 90% + CTA "Elegir Programa" + Preview de Terminal KLineChart v10)
             │
             ▼
-[ 3. Live Institutional Ticker ] (Sincronización en vivo con libros L2 de Bybit, OKX, Binance y Hyperliquid)
+[ 3. Live Funding Telemetry & Ticker ] (Sincronización en vivo con libros L2, métricas de pagos en 24h y ratio de solvencia)
             │
             ▼
-[ 4. The 4 Structural Pillars (Bento Grid) ]
-     ├── Pilar 1: Terminal SaaS Multicuenta (Sin custodia, claves Read & Trade)
-     ├── Pilar 2: Motor de Arbitraje Sintético (Sub-100ms, VWAP L2, Gas Tank)
-     ├── Pilar 3: Fondeo Híbrido Cripto (Ejecución real en libro vs. B-Book falso)
-     └── Pilar 4: Risk Guardian & Solvencia (Pre-flight checks, EOD Drawdown, Solvencia >= 2x)
+[ 4. Horizontal Interactive Showcase (Sticky Drag Scroller) ]
+     ├── Slide 1: Programas de Fondeo ($25k a $500k, 1-Step y 2-Step, scaling hasta $2M)
+     ├── Slide 2: Terminal Propia Global City (KLineChart v10 a 60 FPS, sin MT5)
+     ├── Slide 3: Herramienta de Copy Trading a Exchanges vía API (Replicación a Binance/Bybit)
+     ├── Slide 4: Hoja de Ruta a APKs Oficiales (Trading nativo en Android/Mobile)
+     └── Slide 5: Risk Guardian & Reglas Claras (Cero trampas de trailing flotante intradía)
             │
             ▼
-[ 5. How It Works: El Ciclo de Operación Transparente ] (Paso 1: Conexión -> Paso 2: Evaluación -> Paso 3: Subcuenta Fondeada -> Paso 4: Liquidación B2B)
+[ 5. Programas y Calculadora de Fondeo ] (Selector de capital $25k-$500k, objetivos de beneficio 8%/5%, drawdown máximo 10%, split hasta 90%)
             │
             ▼
-[ 6. Interactive Calculator ] (Calculadora interactiva de Spreads de Arbitraje VWAP o Modelo de Evaluación)
+[ 6. Suite de Herramientas Tecnológicas Propietarias ]
+     ├── Módulo A: Motor de Arbitraje Institucional de Liquidez L2
+     ├── Módulo B: Rebalanceo Automático y Gestión Delta-Neutral
+     └── Módulo C: Gateway de Notificaciones y Operaciones por Telegram
             │
             ▼
-[ 7. Comparative Matrix: Global City vs. Prop Firms Tradicionales ] (Tabla sin ambigüedades técnicas)
+[ 7. Matriz Comparativa: Global City Funding vs. Prop Firms Tradicionales (MT5) ]
             │
             ▼
 [ 8. Conversion Hero / CTA Final ] + [ 9. Quiet Institutional Footer ]
@@ -112,16 +116,15 @@ La landing page se estructura como un argumento técnico y de confianza sin fisu
 
 ## 5. Especificaciones de Componentes Clave
 
-### A. Top Navigation Bar (Contrato de 3 Zonas)
-- **Zona 1 (Brand):** Logomarca de Global City (Isotipo geométrico de ciudad de nodos y tipografía `Plus Jakarta Sans` 700).
-- **Zona 2 (Nav Links):** `Terminal SaaS`, `Arbitraje L2`, `Prop Firm Híbrida`, `Risk Engine`, `Ecosistema`.
-- **Zona 3 (Acciones):** Botón secundario `Documentación` + Botón primario de acento rose `Abrir Terminal`.
+### A. Top Navigation Bar (Estética Clara)
+- **Fondo:** Blanco translúcido `rgba(255, 255, 255, 0.85)` con `backdrop-blur(16px)` y sutil borde inferior en `rgba(124, 58, 237, 0.12)`.
+- **Zona 1 (Brand):** Logo Global City Funding (Emblema institucional en morado amatista y tipografía negra `Plus Jakarta Sans` 800).
+- **Zona 2 (Nav Links):** `Fondeo`, `Terminal Propia`, `Copy a CEX`, `Reglas & Scaling`, `Herramientas`.
+- **Zona 3 (Acciones):** Botón secundario "Iniciar Sesión" + Botón primario en Morado Vibrante `#7C3AED` (o Negro Ónix con resplandor morado) "Empezar Reto".
 
-### B. Bento Grid de Pilares Tecnológicos
-- **Tarjeta 1 (Doble Columna):** Terminal Unificado de Ejecución. Muestra el selector de cuentas múltiples (Bybit, OKX, Binance, Hyperliquid) y el gráfico de equidad consolidada.
-- **Tarjeta 2 (Columna Simple):** Arbitraje Sintético Simultáneo. Monitor de spread en tiempo real con indicador VWAP y botón de despacho paralelo.
-- **Tarjeta 3 (Columna Simple):** Risk Guardian. Métricas de pérdida diaria, bloqueo por racha perdedora y calculadora de tamaño de posición según Stop Loss.
-- **Tarjeta 4 (Doble Columna):** Prop Firm con Verificabilidad Real. Desglose del fill ID en el libro de órdenes del exchange y liquidación 80/20 bajo contrato mercantil B2B.
+### B. Horizontal Showcase (Fondeo + Terminal + Copy a Exchanges)
+- Conserva el suave scroll horizontal interactivo / arrastre en desktop y deslizamiento en mobile.
+- Las diapositivas destacan visualmente los beneficios de Global City Funding sobre tarjetas blancas inmaculadas con acentos morados y tipografía negra de alta legibilidad.
 
 ---
 

@@ -179,10 +179,10 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
         style={{ opacity: isLoaded ? 1 : 0 }}
       />
 
-      {/* Balanced Atmospheric Overlays: Keeps the neon city vibrant while guaranteeing text legibility */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#06070B] via-black/25 to-[#06070B]/60 pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-r from-[#06070B]/50 via-transparent to-[#06070B]/50 pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_35%,rgba(56,189,248,0.12),transparent_75%)] pointer-events-none" />
+      {/* Balanced Atmospheric Overlays: Keeps the canvas cinematic while transitioning seamlessly into the luminous page */}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#F8F9FE] via-[#F8F9FE]/20 to-[#F8F9FE]/50 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#F8F9FE]/70 via-transparent to-[#F8F9FE]/70 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_35%,rgba(124,58,237,0.08),transparent_75%)] pointer-events-none" />
     </div>
   );
 };

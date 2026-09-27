@@ -7,8 +7,8 @@
   
   body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    background-color: #06070A;
-    color: #F8FAFC;
+    background-color: #F8F9FE;
+    color: #090A10;
     overflow-x: hidden;
   }
   
@@ -18,15 +18,23 @@
   }
 }
 
-/* Glassmorphism & Aesthetics */
+/* Luminous Glassmorphism & High-End Aesthetics (Morado / Blanco / Negro) */
 .glass-panel {
-  background: rgba(14, 16, 23, 0.65);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(124, 58, 237, 0.12);
+  box-shadow: 0 10px 30px -5px rgba(124, 58, 237, 0.05), 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.glass-panel-dark {
+  background: rgba(14, 16, 23, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Liquid Button & Fluid Morphing Effects */
+/* Liquid Button & Fluid Morphing Effects in Electric Purple & Obsidian Black */
 .btn-liquid {
   position: relative;
   overflow: hidden;
@@ -37,13 +45,13 @@
 }
 
 .btn-liquid:hover {
-  transform: scale(1.045) translateY(-2px);
-  border-radius: 26px 18px 24px 20px;
+  transform: scale(1.035) translateY(-2px);
+  border-radius: 24px 16px 22px 18px;
 }
 
 .btn-liquid:active {
   transform: scale(0.97) translateY(1px);
-  border-radius: 18px 24px 18px 24px;
+  border-radius: 16px 22px 16px 22px;
 }
 
 .btn-liquid::before {
@@ -53,7 +61,7 @@
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.25) 0%, transparent 65%);
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.35) 0%, transparent 65%);
   opacity: 0;
   transform: scale(0.6);
   transition: opacity 0.4s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -65,55 +73,55 @@
   transform: scale(1.2);
 }
 
-/* Text Shadows for Crystal-Clear Readability over Colorful City Backdrops */
+/* Text Shadows for Crisp Luminous Readability */
 .text-shadow-hero {
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.95), 0 1px 4px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 2px 16px rgba(124, 58, 237, 0.15), 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .text-shadow-subtle {
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9), 0 1px 2px rgba(0, 0, 0, 0.85);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
 }
 
 .glass-panel-hover:hover {
-  background: rgba(22, 25, 36, 0.85);
-  border-color: rgba(224, 109, 138, 0.3);
-  box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  background: #FFFFFF;
+  border-color: rgba(124, 58, 237, 0.32);
+  box-shadow: 0 16px 40px -10px rgba(124, 58, 237, 0.14), inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
   transform: translateY(-2px);
 }
 
-/* Custom Parallax & Glowing Backdrops */
-.ambient-glow-rose {
-  background: radial-gradient(circle 900px at 50% 20%, rgba(224, 109, 138, 0.16), transparent 75%);
+/* Custom Parallax & Glowing Backdrops (Morado Luminous) */
+.ambient-glow-purple {
+  background: radial-gradient(circle 900px at 50% 20%, rgba(124, 58, 237, 0.10), transparent 75%);
 }
 
-.ambient-glow-cyan {
-  background: radial-gradient(circle 700px at 80% 30%, rgba(45, 212, 191, 0.12), transparent 70%);
+.ambient-glow-light {
+  background: radial-gradient(circle 800px at 80% 30%, rgba(168, 85, 247, 0.08), transparent 70%);
 }
 
-/* Custom Page Lateral Scrollbar in Global City Aesthetic */
+/* Custom Page Lateral Scrollbar in Global City Funding Aesthetic */
 ::-webkit-scrollbar {
   width: 7px;
   height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #06070B;
+  background: #F1F3F9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #F472B6, #818CF8, #FBBF24);
+  background: linear-gradient(180deg, #7C3AED, #9333EA, #4F46E5);
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #EC4899, #60A5FA, #F59E0B);
-  box-shadow: 0 0 10px rgba(236, 72, 153, 0.6);
+  background: linear-gradient(180deg, #6D28D9, #7C3AED, #4338CA);
+  box-shadow: 0 0 10px rgba(124, 58, 237, 0.4);
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #EC4899 #06070B;
+  scrollbar-color: #8B5CF6 #F1F3F9;
 }
 
 /* Focused / Hover illuminated text effect */
