@@ -3,54 +3,61 @@ import { KLineData } from 'klinecharts';
 export async function fetchRealHistoricalKlines(
   symbol: string,
   interval: '1m' | '5m' | '15m' | '1h' | '4h' | '1D' = '15m',
-  limit = 150,
+  limit = 200,
   fallbackPrice = 84500
 ): Promise<KLineData[]> {
-  try {
-    // Normalize symbol for Binance Public API (e.g. "BTC/USDT" -> "BTCUSDT")
-    const cleanSymbol = symbol.replace(/[\/-]/g, '').toUpperCase();
-    const intervalMap: Record<string, string> = {
-      '1m': '1m',
-      '5m': '5m',
-      '15m': '15m',
-      '1h': '1h',
-      '4h': '4h',
-      '1D': '1d'
-    };
-    const apiInterval = intervalMap[interval] || '15m';
+  const cleanSymbol = symbol.replace(/[\/-]/g, '').toUpperCase();
+  const intervalMap: Record<string, string> = {
+    '1m': '1m',
+    '5m': '5m',
+    '15m': '15m',
+    '1h': '1h',
+    '4h': '4h',
+    '1D': '1d'
+  };
+  const apiInterval = intervalMap[interval] || '15m';
 
-    const url = `https://api.binance.com/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
+  // Lista de endpoints espejo públicos para garantizar datos reales sin bloqueos de IP
+  const candidateUrls = [
+    `https://api.binance.com/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`,
+    `https://data-api.binance.vision/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`,
+    `https://api1.binance.com/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`
+  ];
 
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId);
+  for (const url of candidateUrls) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4500);
 
-    if (!res.ok) {
-      throw new Error(`Binance klines API status: ${res.status}`);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) continue;
+
+      const rawData = await res.json();
+      if (!Array.isArray(rawData) || rawData.length === 0) continue;
+
+      // Mapear el array crudo al formato canónico KLineData
+      const bars: KLineData[] = rawData.map((item: any[]) => ({
+        timestamp: Number(item[0]),
+        open: parseFloat(item[1]),
+        high: parseFloat(item[2]),
+        low: parseFloat(item[3]),
+        close: parseFloat(item[4]),
+        volume: parseFloat(item[5]),
+        turnover: parseFloat(item[7])
+      }));
+
+      return bars;
+    } catch {
+      // Intentar siguiente endpoint espejo
+      continue;
     }
-
-    const rawData = await res.json();
-    if (!Array.isArray(rawData) || rawData.length === 0) {
-      throw new Error('Empty klines array received');
-    }
-
-    // Map Binance raw array to KLineChart canonical KLineData format
-    const bars: KLineData[] = rawData.map((item: any[]) => ({
-      timestamp: Number(item[0]),
-      open: parseFloat(item[1]),
-      high: parseFloat(item[2]),
-      low: parseFloat(item[3]),
-      close: parseFloat(item[4]),
-      volume: parseFloat(item[5]),
-      turnover: parseFloat(item[7])
-    }));
-
-    return bars;
-  } catch (err) {
-    console.warn(`[KLineFeed] Fallback to synthetic bars for ${symbol}:`, err);
-    return generateFallbackHistoricalBars(fallbackPrice, limit, interval);
   }
+
+  // Si todos los endpoints de red fallaron por estar offline
+  console.warn(`[KLineFeed] Sin conexión con endpoints públicos para ${symbol}. Usando velas locales de contingencia.`);
+  return generateFallbackHistoricalBars(fallbackPrice, limit, interval);
 }
 
 // Fallback generator if offline, network error or non-crypto asset (Forex/Metals)

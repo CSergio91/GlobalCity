@@ -150,18 +150,26 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
     showNotification(`¡Conexión establecida con éxito en ${newAccount.venueName}! Alerta de seguridad enviada al bot de Telegram.`);
   };
 
+  const [isDemoFeedEnabled, setIsDemoFeedEnabled] = useState(true);
   const [accountToDelete, setAccountToDelete] = useState<StoredExchangeAccount | null>(null);
 
   const confirmDeleteAccount = () => {
     if (!accountToDelete) return;
-    exchangeStorage.deleteAccount(accountToDelete.id);
-    const updated = exchangeStorage.getAccounts();
-    setAccounts(updated);
-    if (activeAccountId === accountToDelete.id) {
-      const remaining = updated.filter(a => a.id !== accountToDelete.id);
-      setActiveAccountId(remaining[0]?.id || 'conn_binance_demo_feed');
+
+    if (accountToDelete.id === 'conn_binance_demo_feed') {
+      setIsDemoFeedEnabled(false);
+      setActiveAccountId(connectedAccounts[0]?.id || null);
+      showNotification('Feed de Binance (Demo) desconectado.');
+    } else {
+      exchangeStorage.deleteAccount(accountToDelete.id);
+      const updated = exchangeStorage.getAccounts();
+      setAccounts(updated);
+      if (activeAccountId === accountToDelete.id) {
+        const remaining = updated.filter(a => a.id !== accountToDelete.id);
+        setActiveAccountId(remaining[0]?.id || (isDemoFeedEnabled ? 'conn_binance_demo_feed' : null));
+      }
+      showNotification(`Conexión con ${accountToDelete.venueName} desvinculada.`);
     }
-    showNotification(`Conexión con ${accountToDelete.venueName} desvinculada.`);
     setAccountToDelete(null);
   };
 
@@ -313,11 +321,11 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
         </div>
       </header>
 
-      {/* Main Operations Canvas (Lienzo Vacío) */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 flex flex-col space-y-4">
+      {/* Main Operations Canvas (Lienzo Vacío) Edge-to-Edge Fullscreen */}
+      <main className="flex-1 w-full px-2 sm:px-4 py-2 flex flex-col gap-2 h-[calc(100vh-52px)] overflow-hidden">
         
         {/* Connected Venues Pills Bar */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center justify-between gap-3 shrink-0">
           
           {/* Left: Row of Connected Venue Pills */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
@@ -374,7 +382,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                   </div>
                 );
               })
-            ) : (
+            ) : isDemoFeedEnabled ? (
               /* Default Demo Feed Pill when no custom private accounts are added yet */
               <div
                 onClick={() => setActiveAccountId('conn_binance_demo_feed')}
@@ -393,7 +401,33 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                     $50,000.00 <span className="text-slate-400 font-normal text-[9px]">(Simulado)</span>
                   </div>
                 </div>
+
+                {/* Disconnect Demo Feed Button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setAccountToDelete(defaultDemoVenue);
+                  }}
+                  className="p-1 rounded-lg text-slate-500 hover:text-rose-400 transition-colors cursor-pointer ml-1"
+                  title="Desconectar feed demo"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
               </div>
+            ) : (
+              /* Clean Empty State when user disconnected demo and has no accounts */
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDemoFeedEnabled(true);
+                  setActiveAccountId('conn_binance_demo_feed');
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-2xl border border-dashed border-white/20 bg-white/[0.02] hover:bg-white/5 text-slate-400 hover:text-white text-xs cursor-pointer transition-all"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-[#38BDF8]" />
+                <span>Reactivar Feed Demo</span>
+              </button>
             )}
 
             {/* Always visible: Add Connection Button '+' */}
@@ -462,10 +496,10 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
         </div>
 
         {/* WORKSPACE CANVAS BODY: Fullscreen KLineChart Canvas with Bottom Execution Dock */}
-        <div className="flex-1 flex flex-col bg-[#070910] border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative min-h-[600px] h-[calc(100vh-190px)]">
+        <div className="flex-1 flex flex-col bg-[#070910] border border-white/10 rounded-2xl overflow-hidden shadow-2xl relative min-h-[520px]">
           
           {/* Native KLineChart Hardware-Accelerated Canvas (Full-bleed) */}
-          <div className="flex-1 w-full relative min-h-[480px]">
+          <div className="flex-1 w-full relative min-h-[460px]">
             <GlobalCityChart
               symbol={selectedSymbol}
               venueId={activeAccount?.venueId || 'binance'}
@@ -475,7 +509,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
           </div>
 
           {/* Quick 1-Click Execution Footer Dock (Down below the chart) */}
-          <div className="px-4 py-2.5 bg-[#090B12] border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shrink-0 z-10">
+          <div className="px-4 py-2 bg-[#090B12] border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shrink-0 z-10">
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -512,14 +546,28 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                 <span>Operando en:</span>
                 <span className="text-white font-bold flex items-center gap-1.5">
                   <PlatformLogo name={activeAccount?.venueName || 'Binance'} className="w-4 h-4 rounded" />
-                  {activeAccount?.venueName || 'Binance (Demo)'}
+                  {activeAccount?.venueName || (isDemoFeedEnabled ? 'Binance (Demo)' : 'Desconectado')}
                 </span>
-                <span className="text-emerald-400 font-bold ml-1">
-                  (Disp: ${(activeAccount?.freeMarginUsd || 50000).toLocaleString()})
-                </span>
+                {activeAccount && (
+                  <span className="text-emerald-400 font-bold ml-1">
+                    (Disp: ${(activeAccount?.freeMarginUsd || 50000).toLocaleString()})
+                  </span>
+                )}
+                {/* Desconectar conexión activa desde el dock */}
+                {activeAccount && (
+                  <button
+                    type="button"
+                    onClick={() => setAccountToDelete(activeAccount)}
+                    className="ml-1 px-1.5 py-0.5 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all cursor-pointer flex items-center gap-1 text-[10px]"
+                    title="Desconectar esta conexión"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Cerrar</span>
+                  </button>
+                )}
               </div>
 
-              {connectedAccounts.length === 0 && (
+              {connectedAccounts.length === 0 && isDemoFeedEnabled && (
                 <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-cyan-500/10 text-[#38BDF8] border border-[#38BDF8]/20 text-[10px] font-mono">
                   Feed en Vivo / Modo Demo
                 </span>
@@ -539,12 +587,18 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
               <PlatformLogo name={accountToDelete.venueName} className="w-8 h-8 rounded-xl shrink-0" />
               <div>
                 <h3 className="text-base font-bold text-white">¿Desvincular {accountToDelete.venueName}?</h3>
-                <p className="text-xs text-slate-400">Esta acción cerrará la sesión de esta plataforma.</p>
+                <p className="text-xs text-slate-400">
+                  {accountToDelete.id === 'conn_binance_demo_feed'
+                    ? 'Se detendrá el feed de demostración.'
+                    : 'Esta acción cerrará la sesión de esta plataforma.'}
+                </p>
               </div>
             </div>
 
             <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-[11px] text-rose-300 leading-relaxed">
-              Se eliminarán las claves y credenciales almacenadas localmente. No podrás despachar órdenes en este exchange hasta que vuelvas a vincularlo.
+              {accountToDelete.id === 'conn_binance_demo_feed'
+                ? 'El espacio quedará limpio sin conexiones activas. Podrás reactivarlo en cualquier momento o vincular tus claves API reales.'
+                : 'Se eliminarán las claves y credenciales almacenadas. No podrás despachar órdenes en este exchange hasta que vuelvas a vincularlo.'}
             </div>
 
             <div className="flex items-center justify-end gap-2.5 pt-2">

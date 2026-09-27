@@ -138,6 +138,9 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
 
   // Active Timeframe Pill state
   const [activeInterval, setActiveInterval] = useState<'1m' | '5m' | '15m' | '1h' | '4h' | '1D'>('15m');
+  const activeIntervalRef = useRef<'1m' | '5m' | '15m' | '1h' | '4h' | '1D'>('15m');
+  activeIntervalRef.current = activeInterval;
+
   const [activeIndicators, setActiveIndicators] = useState<{ ma: boolean; ema: boolean; boll: boolean; rsi: boolean }>({
     ma: true,
     ema: false,
@@ -156,6 +159,21 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
       case '1D': return { type: 'day', span: 1 };
       default: return { type: 'minute', span: 15 };
     }
+  }, []);
+
+  const periodToInterval = useCallback((p?: Period): '1m' | '5m' | '15m' | '1h' | '4h' | '1D' => {
+    if (!p) return activeIntervalRef.current;
+    if (p.type === 'minute') {
+      if (p.span === 1) return '1m';
+      if (p.span === 5) return '5m';
+      return '15m';
+    }
+    if (p.type === 'hour') {
+      if (p.span === 1) return '1h';
+      return '4h';
+    }
+    if (p.type === 'day') return '1D';
+    return activeIntervalRef.current;
   }, []);
 
   const subscriberCallbackRef = useRef<((bar: KLineData) => void) | null>(null);
@@ -185,13 +203,14 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
       volumePrecision: 2
     });
 
-    chart.setPeriod(getPeriod(activeInterval));
+    chart.setPeriod(getPeriod(activeIntervalRef.current));
 
     // KLineChart v10 native DataLoader architecture with real historical market feeds
     chart.setDataLoader({
       getBars: async (params) => {
         try {
-          const bars = await fetchRealHistoricalKlines(symbol, activeInterval, 200, livePrice);
+          const reqInterval = periodToInterval(params.period);
+          const bars = await fetchRealHistoricalKlines(symbol, reqInterval, 200, livePrice);
           if (params.type === 'init') {
             params.callback(bars, { forward: false, backward: false });
           } else if (params.type === 'forward') {
@@ -242,13 +261,14 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
       chartInstanceRef.current = null;
       subscriberCallbackRef.current = null;
     };
-  }, [venueId, symbol]);
+  }, [venueId, symbol, getPeriod, periodToInterval]);
 
-  // Update timeframe period when activeInterval changes
+  // Update timeframe period and reload bars when activeInterval changes
   useEffect(() => {
     const chart = chartInstanceRef.current;
     if (!chart) return;
     chart.setPeriod(getPeriod(activeInterval));
+    chart.resetData();
   }, [activeInterval, getPeriod]);
 
   // Real-time Tick-by-Tick streaming update via v10 subscriber callback
