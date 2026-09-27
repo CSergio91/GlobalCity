@@ -111,6 +111,7 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
   venueId,
   venueName,
   livePrice = 84150,
+  change24h = 0,
   className = "w-full h-full min-h-[440px]"
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
