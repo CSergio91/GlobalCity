@@ -9,6 +9,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import { authService, AuthResult } from '../../services/authService';
+import { supabase } from '../../lib/supabaseClient';
 import presentationVideo from '../../assets/video/global_city_presentation_logo.mp4';
 import lastFrameLogo from '../../assets/video/global_city_presentation_logo_last_frame.png';
 
@@ -101,7 +102,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
     } catch {}
   }, []);
 
-  // Polling automático para cuando el usuario pulsa START en Telegram
+  // Polling automático y escucha en tiempo real para cuando el usuario pulsa START en Telegram
   useEffect(() => {
     let intervalId: any;
     if (isTelegramWaiting) {
@@ -118,9 +119,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
 
       // Comprobación inicial inmediata
       checkNow();
-      intervalId = setInterval(checkNow, 1200);
+      intervalId = setInterval(checkNow, 1000);
 
-      // Listener reactivo al volver del móvil (Safari / Chrome cambia de app)
+      // Listener reactivo al volver a la pestaña (cambio de foco de ventana o app)
       const handleTabResume = () => {
         if (document.visibilityState === 'visible') {
           checkNow();
@@ -129,10 +130,46 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
       document.addEventListener('visibilitychange', handleTabResume);
       window.addEventListener('focus', handleTabResume);
 
+      // Suscripción Realtime a Supabase (detección instantánea < 100ms)
+      let channel: any = null;
+      if (supabase) {
+        channel = supabase
+          .channel(`tg_auth_${Date.now()}`)
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'telegram_auth_sessions' },
+            (payload) => {
+              const newRow = payload.new as any;
+              if (newRow && newRow.status === 'authenticated') {
+                const matchesNonce = authSessionNonce && newRow.nonce === authSessionNonce;
+                const isRecent = newRow.authenticated_at && (Date.now() - new Date(newRow.authenticated_at).getTime() < 180000);
+                if (matchesNonce || isRecent) {
+                  if (intervalId) clearInterval(intervalId);
+                  setIsTelegramWaiting(false);
+                  localStorage.removeItem('gc_pending_nonce');
+                  localStorage.removeItem('gc_pending_nonce_time');
+                  handleTelegramSuccess({
+                    id: newRow.telegram_id,
+                    first_name: newRow.first_name,
+                    last_name: newRow.last_name,
+                    username: newRow.username,
+                    photo_url: newRow.photo_url,
+                    auth_date: newRow.auth_date
+                  });
+                }
+              }
+            }
+          )
+          .subscribe();
+      }
+
       return () => {
         if (intervalId) clearInterval(intervalId);
         document.removeEventListener('visibilitychange', handleTabResume);
         window.removeEventListener('focus', handleTabResume);
+        if (channel && supabase) {
+          supabase.removeChannel(channel);
+        }
       };
     }
   }, [isTelegramWaiting, authSessionNonce]);
