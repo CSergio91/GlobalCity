@@ -253,10 +253,10 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
   };
 
   return (
-    <div className="min-h-screen bg-[#06070B] text-slate-100 flex flex-col font-sans selection:bg-[#EC4899]/30">
+    <div className="min-h-screen sm:h-screen bg-[#06070B] text-slate-100 flex flex-col font-sans selection:bg-[#EC4899]/30 sm:overflow-hidden">
       
       {/* Top Navigation Bar: Mobile-First, Minimalist, clean */}
-      <header className="sticky top-0 z-30 w-full bg-[#08090E]/95 backdrop-blur-xl border-b border-white/10 px-2 sm:px-6 py-1.5 sm:py-2 transition-all">
+      <header className="sticky top-0 z-30 w-full bg-[#08090E]/95 backdrop-blur-xl border-b border-white/10 px-2 sm:px-6 py-1.5 sm:py-2 transition-all shrink-0">
         <div className="w-full flex items-center justify-between gap-2 sm:gap-3">
           
           {/* Left: Brand + Back to Web */}
@@ -539,16 +539,17 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
         </div>
 
         {/* WORKSPACE CANVAS BODY: Fullscreen KLineChart Canvas with Floating Execution Dock */}
-        <div className="flex-1 flex flex-col bg-[#070910] border border-white/10 rounded-2xl overflow-hidden shadow-2xl relative min-h-0">
+        <div className="flex-1 flex flex-col bg-[#070910] border border-white/10 rounded-2xl overflow-hidden shadow-2xl relative min-h-0 w-full h-full">
           
-          {/* Native KLineChart Hardware-Accelerated Canvas (Full-bleed) */}
-          <div className="w-full h-[380px] sm:h-full sm:flex-1 relative min-h-[340px]">
+          {/* Native KLineChart Hardware-Accelerated Canvas (Full-bleed taking all vertical space) */}
+          <div className="w-full flex-1 relative min-h-[360px] sm:min-h-0 h-full overflow-hidden">
             <GlobalCityChart
               symbol={selectedSymbol}
               venueId={activeAccount?.venueId || 'binance'}
               venueName={activeAccount?.venueName || 'Binance'}
               livePrice={currentPrice}
               change24h={activeTick?.change24h}
+              className="w-full h-full"
             />
           </div>
 

@@ -227,32 +227,43 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
       }
     });
 
-    // 3. Crear indicadores en subpaneles de forma canónica
+    // 3. Crear indicadores de forma canónica (SMA overlay en velas, VOL en subpanel compacto)
     try {
-      chart.createIndicator('VOL', false);
-      chart.createIndicator('SMA', true);
+      const volPaneId = chart.createIndicator('VOL', false);
+      if (volPaneId) {
+        chart.setPaneOptions({ id: volPaneId, height: 75, minHeight: 40 });
+      }
+      // Superponer SMA en el panel principal de velas (candle_pane) para no robar altura vertical
+      chart.createIndicator({ name: 'SMA', paneId: 'candle_pane' }, true);
     } catch (e) {
       console.warn('Indicator initialization note:', e);
     }
 
-    // 4. Sincronizar dimensiones con el layout
+    // 4. Sincronizar dimensiones con el layout completo
+    const resizeObserver = new ResizeObserver(() => {
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.resize();
+      }
+    });
+    resizeObserver.observe(containerRef.current);
+
     const rafId = requestAnimationFrame(() => {
       chart.resize();
       chart.scrollToRealTime();
     });
-    const timerId = setTimeout(() => {
+    const timerId1 = setTimeout(() => {
       chart.resize();
       chart.scrollToRealTime();
     }, 80);
-
-    const resizeObserver = new ResizeObserver(() => {
+    const timerId2 = setTimeout(() => {
       chart.resize();
-    });
-    resizeObserver.observe(containerRef.current);
+      chart.scrollToRealTime();
+    }, 250);
 
     return () => {
       cancelAnimationFrame(rafId);
-      clearTimeout(timerId);
+      clearTimeout(timerId1);
+      clearTimeout(timerId2);
       resizeObserver.disconnect();
       if (containerRef.current) {
         dispose(containerRef.current);
@@ -327,7 +338,7 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
   };
 
   return (
-    <div className="flex flex-col w-full h-full bg-[#06070B] select-none rounded-xl sm:rounded-2xl overflow-hidden relative min-h-[320px] sm:min-h-[440px]">
+    <div className={`flex flex-col w-full h-full bg-[#06070B] select-none rounded-xl sm:rounded-2xl overflow-hidden relative min-h-0 flex-1 ${className}`}>
       
       {/* Voltrex-Inspired Pro Header: Hero Asset Price + Capsule Timeframe Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-[#080A12] border-b border-white/[0.08] shrink-0">
@@ -408,12 +419,11 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
         </div>
       </div>
 
-      {/* Hardware Accelerated Canvas Container */}
-      <div className="w-full relative flex-1 min-h-[340px] sm:min-h-[420px]">
+      {/* Hardware Accelerated Canvas Container (Full-bleed 100% height) */}
+      <div className="w-full relative flex-1 min-h-0 h-full overflow-hidden">
         <div 
           ref={containerRef} 
-          style={{ width: '100%', height: '100%', minHeight: '340px', position: 'relative' }} 
-          className="w-full h-full min-h-[340px] sm:min-h-[420px]" 
+          className="absolute inset-0 w-full h-full" 
         />
       </div>
 
