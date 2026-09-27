@@ -48,14 +48,19 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
     id: 'conn_binance_demo_feed',
     venueId: 'binance',
     venueName: 'Binance (Demo)',
+    label: 'Binance Demo Account',
+    authType: 'api_keys',
     apiKey: '',
     apiSecret: '',
+    permissions: ['read', 'trade'],
     balanceUsd: 50000,
     freeMarginUsd: 50000,
+    pingMs: 12,
+    lastSync: new Date().toISOString(),
     currency: 'USDT',
     status: 'CONNECTED',
     isTestnet: true,
-    connectedAt: new Date().toISOString()
+    createdAt: new Date().toISOString()
   }), []);
 
   // Selected Active Venue Account

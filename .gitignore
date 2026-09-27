@@ -8,3 +8,5 @@ coverage/
 !.env.example
 *.mov
 src/assets/video/fondo.mov
+supabase/.temp/
+

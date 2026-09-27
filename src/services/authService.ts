@@ -1,4 +1,5 @@
 import { UserProfile, TelegramUserPayload } from '../types/auth';
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
 export interface AuthResult {
   success: boolean;
@@ -14,9 +15,7 @@ export const authService = {
    * Verifica si Supabase está configurado con variables de entorno
    */
   isSupabaseConfigured(): boolean {
-    const url = import.meta.env.VITE_SUPABASE_URL;
-    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    return !!(url && key && url.trim() !== '' && key.trim() !== '');
+    return isSupabaseConfigured;
   },
 
   /**
@@ -43,13 +42,14 @@ export const authService = {
    */
   signOut(): void {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('gc_pending_nonce');
   },
 
   /**
    * Obtiene la última autorización de Telegram enviada al bot
    */
   async getLatestTelegramAuthUser(): Promise<TelegramUserPayload | null> {
-    // 1. Si ya existe sesión activa en localStorage, retornarla de inmediato sin saturar getUpdates
+    // 1. Si ya existe sesión activa en localStorage, retornarla de inmediato
     const existing = this.getCurrentUser();
     if (existing && existing.telegramId) {
       return {
@@ -62,16 +62,54 @@ export const authService = {
       };
     }
 
+    // 2. Consultar al endpoint backend de Vite / Control Plane
+    try {
+      const res = await fetch('/api/auth/telegram-latest');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.authenticated && json.user) {
+          return json.user;
+        }
+      }
+    } catch {
+      // Ignorar fallback
+    }
+
+    // 3. Consultar a Supabase Cloud / Local si está disponible
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data } = await supabase
+          .from('telegram_auth_sessions')
+          .select('*')
+          .eq('status', 'authenticated')
+          .order('authenticated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (data && data.telegram_id) {
+          return {
+            id: data.telegram_id,
+            first_name: data.first_name,
+            last_name: data.last_name,
+            username: data.username,
+            photo_url: data.photo_url,
+            auth_date: data.auth_date || Math.floor(Date.now() / 1000)
+          };
+        }
+      } catch {
+        // Silencioso
+      }
+    }
+
+    // 4. Fallback directo a Telegram API si las anteriores no respondieron
     const token = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '';
     if (!token) return null;
     try {
-      const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=-20`);
-      // Si Telegram responde 409 Conflict (porque el bot worker en background está activo con getUpdates)
+      const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=-10`);
       if (!res.ok) return null;
       const data = await res.json();
       if (!data.ok || !data.result) return null;
 
-      // Buscar el último mensaje de un usuario real que haya iniciado el bot con /start
       for (let i = data.result.length - 1; i >= 0; i--) {
         const update = data.result[i];
         const msg = update.message;
@@ -92,52 +130,75 @@ export const authService = {
       }
       return null;
     } catch (err) {
-      console.error('Error fetching latest telegram auth user:', err);
+      console.warn('[authService] Error al consultar Telegram API:', err);
       return null;
     }
   },
 
   /**
-   * Sondea la API de Telegram para detectar cuando el usuario pulsa START en el bot
+   * Sondea el estado de autorización de Telegram
+   * Verifica primero el backend/servidor local, luego Supabase y finalmente Telegram Bot API
    */
   async checkTelegramBotUpdates(authNonce?: string): Promise<TelegramUserPayload | null> {
+    // 1. Consultar endpoint dev/backend /api/auth/telegram-status
+    if (authNonce) {
+      try {
+        const res = await fetch(`/api/auth/telegram-status?nonce=${encodeURIComponent(authNonce)}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.authenticated && json.user) {
+            return json.user;
+          }
+        }
+      } catch {
+        // Continuar con fallback
+      }
+    }
+
+    // 2. Consultar en Supabase Cloud / Local
+    if (isSupabaseConfigured && supabase && authNonce) {
+      try {
+        const { data } = await supabase
+          .from('telegram_auth_sessions')
+          .select('*')
+          .eq('nonce', authNonce)
+          .maybeSingle();
+
+        if (data && data.status === 'authenticated') {
+          return {
+            id: data.telegram_id,
+            first_name: data.first_name,
+            last_name: data.last_name,
+            username: data.username,
+            photo_url: data.photo_url,
+            auth_date: data.auth_date || Math.floor(Date.now() / 1000)
+          };
+        }
+      } catch {
+        // Continuar con fallback
+      }
+    }
+
+    // 3. Fallback directo a Telegram Bot API
     const token = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '';
     if (!token) return null;
     try {
-      const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=-20`);
-      if (!res.ok) return null; // Previene conflicto 409 con el bot worker
+      const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=-10`);
+      if (!res.ok) return null;
       const data = await res.json();
       if (!data.ok || !data.result) return null;
 
-      // Buscar si el usuario envió /start
       for (let i = data.result.length - 1; i >= 0; i--) {
         const update = data.result[i];
         const text = update.message?.text || '';
         const msgDate = update.message?.date || 0;
         const nowSec = Math.floor(Date.now() / 1000);
 
-        // Si coincide con el nonce específico O es un /start en las últimas 24h
         const matchesNonce = authNonce && text.includes(authNonce);
-        const isRecentStart = text.startsWith('/start') && (nowSec - msgDate < 86400);
+        const isRecentStart = text.startsWith('/start') && (nowSec - msgDate < 3600);
 
         if ((matchesNonce || isRecentStart) && update.message?.from) {
           const from = update.message.from;
-          
-          // Enviar confirmación automática al chat de Telegram del usuario si no es repetido
-          try {
-            await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                chat_id: from.id,
-                text: `🎯 *TAKE PROFIT: Autenticación Exitosa*\n\n¡Hola ${from.first_name || ''}! Has autorizado el acceso a *Global City Trading Platform* con éxito.\n\nPuedes volver a la ventana de tu navegador para acceder a la Sala de Operaciones (/operaciones).`,
-                parse_mode: 'Markdown'
-              })
-            });
-          } catch {
-            // Ignorar errores de notificación secundaria
-          }
-
           return {
             id: from.id,
             first_name: from.first_name,
@@ -149,7 +210,7 @@ export const authService = {
       }
       return null;
     } catch (err) {
-      console.error('Error polling Telegram bot updates:', err);
+      console.warn('[authService] Error polling Telegram bot updates:', err);
       return null;
     }
   },

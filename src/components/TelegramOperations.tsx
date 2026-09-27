@@ -130,7 +130,7 @@ export const TelegramOperations: React.FC = () => {
             {/* Quick Command Selector */}
             <div className="mt-6 pt-5 border-t border-white/[0.06]">
               <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block mb-2 font-semibold">
-                {t.telegram.testBotCommands}
+                {t.telegram.selectCommand}
               </span>
               <div className="flex flex-wrap gap-2 font-mono text-xs">
                 {['/portfolio', '/arbitrage_radar', '/emergency_freeze'].map((cmd) => (

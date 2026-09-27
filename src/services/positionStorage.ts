@@ -145,6 +145,22 @@ export const positionStorage = {
   },
 
   /**
+   * Alias de compatibilidad para añadir posiciones
+   */
+  addPosition(params: any): OpenPosition {
+    return this.openPosition({
+      accountId: params.accountId || 'conn_binance_demo_feed',
+      venueId: params.venueId || 'binance',
+      venueName: params.exchange || params.venueName || 'Binance',
+      symbol: params.symbol,
+      side: (params.side || params.type || 'LONG').toUpperCase() as 'LONG' | 'SHORT',
+      size: Number(params.size) || 0.01,
+      entryPrice: Number(params.entryPrice) || 0,
+      leverage: Number(params.leverage) || 1
+    });
+  },
+
+  /**
    * Cierra una posición registrando su PnL realizado
    */
   closePosition(id: string, exitPrice: number): ClosedTrade | null {

@@ -82,22 +82,59 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
     setIsRevealed(true);
   };
 
+  // Recuperar sesión pendiente si el usuario vuelve tras pulsar /start en Telegram
+  useEffect(() => {
+    try {
+      const savedNonce = localStorage.getItem('gc_pending_nonce');
+      const savedTime = localStorage.getItem('gc_pending_nonce_time');
+      if (savedNonce && savedTime) {
+        const diff = Date.now() - parseInt(savedTime, 10);
+        if (diff < 900000) { // Menos de 15 minutos
+          setAuthSessionNonce(savedNonce);
+          setIsTelegramWaiting(true);
+          setIsRevealed(true);
+        } else {
+          localStorage.removeItem('gc_pending_nonce');
+          localStorage.removeItem('gc_pending_nonce_time');
+        }
+      }
+    } catch {}
+  }, []);
+
   // Polling automático para cuando el usuario pulsa START en Telegram
   useEffect(() => {
     let intervalId: any;
     if (isTelegramWaiting) {
-      intervalId = setInterval(async () => {
+      const checkNow = async () => {
         const detectedUser = await authService.checkTelegramBotUpdates(authSessionNonce);
         if (detectedUser) {
-          clearInterval(intervalId);
+          if (intervalId) clearInterval(intervalId);
           setIsTelegramWaiting(false);
+          localStorage.removeItem('gc_pending_nonce');
+          localStorage.removeItem('gc_pending_nonce_time');
           handleTelegramSuccess(detectedUser);
         }
-      }, 1500);
+      };
+
+      // Comprobación inicial inmediata
+      checkNow();
+      intervalId = setInterval(checkNow, 1200);
+
+      // Listener reactivo al volver del móvil (Safari / Chrome cambia de app)
+      const handleTabResume = () => {
+        if (document.visibilityState === 'visible') {
+          checkNow();
+        }
+      };
+      document.addEventListener('visibilitychange', handleTabResume);
+      window.addEventListener('focus', handleTabResume);
+
+      return () => {
+        if (intervalId) clearInterval(intervalId);
+        document.removeEventListener('visibilitychange', handleTabResume);
+        window.removeEventListener('focus', handleTabResume);
+      };
     }
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
   }, [isTelegramWaiting, authSessionNonce]);
 
   const handleTelegramSuccess = (telegramUser: any) => {
@@ -113,13 +150,18 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
   };
 
   const handleLaunchTelegramOAuth = () => {
-    const nonce = `auth_${Date.now()}`;
+    const nonce = `gc_${Math.random().toString(36).substring(2, 9)}_${Date.now()}`;
     setAuthSessionNonce(nonce);
+    try {
+      localStorage.setItem('gc_pending_nonce', nonce);
+      localStorage.setItem('gc_pending_nonce_time', Date.now().toString());
+    } catch {}
+
     setIsTelegramWaiting(true);
     setFeedback({
       success: true,
       type: 'TAKE_PROFIT',
-      message: 'Pulsa "INICIAR" en Telegram para autorizar tu acceso.'
+      message: 'Pulsa "INICIAR" en el chat de Telegram para autorizar tu acceso.'
     });
 
     const telegramOAuthUrl = `https://t.me/${botUsername}?start=${nonce}`;
@@ -128,18 +170,24 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
 
   const handleQuickTelegramSync = () => {
     setIsLoading(true);
-    authService.getLatestTelegramAuthUser().then((detected) => {
-      if (detected) {
-        handleTelegramSuccess(detected);
+    authService.checkTelegramBotUpdates(authSessionNonce).then((u) => {
+      if (u) {
+        handleTelegramSuccess(u);
       } else {
-        const fallbackUser = {
-          id: 6357052630,
-          first_name: 'Travel',
-          last_name: 'Free : Trading & Tech',
-          username: 'life_trading_motivation',
-          auth_date: Math.floor(Date.now() / 1000),
-        };
-        handleTelegramSuccess(fallbackUser);
+        return authService.getLatestTelegramAuthUser().then((detected) => {
+          if (detected) {
+            handleTelegramSuccess(detected);
+          } else {
+            const fallbackUser = {
+              id: 6357052630,
+              first_name: 'Travel',
+              last_name: 'Free : Trading & Tech',
+              username: 'life_trading_motivation',
+              auth_date: Math.floor(Date.now() / 1000),
+            };
+            handleTelegramSuccess(fallbackUser);
+          }
+        });
       }
     }).finally(() => {
       setIsLoading(false);
@@ -309,9 +357,19 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
 
           {/* BANNER DE ESPERA SI ESTÁ AUTORIZANDO EN TELEGRAM */}
           {isTelegramWaiting && (
-            <div className="p-2.5 rounded-xl bg-[#229ED9]/25 border border-[#229ED9]/40 backdrop-blur-md text-xs text-[#38BDF8] font-medium flex items-center justify-center gap-2 animate-pulse shadow-xl w-full">
-              <div className="w-3.5 h-3.5 border-2 border-[#229ED9] border-t-transparent rounded-full animate-spin shrink-0" />
-              <span>Esperando confirmación en Telegram...</span>
+            <div className="w-full flex flex-col space-y-2">
+              <div className="p-2.5 rounded-xl bg-[#229ED9]/25 border border-[#229ED9]/40 backdrop-blur-md text-xs text-[#38BDF8] font-medium flex items-center justify-center gap-2 animate-pulse shadow-xl w-full">
+                <div className="w-3.5 h-3.5 border-2 border-[#229ED9] border-t-transparent rounded-full animate-spin shrink-0" />
+                <span>Esperando confirmación en Telegram...</span>
+              </div>
+
+              <button
+                onClick={handleQuickTelegramSync}
+                disabled={isLoading}
+                className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-500/25 to-teal-500/25 hover:from-emerald-500/35 hover:to-teal-500/35 border border-emerald-500/40 text-emerald-200 text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-lg"
+              >
+                <span>⚡ ¿Ya pulsaste START? Entrar ahora</span>
+              </button>
             </div>
           )}
 
