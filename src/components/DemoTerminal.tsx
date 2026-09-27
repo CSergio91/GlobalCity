@@ -405,13 +405,13 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
       </header>
 
       {/* Main Operations Canvas (Lienzo Vacío) Edge-to-Edge Fullscreen */}
-      <main className="flex-1 w-full px-1.5 sm:px-4 py-1 sm:py-2 flex flex-col gap-1.5 sm:gap-2 min-h-0 h-auto sm:h-[calc(100vh-50px)] overflow-y-auto sm:overflow-hidden">
+      <main className="flex-1 w-full px-1 sm:px-2 py-0.5 sm:py-1 flex flex-col gap-1 min-h-0 h-auto sm:h-[calc(100vh-46px)] overflow-y-auto sm:overflow-hidden">
         
         {/* Connected Venues & Pair Bar */}
-        <div className="flex items-center justify-between gap-2 shrink-0 py-0.5">
+        <div className="flex items-center justify-between gap-1.5 shrink-0 py-0.5">
           
           {/* Left: Row of Connected Venue Pills */}
-          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5">
+          <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5">
             {connectedAccounts.length > 0 ? (
               connectedAccounts.map((acc) => {
                 const isSelected = activeAccount?.id === acc.id;
@@ -420,22 +420,22 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                   <div
                     key={acc.id}
                     onClick={() => setActiveAccountId(acc.id)}
-                    className={`flex items-center gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl border transition-all cursor-pointer select-none ${
+                    className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-xl border transition-all cursor-pointer select-none ${
                       isSelected
-                        ? 'bg-gradient-to-r from-[#0E1524] to-[#121E36] border-[#38BDF8] shadow-lg shadow-[#38BDF8]/20 ring-1 ring-[#38BDF8]/40 text-white'
+                        ? 'bg-gradient-to-r from-[#0E1524] to-[#121E36] border-[#38BDF8] shadow-md shadow-[#38BDF8]/20 ring-1 ring-[#38BDF8]/40 text-white'
                         : 'bg-[#0B0D16] hover:bg-[#101322] border-white/10 text-slate-400 hover:text-white'
                     }`}
                   >
-                    <PlatformLogo name={acc.venueName} className="w-4 h-4 sm:w-5 sm:h-5 rounded-lg shadow-sm shrink-0" />
+                    <PlatformLogo name={acc.venueName} className="w-4 h-4 rounded shadow-sm shrink-0" />
                     
                     <div className="flex flex-col text-left">
                       <div className="flex items-center gap-1">
-                        <span className="text-[11px] sm:text-xs font-bold text-white truncate max-w-[90px] sm:max-w-[110px]">
+                        <span className="text-[10px] sm:text-[11px] font-bold text-white truncate max-w-[85px] sm:max-w-[105px]">
                           {acc.venueName}
                         </span>
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                       </div>
-                      <div className="text-[9px] sm:text-[10px] font-mono text-emerald-400 font-bold">
+                      <div className="text-[8px] sm:text-[9px] font-mono text-emerald-400 font-bold">
                         ${(acc.balanceUsd || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </div>
                     </div>
@@ -444,10 +444,10 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                     <button
                       type="button"
                       onClick={(e) => handleSyncBalance(acc, e)}
-                      className="p-0.5 sm:p-1 rounded-lg text-slate-500 hover:text-white transition-colors cursor-pointer"
+                      className="p-0.5 rounded text-slate-500 hover:text-white transition-colors cursor-pointer"
                       title="Sincronizar balance real"
                     >
-                      <RefreshCw className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${syncingId === acc.id ? 'animate-spin text-[#38BDF8]' : ''}`} />
+                      <RefreshCw className={`w-2.5 h-2.5 ${syncingId === acc.id ? 'animate-spin text-[#38BDF8]' : ''}`} />
                     </button>
 
                     {/* Disconnect Button (triggers confirmation dialog) */}
@@ -457,10 +457,10 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                         e.stopPropagation();
                         setAccountToDelete(acc);
                       }}
-                      className="p-0.5 sm:p-1 rounded-lg text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
+                      className="p-0.5 rounded text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
                       title="Desvincular cuenta"
                     >
-                      <Trash2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                      <Trash2 className="w-2.5 h-2.5" />
                     </button>
                   </div>
                 );
@@ -469,19 +469,19 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
               /* Default Demo Feed Pill when no custom private accounts are added yet */
               <div
                 onClick={() => setActiveAccountId('conn_binance_demo_feed')}
-                className="flex items-center gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl border bg-gradient-to-r from-[#0E1524] to-[#121E36] border-[#38BDF8]/40 shadow-lg shadow-[#38BDF8]/10 ring-1 ring-[#38BDF8]/30 text-white select-none cursor-pointer"
+                className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-xl border bg-gradient-to-r from-[#0E1524] to-[#121E36] border-[#38BDF8]/40 shadow-md shadow-[#38BDF8]/10 ring-1 ring-[#38BDF8]/30 text-white select-none cursor-pointer"
                 title="Conexión en modo demo con datos en tiempo real de Binance"
               >
-                <PlatformLogo name="Binance" className="w-4 h-4 sm:w-5 sm:h-5 rounded-lg shadow-sm shrink-0" />
+                <PlatformLogo name="Binance" className="w-4 h-4 rounded shadow-sm shrink-0" />
                 <div className="flex flex-col text-left">
                   <div className="flex items-center gap-1">
-                    <span className="text-[11px] sm:text-xs font-bold text-white truncate max-w-[95px] sm:max-w-[120px]">
+                    <span className="text-[10px] sm:text-[11px] font-bold text-white truncate max-w-[90px] sm:max-w-[110px]">
                       Binance (Demo)
                     </span>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                   </div>
-                  <div className="text-[9px] sm:text-[10px] font-mono text-emerald-400 font-bold">
-                    $50,000.00 <span className="text-slate-400 font-normal text-[8px] sm:text-[9px]">(Demo)</span>
+                  <div className="text-[8px] sm:text-[9px] font-mono text-emerald-400 font-bold">
+                    $50,000.00 <span className="text-slate-400 font-normal text-[8px]">(Demo)</span>
                   </div>
                 </div>
 
@@ -492,10 +492,10 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                     e.stopPropagation();
                     setAccountToDelete(defaultDemoVenue);
                   }}
-                  className="p-0.5 sm:p-1 rounded-lg text-slate-500 hover:text-rose-400 transition-colors cursor-pointer ml-1"
+                  className="p-0.5 rounded text-slate-500 hover:text-rose-400 transition-colors cursor-pointer ml-1"
                   title="Desconectar feed demo"
                 >
-                  <Trash2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                  <Trash2 className="w-2.5 h-2.5" />
                 </button>
               </div>
             ) : (
@@ -506,7 +506,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                   setIsDemoFeedEnabled(true);
                   setActiveAccountId('conn_binance_demo_feed');
                 }}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl border border-dashed border-white/20 bg-white/[0.02] hover:bg-white/5 text-slate-400 hover:text-white text-[11px] cursor-pointer transition-all"
+                className="flex items-center gap-1.5 px-2 py-1 rounded-xl border border-dashed border-white/20 bg-white/[0.02] hover:bg-white/5 text-slate-400 hover:text-white text-[10px] cursor-pointer transition-all"
               >
                 <RefreshCw className="w-3 h-3 text-[#38BDF8]" />
                 <span>Reactivar Feed Demo</span>
@@ -517,10 +517,10 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
             <button
               type="button"
               onClick={() => setIsAddModalOpen(true)}
-              className="flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#38BDF8] to-[#0284C7] hover:brightness-110 text-white text-[11px] sm:text-xs font-extrabold transition-all cursor-pointer shadow-md shadow-[#38BDF8]/20 active:scale-95 shrink-0"
+              className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-xl bg-gradient-to-r from-[#38BDF8] to-[#0284C7] hover:brightness-110 text-white text-[10px] sm:text-[11px] font-extrabold transition-all cursor-pointer shadow-md shadow-[#38BDF8]/20 active:scale-95 shrink-0"
               title="Añadir nueva conexión a Exchange o Broker"
             >
-              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              <Plus className="w-3 h-3 stroke-[3]" />
               <span className="hidden xs:inline">Conectar</span>
             </button>
           </div>
@@ -530,7 +530,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
             <button
               type="button"
               onClick={() => setIsPairDropdownOpen(!isPairDropdownOpen)}
-              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono font-bold text-white transition-all cursor-pointer shadow-sm"
+              className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono font-bold text-white transition-all cursor-pointer shadow-sm"
             >
               <span>{selectedSymbol}</span>
               <span className="text-emerald-400 font-bold hidden xs:inline">
@@ -586,10 +586,10 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
         </div>
 
         {/* WORKSPACE CANVAS BODY: Flex Row (Chart Workstation on Left + Trading Side Navigation on Right) */}
-        <div className="flex-1 flex flex-col lg:flex-row gap-2 min-h-0 h-full w-full overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row gap-1.5 min-h-0 h-full w-full overflow-hidden">
           
-          {/* LEFT: Full-bleed Chart Canvas with bottom bento ticker cards */}
-          <div className="flex-1 flex flex-col bg-[#070910] border border-white/10 rounded-2xl overflow-hidden shadow-2xl min-h-0 h-full min-w-0">
+          {/* LEFT: Full-bleed Chart Canvas (Takes 100% of workspace, TradingView style) */}
+          <div className="flex-1 flex flex-col bg-[#070910] border border-white/10 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl min-h-0 h-full min-w-0">
             {/* Native KLineChart Hardware-Accelerated Canvas (Full-bleed taking all vertical space) */}
             <div className="w-full flex-1 relative min-h-[340px] sm:min-h-0 h-full overflow-hidden">
               <GlobalCityChart
@@ -601,39 +601,6 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                 className="w-full h-full"
               />
             </div>
-
-            {/* 4 Voltrex-Inspired Bento Market Cards with Sparklines (Bottom of Chart) */}
-            {ticks && ticks.length > 1 && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 bg-[#080A12] border-t border-white/[0.08] shrink-0">
-                {ticks.filter(t => t.symbol !== selectedSymbol).slice(0, 4).map((tick) => (
-                  <div
-                    key={tick.symbol}
-                    onClick={() => setSelectedSymbol(tick.symbol)}
-                    className="bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 hover:border-white/15 rounded-xl p-2 flex items-center justify-between cursor-pointer transition-all group select-none"
-                  >
-                    <div className="flex flex-col min-w-0">
-                      <div className="flex items-center gap-1">
-                        <span className="text-[10px] sm:text-[11px] font-mono font-bold text-white group-hover:text-[#38BDF8] transition-colors truncate">
-                          {tick.symbol}
-                        </span>
-                        <span className={`text-[8px] sm:text-[9px] font-mono font-bold px-1 rounded-full ${
-                          tick.change24h >= 0 ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'
-                        }`}>
-                          {tick.change24h >= 0 ? '+' : ''}{tick.change24h.toFixed(1)}%
-                        </span>
-                      </div>
-                      <span className="text-xs sm:text-sm font-mono font-black text-white tracking-tight mt-0.5">
-                        ${Number(tick.price || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-
-                    <div className="opacity-75 group-hover:opacity-100 transition-opacity pl-1 shrink-0">
-                      <MiniSparkline isPositive={tick.change24h >= 0} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* RIGHT: Trading Side Navigation (Navegación Lateral Replegable/Desplegable) */}
@@ -910,33 +877,34 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
               </div>
             ) : (
               /* ESTADO REPLEGADO: Panel Lateral Compacto con Controles Directos */
-              <div className="w-full flex flex-col items-center gap-2.5 h-full">
+              <div className="w-full flex flex-row lg:flex-col items-center justify-between gap-1.5 lg:gap-2.5 h-auto lg:h-full">
                 {/* Header: Botón para Desplegar */}
-                <div className="w-full flex items-center justify-center pb-2 border-b border-white/10">
+                <div className="flex lg:w-full items-center justify-center lg:pb-2 lg:border-b lg:border-white/10 shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsTradePanelOpen(true)}
-                    className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-all cursor-pointer flex items-center gap-1 group"
+                    className="p-1 sm:p-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-all cursor-pointer flex items-center gap-1 group"
                     title="Desplegar panel de trading"
                   >
                     <ChevronLeft className="w-4 h-4 text-[#38BDF8] group-hover:-translate-x-0.5 transition-transform" />
+                    <span className="text-[10px] font-mono font-bold lg:hidden">Operar</span>
                   </button>
                 </div>
 
                 {/* Mini Venue & Leverage Indicator */}
-                <div className="flex flex-col items-center py-0.5">
-                  <PlatformLogo name={activeAccount?.venueName || 'Binance'} className="w-5 h-5 rounded shrink-0 shadow-sm" />
-                  <span className="text-[9px] font-mono text-emerald-400 font-bold mt-1">
+                <div className="hidden sm:flex flex-row lg:flex-col items-center gap-1 py-0.5 shrink-0">
+                  <PlatformLogo name={activeAccount?.venueName || 'Binance'} className="w-4 h-4 sm:w-5 sm:h-5 rounded shrink-0 shadow-sm" />
+                  <span className="text-[9px] font-mono text-emerald-400 font-bold">
                     {leverage}x
                   </span>
                 </div>
 
                 {/* Botones de Compra y Venta Directos */}
-                <div className="w-full flex flex-col gap-1.5">
+                <div className="flex flex-row lg:flex-col gap-1.5 flex-1 lg:w-full">
                   <button
                     type="button"
                     onClick={() => handleQuickTrade('BUY')}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-mono font-black text-[11px] shadow-lg shadow-emerald-500/20 hover:brightness-110 active:scale-95 transition-all flex flex-col items-center justify-center cursor-pointer"
+                    className="flex-1 lg:w-full py-1.5 lg:py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-mono font-black text-[11px] shadow-lg shadow-emerald-500/20 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
                     title={`Comprar (Long ${selectedSymbol})`}
                   >
                     <ArrowUpRight className="w-3.5 h-3.5 stroke-[3]" />
@@ -946,7 +914,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                   <button
                     type="button"
                     onClick={() => handleQuickTrade('SELL')}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-mono font-black text-[11px] shadow-lg shadow-rose-500/20 hover:brightness-110 active:scale-95 transition-all flex flex-col items-center justify-center cursor-pointer"
+                    className="flex-1 lg:w-full py-1.5 lg:py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-mono font-black text-[11px] shadow-lg shadow-rose-500/20 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
                     title={`Vender (Short ${selectedSymbol})`}
                   >
                     <ArrowDownRight className="w-3.5 h-3.5 stroke-[3]" />
@@ -955,13 +923,13 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                 </div>
 
                 {/* Debajo: Tipo de Orden */}
-                <div className="w-full flex flex-col items-center bg-black/50 border border-white/10 rounded-xl p-1.5">
-                  <span className="text-[8px] font-mono uppercase text-slate-500 font-bold mb-1">Orden</span>
+                <div className="hidden xs:flex flex-col items-center bg-black/50 border border-white/10 rounded-xl p-1 shrink-0 lg:w-full">
+                  <span className="text-[7px] font-mono uppercase text-slate-500 font-bold mb-0.5">Orden</span>
                   <div className="flex w-full rounded-lg bg-black/60 p-0.5 text-[9px] font-mono font-bold">
                     <button
                       type="button"
                       onClick={() => setOrderType('MARKET')}
-                      className={`flex-1 py-0.5 rounded text-center transition-all cursor-pointer ${
+                      className={`px-1.5 py-0.5 rounded text-center transition-all cursor-pointer ${
                         orderType === 'MARKET' ? 'bg-[#38BDF8] text-black font-extrabold' : 'text-slate-400 hover:text-white'
                       }`}
                       title="Orden a Mercado"
@@ -971,7 +939,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                     <button
                       type="button"
                       onClick={() => setOrderType('LIMIT')}
-                      className={`flex-1 py-0.5 rounded text-center transition-all cursor-pointer ${
+                      className={`px-1.5 py-0.5 rounded text-center transition-all cursor-pointer ${
                         orderType === 'LIMIT' ? 'bg-[#38BDF8] text-black font-extrabold' : 'text-slate-400 hover:text-white'
                       }`}
                       title="Orden Límite"
@@ -982,9 +950,9 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                 </div>
 
                 {/* Debajo: Riesgo en % Manual (No 0, no negativos, admite decimales) */}
-                <div className="w-full flex flex-col items-center bg-black/50 border border-white/10 rounded-xl p-1.5">
-                  <span className="text-[8px] font-mono uppercase text-slate-500 font-bold mb-1">% Riesgo</span>
-                  <div className="relative w-full">
+                <div className="flex flex-col items-center bg-black/50 border border-white/10 rounded-xl p-1 shrink-0 lg:w-full">
+                  <span className="text-[7px] font-mono uppercase text-slate-500 font-bold mb-0.5">% Riesgo</span>
+                  <div className="relative w-14 lg:w-full">
                     <input
                       type="number"
                       step="0.1"
@@ -993,21 +961,21 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                       onChange={(e) => handleRiskPercentChange(e.target.value)}
                       onBlur={handleRiskPercentBlur}
                       placeholder="1.0"
-                      className="w-full bg-black/80 border border-white/15 rounded-lg py-1 px-1 text-center font-mono font-bold text-xs text-white focus:outline-none focus:border-[#E06D8A]"
+                      className="w-full bg-black/80 border border-white/15 rounded-lg py-0.5 px-1 text-center font-mono font-bold text-xs text-white focus:outline-none focus:border-[#E06D8A]"
                       title="Escribir % de riesgo manual (no 0, no negativo)"
                     />
-                    <span className="text-[9px] text-slate-500 font-mono absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none">%</span>
+                    <span className="text-[8px] text-slate-500 font-mono absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none">%</span>
                   </div>
-                  <div className="mt-1 text-[8px] font-mono text-emerald-400 font-bold truncate max-w-full text-center">
+                  <div className="text-[7px] font-mono text-emerald-400 font-bold truncate max-w-full text-center">
                     ${parseFloat(orderAmountUsdt || '0').toLocaleString()}
                   </div>
                 </div>
 
-                {/* Acceso inferior para desplegar */}
+                {/* Acceso inferior para desplegar en desktop */}
                 <button
                   type="button"
                   onClick={() => setIsTradePanelOpen(true)}
-                  className="mt-auto w-full py-1.5 rounded-xl border border-dashed border-white/15 bg-white/[0.02] hover:bg-white/10 text-slate-400 hover:text-white text-[9px] font-mono transition-all flex items-center justify-center gap-1 cursor-pointer"
+                  className="hidden lg:flex mt-auto w-full py-1.5 rounded-xl border border-dashed border-white/15 bg-white/[0.02] hover:bg-white/10 text-slate-400 hover:text-white text-[9px] font-mono transition-all items-center justify-center gap-1 cursor-pointer"
                   title="Desplegar todo el panel lateral"
                 >
                   <ChevronLeft className="w-3 h-3 text-[#38BDF8]" />
