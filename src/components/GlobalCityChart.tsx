@@ -1,27 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { init, dispose, registerLocale, Chart, KLineData, DeepPartial, Styles, Period } from 'klinecharts';
+import { init, dispose, Chart, KLineData, DeepPartial, Styles, Period } from 'klinecharts';
 import { fetchRealHistoricalKlines } from '../services/realKlineData';
-
-// Register full Spanish dictionary for KLineChart v10 engine
-try {
-  registerLocale('es', {
-    time: 'Hora: ',
-    open: 'Apertura: ',
-    high: 'Máx: ',
-    low: 'Mín: ',
-    close: 'Cierre: ',
-    volume: 'Volumen: ',
-    turnover: 'Turnover: ',
-    change: 'Cambio: ',
-    second: 's',
-    minute: 'm',
-    hour: 'h',
-    day: 'd',
-    week: 's',
-    month: 'm',
-    year: 'a'
-  });
-} catch {}
 
 export interface GlobalCityChartProps {
   symbol: string;
@@ -93,14 +72,14 @@ const GLOBAL_CITY_CHART_THEME: DeepPartial<Styles> = {
 };
 
 // Generates realistic baseline candlestick history leading up to the current live price
-function generateHistoricalBars(basePrice: number, count = 120, intervalMinutes = 15): KLineData[] {
+function generateHistoricalBars(basePrice: number, count = 140, intervalMinutes = 15): KLineData[] {
   const bars: KLineData[] = [];
   const now = Date.now();
   const stepMs = intervalMinutes * 60 * 1000;
   let currentClose = basePrice;
   const volatility = basePrice * 0.0035;
 
-  // Generate in reverse to end precisely at currentClose
+  // Generate in reverse to end precisely at basePrice
   for (let i = count - 1; i >= 0; i--) {
     const timestamp = now - i * stepMs;
     const delta = (Math.random() - 0.495) * volatility;
@@ -188,25 +167,35 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
     } catch {}
 
     const chart = init(containerRef.current, {
-      locale: 'es',
       styles: GLOBAL_CITY_CHART_THEME
     });
 
     if (!chart) return;
     chartInstanceRef.current = chart;
 
-    // 1. Registrar DataLoader canónico de KLineChart v10 ANTES de setSymbol y setPeriod
+    // 1. Configurar el símbolo y temporalidad ANTES de setDataLoader
+    const precision = symbol.includes('USDT') || symbol.includes('USD') || symbol.includes('EUR') ? 2 : 5;
+
+    chart.setSymbol({
+      ticker: `${venueId.toUpperCase()}:${symbol}`,
+      pricePrecision: precision,
+      volumePrecision: 2
+    });
+
+    chart.setPeriod(getPeriod(activeIntervalRef.current));
+
+    // 2. Registrar DataLoader canónico de KLineChart v10
     chart.setDataLoader({
       getBars: async (params) => {
         try {
           const reqInterval = periodToInterval(params.period);
           const intervalMins = reqInterval === '1m' ? 1 : reqInterval === '5m' ? 5 : reqInterval === '1h' ? 60 : reqInterval === '4h' ? 240 : reqInterval === '1D' ? 1440 : 15;
 
-          // 1. Inyectar de inmediato velas sintéticas de alta precisión para que el usuario NUNCA vea el lienzo vacío
+          // Inyectar de inmediato velas sintéticas para que el usuario NUNCA vea el lienzo vacío
           const initialBaseline = generateHistoricalBars(livePrice, 150, intervalMins);
           params.callback(initialBaseline, { forward: true, backward: false });
 
-          // 2. Traer en segundo plano las velas reales oficiales del exchange y actualizar
+          // Traer en segundo plano las velas reales oficiales del exchange y actualizar
           try {
             const realBars = await fetchRealHistoricalKlines(symbol, reqInterval, 200, livePrice);
             if (realBars && realBars.length > 0) {
@@ -234,17 +223,6 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
       }
     });
 
-    // 2. Configurar el símbolo y temporalidad (dispara getBars con type: 'init')
-    const precision = symbol.includes('USDT') || symbol.includes('USD') || symbol.includes('EUR') ? 2 : 5;
-
-    chart.setSymbol({
-      ticker: `${venueId.toUpperCase()}:${symbol}`,
-      pricePrecision: precision,
-      volumePrecision: 2
-    });
-
-    chart.setPeriod(getPeriod(activeIntervalRef.current));
-
     // 3. Crear indicadores en subpaneles
     try {
       chart.createIndicator({ name: 'VOL' }, false);
@@ -261,7 +239,7 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
     const timerId = setTimeout(() => {
       chart.resize();
       chart.scrollToRealTime();
-    }, 80);
+    }, 60);
 
     const resizeObserver = new ResizeObserver(() => {
       chart.resize();
