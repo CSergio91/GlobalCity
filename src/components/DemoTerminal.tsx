@@ -14,9 +14,11 @@ import {
   ExternalLink,
   ShieldCheck,
   ChevronDown,
+  ChevronUp,
   ChevronLeft,
   ChevronRight,
-  Search
+  Search,
+  X
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { CandlestickLanguageSelector } from './CandlestickLanguageSelector';
@@ -57,9 +59,19 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
   
   // Real LocalStorage Exchange Accounts
   const [accounts, setAccounts] = useState<StoredExchangeAccount[]>(() => exchangeStorage.getAccounts());
-  const connectedAccounts = useMemo(() => accounts.filter(a => a.status === 'CONNECTED'), [accounts]);
 
-  // Default Fallback Demo Venue when user hasn't connected a custom account yet
+  // Trading Mode: 'demo' (Virtual Simulation) vs 'real' (Verified Real Funds)
+  const [tradingMode, setTradingMode] = useState<'demo' | 'real'>(() => {
+    try {
+      return (localStorage.getItem('globalcity_trading_mode') as 'demo' | 'real') || 'real';
+    } catch {
+      return 'real';
+    }
+  });
+
+  const [isDemoFeedEnabled, setIsDemoFeedEnabled] = useState(true);
+
+  // Default Fallback Demo Venue when user is in demo mode without custom accounts
   const defaultDemoVenue: StoredExchangeAccount = useMemo(() => ({
     id: 'conn_binance_demo_feed',
     venueId: 'binance',
@@ -79,14 +91,53 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
     createdAt: new Date().toISOString()
   }), []);
 
+  // Segregación estricta de cuentas: REAL vs DEMO
+  const realAccounts = useMemo(() => {
+    return accounts.filter(a => a.status === 'CONNECTED' && !a.isTestnet && a.id !== 'conn_binance_demo_feed');
+  }, [accounts]);
+
+  const demoAccounts = useMemo(() => {
+    const customDemo = accounts.filter(a => a.status === 'CONNECTED' && (a.isTestnet || a.id === 'conn_binance_demo_feed'));
+    if (customDemo.length > 0) return customDemo;
+    return isDemoFeedEnabled ? [defaultDemoVenue] : [];
+  }, [accounts, isDemoFeedEnabled, defaultDemoVenue]);
+
+  // Cuentas visibles activas para la barra de venues
+  const visibleAccounts = useMemo(() => {
+    return tradingMode === 'real' ? realAccounts : demoAccounts;
+  }, [tradingMode, realAccounts, demoAccounts]);
+
   // Selected Active Venue Account
   const [activeAccountId, setActiveAccountId] = useState<string | null>(() => {
-    return connectedAccounts[0]?.id || 'conn_binance_demo_feed';
+    const initialMode = (localStorage.getItem('globalcity_trading_mode') as 'demo' | 'real') || 'real';
+    const initAccounts = exchangeStorage.getAccounts();
+    if (initialMode === 'real') {
+      const real = initAccounts.find(a => a.status === 'CONNECTED' && !a.isTestnet && a.id !== 'conn_binance_demo_feed');
+      return real ? real.id : null;
+    }
+    const demo = initAccounts.find(a => a.status === 'CONNECTED' && (a.isTestnet || a.id === 'conn_binance_demo_feed'));
+    return demo ? demo.id : 'conn_binance_demo_feed';
   });
 
   const activeAccount = useMemo(() => {
-    return accounts.find(a => a.id === activeAccountId) || connectedAccounts[0] || defaultDemoVenue;
-  }, [accounts, activeAccountId, connectedAccounts, defaultDemoVenue]);
+    if (tradingMode === 'real') {
+      return realAccounts.find(a => a.id === activeAccountId) || realAccounts[0] || null;
+    } else {
+      return demoAccounts.find(a => a.id === activeAccountId) || demoAccounts[0] || (isDemoFeedEnabled ? defaultDemoVenue : null);
+    }
+  }, [tradingMode, realAccounts, demoAccounts, activeAccountId, isDemoFeedEnabled, defaultDemoVenue]);
+
+  // Saldo efectivo de margen según el modo activo
+  const currentMarginBalance = useMemo(() => {
+    if (tradingMode === 'real') {
+      if (!activeAccount) return 0;
+      return activeAccount.freeMarginUsd !== undefined ? activeAccount.freeMarginUsd : (activeAccount.balanceUsd || 0);
+    }
+    return activeAccount?.freeMarginUsd !== undefined ? activeAccount.freeMarginUsd : 50000;
+  }, [tradingMode, activeAccount]);
+
+  // Mobile Bottom Sheet state (replegar/desplegar desde abajo)
+  const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
 
   // Modal State for adding new connection
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -112,8 +163,8 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
   const handleRiskPercentClick = (pct: number) => {
     setSelectedRiskPercent(pct);
     setRiskPercentInput(pct.toString());
-    const balance = activeAccount?.freeMarginUsd || 50000;
-    const computedAmount = Math.max(1, Number(((balance * pct) / 100).toFixed(2)));
+    const balance = currentMarginBalance > 0 ? currentMarginBalance : (tradingMode === 'real' ? 0 : 50000);
+    const computedAmount = balance > 0 ? Math.max(1, Number(((balance * pct) / 100).toFixed(2))) : 50;
     setOrderAmountUsdt(computedAmount.toString());
   };
 
@@ -124,8 +175,8 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
     const num = parseFloat(valStr);
     if (!isNaN(num) && num > 0) {
       setSelectedRiskPercent(num);
-      const balance = activeAccount?.freeMarginUsd || 50000;
-      const computedAmount = Math.max(1, Number(((balance * num) / 100).toFixed(2)));
+      const balance = currentMarginBalance > 0 ? currentMarginBalance : (tradingMode === 'real' ? 0 : 50000);
+      const computedAmount = balance > 0 ? Math.max(1, Number(((balance * num) / 100).toFixed(2))) : 50;
       setOrderAmountUsdt(computedAmount.toString());
     }
   };
@@ -137,8 +188,8 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
       const safeVal = 1.0;
       setRiskPercentInput(safeVal.toString());
       setSelectedRiskPercent(safeVal);
-      const balance = activeAccount?.freeMarginUsd || 50000;
-      const computedAmount = Math.max(1, Number(((balance * safeVal) / 100).toFixed(2)));
+      const balance = currentMarginBalance > 0 ? currentMarginBalance : (tradingMode === 'real' ? 0 : 50000);
+      const computedAmount = balance > 0 ? Math.max(1, Number(((balance * safeVal) / 100).toFixed(2))) : 50;
       setOrderAmountUsdt(computedAmount.toString());
     } else {
       setRiskPercentInput(num.toString());
@@ -150,11 +201,13 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
     setOrderAmountUsdt(valStr);
     const num = parseFloat(valStr);
     if (!isNaN(num) && num > 0) {
-      const balance = activeAccount?.freeMarginUsd || 50000;
-      const pct = Number(((num / balance) * 100).toFixed(2));
-      if (pct > 0) {
-        setSelectedRiskPercent(pct);
-        setRiskPercentInput(pct.toString());
+      const balance = currentMarginBalance > 0 ? currentMarginBalance : (tradingMode === 'real' ? 0 : 50000);
+      if (balance > 0) {
+        const pct = Number(((num / balance) * 100).toFixed(2));
+        if (pct > 0) {
+          setSelectedRiskPercent(pct);
+          setRiskPercentInput(pct.toString());
+        }
       }
     }
   };
@@ -163,21 +216,21 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
   const [isPairDropdownOpen, setIsPairDropdownOpen] = useState(false);
   const [pairSearchQuery, setPairSearchQuery] = useState('');
 
-  // Trading Mode: 'demo' (Virtual Simulation) vs 'real' (Verified Real Funds)
-  const [tradingMode, setTradingMode] = useState<'demo' | 'real'>(() => {
-    try {
-      return (localStorage.getItem('globalcity_trading_mode') as 'demo' | 'real') || 'real';
-    } catch {
-      return 'real';
-    }
-  });
-
   const handleTradingModeChange = (mode: 'demo' | 'real') => {
     setTradingMode(mode);
     try {
       localStorage.setItem('globalcity_trading_mode', mode);
       window.dispatchEvent(new CustomEvent('globalcity_trading_mode_changed', { detail: mode }));
     } catch {}
+
+    if (mode === 'real') {
+      const firstReal = accounts.find(a => a.status === 'CONNECTED' && !a.isTestnet && a.id !== 'conn_binance_demo_feed');
+      setActiveAccountId(firstReal ? firstReal.id : null);
+    } else {
+      const firstDemo = accounts.find(a => a.status === 'CONNECTED' && (a.isTestnet || a.id === 'conn_binance_demo_feed'));
+      setActiveAccountId(firstDemo ? firstDemo.id : 'conn_binance_demo_feed');
+    }
+
     showNotification(
       mode === 'demo'
         ? 'Modo DEMO activado: Simulación sin arriesgar capital.'
@@ -231,7 +284,6 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
     showNotification(`¡Conexión establecida con éxito en ${newAccount.venueName}! Alerta de seguridad enviada al bot de Telegram.`);
   };
 
-  const [isDemoFeedEnabled, setIsDemoFeedEnabled] = useState(true);
   const [accountToDelete, setAccountToDelete] = useState<StoredExchangeAccount | null>(null);
 
   const confirmDeleteAccount = () => {
@@ -239,7 +291,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
 
     if (accountToDelete.id === 'conn_binance_demo_feed') {
       setIsDemoFeedEnabled(false);
-      setActiveAccountId(connectedAccounts[0]?.id || null);
+      setActiveAccountId(visibleAccounts[0]?.id || null);
       showNotification('Feed de Binance (Demo) desconectado.');
     } else {
       exchangeStorage.deleteAccount(accountToDelete.id);
@@ -247,7 +299,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
       setAccounts(updated);
       if (activeAccountId === accountToDelete.id) {
         const remaining = updated.filter(a => a.id !== accountToDelete.id);
-        setActiveAccountId(remaining[0]?.id || (isDemoFeedEnabled ? 'conn_binance_demo_feed' : null));
+        setActiveAccountId(remaining[0]?.id || (tradingMode === 'demo' && isDemoFeedEnabled ? 'conn_binance_demo_feed' : null));
       }
       showNotification(`Conexión con ${accountToDelete.venueName} desvinculada.`);
     }
@@ -277,17 +329,19 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
   };
 
   const handleQuickTrade = (side: 'BUY' | 'SELL') => {
-    if (!activeAccount) {
-      showNotification('Conecta un exchange primero para operar.');
+    if (tradingMode === 'real' && !activeAccount) {
+      showNotification('Modo REAL: Debes conectar una API real primero.');
+      setIsAddModalOpen(true);
       return;
     }
 
-    const numericAmount = Math.max(1, parseFloat(orderAmountUsdt) || 500);
+    const venueName = activeAccount?.venueName || (tradingMode === 'real' ? 'Exchange Real' : 'Binance (Demo)');
+    const numericAmount = Math.max(1, parseFloat(orderAmountUsdt) || 50);
     const cryptoSize = (numericAmount / currentPrice).toFixed(4);
 
     positionStorage.addPosition({
       symbol: selectedSymbol,
-      exchange: activeAccount.venueName,
+      exchange: venueName,
       type: side === 'BUY' ? 'LONG' : 'SHORT',
       entryPrice: currentPrice,
       size: parseFloat(cryptoSize) || 0.01,
@@ -296,11 +350,11 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
       margin: numericAmount
     });
 
-    showNotification(`¡Orden ${orderType} ${side} de $${numericAmount} (${riskPercentInput}% riesgo, ${leverage}x) ${selectedSymbol} despachada a ${activeAccount.venueName}!`);
+    showNotification(`¡Orden ${orderType} ${side} de $${numericAmount} (${riskPercentInput}% riesgo, ${leverage}x) ${selectedSymbol} despachada a ${venueName}!`);
   };
 
   return (
-    <div className="min-h-screen sm:h-screen bg-[#06070B] text-slate-100 flex flex-col font-sans selection:bg-[#EC4899]/30 sm:overflow-hidden">
+    <div className="h-[100dvh] max-h-[100dvh] w-full bg-[#06070B] text-slate-100 flex flex-col font-sans selection:bg-[#EC4899]/30 overflow-hidden">
       
       {/* Top Navigation Bar: Mobile-First, Minimalist, clean */}
       <header className="sticky top-0 z-30 w-full bg-[#08090E]/95 backdrop-blur-xl border-b border-white/10 px-2 sm:px-6 py-1.5 sm:py-2 transition-all shrink-0">
@@ -404,16 +458,16 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
         </div>
       </header>
 
-      {/* Main Operations Canvas (Lienzo Vacío) Edge-to-Edge Fullscreen */}
-      <main className="flex-1 w-full px-1 sm:px-2 py-0.5 sm:py-1 flex flex-col gap-1 min-h-0 h-auto sm:h-[calc(100vh-46px)] overflow-y-auto sm:overflow-hidden">
+      {/* Main Operations Canvas Edge-to-Edge Fullscreen (No vertical scrolling) */}
+      <main className="flex-1 w-full px-1 sm:px-2 py-0.5 sm:py-1 flex flex-col gap-1 min-h-0 overflow-hidden">
         
         {/* Connected Venues & Pair Bar */}
         <div className="flex items-center justify-between gap-1.5 shrink-0 py-0.5">
           
           {/* Left: Row of Connected Venue Pills */}
           <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-            {connectedAccounts.length > 0 ? (
-              connectedAccounts.map((acc) => {
+            {visibleAccounts.length > 0 ? (
+              visibleAccounts.map((acc) => {
                 const isSelected = activeAccount?.id === acc.id;
 
                 return (
@@ -465,6 +519,20 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                   </div>
                 );
               })
+            ) : tradingMode === 'real' ? (
+              /* Estado limpio para Modo Real cuando no hay APIs vinculadas aún */
+              <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[10px] sm:text-[11px] font-mono select-none">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="font-bold">Modo Real: $0.00</span>
+                <span className="text-slate-400 text-[9px] hidden sm:inline">(Sin API vinculada)</span>
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="ml-1 px-2 py-0.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] font-extrabold cursor-pointer transition-all shadow-sm"
+                >
+                  + Conectar API Real
+                </button>
+              </div>
             ) : isDemoFeedEnabled ? (
               /* Default Demo Feed Pill when no custom private accounts are added yet */
               <div
@@ -603,11 +671,11 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
             </div>
           </div>
 
-          {/* RIGHT: Trading Side Navigation (Navegación Lateral Replegable/Desplegable) */}
-          <aside className={`transition-all duration-300 flex flex-col bg-[#090B12]/95 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-2xl shrink-0 overflow-hidden ${
+          {/* RIGHT: Trading Side Navigation (Solo Desktop lg:flex - Navegación Lateral Replegable) */}
+          <aside className={`hidden lg:flex transition-all duration-300 flex-col bg-[#090B12]/95 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-2xl shrink-0 overflow-hidden ${
             isTradePanelOpen 
-              ? 'w-full lg:w-[325px] xl:w-[340px] h-auto lg:h-full p-3 sm:p-3.5 space-y-2.5 overflow-y-auto no-scrollbar' 
-              : 'w-full lg:w-[84px] h-auto lg:h-full p-2 flex flex-col items-center justify-between space-y-2 overflow-y-auto no-scrollbar'
+              ? 'w-[325px] xl:w-[340px] h-full p-3.5 space-y-2.5 overflow-y-auto no-scrollbar' 
+              : 'w-[84px] h-full p-2 flex flex-col items-center justify-between space-y-2 overflow-y-auto no-scrollbar'
           }`}>
             {isTradePanelOpen ? (
               /* ESTADO DESPLEGADO: Panel Lateral Completo */
@@ -617,10 +685,10 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                   <div className="flex items-center gap-1.5 min-w-0">
                     <PlatformLogo name={activeAccount?.venueName || 'Binance'} className="w-4 h-4 rounded shrink-0" />
                     <span className="font-bold text-white text-[11px] truncate">
-                      {activeAccount?.venueName || (isDemoFeedEnabled ? 'Binance (Demo)' : 'Desconectado')}
+                      {activeAccount?.venueName || (tradingMode === 'real' ? 'Modo Real (Sin API)' : 'Binance (Demo)')}
                     </span>
                     <span className="text-[10px] font-mono text-emerald-400 font-bold shrink-0">
-                      ${(activeAccount?.freeMarginUsd || 50000).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      ${currentMarginBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
 
@@ -877,34 +945,33 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
               </div>
             ) : (
               /* ESTADO REPLEGADO: Panel Lateral Compacto con Controles Directos */
-              <div className="w-full flex flex-row lg:flex-col items-center justify-between gap-1.5 lg:gap-2.5 h-auto lg:h-full">
+              <div className="w-full flex flex-col items-center justify-between gap-2.5 h-full">
                 {/* Header: Botón para Desplegar */}
-                <div className="flex lg:w-full items-center justify-center lg:pb-2 lg:border-b lg:border-white/10 shrink-0">
+                <div className="flex w-full items-center justify-center pb-2 border-b border-white/10 shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsTradePanelOpen(true)}
-                    className="p-1 sm:p-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-all cursor-pointer flex items-center gap-1 group"
+                    className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-all cursor-pointer flex items-center gap-1 group"
                     title="Desplegar panel de trading"
                   >
                     <ChevronLeft className="w-4 h-4 text-[#38BDF8] group-hover:-translate-x-0.5 transition-transform" />
-                    <span className="text-[10px] font-mono font-bold lg:hidden">Operar</span>
                   </button>
                 </div>
 
                 {/* Mini Venue & Leverage Indicator */}
-                <div className="hidden sm:flex flex-row lg:flex-col items-center gap-1 py-0.5 shrink-0">
-                  <PlatformLogo name={activeAccount?.venueName || 'Binance'} className="w-4 h-4 sm:w-5 sm:h-5 rounded shrink-0 shadow-sm" />
+                <div className="flex flex-col items-center gap-1 py-0.5 shrink-0">
+                  <PlatformLogo name={activeAccount?.venueName || 'Binance'} className="w-5 h-5 rounded shrink-0 shadow-sm" />
                   <span className="text-[9px] font-mono text-emerald-400 font-bold">
                     {leverage}x
                   </span>
                 </div>
 
                 {/* Botones de Compra y Venta Directos */}
-                <div className="flex flex-row lg:flex-col gap-1.5 flex-1 lg:w-full">
+                <div className="flex flex-col gap-1.5 w-full">
                   <button
                     type="button"
                     onClick={() => handleQuickTrade('BUY')}
-                    className="flex-1 lg:w-full py-1.5 lg:py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-mono font-black text-[11px] shadow-lg shadow-emerald-500/20 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
+                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-mono font-black text-[11px] shadow-lg shadow-emerald-500/20 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
                     title={`Comprar (Long ${selectedSymbol})`}
                   >
                     <ArrowUpRight className="w-3.5 h-3.5 stroke-[3]" />
@@ -914,7 +981,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                   <button
                     type="button"
                     onClick={() => handleQuickTrade('SELL')}
-                    className="flex-1 lg:w-full py-1.5 lg:py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-mono font-black text-[11px] shadow-lg shadow-rose-500/20 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
+                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-mono font-black text-[11px] shadow-lg shadow-rose-500/20 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
                     title={`Vender (Short ${selectedSymbol})`}
                   >
                     <ArrowDownRight className="w-3.5 h-3.5 stroke-[3]" />
@@ -923,7 +990,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                 </div>
 
                 {/* Debajo: Tipo de Orden */}
-                <div className="hidden xs:flex flex-col items-center bg-black/50 border border-white/10 rounded-xl p-1 shrink-0 lg:w-full">
+                <div className="flex flex-col items-center bg-black/50 border border-white/10 rounded-xl p-1 shrink-0 w-full">
                   <span className="text-[7px] font-mono uppercase text-slate-500 font-bold mb-0.5">Orden</span>
                   <div className="flex w-full rounded-lg bg-black/60 p-0.5 text-[9px] font-mono font-bold">
                     <button
@@ -949,10 +1016,10 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                   </div>
                 </div>
 
-                {/* Debajo: Riesgo en % Manual (No 0, no negativos, admite decimales) */}
-                <div className="flex flex-col items-center bg-black/50 border border-white/10 rounded-xl p-1 shrink-0 lg:w-full">
+                {/* Debajo: Riesgo en % Manual */}
+                <div className="flex flex-col items-center bg-black/50 border border-white/10 rounded-xl p-1 shrink-0 w-full">
                   <span className="text-[7px] font-mono uppercase text-slate-500 font-bold mb-0.5">% Riesgo</span>
-                  <div className="relative w-14 lg:w-full">
+                  <div className="relative w-full">
                     <input
                       type="number"
                       step="0.1"
@@ -975,7 +1042,7 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
                 <button
                   type="button"
                   onClick={() => setIsTradePanelOpen(true)}
-                  className="hidden lg:flex mt-auto w-full py-1.5 rounded-xl border border-dashed border-white/15 bg-white/[0.02] hover:bg-white/10 text-slate-400 hover:text-white text-[9px] font-mono transition-all items-center justify-center gap-1 cursor-pointer"
+                  className="mt-auto w-full py-1.5 rounded-xl border border-dashed border-white/15 bg-white/[0.02] hover:bg-white/10 text-slate-400 hover:text-white text-[9px] font-mono transition-all items-center justify-center gap-1 cursor-pointer"
                   title="Desplegar todo el panel lateral"
                 >
                   <ChevronLeft className="w-3 h-3 text-[#38BDF8]" />
@@ -986,6 +1053,324 @@ export const DemoTerminal: React.FC<DemoTerminalProps> = ({ onBackToLanding, onO
           </aside>
 
         </div>
+
+        {/* MOBILE BOTTOM DOCK (lg:hidden): Docked bar taking ~48px at bottom, maximizes chart height */}
+        <div className="lg:hidden shrink-0 w-full bg-[#090B12]/95 backdrop-blur-2xl border-t border-white/15 px-2.5 py-1.5 flex flex-col gap-1 z-30 shadow-2xl">
+          {/* Interactive pull handle with Upward Arrow */}
+          <button
+            type="button"
+            onClick={() => setIsMobileSheetOpen(true)}
+            className="w-full flex items-center justify-center gap-1.5 py-0.5 text-slate-400 hover:text-white transition-all cursor-pointer group"
+          >
+            <ChevronUp className="w-3.5 h-3.5 text-[#38BDF8] group-hover:-translate-y-0.5 transition-transform animate-bounce" />
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-300">
+              Desplegar Trading & Riesgo ({leverage}x)
+            </span>
+            <ChevronUp className="w-3.5 h-3.5 text-[#38BDF8] group-hover:-translate-y-0.5 transition-transform animate-bounce" />
+          </button>
+
+          {/* Quick inline controls: BUY, SELL, MKT/LMT, Risk % */}
+          <div className="flex items-center justify-between gap-1.5 w-full">
+            <button
+              type="button"
+              onClick={() => handleQuickTrade('BUY')}
+              className="flex-1 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-mono font-black text-xs shadow-md shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
+            >
+              <ArrowUpRight className="w-3.5 h-3.5 stroke-[3]" />
+              <span>BUY</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleQuickTrade('SELL')}
+              className="flex-1 py-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-mono font-black text-xs shadow-md shadow-rose-500/20 active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
+            >
+              <ArrowDownRight className="w-3.5 h-3.5 stroke-[3]" />
+              <span>SELL</span>
+            </button>
+
+            {/* MKT / LMT Selector */}
+            <div className="flex items-center rounded-lg bg-black/60 border border-white/10 p-0.5 text-[9px] font-mono font-bold">
+              <button
+                type="button"
+                onClick={() => setOrderType('MARKET')}
+                className={`px-1.5 py-0.5 rounded transition-all ${orderType === 'MARKET' ? 'bg-[#38BDF8] text-black font-black' : 'text-slate-400'}`}
+              >
+                MKT
+              </button>
+              <button
+                type="button"
+                onClick={() => setOrderType('LIMIT')}
+                className={`px-1.5 py-0.5 rounded transition-all ${orderType === 'LIMIT' ? 'bg-[#38BDF8] text-black font-black' : 'text-slate-400'}`}
+              >
+                LMT
+              </button>
+            </div>
+
+            {/* % Risk Input */}
+            <div className="relative w-14">
+              <input
+                type="number"
+                step="0.1"
+                min="0.01"
+                value={riskPercentInput}
+                onChange={(e) => handleRiskPercentChange(e.target.value)}
+                onBlur={handleRiskPercentBlur}
+                className="w-full bg-black/80 border border-white/15 rounded-lg py-1 px-1 text-center font-mono font-bold text-xs text-white focus:outline-none focus:border-[#E06D8A]"
+              />
+              <span className="text-[8px] text-slate-500 font-mono absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none">%</span>
+            </div>
+
+            {/* Expand Sheet Button */}
+            <button
+              type="button"
+              onClick={() => setIsMobileSheetOpen(true)}
+              className="px-2 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-[11px] font-mono font-bold flex items-center gap-0.5 cursor-pointer active:scale-95 transition-all"
+              title="Expandir panel de trading"
+            >
+              <span>{leverage}x</span>
+              <ChevronUp className="w-3 h-3 text-[#38BDF8]" />
+            </button>
+          </div>
+        </div>
+
+        {/* MOBILE SLIDE-UP BOTTOM SHEET (lg:hidden): Sube desde abajo sin scroll */}
+        {isMobileSheetOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
+              onClick={() => setIsMobileSheetOpen(false)}
+            />
+
+            {/* Bottom Sheet Drawer */}
+            <div className="relative z-10 w-full max-h-[82vh] bg-[#090B12] border-t border-white/20 rounded-t-3xl shadow-2xl p-4 flex flex-col space-y-3 overflow-y-auto no-scrollbar animate-in slide-in-from-bottom duration-300">
+              {/* Drag Handle & Replegar Header */}
+              <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <PlatformLogo name={activeAccount?.venueName || 'Binance'} className="w-4 h-4 rounded shrink-0" />
+                  <span className="font-bold text-white text-xs truncate max-w-[130px]">
+                    {activeAccount?.venueName || (tradingMode === 'real' ? 'Modo Real (Sin API)' : 'Binance (Demo)')}
+                  </span>
+                  <span className="text-xs font-mono text-emerald-400 font-bold">
+                    ${currentMarginBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsMobileSheetOpen(false)}
+                  className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/15 text-slate-300 hover:text-white text-xs font-mono flex items-center gap-1 transition-all cursor-pointer"
+                >
+                  <span>Replegar</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-[#38BDF8]" />
+                </button>
+              </div>
+
+              {/* BUY / SELL Switch */}
+              <div className="grid grid-cols-2 p-1 rounded-2xl bg-black/60 border border-white/10 shadow-inner">
+                <button
+                  type="button"
+                  onClick={() => setActiveSide('BUY')}
+                  className={`py-2 rounded-xl text-xs font-mono font-black transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                    activeSide === 'BUY'
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-black shadow-lg shadow-emerald-500/25'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <ArrowUpRight className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>BUY (LONG)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveSide('SELL')}
+                  className={`py-2 rounded-xl text-xs font-mono font-black transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                    activeSide === 'SELL'
+                      ? 'bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-lg shadow-rose-500/25'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <ArrowDownRight className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>SELL (SHORT)</span>
+                </button>
+              </div>
+
+              {/* Order Type */}
+              <div className="flex items-center justify-between p-2 bg-black/40 border border-white/10 rounded-xl text-xs font-mono">
+                <span className="text-slate-400">Tipo de Orden:</span>
+                <div className="flex rounded-lg bg-black/60 p-0.5 font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setOrderType('MARKET')}
+                    className={`px-3 py-1 rounded text-xs transition-all cursor-pointer ${
+                      orderType === 'MARKET' ? 'bg-[#38BDF8] text-black font-extrabold' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    MARKET
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOrderType('LIMIT')}
+                    className={`px-3 py-1 rounded text-xs transition-all cursor-pointer ${
+                      orderType === 'LIMIT' ? 'bg-[#38BDF8] text-black font-extrabold' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    LIMIT
+                  </button>
+                </div>
+              </div>
+
+              {/* Amount & Risk % */}
+              <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-3 space-y-2">
+                <div className="flex items-center justify-between text-xs font-mono text-slate-400 uppercase tracking-wider">
+                  <span>Monto (Amount)</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-slate-400">Riesgo:</span>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0.01"
+                        value={riskPercentInput}
+                        onChange={(e) => handleRiskPercentChange(e.target.value)}
+                        onBlur={handleRiskPercentBlur}
+                        className="w-16 bg-black/80 border border-white/20 rounded px-1.5 py-0.5 text-right font-mono font-bold text-white text-xs focus:outline-none focus:border-[#E06D8A]"
+                      />
+                      <span className="text-[10px] text-slate-400 ml-0.5">%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-baseline justify-between">
+                  <div className="flex items-center">
+                    <span className="text-base font-mono text-slate-500 mr-1">$</span>
+                    <input
+                      type="number"
+                      min="1"
+                      step="any"
+                      value={orderAmountUsdt}
+                      onChange={(e) => handleOrderAmountChange(e.target.value)}
+                      className="w-32 bg-transparent text-2xl font-mono font-black text-white tracking-tight focus:outline-none"
+                    />
+                  </div>
+                  <span className="text-xs font-mono text-slate-400">
+                    ≈ {((parseFloat(orderAmountUsdt) || 0) * leverage / currentPrice).toFixed(4)} {selectedSymbol.split('/')[0]}
+                  </span>
+                </div>
+
+                {/* Quick Risk Chips */}
+                <div className="grid grid-cols-5 gap-1.5 pt-1">
+                  {[0.5, 1, 2, 5, 10].map(pct => (
+                    <button
+                      key={pct}
+                      type="button"
+                      onClick={() => handleRiskPercentClick(pct)}
+                      className={`py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer text-center ${
+                        selectedRiskPercent === pct
+                          ? 'bg-gradient-to-r from-[#E06D8A] to-[#F43F5E] text-white shadow-sm ring-1 ring-[#E06D8A]'
+                          : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/5'
+                      }`}
+                    >
+                      {pct}%
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Leverage Slider */}
+              <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-3 space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-mono text-slate-400 uppercase tracking-wider">
+                  <span>Apalancamiento</span>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                    leverage <= 10 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
+                  }`}>
+                    {leverage <= 10 ? 'Bajo Riesgo' : 'Alto Riesgo'}
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-2xl font-mono font-black text-white tracking-tight">
+                    {leverage}x
+                  </span>
+                  <span className="text-xs font-mono text-slate-400">
+                    Poder: ${((parseFloat(orderAmountUsdt) || 0) * leverage).toLocaleString()}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="100"
+                  step="1"
+                  value={leverage}
+                  onChange={(e) => setLeverage(Number(e.target.value))}
+                  className="w-full accent-[#E06D8A] cursor-pointer"
+                />
+              </div>
+
+              {/* SL / TP Chips */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-2.5 space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
+                    <span>Stop Loss</span>
+                    <span className="text-rose-400 font-bold">{stopLossPct === 0 ? 'Off' : `-${stopLossPct}%`}</span>
+                  </div>
+                  <div className="flex gap-1 py-0.5">
+                    {[0, 10, 25, 50].map(pct => (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => setStopLossPct(pct)}
+                        className={`flex-1 py-1 rounded text-[9px] font-mono font-bold transition-all cursor-pointer ${
+                          stopLossPct === pct ? 'bg-rose-500/30 text-rose-300 border border-rose-500/50' : 'bg-white/5 text-slate-400'
+                        }`}
+                      >
+                        {pct === 0 ? '0%' : `-${pct}%`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-2.5 space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
+                    <span>Take Profit</span>
+                    <span className="text-emerald-400 font-bold">{`+${takeProfitPct}%`}</span>
+                  </div>
+                  <div className="flex gap-1 py-0.5">
+                    {[50, 100, 300, 900].map(pct => (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => setTakeProfitPct(pct)}
+                        className={`flex-1 py-1 rounded text-[9px] font-mono font-bold transition-all cursor-pointer ${
+                          takeProfitPct === pct ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50' : 'bg-white/5 text-slate-400'
+                        }`}
+                      >
+                        {`+${pct}%`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Submit Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  handleQuickTrade(activeSide);
+                  setIsMobileSheetOpen(false);
+                }}
+                className={`w-full py-3 rounded-2xl font-mono font-black text-xs tracking-wider uppercase transition-all shadow-xl cursor-pointer active:scale-[0.98] ${
+                  activeSide === 'BUY'
+                    ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 text-black shadow-emerald-500/30 hover:brightness-110'
+                    : 'bg-gradient-to-r from-rose-500 via-red-600 to-rose-600 text-white shadow-rose-500/30 hover:brightness-110'
+                }`}
+              >
+                {activeSide === 'BUY' 
+                  ? `Confirmar Compra (${orderType} $${currentPrice.toFixed(2)})` 
+                  : `Confirmar Venta (${orderType} $${(currentPrice * 0.9998).toFixed(2)})`}
+              </button>
+            </div>
+          </div>
+        )}
 
       </main>
 

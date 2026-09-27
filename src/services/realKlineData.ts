@@ -1,12 +1,20 @@
 import { KLineData } from 'klinecharts';
 
+// Determinar si el símbolo es un par cripto válido en Binance Spot
+const isSupportedBinanceCrypto = (sym: string): boolean => {
+  if (['XAUUSD', 'EURUSD', 'GBPUSD', 'USDJPY'].includes(sym)) return false;
+  if (sym.includes('!') || sym.includes('^') || sym.includes('(') || sym.includes(')')) return false;
+  return /^[A-Z0-9]{2,10}(USDT|FDUSD|BTC|ETH)$/.test(sym);
+};
+
 export async function fetchRealHistoricalKlines(
   symbol: string,
   interval: '1m' | '5m' | '15m' | '1h' | '4h' | '1D' = '15m',
   limit = 200,
-  fallbackPrice = 84500
+  fallbackPrice = 84500,
+  endTime?: number
 ): Promise<KLineData[]> {
-  const cleanSymbol = symbol.replace(/[\/-]/g, '').toUpperCase();
+  const cleanSymbol = symbol.replace(/[\/\-\s]/g, '').toUpperCase();
   const intervalMap: Record<string, string> = {
     '1m': '1m',
     '5m': '5m',
@@ -16,13 +24,18 @@ export async function fetchRealHistoricalKlines(
     '1D': '1d'
   };
   const apiInterval = intervalMap[interval] || '15m';
+  const endParam = endTime ? `&endTime=${endTime}` : '';
 
-  // Lista de endpoints espejo públicos para garantizar datos reales sin bloqueos de IP
+  // Si es un activo no cripto (Forex / Metales como XAUUSD o Futuros de índices), no enviar a Binance para evitar 400 Bad Request / CORS
+  if (!isSupportedBinanceCrypto(cleanSymbol)) {
+    return generateFallbackHistoricalBars(fallbackPrice, limit, interval, endTime);
+  }
+
+  // Lista de endpoints: primero el proxy local Vite para evitar CORS, luego espejos públicos
   const candidateUrls = [
-    `https://data-api.binance.vision/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`,
-    `https://api.binance.com/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`,
-    `https://api1.binance.com/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`,
-    `/api-binance/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}`
+    `/api-binance/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}${endParam}`,
+    `https://data-api.binance.vision/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}${endParam}`,
+    `https://api.binance.com/api/v3/klines?symbol=${cleanSymbol}&interval=${apiInterval}&limit=${limit}${endParam}`
   ];
 
   for (const url of candidateUrls) {
@@ -57,26 +70,32 @@ export async function fetchRealHistoricalKlines(
     }
   }
 
-  // Si todos los endpoints de red fallaron por estar offline
+  // Si se pedían velas históricas anteriores (endTime) y no se obtuvieron por red, devolver array vacío para no duplicar velas
+  if (endTime) {
+    return [];
+  }
+
+  // Si todos los endpoints de red fallaron por estar offline en la carga inicial
   console.warn(`[KLineFeed] Sin conexión con endpoints públicos para ${symbol}. Usando velas locales de contingencia.`);
   return generateFallbackHistoricalBars(fallbackPrice, limit, interval);
 }
 
-// Fallback generator if offline, network error or non-crypto asset (Forex/Metals)
+// Fallback generator if offline, network error or non-crypto asset (Forex/Metals/Futures)
 export function generateFallbackHistoricalBars(
   basePrice: number,
   count = 120,
-  interval: '1m' | '5m' | '15m' | '1h' | '4h' | '1D' = '15m'
+  interval: '1m' | '5m' | '15m' | '1h' | '4h' | '1D' = '15m',
+  endTime?: number
 ): KLineData[] {
   const intervalMinutes = interval === '1m' ? 1 : interval === '5m' ? 5 : interval === '1h' ? 60 : interval === '4h' ? 240 : interval === '1D' ? 1440 : 15;
   const bars: KLineData[] = [];
-  const now = Date.now();
+  const endTimestamp = endTime || Date.now();
   const stepMs = intervalMinutes * 60 * 1000;
   let currentClose = basePrice;
   const volatility = basePrice * 0.0035;
 
   for (let i = count - 1; i >= 0; i--) {
-    const timestamp = now - i * stepMs;
+    const timestamp = endTimestamp - i * stepMs;
     const delta = (Math.random() - 0.495) * volatility;
     const open = i === count - 1 ? currentClose - delta : currentClose;
     const close = i === 0 ? basePrice : open + delta;

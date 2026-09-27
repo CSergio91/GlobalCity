@@ -194,7 +194,37 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
           const reqInterval = periodToInterval(params.period);
           const intervalMins = reqInterval === '1m' ? 1 : reqInterval === '5m' ? 5 : reqInterval === '1h' ? 60 : reqInterval === '4h' ? 240 : reqInterval === '1D' ? 1440 : 15;
 
-          // Traer datos reales con timeout rápido o fallback instantáneo
+          // Si KLineChart solicita velas históricas anteriores (hacia la izquierda del gráfico)
+          if (params.type === 'forward') {
+            if (!params.timestamp) {
+              params.callback([], { forward: false, backward: false });
+              return;
+            }
+
+            let olderBars: KLineData[] = [];
+            try {
+              olderBars = await fetchRealHistoricalKlines(symbol, reqInterval, 100, livePrice, params.timestamp - 1);
+            } catch {
+              olderBars = [];
+            }
+
+            if (olderBars && olderBars.length > 0) {
+              const validOlderBars = olderBars.filter(b => b.timestamp < params.timestamp!);
+              params.callback(validOlderBars, { forward: validOlderBars.length >= 80, backward: false });
+            } else {
+              // Cortar paginación hacia atrás para nunca repetir velas
+              params.callback([], { forward: false, backward: false });
+            }
+            return;
+          }
+
+          // Si KLineChart solicita velas hacia el futuro (cubierto por streaming en tiempo real)
+          if (params.type === 'backward') {
+            params.callback([], { forward: false, backward: false });
+            return;
+          }
+
+          // Carga inicial (params.type === 'init')
           let bars: KLineData[] = [];
           try {
             bars = await fetchRealHistoricalKlines(symbol, reqInterval, 180, livePrice);
@@ -206,7 +236,8 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
             bars = generateHistoricalBars(livePrice, 150, intervalMins);
           }
 
-          params.callback(bars, { forward: true, backward: false });
+          // Solo permitir paginación si se consiguieron datos completos
+          params.callback(bars, { forward: bars.length >= 100, backward: false });
 
           requestAnimationFrame(() => {
             if (chartInstanceRef.current) {
@@ -216,7 +247,7 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
           });
         } catch (err) {
           console.warn('[DataLoader] Error loading historical bars:', err);
-          params.callback(generateHistoricalBars(livePrice, 150, 15), { forward: true, backward: false });
+          params.callback([], { forward: false, backward: false });
         }
       },
       subscribeBar: (params) => {
