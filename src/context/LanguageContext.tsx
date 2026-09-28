@@ -150,6 +150,19 @@ export interface Translations {
     cancelBtn: string;
     tlsNotice: string;
   };
+  credentials?: {
+    title: string;
+    subtitle: string;
+    step1: string;
+    step2: string;
+    step3: string;
+    apiKeyLabel: string;
+    apiSecretLabel: string;
+    passphraseLabel: string;
+    connectBtn: string;
+    cancelBtn: string;
+    tlsNotice: string;
+  };
   cta: {
     titleStart: string;
     titleEnd: string;
@@ -377,6 +390,19 @@ export const translations: Record<Language, Translations> = {
       botVerified: "verified bot · online",
       nodeOperative: "NODE 100% OPERATIONAL",
       confirmEmergencyBtn: "CONFIRM EMERGENCY CLOSE",
+      cancelBtn: "Cancel",
+      tlsNotice: "TLS 1.3 Encrypted Tunnel",
+    },
+    credentials: {
+      title: "Exchange API Connections",
+      subtitle: "Connect your personal Binance or Bybit accounts to copy your funded trades in real time",
+      step1: "1. Create your API keys in your exchange with Read and Trade permissions only (Disable Withdrawals)",
+      step2: "2. Enter your API Key and Secret below",
+      step3: "3. Start copying positions automatically from your Eklipse Funded terminal",
+      apiKeyLabel: "API Key",
+      apiSecretLabel: "API Secret",
+      passphraseLabel: "Passphrase (if applicable)",
+      connectBtn: "Link Exchange API",
       cancelBtn: "Cancel",
       tlsNotice: "TLS 1.3 Encrypted Tunnel",
     },
