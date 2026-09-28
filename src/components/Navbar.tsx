@@ -10,7 +10,9 @@ import {
   Repeat,
   Share2,
   Bot,
-  Zap
+  Zap,
+  Cpu,
+  ShieldCheck
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { CandlestickLanguageSelector } from './CandlestickLanguageSelector';
@@ -62,7 +64,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 15);
 
-      const sectionIds = ["hero", "multi-venue", "arbitrage", "rebalance", "copy-trading", "telegram"];
+      const sectionIds = ["hero", "programs", "terminal", "rules", "markets", "faq"];
       const scrollPosition = window.scrollY + 220;
 
       for (let i = sectionIds.length - 1; i >= 0; i--) {
@@ -99,11 +101,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
 
   const navItems = [
     { id: "hero", label: language === 'en' ? "Home" : "Inicio", icon: Compass },
-    { id: "planes", label: language === 'en' ? "Funding & Plans" : "Fondeo & Planes", icon: Zap },
-    { id: "multi-venue", label: t.nav.multiVenue, icon: Layers },
-    { id: "arbitrage", label: t.nav.arbitrage, icon: Repeat },
-    { id: "copy-trading", label: t.nav.copyTrading, icon: Share2 },
-    { id: "telegram", label: "Telegram Ops", icon: Bot }
+    { id: "programs", label: language === 'en' ? "Funding" : "Fondeo", icon: Zap },
+    { id: "terminal", label: language === 'en' ? "Terminal" : "Terminal", icon: Cpu },
+    { id: "rules", label: language === 'en' ? "Rules" : "Reglas", icon: ShieldCheck },
+    { id: "markets", label: language === 'en' ? "Markets" : "Mercados", icon: Repeat },
+    { id: "faq", label: "FAQ", icon: Bot }
   ];
 
   return (

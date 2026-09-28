@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import commandDeckVisualPath from '../assets/images/command_bridge_parallax_1790347047571.webp';
+import horizontalParallaxBg from '../assets/images/horizontal_parallax_bg.webp';
 import { ArrowRight, LogIn } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppRouter } from '../context/RouterContext';
@@ -42,18 +42,19 @@ export const HorizontalShowcase: React.FC = () => {
       {/* Sticky Full-Viewport Stage */}
       <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-between">
         
-        {/* Parallax High-Contrast Background Canvas (Clean, translucent) */}
+        {/* Parallax High-Contrast Background Canvas with user provided celestial horizon image */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
           <img 
-            src={commandDeckVisualPath} 
-            alt="Eklipse Funded Command Deck Parallax Horizon" 
-            className="w-[130vw] h-full object-cover object-center filter brightness-[1.05] contrast-[1.12] opacity-30 transition-transform duration-100 ease-out will-change-transform"
+            src={horizontalParallaxBg} 
+            alt="Eklipse Horizon Parallax" 
+            className="w-[140vw] h-full object-cover object-center filter brightness-[1.05] contrast-[1.15] opacity-60 transition-transform duration-100 ease-out will-change-transform"
             style={{
               transform: `scale(1.08) translateX(-${bgTranslateX}%)`
             }}
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/30 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#06070B] via-transparent to-[#06070B]/80 pointer-events-none" />
+          <div className="absolute inset-0 bg-radial-at-c from-transparent via-[#06070B]/20 to-[#06070B]/90 pointer-events-none" />
         </div>
 
         {/* Minimal Retro Monospace Navigation Counter */}

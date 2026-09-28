@@ -7,53 +7,140 @@ interface HeroScrollCanvasProps {
   containerId?: string;
 }
 
+const CACHE_NAME = 'eklipse-sequence-v4';
+
+// Automatically purge legacy caches to prevent stale city video frames
+if (typeof window !== 'undefined' && 'caches' in window) {
+  caches.keys().then((keys) => {
+    keys.forEach((k) => {
+      if (k !== CACHE_NAME && (k.startsWith('eklipse-') || k.startsWith('globalcity-'))) {
+        caches.delete(k);
+      }
+    });
+  });
+}
+
 export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
-  totalFrames = 80,
+  totalFrames = 160,
   className = '',
   scrollProgress,
   containerId,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imagesRef = useRef<(HTMLImageElement | null)[]>([]);
+  const framesRef = useRef<(ImageBitmap | HTMLImageElement | null)[]>([]);
   const currentFrameRef = useRef(0);
   const targetFrameRef = useRef(0);
   const rafIdRef = useRef<number | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isFirstFrameReady, setIsFirstFrameReady] = useState(false);
 
-  // Preload sequence frames in an optimized, non-blocking queue
+  // Helper: Load a single frame through persistent CacheStorage + ImageBitmap
+  const loadSingleFrame = useCallback(async (idx: number): Promise<ImageBitmap | HTMLImageElement | null> => {
+    const relativeUrl = `/eklipse-sequence/frame_${String(idx).padStart(3, '0')}.webp`;
+
+    // 1. Try CacheStorage API for instant disk persistence
+    if (typeof window !== 'undefined' && 'caches' in window) {
+      try {
+        const fullUrl = new URL(relativeUrl, window.location.href).toString();
+        const cache = await caches.open(CACHE_NAME);
+        let resp = await cache.match(fullUrl);
+        if (!resp) {
+          resp = await fetch(fullUrl);
+          if (resp.ok) {
+            try {
+              cache.put(fullUrl, resp.clone());
+            } catch {
+              // Ignore cache storage quota or scheme errors
+            }
+          }
+        }
+        if (resp && resp.ok) {
+          const blob = await resp.blob();
+          if ('createImageBitmap' in window) {
+            const bitmap = await createImageBitmap(blob);
+            framesRef.current[idx] = bitmap;
+            return bitmap;
+          }
+        }
+      } catch {
+        // Fallback to standard Image if CacheStorage fails or is restricted
+      }
+    }
+
+    // 2. Standard HTMLImageElement fallback
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = relativeUrl;
+      img.onload = () => {
+        framesRef.current[idx] = img;
+        resolve(img);
+      };
+      img.onerror = () => {
+        resolve(null);
+      };
+    });
+  }, []);
+
+  // Preload sequence frames in an optimized, non-blocking prioritized queue
   useEffect(() => {
-    imagesRef.current = new Array(totalFrames).fill(null);
+    framesRef.current = new Array(totalFrames).fill(null);
 
-    // 1. Load initial frame immediately for instant LCP
-    const firstImg = new Image();
-    firstImg.src = '/hero-sequence/frame_000.webp';
-    firstImg.onload = () => {
-      imagesRef.current[0] = firstImg;
-      setIsLoaded(true);
-      renderFrame(0);
+    // 1. Load initial frame (0) immediately for instant 0ms LCP
+    loadSingleFrame(0).then((frame) => {
+      if (frame) {
+        setIsFirstFrameReady(true);
+        renderFrame(0);
+      }
+    });
+
+    // 2. Priority Chunk: Frames 1 to 24 (Initial scroll horizon)
+    const loadPriorityChunk = async () => {
+      const priorityPromises: Promise<any>[] = [];
+      const priorityLimit = Math.min(25, totalFrames);
+      for (let i = 1; i < priorityLimit; i++) {
+        priorityPromises.push(loadSingleFrame(i));
+      }
+      await Promise.allSettled(priorityPromises);
+
+      // 3. Background Chunk: Remaining frames loaded in idle batches
+      loadRemainingFrames(priorityLimit);
     };
 
-    // 2. Preload remaining sequence in background
-    const loadRemainingFrames = () => {
-      for (let i = 1; i < totalFrames; i++) {
-        const img = new Image();
-        img.src = `/hero-sequence/frame_${String(i).padStart(3, '0')}.webp`;
-        img.onload = () => {
-          imagesRef.current[i] = img;
-        };
+    const loadRemainingFrames = (startIdx: number) => {
+      let currentIdx = startIdx;
+      const batchSize = 8;
+
+      const scheduleNextBatch = () => {
+        if (currentIdx >= totalFrames) return;
+        const end = Math.min(currentIdx + batchSize, totalFrames);
+        const batchPromises: Promise<any>[] = [];
+        for (let i = currentIdx; i < end; i++) {
+          batchPromises.push(loadSingleFrame(i));
+        }
+        currentIdx = end;
+
+        if ('requestIdleCallback' in window) {
+          (window as any).requestIdleCallback(scheduleNextBatch);
+        } else {
+          setTimeout(scheduleNextBatch, 20);
+        }
+      };
+
+      if ('requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(scheduleNextBatch);
+      } else {
+        setTimeout(scheduleNextBatch, 35);
       }
     };
 
-    if ('requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(loadRemainingFrames);
-    } else {
-      setTimeout(loadRemainingFrames, 100);
-    }
+    // Stagger priority load by 30ms to let page finish rendering main layout
+    const timer = setTimeout(loadPriorityChunk, 30);
 
     return () => {
+      clearTimeout(timer);
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     };
-  }, [totalFrames]);
+  }, [totalFrames, loadSingleFrame]);
 
   // Render a specific frame on canvas with object-fit: cover math
   const renderFrame = useCallback((frameIdx: number) => {
@@ -63,28 +150,31 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
     if (!ctx) return;
 
     const clampedIdx = Math.max(0, Math.min(totalFrames - 1, Math.round(frameIdx)));
-    let img = imagesRef.current[clampedIdx];
+    let frame = framesRef.current[clampedIdx];
 
-    // Fallback to nearest loaded frame if current frame is loading
-    if (!img || !img.complete) {
+    // Fallback to nearest loaded frame if current frame is still downloading
+    if (!frame) {
       for (let offset = 1; offset < totalFrames; offset++) {
-        if (clampedIdx - offset >= 0 && imagesRef.current[clampedIdx - offset]?.complete) {
-          img = imagesRef.current[clampedIdx - offset];
+        if (clampedIdx - offset >= 0 && framesRef.current[clampedIdx - offset]) {
+          frame = framesRef.current[clampedIdx - offset];
           break;
         }
-        if (clampedIdx + offset < totalFrames && imagesRef.current[clampedIdx + offset]?.complete) {
-          img = imagesRef.current[clampedIdx + offset];
+        if (clampedIdx + offset < totalFrames && framesRef.current[clampedIdx + offset]) {
+          frame = framesRef.current[clampedIdx + offset];
           break;
         }
       }
     }
 
-    if (!img || !img.complete) return;
+    if (!frame) return;
 
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
-    const imgWidth = img.naturalWidth || 960;
-    const imgHeight = img.naturalHeight || 540;
+    if (canvasWidth <= 0 || canvasHeight <= 0) return;
+
+    const imgWidth = (frame as any).width || (frame as any).naturalWidth || 1280;
+    const imgHeight = (frame as any).height || (frame as any).naturalHeight || 720;
+    if (imgWidth <= 0 || imgHeight <= 0) return;
 
     // High quality aspect ratio cover scaling
     const scale = Math.max(canvasWidth / imgWidth, canvasHeight / imgHeight);
@@ -93,8 +183,13 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
     const renderX = (canvasWidth - renderWidth) / 2;
     const renderY = (canvasHeight - renderHeight) / 2;
 
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    ctx.drawImage(img, renderX, renderY, renderWidth, renderHeight);
+    try {
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(frame as any, renderX, renderY, renderWidth, renderHeight);
+    } catch {
+      // Guard against potential drawImage exception
+    }
   }, [totalFrames]);
 
   // Sync canvas internal resolution with DPR
@@ -109,7 +204,7 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
       renderFrame(currentFrameRef.current);
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize, { passive: true });
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
   }, [renderFrame]);
@@ -139,7 +234,6 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    // Run once on mount to sync initial scroll position
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, [scrollProgress, totalFrames, containerId]);
@@ -151,9 +245,9 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
     const updateLoop = () => {
       const diff = targetFrameRef.current - currentFrameRef.current;
       
-      // Only compute and re-render if there is actual scroll movement
+      // Ultra-smooth easing dampener for silky, cinematic transitions
       if (Math.abs(diff) > 0.005) {
-        currentFrameRef.current += diff * 0.25;
+        currentFrameRef.current += diff * 0.09;
         const frameToRender = Math.round(currentFrameRef.current);
         if (frameToRender !== lastRenderedFrame) {
           renderFrame(frameToRender);
@@ -172,17 +266,30 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
 
   return (
     <div className={`absolute inset-0 z-0 overflow-hidden pointer-events-none ${className}`}>
+      {/* 
+        Instant Pre-Paint Poster (Frame 000 from fondo Eklipse):
+        Guarantees 0ms blank time before canvas initializes
+      */}
+      <img
+        src="/eklipse-sequence/frame_000.webp"
+        alt="Eklipse Background Poster"
+        fetchPriority="high"
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 pointer-events-none ${
+          isFirstFrameReady ? 'opacity-0' : 'opacity-100'
+        }`}
+      />
+
       {/* Hardware-Accelerated Video Sequence Canvas */}
       <canvas 
         ref={canvasRef} 
         className="w-full h-full object-cover transition-opacity duration-500 will-change-transform"
-        style={{ opacity: isLoaded ? 1 : 0 }}
+        style={{ opacity: isFirstFrameReady ? 1 : 0 }}
       />
 
-      {/* Crisp Cinematic Contrast: Allows the futuristic 3D city sequence to stand out vividly */}
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-slate-950/30 pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/40 via-transparent to-slate-950/40 pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_75%_60%_at_50%_35%,rgba(124,58,237,0.14),transparent_75%)] pointer-events-none" />
+      {/* Atmospheric Cinematic Eclipse Overlays */}
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/40 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/45 via-transparent to-slate-950/45 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_65%_at_50%_35%,rgba(245,158,11,0.06),transparent_80%)] pointer-events-none" />
     </div>
   );
 };
