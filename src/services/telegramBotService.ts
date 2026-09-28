@@ -80,7 +80,7 @@ export const telegramBotService = {
     if (text.startsWith('/help') || text.startsWith('/start') && isGroup) {
       await this.sendMessage(
         chatId,
-        `⚡ *GLOBAL CITY TRADING BOT — COMANDOS DE EQUIPO*\n\n` +
+        `⚡ *EKLIPSE FUNDED TRADING BOT — COMANDOS DE EQUIPO*\n\n` +
         `• \`/spread [par]\` — Monitor de spreads en tiempo real entre exchanges.\n` +
         `• \`/calc [riesgo%] [SL]\` — Calculadora de tamaño de posición institucional.\n` +
         `• \`/signal [par] [long/short] [precio]\` — Publicar una tesis de trading colaborativa.\n` +
@@ -162,7 +162,7 @@ export const telegramBotService = {
     if (text.startsWith('/leaderboard')) {
       await this.sendMessage(
         chatId,
-        `🏆 *LEADERBOARD SEMANAL DE TRADERS · GLOBAL CITY*\n` +
+        `🏆 *LEADERBOARD SEMANAL DE TRADERS · EKLIPSE FUNDED*\n` +
         `━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
         `🥇 *${username}* → \`+18.4% ROI\` (Win Rate: 72%)\n` +
         `🥈 *@quant_trader_alpha* → \`+14.1% ROI\` (Win Rate: 68%)\n` +
@@ -225,7 +225,7 @@ export const telegramBotService = {
   }): Promise<boolean> {
     const isReal = params.mode === 'real';
     const text = 
-      `🔐 *GLOBAL CITY · CONEXIÓN AUTORIZADA*\n` +
+      `🔐 *EKLIPSE FUNDED · CONEXIÓN AUTORIZADA*\n` +
       `━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
       `Venue:        *${params.venueName.toUpperCase()}*\n` +
       `Modo:         *${isReal ? '🟢 REAL (Capital Oficial)' : '🟡 DEMO (Simulación)'}*\n` +

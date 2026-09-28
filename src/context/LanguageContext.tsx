@@ -16,9 +16,11 @@ export interface Translations {
   hero: {
     headlineStart: string;
     headlineEnd: string;
+    profitBadge: string;
     subheadline: string;
     openTerminalBtn: string;
     exploreModulesBtn: string;
+    note: string;
     telemetry: {
       t1Title: string;
       t1Desc: string;
@@ -181,11 +183,13 @@ export const translations: Record<Language, Translations> = {
       terminalBtn: "Terminal",
     },
     hero: {
-      headlineStart: "Next-Generation Prop Firm with Proprietary",
-      headlineEnd: "",
-      subheadline: "Global City Funding finances traders with institutional capital up to $500,000, 60 FPS GPU-accelerated proprietary terminal, zero MetaTrader latency, guaranteed 24-hour payouts, up to 90% profit split, and internal tools to copy your funded trades to Binance or Bybit via API.",
-      openTerminalBtn: "Choose Funding Challenge",
-      exploreModulesBtn: "Explore Terminal & Tools",
+      headlineStart: "Fund your trading journey with",
+      headlineEnd: "Instant Capital",
+      profitBadge: "Earn profits from 35% up to 80%",
+      subheadline: "",
+      openTerminalBtn: "Get Funded Now",
+      exploreModulesBtn: "Try Our Tools",
+      note: "Active challenge? Free tools included + earn GC Points for challenge discounts.",
       telemetry: {
         t1Title: "Proprietary Terminal v10",
         t1Desc: "60 FPS GPU Canvas, zero reliance on 3rd-party MT5/cTrader",
@@ -197,7 +201,7 @@ export const translations: Record<Language, Translations> = {
         t4Desc: "Static / EOD equity rules with zero intraday trailing traps",
       },
       liveTelemetry: {
-        title: "Global City Funding Simulation Engine Active",
+        title: "Eklipse Funded Simulation Engine Active",
         desc: "Streaming real institutional L2 tick-by-tick market data across multi-asset venues with sub-millisecond execution.",
       },
       rotatingWords: [
@@ -240,7 +244,7 @@ export const translations: Record<Language, Translations> = {
         {
           index: "02",
           title: "Trade on Our Proprietary High-Performance Web & Mobile Terminal",
-          description: "Say goodbye to clunky MT5 white-labels and sluggish third-party platforms. Global City Funding runs on an in-house Canvas-powered KLineChart v10 engine, delivering 60 FPS charts, sub-millisecond execution, Level 2 order book depth, and customizable TradingView-grade timeframes.",
+          description: "Say goodbye to clunky MT5 white-labels and sluggish third-party platforms. Eklipse Funded runs on an in-house Canvas-powered KLineChart v10 engine, delivering 60 FPS charts, sub-millisecond execution, Level 2 order book depth, and customizable TradingView-grade timeframes.",
           highlightStat: "60 FPS",
           highlightLabel: "Hardware GPU-accelerated proprietary terminal",
           tags: [
@@ -252,7 +256,7 @@ export const translations: Record<Language, Translations> = {
         {
           index: "03",
           title: "Mirror Funded Positions to Real Exchanges via API (Exclusive Tool)",
-          description: "Unlock hybrid monetization: connect your personal Binance, Bybit, or Kraken accounts via read & trade API keys. Our internal Copy Engine automatically mirrors positions opened on your Global City Funding account directly to your external exchange accounts in real time.",
+          description: "Unlock hybrid monetization: connect your personal Binance, Bybit, or Kraken accounts via read & trade API keys. Our internal Copy Engine automatically mirrors positions opened on your Eklipse Funded account directly to your external exchange accounts in real time.",
           highlightStat: "< 12 ms",
           highlightLabel: "Cross-venue API replication speed",
           tags: [
@@ -264,7 +268,7 @@ export const translations: Record<Language, Translations> = {
         {
           index: "04",
           title: "Official Mobile APKs: Institutional Power in Your Pocket",
-          description: "Never miss a trade or breach a risk threshold on the go. We are engineering the official Android APK and native mobile releases for Global City Trading Terminal, providing a full-screen, gesture-optimized canvas without restrictive app-store wrappers.",
+          description: "Never miss a trade or breach a risk threshold on the go. We are engineering the official Android APK and native mobile releases for Eklipse Trading Terminal, providing a full-screen, gesture-optimized canvas without restrictive app-store wrappers.",
           highlightStat: "100% Native",
           highlightLabel: "Mobile canvas architecture without WebView lag",
           tags: [
@@ -300,7 +304,7 @@ export const translations: Record<Language, Translations> = {
       simulatingBtn: "Calculating Scaling & Payouts...",
       simulateBtn: "Calculate Projected Earnings",
       breakdownTitle: "Net Profit & Scaling Breakdown",
-      breakdownSubtitle: "Audited financial projection under Global City Funding terms",
+      breakdownSubtitle: "Audited financial projection under Eklipse Funded terms",
       positiveSpread: "PROFIT TARGET ACHIEVED",
       netProfitLabel: "Trader Net Share (90%)",
       netSpreadEffective: "Challenge Target (8%)",
@@ -332,7 +336,7 @@ export const translations: Record<Language, Translations> = {
       securityTitle: "Security Guarantees",
       securitySubtitle: "Strictly non-custodial architecture",
       sec1Title: "1. Read & Trade Keys Only",
-      sec1Desc: "Global City automatically rejects any API key with withdrawal or external transfer permissions enabled.",
+      sec1Desc: "Eklipse automatically rejects any API key with withdrawal or external transfer permissions enabled.",
       sec2Title: "2. Low-Cost Route Advising",
       sec2Desc: "If the trader opts for a manual transfer, the engine identifies low-cost Layer-2 networks below $0.50.",
       sec3Title: "3. AES-256 Client-Side Encryption",
@@ -341,11 +345,11 @@ export const translations: Record<Language, Translations> = {
     },
     copyTrading: {
       titleStart: "Direct CEX Copy Trading.",
-      titleEnd: "From Global City Funding to Binance & Bybit.",
-      subtitle: "Mirror trades from your Global City Funding account directly to your personal accounts on Binance, Bybit, Kraken, or MT5 with sub-millisecond precision and automatic lot size normalization.",
+      titleEnd: "From Eklipse Funded to Binance & Bybit.",
+      subtitle: "Mirror trades from your Eklipse Funded account directly to your personal accounts on Binance, Bybit, Kraken, or MT5 with sub-millisecond precision and automatic lot size normalization.",
       step1Tag: "01 // FUNDED MASTER TRADE",
       step1Title: "Funded Account Order Trigger",
-      step1Desc: "You execute a trade on your Global City Funding terminal with GPU-accelerated Canvas speed.",
+      step1Desc: "You execute a trade on your Eklipse Funded terminal with GPU-accelerated Canvas speed.",
       step2Tag: "02 // LOT NORMALIZATION",
       step2Title: "Dynamic Risk & Lot Mapper",
       step2Desc: "Our internal mapper normalizes position sizing to match the exact risk and leverage configured on your personal exchange account.",
@@ -378,18 +382,18 @@ export const translations: Record<Language, Translations> = {
     },
     cta: {
       titleStart: "Trade with Institutional Capital on",
-      titleEnd: "Global City Funding",
+      titleEnd: "Eklipse Funded",
       subtitle: "Choose your evaluation program, showcase your discipline on our proprietary 60 FPS terminal, and withdraw profits every 14 days with exclusive tools to mirror trades to your personal exchanges.",
       accessTerminalBtn: "Start Funding Challenge",
       exploreGatewaysBtn: "View Programs & Rules",
     },
     footer: {
-      brandDesc: "Global City Funding is the next-generation proprietary trading firm built upon a universal Trading OS. Featuring high-performance GPU Canvas terminal, 24-hour payouts, up to 90% profit split, and built-in API copy tools to external exchanges.",
+      brandDesc: "Eklipse Funded is the next-generation proprietary trading firm built upon a universal Trading OS. Featuring high-performance GPU Canvas terminal, 24-hour payouts, up to 90% profit split, and built-in API copy tools to external exchanges.",
       quickLinks: "Funding Programs",
       legal: "Rules & Compliance",
-      disclaimer: "Global City Funding offers simulated evaluation accounts. External exchange copy tools operate under strict non-custodial security with zero withdrawal permissions.",
+      disclaimer: "Eklipse Funded offers simulated evaluation accounts. External exchange copy tools operate under strict non-custodial security with zero withdrawal permissions.",
       riskTitle: "Operational Risk Disclosure & Disclaimer",
-      riskDisclaimerFull: "Trading financial instruments, cryptocurrencies, Forex, and futures involves substantial risk of loss. Global City Funding provides evaluation programs and proprietary software infrastructure. Past performance in simulated accounts is not indicative of future results. All exchange connectivity operates non-custodially at the sole discretion of the user.",
+      riskDisclaimerFull: "Trading financial instruments, cryptocurrencies, Forex, and futures involves substantial risk of loss. Eklipse Funded provides evaluation programs and proprietary software infrastructure. Past performance in simulated accounts is not indicative of future results. All exchange connectivity operates non-custodially at the sole discretion of the user.",
       connectorsTitle: "Execution & Copy Gateways",
       connectorsCount: "+20 Exchanges & Venues",
       securityTitle: "Institutional Security & Solvency",
@@ -407,11 +411,13 @@ export const translations: Record<Language, Translations> = {
       terminalBtn: "Terminal",
     },
     hero: {
-      headlineStart: "Empresa de Fondeo de Próxima Generación con",
-      headlineEnd: "",
-      subheadline: "Global City Funding te financia con cuentas de hasta $500,000, terminal propia acelerada por GPU a 60 FPS sin depender de MT5, liquidaciones en 24 horas, hasta 90% de beneficio y herramientas exclusivas para copiar operaciones a tus exchanges vía API.",
-      openTerminalBtn: "Elegir Programa de Fondeo",
-      exploreModulesBtn: "Explorar Terminal y Herramientas",
+      headlineStart: "Patrocinamos tu viaje de trading con",
+      headlineEnd: "Fondeo Inmediato",
+      profitBadge: "Recibe ganancias desde el 35% hasta el 80%",
+      subheadline: "",
+      openTerminalBtn: "Fondearme ahora",
+      exploreModulesBtn: "Probar Herramientas",
+      note: "¿Challenge activo? Herramientas gratuitas + acumulas Puntos GC para descuentos.",
       telemetry: {
         t1Title: "Terminal Propia v10",
         t1Desc: "Canvas a 60 FPS acelerado por GPU, 100% independiente de MT5",
@@ -423,7 +429,7 @@ export const translations: Record<Language, Translations> = {
         t4Desc: "Drawdown estático/EOD sin trampas de trailing flotante intradía",
       },
       liveTelemetry: {
-        title: "Motor de Simulación Global City Funding Activo",
+        title: "Motor de Simulación Eklipse Funded Activo",
         desc: "Procesando cotizaciones en streaming tick-a-tick con libros L2 de alta fidelidad y ejecución sub-milisegundo sin intermediarios.",
       },
       rotatingWords: [
@@ -466,7 +472,7 @@ export const translations: Record<Language, Translations> = {
         {
           index: "02",
           title: "Opera en Nuestra Propia Terminal de Trading Web y Móvil",
-          description: "Dile adiós a las soluciones lentas de MT5 y a las plataformas genéricas de terceros. Global City Funding funciona sobre un motor KLineChart v10 desarrollado en Canvas HTML5 nativo, ofreciendo 60 FPS, profundidad L2, ejecución instantánea y temporalidades personalizables.",
+          description: "Dile adiós a las soluciones lentas de MT5 y a las plataformas genéricas de terceros. Eklipse Funded funciona sobre un motor KLineChart v10 desarrollado en Canvas HTML5 nativo, ofreciendo 60 FPS, profundidad L2, ejecución instantánea y temporalidades personalizables.",
           highlightStat: "60 FPS",
           highlightLabel: "Terminal propietaria acelerada por hardware GPU",
           tags: [
@@ -489,7 +495,7 @@ export const translations: Record<Language, Translations> = {
         },
         {
           index: "04",
-          title: "Hoja de Ruta a las APKs Oficiales de Global City",
+          title: "Hoja de Ruta a las APKs Oficiales de Eklipse",
           description: "Lleva el poder de la terminal en tu bolsillo. Estamos desarrollando las aplicaciones nativas y APKs oficiales para Android y dispositivos móviles, optimizadas con gestos táctiles y Canvas nativo sin las limitaciones de los navegadores móviles.",
           highlightStat: "100% Nativo",
           highlightLabel: "Arquitectura Canvas móvil sin latencia de WebView",
@@ -526,7 +532,7 @@ export const translations: Record<Language, Translations> = {
       simulatingBtn: "Calculando Escalado y Pagos...",
       simulateBtn: "Calcular Ganancias Proyectadas",
       breakdownTitle: "Desglose de Beneficio Neto y Escalado",
-      breakdownSubtitle: "Proyección financiera auditada bajo términos de Global City Funding",
+      breakdownSubtitle: "Proyección financiera auditada bajo términos de Eklipse Funded",
       positiveSpread: "OBJETIVO DE FONDEO ALCANZADO",
       netProfitLabel: "Retiro Neto del Trader (90%)",
       netSpreadEffective: "Objetivo de Fase (8%)",
@@ -558,7 +564,7 @@ export const translations: Record<Language, Translations> = {
       securityTitle: "Garantías de Seguridad",
       securitySubtitle: "Arquitectura estrictamente no custodial",
       sec1Title: "1. Claves Read & Trade Únicamente",
-      sec1Desc: "Global City rechaza automáticamente cualquier clave API que tenga habilitados permisos de retiro o transferencia externa.",
+      sec1Desc: "Eklipse rechaza automáticamente cualquier clave API que tenga habilitados permisos de retiro o transferencia externa.",
       sec2Title: "2. Enrutamiento por Redes Low-Cost",
       sec2Desc: "Si el trader decide realizar una transferencia física opcional, el motor recomienda enrutadores de capa 2 inferiores a $0.50.",
       sec3Title: "3. Cifrado AES-256 en Reposo",
@@ -567,11 +573,11 @@ export const translations: Record<Language, Translations> = {
     },
     copyTrading: {
       titleStart: "Copy Trading Directo a CEX.",
-      titleEnd: "De Global City Funding a Binance y Bybit.",
+      titleEnd: "De Eklipse Funded a Binance y Bybit.",
       subtitle: "Replica las operaciones de tu cuenta fondeada directamente hacia tus cuentas personales en Binance, Bybit, Kraken o MT5, con normalización instantánea de lotaje y apalancamiento.",
       step1Tag: "01 // TRADE EN CUENTA FONDEADA",
       step1Title: "Disparo de Orden en Terminal",
-      step1Desc: "Ejecutas una operación en tu terminal propia de Global City Funding con velocidad Canvas GPU.",
+      step1Desc: "Ejecutas una operación en tu terminal propia de Eklipse Funded con velocidad Canvas GPU.",
       step2Tag: "02 // NORMALIZACIÓN CANÓNICA",
       step2Title: "SymbolMapper & Lot Calibrator",
       step2Desc: "Traduce el símbolo y calibra el tamaño de lote proporcional a la equidad y apalancamiento de tu exchange personal.",
@@ -607,7 +613,7 @@ export const translations: Record<Language, Translations> = {
       subtitle: "Conecta tus cuentas personales de Binance o Bybit para copiar tus operaciones financiadas en tiempo real",
       step1: "1. Crea tus claves API en tu exchange con permisos exclusivos de Lectura y Trading (Deshabilita Retiros)",
       step2: "2. Introduce tu API Key y Secret a continuación",
-      step3: "3. Comienza a copiar posiciones automáticamente desde tu terminal de Global City Funding",
+      step3: "3. Comienza a copiar posiciones automáticamente desde tu terminal de Eklipse Funded",
       apiKeyLabel: "API Key",
       apiSecretLabel: "API Secret",
       passphraseLabel: "Passphrase (si aplica)",
@@ -617,18 +623,18 @@ export const translations: Record<Language, Translations> = {
     },
     cta: {
       titleStart: "Opera con Capital Institucional en",
-      titleEnd: "Global City Funding",
+      titleEnd: "Eklipse Funded",
       subtitle: "Elige tu reto de evaluación, demuestra tu disciplina en nuestra terminal propia y retira tus beneficios cada 14 días con herramientas exclusivas para copiar operaciones a tus exchanges vía API.",
       accessTerminalBtn: "Empezar Reto de Fondeo",
       exploreGatewaysBtn: "Explorar Programas y Reglas",
     },
     footer: {
-      brandDesc: "Global City Funding es la empresa de fondeo tecnológica de próxima generación construida sobre un Trading OS integral. Cuenta con terminal propia en Canvas GPU a 60 FPS, liquidaciones en 24 horas, hasta 90% de profit split y herramientas de copia a exchanges vía API.",
+      brandDesc: "Eklipse Funded es la empresa de fondeo tecnológica de próxima generación construida sobre un Trading OS integral. Cuenta con terminal propia en Canvas GPU a 60 FPS, liquidaciones en 24 horas, hasta 90% de profit split y herramientas de copia a exchanges vía API.",
       quickLinks: "Programas de Fondeo",
       legal: "Reglas y Cumplimiento",
-      disclaimer: "Global City Funding ofrece programas de evaluación y cuentas de trading simuladas. Las herramientas de conexión a exchanges operan bajo protocolo estrictamente no custodial sin permisos de retiro.",
+      disclaimer: "Eklipse Funded ofrece programas de evaluación y cuentas de trading simuladas. Las herramientas de conexión a exchanges operan bajo protocolo estrictamente no custodial sin permisos de retiro.",
       riskTitle: "Aviso de Alto Riesgo Operativo y Descargo de Responsabilidad",
-      riskDisclaimerFull: "El trading en los mercados financieros, criptoactivos, divisas y futuros conlleva un alto riesgo de pérdida de capital. Global City Funding ofrece programas de evaluación educativa y cuentas simuladas con capital de la firma tras superar las fases de reto. Las herramientas de conexión a exchanges se proporcionan para conveniencia del usuario bajo arquitectura no custodial.",
+      riskDisclaimerFull: "El trading en los mercados financieros, criptoactivos, divisas y futuros conlleva un alto riesgo de pérdida de capital. Eklipse Funded ofrece programas de evaluación educativa y cuentas simuladas con capital de la firma tras superar las fases de reto. Las herramientas de conexión a exchanges se proporcionan para conveniencia del usuario bajo arquitectura no custodial.",
       connectorsTitle: "Pasarelas & Capacidad de Conexión",
       connectorsCount: "+20 Exchanges & Pasarelas",
       securityTitle: "Seguridad y Solvencia Institucional",
@@ -654,8 +660,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     
     // Dynamic Page Title
     document.title = isEs 
-      ? "Global City Funding · Empresa de Fondeo de Próxima Generación con Terminal Propia"
-      : "Global City Funding · Next-Generation Prop Firm with Proprietary Terminal";
+      ? "Eklipse Funded · Empresa de Fondeo de Próxima Generación con Terminal Propia"
+      : "Eklipse Funded · Next-Generation Prop Firm with Proprietary Terminal";
 
     // Dynamic Meta Description
     const metaDesc = document.querySelector('meta[name="description"]');
@@ -663,8 +669,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       metaDesc.setAttribute(
         'content',
         isEs
-          ? "Global City Funding: Empresa de fondeo con terminal propia en Canvas a 60 FPS, retos hasta $500,000, 90% de profit share, pagos en 24h y herramientas para copiar a Binance y Bybit vía API."
-          : "Global City Funding: Next-generation proprietary trading firm with in-house 60 FPS Canvas terminal, funding challenges up to $500,000, 90% profit split, 24h payouts, and API copy trading to Binance and Bybit."
+          ? "Eklipse Funded: Empresa de fondeo con terminal propia en Canvas a 60 FPS, retos hasta $500,000, 90% de profit share, pagos en 24h y herramientas para copiar a Binance y Bybit vía API."
+          : "Eklipse Funded: Next-generation proprietary trading firm with in-house 60 FPS Canvas terminal, funding challenges up to $500,000, 90% profit split, 24h payouts, and API copy trading to Binance and Bybit."
       );
     }
 
@@ -674,8 +680,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       ogTitle.setAttribute(
         'content',
         isEs
-          ? "Global City Funding · Empresa de Fondeo con Terminal Propia & Copy a Exchanges"
-          : "Global City Funding · Proprietary Terminal Prop Firm & CEX Copy Trading"
+          ? "Eklipse Funded · Empresa de Fondeo con Terminal Propia & Copy a Exchanges"
+          : "Eklipse Funded · Proprietary Terminal Prop Firm & CEX Copy Trading"
       );
     }
     const ogDesc = document.querySelector('meta[property="og:description"]');
@@ -683,8 +689,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       ogDesc.setAttribute(
         'content',
         isEs
-          ? "Global City Funding: Cuentas de fondeo hasta $500k, terminal propia en Canvas a 60 FPS, liquidaciones en 24h, 90% de beneficio y copia a Binance/Bybit vía API."
-          : "Global City Funding: Capital accounts up to $500k, proprietary 60 FPS Canvas terminal, 24h payouts, 90% profit split, and API copy tools to Binance/Bybit."
+          ? "Eklipse Funded: Cuentas de fondeo hasta $500k, terminal propia en Canvas a 60 FPS, liquidaciones en 24h, 90% de beneficio y copia a Binance/Bybit vía API."
+          : "Eklipse Funded: Capital accounts up to $500k, proprietary 60 FPS Canvas terminal, 24h payouts, 90% profit split, and API copy tools to Binance/Bybit."
       );
     }
 
@@ -694,8 +700,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       twTitle.setAttribute(
         'content',
         isEs
-          ? "Global City · Terminal Multi-Exchange & Prop-Firm"
-          : "Global City · Multi-Exchange & Prop-Firm Terminal"
+          ? "Eklipse · Terminal Multi-Exchange & Prop-Firm"
+          : "Eklipse · Multi-Exchange & Prop-Firm Terminal"
       );
     }
     const twDesc = document.querySelector('meta[name="twitter:description"]');

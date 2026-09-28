@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import commandDeckVisualPath from '../assets/images/command_bridge_parallax_1790347047571.jpg';
+import commandDeckVisualPath from '../assets/images/command_bridge_parallax_1790347047571.webp';
 import { ArrowRight, LogIn } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppRouter } from '../context/RouterContext';
@@ -37,25 +37,23 @@ export const HorizontalShowcase: React.FC = () => {
     <section 
       id="horizontal-showcase" 
       ref={containerRef} 
-      className="relative h-[380vh] bg-[#F1F3FA] select-none"
+      className="relative h-[380vh] bg-transparent select-none"
     >
       {/* Sticky Full-Viewport Stage */}
       <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-between">
         
-        {/* Parallax High-Contrast Background Canvas (Clean, visible, not washed out) */}
+        {/* Parallax High-Contrast Background Canvas (Clean, translucent) */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
           <img 
             src={commandDeckVisualPath} 
-            alt="Global City Command Deck Parallax Horizon" 
-            className="w-[130vw] h-full object-cover object-center filter brightness-[1.05] contrast-[1.12] opacity-40 transition-transform duration-100 ease-out will-change-transform"
+            alt="Eklipse Funded Command Deck Parallax Horizon" 
+            className="w-[130vw] h-full object-cover object-center filter brightness-[1.05] contrast-[1.12] opacity-30 transition-transform duration-100 ease-out will-change-transform"
             style={{
               transform: `scale(1.08) translateX(-${bgTranslateX}%)`
             }}
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#F1F3FA]/70 via-transparent to-[#F1F3FA]/70" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#F1F3FA]/80 via-transparent to-[#F1F3FA]/60" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.08),transparent_70%)]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/30 pointer-events-none" />
         </div>
 
         {/* Minimal Retro Monospace Navigation Counter */}
@@ -81,15 +79,12 @@ export const HorizontalShowcase: React.FC = () => {
                 key={idx} 
                 className="w-screen h-full flex flex-col justify-center px-4 sm:px-12 lg:px-24 xl:px-32 flex-shrink-0 py-8 sm:py-0 overflow-y-auto sm:overflow-visible"
               >
-                {/* Retro-Brutalist Light Glass Console Box */}
-                <div className="max-w-4xl mx-auto w-full p-6 sm:p-10 lg:p-12 rounded-2xl bg-white/85 border-2 border-slate-900/20 backdrop-blur-2xl shadow-[8px_8px_0px_#090A10,0_20px_50px_rgba(0,0,0,0.06)] my-auto relative overflow-hidden">
+                {/* Retro-Brutalist Translucent Glass Console Box (relative z-10 to stay in front of astros) */}
+                <div className="max-w-4xl mx-auto w-full p-6 sm:p-10 lg:p-12 rounded-2xl bg-slate-950/80 border-2 border-white/20 backdrop-blur-2xl shadow-[8px_8px_0px_#7C3AED,0_20px_50px_rgba(0,0,0,0.6)] my-auto relative z-10 overflow-hidden text-white">
                   
-                  {/* Watermark Index + Top Stamp */}
-                  <div className="flex items-center justify-between mb-4 border-b-2 border-slate-900/10 pb-3">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-purple-50 border border-purple-300 text-[10.5px] font-mono font-bold text-[#6D28D9] uppercase tracking-wider">
-                      <span>[ 0{idx + 1} // ECOSYSTEM SPEC ]</span>
-                    </div>
-                    <div className="font-mono text-2xl sm:text-3xl font-black text-slate-900/20 tracking-tighter select-none">
+                  {/* Watermark Index */}
+                  <div className="flex items-center justify-end mb-2">
+                    <div className="font-mono text-2xl sm:text-3xl font-black text-white/20 tracking-tighter select-none">
                       {slide.index}
                     </div>
                   </div>
@@ -101,9 +96,9 @@ export const HorizontalShowcase: React.FC = () => {
                     const startPart = words.slice(0, splitIdx).join(' ');
                     const endPart = words.slice(splitIdx).join(' ');
                     return (
-                      <h2 className="text-xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-[#090A10] tracking-tight leading-tight mb-3 sm:mb-4 text-balance">
+                      <h2 className="text-xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white tracking-tight leading-tight mb-3 sm:mb-4 text-balance">
                         {startPart}{' '}
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7C3AED] via-[#9333EA] to-[#6366F1]">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#A78BFA] via-[#C084FC] to-[#818CF8]">
                           {endPart}
                         </span>
                       </h2>
@@ -111,27 +106,27 @@ export const HorizontalShowcase: React.FC = () => {
                   })()}
 
                   {/* Narrative Body */}
-                  <p className="text-xs sm:text-sm lg:text-base text-slate-700 font-normal leading-relaxed max-w-2xl mb-6 sm:mb-8 text-balance">
+                  <p className="text-xs sm:text-sm lg:text-base text-slate-200 font-normal leading-relaxed max-w-2xl mb-6 sm:mb-8 text-balance">
                     {slide.description}
                   </p>
 
                   {/* Highlights & Tags: Retro Brutalist Stamped Cells */}
-                  <div className="pt-4 border-t-2 border-slate-900/10 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 items-stretch">
-                    <div className="p-3 rounded-xl bg-purple-50/70 border border-purple-200">
-                      <div className="text-xl sm:text-2xl font-black text-[#7C3AED] font-mono truncate">
+                  <div className="pt-4 border-t-2 border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 items-stretch">
+                    <div className="p-3 rounded-xl bg-purple-950/60 border border-purple-400/30">
+                      <div className="text-xl sm:text-2xl font-black text-[#A78BFA] font-mono truncate">
                         {slide.highlightStat}
                       </div>
-                      <div className="text-[10px] sm:text-xs text-slate-600 mt-0.5 font-mono uppercase font-bold truncate">
+                      <div className="text-[10px] sm:text-xs text-slate-300 mt-0.5 font-mono uppercase font-bold truncate">
                         {slide.highlightLabel}
                       </div>
                     </div>
 
                     {slide.tags.map((tag, tIdx) => (
-                      <div key={tIdx} className="p-3 rounded-xl bg-slate-50/80 border border-slate-200 group">
-                        <div className="text-[10px] font-mono uppercase tracking-wider text-[#6D28D9] font-bold truncate">
+                      <div key={tIdx} className="p-3 rounded-xl bg-slate-900/60 border border-white/10 group">
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-purple-300 font-bold truncate">
                           {tag.label}
                         </div>
-                        <div className="text-xs font-semibold text-[#090A10] mt-0.5 group-hover:text-[#7C3AED] transition-colors truncate">
+                        <div className="text-xs font-semibold text-white mt-0.5 group-hover:text-purple-300 transition-colors truncate">
                           {tag.value}
                         </div>
                       </div>

@@ -8,14 +8,14 @@ import { motion } from 'motion/react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppRouter } from '../context/RouterContext';
 import { ParallaxBackground } from './ParallaxBackground';
-import propFirmExecutionVisual from '../assets/images/prop_firm_execution_node_1790346394469.jpg';
+import propFirmExecutionVisual from '../assets/images/prop_firm_execution_node_1790346394469.webp';
 
 export const CrossCopyTrading: React.FC = () => {
   const { t } = useLanguage();
   const { navigate } = useAppRouter();
 
   return (
-    <section id="copy-trading" className="w-full py-20 sm:py-28 bg-[#090A12] border-t border-white/10 relative select-none overflow-hidden">
+    <section id="copy-trading" className="w-full py-20 sm:py-28 bg-transparent border-t border-white/10 relative select-none overflow-hidden">
       {/* Cinematic Parallax Execution Node Backdrop (Vivid & Clear) */}
       <ParallaxBackground 
         imageSrc={propFirmExecutionVisual} 
@@ -38,11 +38,6 @@ export const CrossCopyTrading: React.FC = () => {
           className="mb-10 sm:mb-14"
         >
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-950/70 border border-purple-400/40 text-[11px] font-mono font-bold text-purple-300 tracking-wider uppercase mb-3 shadow-[0_0_15px_rgba(124,58,237,0.25)]">
-              <span>[ 06 // HERRAMIENTA INTERNA ]</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-              <span>COPIA A EXCHANGES VÍA API</span>
-            </div>
             <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
               {t.copyTrading.titleStart}{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-fuchsia-300 to-indigo-300">
@@ -79,7 +74,7 @@ export const CrossCopyTrading: React.FC = () => {
               </div>
 
               <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-mono">
-                <span className="text-slate-400">Terminal Global City</span>
+                <span className="text-slate-400">Terminal Eklipse Funded</span>
                 <span className="text-emerald-400 font-bold">+2.50 BTC / Long</span>
               </div>
             </div>

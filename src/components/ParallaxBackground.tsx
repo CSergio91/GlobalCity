@@ -12,9 +12,9 @@ interface ParallaxBackgroundProps {
 export const ParallaxBackground: React.FC<ParallaxBackgroundProps> = ({
   imageSrc,
   alt,
-  speed = 0.14,
-  opacity = 0.30,
-  brightness = 0.45,
+  speed = 0.22,
+  opacity = 0.32,
+  brightness = 0.48,
   contrast = 1.3
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -27,7 +27,7 @@ export const ParallaxBackground: React.FC<ParallaxBackgroundProps> = ({
       const viewportHeight = window.innerHeight;
 
       // Only calculate if visible near viewport
-      if (rect.bottom >= -150 && rect.top <= viewportHeight + 150) {
+      if (rect.bottom >= -200 && rect.top <= viewportHeight + 200) {
         const centerOffset = rect.top + rect.height / 2 - viewportHeight / 2;
         const targetOffset = -centerOffset * speed;
         setOffsetY(targetOffset);
@@ -48,9 +48,9 @@ export const ParallaxBackground: React.FC<ParallaxBackgroundProps> = ({
       <img
         src={imageSrc}
         alt={alt}
-        className="w-full h-[140%] object-cover object-center will-change-transform transition-transform duration-75 ease-out"
+        className="w-full h-[155%] object-cover object-center will-change-transform transition-transform duration-75 ease-out"
         style={{
-          transform: `translateY(${offsetY}px) scale(1.08)`,
+          transform: `translateY(${offsetY}px) scale(1.12)`,
           opacity: opacity,
           filter: `brightness(${brightness}) contrast(${contrast}) saturate(1.15)`
         }}

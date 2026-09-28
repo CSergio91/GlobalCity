@@ -55,7 +55,7 @@ export const Footer: React.FC = () => {
           
           {/* Col 1: Brand Info (Enlarged clean logo, no circles) */}
           <div className="space-y-4">
-            <BrandLogo size="md" lightMode={false} />
+            <BrandLogo size="lg" lightMode={false} />
             <p className="text-slate-400 text-xs leading-relaxed">
               {t.footer.brandDesc}
             </p>
@@ -175,7 +175,7 @@ export const Footer: React.FC = () => {
         {/* Legal Disclaimer & Copyright */}
         <div className="pt-2 flex flex-col md:flex-row items-center justify-between gap-4 text-slate-400 text-[11px]">
           <div>
-            © {new Date().getFullYear()} GLOBAL CITY FUNDING. {language === 'en' ? 'Prop Firm & Institutional High-Performance Trading Architecture. All rights reserved.' : 'Empresa de Fondeo & Arquitectura Institucional de Alto Rendimiento. Todos los derechos reservados.'}
+            © {new Date().getFullYear()} EKLIPSE FUNDED. {language === 'en' ? 'Prop Firm & Institutional High-Performance Trading Architecture. All rights reserved.' : 'Empresa de Fondeo & Arquitectura Institucional de Alto Rendimiento. Todos los derechos reservados.'}
           </div>
           <div className="max-w-xl text-center md:text-right text-[10px] text-slate-500">
             {t.footer.disclaimer}

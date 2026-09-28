@@ -1,4 +1,4 @@
-# Global City Trading Platform - Robots Configuration
+# Eklipse Funded Trading Platform - Robots Configuration
 # AI-Ready & Search Engine Crawling Allowed
 
 User-agent: *
@@ -37,4 +37,4 @@ Allow: /
 User-agent: TelegramBot
 Allow: /
 
-Sitemap: https://globalcitytrading.com/sitemap.xml
+Sitemap: https://eklipsefunded.com/sitemap.xml

@@ -11,7 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import { authService, AuthResult } from '../../services/authService';
 import { supabase } from '../../lib/supabaseClient';
 import presentationVideo from '../../assets/video/global_city_presentation_logo.mp4';
-import lastFrameLogo from '../../assets/video/global_city_presentation_logo_last_frame.png';
+import lastFrameLogo from '../../assets/video/global_city_presentation_logo_last_frame.webp';
 
 interface AuthCardProps {
   onSuccess: () => void;

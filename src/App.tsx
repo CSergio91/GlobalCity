@@ -19,11 +19,14 @@ import { RouterProvider, useAppRouter } from './context/RouterContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { LoginPage } from './components/auth/LoginPage';
 import { ParallaxBackground } from './components/ParallaxBackground';
-import panoramicSkylineVisual from './assets/images/global_city_panoramic_skyline_1790347023744.jpg';
+import { CelestialOrbit } from './components/CelestialOrbit';
+import { FundingPlans } from './components/FundingPlans';
+import panoramicSkylineVisual from './assets/images/global_city_panoramic_skyline_1790347023744.webp';
 
 function MainAppContent() {
   const { currentPath, navigate } = useAppRouter();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [themeLightness, setThemeLightness] = useState<number>(0);
   const { t } = useLanguage();
   const { isAuthenticated } = useAuth();
 
@@ -83,7 +86,7 @@ function MainAppContent() {
 
   // Otherwise, render the Landing Page
   return (
-    <div className="min-h-screen bg-[#090A10] text-[#090A10] flex flex-col selection:bg-[#7C3AED]/20 selection:text-[#5B21B6] relative">
+    <div className="min-h-screen bg-[#090A10] text-white flex flex-col selection:bg-[#7C3AED]/20 selection:text-[#5B21B6] relative transition-colors duration-500">
       
       {/* Dynamic Immersive Navbar with Candlestick Pair Language Selector */}
       <Navbar 
@@ -91,6 +94,10 @@ function MainAppContent() {
         onNavigateSection={handleNavigateSection} 
       />
 
+      {/* Realistic Celestial Sun / Moon Orbital System & Dynamic Atmospheric Transition */}
+      <CelestialOrbit onThemeLightnessChange={setThemeLightness} />
+
+      {/* Main Content Layer (Cards inside have relative z-10 so astros at z-[5] pass behind cards but in front of section) */}
       <main className="flex-1">
         
         {/* Unified Hero + Multi-Venue Cinematic Scrub Experience */}
@@ -110,7 +117,10 @@ function MainAppContent() {
           </div>
         </div>
 
-        {/* Section 3: Horizontal Interactive Showcase (Sticky Drag Scroller) */}
+        {/* Section 3: Instant Funding Plans (Crypto & Forex $2.5K to $100K) & Tools Subscriptions */}
+        <FundingPlans onSelectPlan={(plan) => navigate('/login')} />
+
+        {/* Section 4: Horizontal Interactive Showcase (Sticky Drag Scroller) */}
         <section id="horizontal-showcase">
           <HorizontalShowcase />
         </section>
@@ -136,26 +146,20 @@ function MainAppContent() {
         </section>
 
         {/* Section 8: Final Call to Action */}
-        <section className="py-24 sm:py-32 px-4 sm:px-6 relative overflow-hidden bg-[#090A12] border-t border-white/10 select-none">
+        <section className="py-24 sm:py-32 px-4 sm:px-6 relative overflow-hidden bg-transparent border-t border-white/10 select-none">
           {/* Ambient Purple Lighting Glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gradient-to-r from-[#7C3AED]/20 via-[#9333EA]/15 to-[#6366F1]/15 blur-[150px] pointer-events-none" />
 
           {/* Panoramic Skyline Parallax Backdrop (Vivid & Crisp) */}
           <ParallaxBackground 
             imageSrc={panoramicSkylineVisual} 
-            alt="Global City Panoramic Skyline Backdrop" 
+            alt="Eklipse Panoramic Skyline Backdrop" 
             opacity={0.32}
             speed={0.14}
           />
 
           <ScrollReveal direction="up" delay={50}>
             <div className="max-w-4xl mx-auto text-center relative z-10 space-y-6 sm:space-y-8">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-950/70 border border-purple-400/40 text-[11px] font-mono font-bold text-purple-300 tracking-wider uppercase shadow-[0_0_15px_rgba(124,58,237,0.25)]">
-                <span>[ 08 // GLOBAL CITY FUNDING ]</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                <span>TERMINAL PROPIA V10</span>
-              </div>
-
               <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.12]">
                 {t.cta.titleStart}{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-fuchsia-300 to-indigo-300">

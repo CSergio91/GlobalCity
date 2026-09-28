@@ -6,7 +6,7 @@ import { useAppRouter } from '../context/RouterContext';
 import { useLiveMarketTicks } from '../services/liveMarketFeed';
 import { PlatformLogo } from './MarketIcons';
 import { ParallaxBackground } from './ParallaxBackground';
-import arbitrageRadarVisual from '../assets/images/arbitrage_radar_mesh_1790346379182.jpg';
+import arbitrageRadarVisual from '../assets/images/arbitrage_radar_mesh_1790346379182.webp';
 
 interface ArbitragePairConfig {
   pair: string;
@@ -162,7 +162,7 @@ export const ArbitrageCalculator: React.FC = () => {
   };
 
   return (
-    <section id="arbitrage" className="w-full py-20 sm:py-28 bg-[#090A12] border-t border-white/10 relative select-none overflow-hidden">
+    <section id="arbitrage" className="w-full py-20 sm:py-28 bg-transparent border-t border-white/10 relative select-none overflow-hidden">
       {/* Cinematic Parallax Radar Mesh Backdrop (Vivid & Clear) */}
       <ParallaxBackground 
         imageSrc={arbitrageRadarVisual} 
@@ -186,11 +186,6 @@ export const ArbitrageCalculator: React.FC = () => {
         >
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 sm:gap-8">
             <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-950/70 border border-purple-400/40 text-[11px] font-mono font-bold text-purple-300 tracking-wider uppercase mb-3 shadow-[0_0_15px_rgba(124,58,237,0.25)]">
-                <span>[ 04 // HERRAMIENTA INTERNA ]</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                <span>ARBITRAJE SINTÉTICO L2</span>
-              </div>
               <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
                 {t.calculator.titleStart}{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-fuchsia-300 to-indigo-300">
@@ -236,7 +231,6 @@ export const ArbitrageCalculator: React.FC = () => {
               <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
                 <div>
                   <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-                    <span className="text-purple-400 font-mono text-xs">[ PARAMS ]</span>
                     <span>{t.calculator.capitalParamsTitle}</span>
                   </h3>
                   <p className="text-[11px] text-slate-400 font-mono mt-0.5">{t.calculator.capitalParamsSubtitle}</p>
@@ -385,7 +379,6 @@ export const ArbitrageCalculator: React.FC = () => {
               <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
                 <div>
                   <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-                    <span className="text-purple-400 font-mono text-xs">[ TELEMETRY ]</span>
                     <span>{t.calculator.breakdownTitle}</span>
                   </h3>
                   <p className="text-[11px] text-slate-400 font-mono mt-0.5">{t.calculator.breakdownSubtitle}</p>
