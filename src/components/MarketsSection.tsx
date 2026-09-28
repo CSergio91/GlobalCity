@@ -31,7 +31,7 @@ export const MarketsSection: React.FC = () => {
       price: btc.price,
       change: btc.change,
       isPositive: btc.isPositive,
-      leverage: '10x Max',
+      leverage: '20x – 100x',
       status: isEn ? 'Live' : 'Activo'
     },
     {
@@ -40,7 +40,7 @@ export const MarketsSection: React.FC = () => {
       price: eth.price,
       change: eth.change,
       isPositive: eth.isPositive,
-      leverage: '10x Max',
+      leverage: '20x – 100x',
       status: isEn ? 'Live' : 'Activo'
     },
     {
@@ -49,7 +49,7 @@ export const MarketsSection: React.FC = () => {
       price: sol.price,
       change: sol.change,
       isPositive: sol.isPositive,
-      leverage: '10x Max',
+      leverage: '20x – 100x',
       status: isEn ? 'Live' : 'Activo'
     }
   ];
@@ -57,7 +57,7 @@ export const MarketsSection: React.FC = () => {
   return (
     <section 
       id="markets"
-      className="w-full py-16 sm:py-24 relative select-none bg-transparent"
+      className="min-h-screen w-full flex flex-col justify-center items-center py-16 sm:py-24 relative select-none bg-transparent"
     >
       <div className="w-full px-4 sm:px-6 lg:px-12 max-w-6xl mx-auto relative z-10">
         

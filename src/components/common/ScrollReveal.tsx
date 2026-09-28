@@ -27,7 +27,7 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
   duration = 700,
   className = '',
   threshold = 0.1,
-  once = true,
+  once = false,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -106,7 +106,7 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
       ref={ref}
       style={{
         transitionDuration: `${duration}ms`,
-        transitionDelay: `${delay}ms`,
+        transitionDelay: isVisible ? `${delay}ms` : '0ms',
       }}
       className={`transition-all ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${
         isVisible ? getVisibleStyle() : getInitialStyle()

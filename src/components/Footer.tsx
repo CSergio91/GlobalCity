@@ -1,186 +1,160 @@
 import React from 'react';
 import { 
-  ShieldCheck, 
-  Lock, 
-  KeyRound, 
-  Layers, 
-  Cpu, 
-  Zap, 
-  Globe, 
-  AlertTriangle 
+  Send, 
+  Instagram, 
+  Mail
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { useLanguage } from '../context/LanguageContext';
+import { ScrollReveal } from './common/ScrollReveal';
+import footerBg from '../assets/images/footer.webp';
 
 export const Footer: React.FC = () => {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
+  const isEn = language === 'en';
 
-  const connectorSpecs = [
-    {
-      icon: Layers,
-      title: language === 'en' ? '+20 Connected CEX & DEX Venues' : '+20 CEX & DEX Conectados',
-      sub: language === 'en' ? 'Deep aggregated orderbooks & synthetic spreads' : 'Libros agregados y liquidez cruzada',
-      badge: 'Aggregated',
-      color: 'text-amber-400'
-    },
-    {
-      icon: Cpu,
-      title: language === 'en' ? '+8 DMA & Prop-Firm Gateways' : '+8 Pasarelas DMA & Prop-Firm',
-      sub: language === 'en' ? 'MetaTrader 5 Windows Server & cTrader Open API' : 'MetaTrader 5 Windows & cTrader Open API',
-      badge: 'DMA / STP',
-      color: 'text-[#F472B6]'
-    },
-    {
-      icon: Zap,
-      title: language === 'en' ? '+15 Direct FIX 4.4 / 5.0 Endpoints' : '+15 Endpoints FIX 4.4 / 5.0 Directos',
-      sub: language === 'en' ? 'Sub-1.2ms ultra-low latency execution channel' : 'Canal ultra-baja latencia sub-1.2ms',
-      badge: 'Sub-1.2ms',
-      color: 'text-cyan-400'
-    },
-    {
-      icon: Globe,
-      title: language === 'en' ? '+4 High-Speed L2 Networks & Bridges' : '+4 Redes L2 de Alta Velocidad & Bridges',
-      sub: language === 'en' ? 'Atomic synthetic arbitrage routing' : 'Enrutamiento atómico de arbitraje sintético',
-      badge: 'L2 Routing',
-      color: 'text-emerald-400'
+  const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'globalcity_auth_bot';
+
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
     }
-  ];
+  };
 
   return (
-    <footer className="bg-slate-950 border-t border-white/10 pt-16 pb-12 text-slate-400 text-xs">
-      <div className="w-full px-4 sm:px-8 lg:px-12 max-w-7xl mx-auto space-y-12">
+    <footer className="relative bg-[#06070B] text-slate-300 text-xs overflow-hidden select-none">
+      
+      {/* 1. The Majestic Eclipse Background - 100% Unobstructed, Spectacular & Cinematic */}
+      <div 
+        className="absolute inset-0 bg-cover bg-top bg-no-repeat pointer-events-none opacity-95 filter contrast-125 saturate-125"
+        style={{ backgroundImage: `url(${footerBg})` }}
+      />
+      
+      {/* 2. Seamless Top Fade from previous section into the Solar Horizon */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#06070B] via-transparent to-black/90 pointer-events-none" />
+
+      {/* 3. Footer Content - Placed gracefully on the lower dark horizon with zero clunky boxes */}
+      <div className="relative z-10 w-full px-6 sm:px-12 lg:px-16 max-w-7xl mx-auto pt-64 sm:pt-80 pb-12 flex flex-col justify-end space-y-12">
         
-        {/* Main 4-Column Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-10 border-b border-white/10">
-          
-          {/* Col 1: Brand Info (Enlarged clean logo, no circles) */}
-          <div className="space-y-4">
-            <BrandLogo size="lg" lightMode={false} />
-            <p className="text-slate-400 text-xs leading-relaxed">
-              {t.footer.brandDesc}
-            </p>
-          </div>
-
-          {/* Col 2: Capacities & Modules */}
-          <div>
-            <h4 className="text-white font-bold mb-4 uppercase tracking-wider text-[11px] font-mono flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-              <span>{language === 'en' ? 'Capabilities' : 'Capacidades'}</span>
-            </h4>
-            <ul className="space-y-2.5">
-              <li><a href="#hero-experience" className="hover:text-purple-300 transition-colors">{language === 'en' ? 'Prop Firm Challenges' : 'Retos de Fondeo Institucional'}</a></li>
-              <li><a href="#multi-venue" className="hover:text-purple-300 transition-colors">{language === 'en' ? 'Multi-Venue Gateways' : 'Pasarelas Multi-Exchange'}</a></li>
-              <li><a href="#arbitrage" className="hover:text-purple-300 transition-colors">{language === 'en' ? 'Cross-Venue Arbitrage L2' : 'Arbitraje Cross-Venue L2'}</a></li>
-              <li><a href="#copy-trading" className="hover:text-purple-300 transition-colors">{language === 'en' ? 'Cross Copy to CEX API' : 'Copia a CEX vía API'}</a></li>
-              <li><a href="#telegram" className="hover:text-purple-300 transition-colors">{language === 'en' ? 'Telegram Bot Ops' : 'Telegram Bot Ops'}</a></li>
-              <li><a href="#rebalance" className="hover:text-purple-300 transition-colors">{language === 'en' ? 'Synthetic Rebalancing' : 'Rebalanceo Asistido'}</a></li>
-            </ul>
-          </div>
-
-          {/* Col 3: Conectores & Capacidad de Conexión */}
-          <div>
-            <h4 className="text-white font-bold mb-4 uppercase tracking-wider text-[11px] font-mono flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-              <span>{t.footer.connectorsTitle}</span>
-            </h4>
-            <div className="space-y-2.5">
-              {connectorSpecs.map((item, idx) => {
-                const Icon = item.icon;
-                return (
-                  <div 
-                    key={idx}
-                    className="p-2.5 rounded-xl bg-slate-900/60 hover:bg-slate-900/90 border border-white/10 hover:border-purple-400/40 transition-all group"
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <Icon className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                        <span className="text-white font-semibold text-[11px] tracking-wide">
-                          {item.title}
-                        </span>
-                      </div>
-                      <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-purple-950 border border-purple-400/30 text-purple-300">
-                        {item.badge}
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-slate-400 pl-5.5 leading-snug font-mono">
-                      {item.sub}
-                    </p>
-                  </div>
-                );
-              })}
+        {/* Main Clean Row: Brand + Navigation + Social Icons with ScrollReveal */}
+        <ScrollReveal animation="fade-up" duration={700}>
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10 pb-8 border-b border-white/15">
+            
+            {/* Brand Identity & Mission */}
+            <div className="space-y-4 max-w-md">
+              <BrandLogo size="lg" lightMode={false} />
+              <p className="text-slate-200 text-sm font-medium leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                {isEn 
+                  ? 'Institutional crypto futures funding platform. Proprietary web terminal, clear risk limits, and bi-weekly payouts in USDT.' 
+                  : 'Plataforma institucional de fondeo cripto. Terminal propia web, reglas claras de riesgo y retiros quincenales en USDT.'}
+              </p>
             </div>
-          </div>
 
-          {/* Col 4: Institutional Security & Custody */}
-          <div>
-            <h4 className="text-white font-bold mb-4 uppercase tracking-wider text-[11px] font-mono flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-              <span>{t.footer.securityTitle}</span>
-            </h4>
-            <div className="space-y-2.5">
-              {/* Feature 1: Non-Custodial */}
-              <div className="p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/30">
-                <div className="flex items-center gap-2 text-emerald-400 font-bold text-[11px] mb-1">
-                  <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
-                  <span>{language === 'en' ? '100% Non-Custodial Protocol' : 'Protocolo 100% No Custodial'}</span>
-                </div>
-                <p className="text-[10px] text-slate-400 leading-snug">
-                  {language === 'en' 
-                    ? 'Zero withdrawal permissions accepted. User funds remain securely hosted on your own exchange and broker accounts.' 
-                    : 'Cero permisos de retiro aceptados. Tus fondos permanecen bajo tu custodia directa en tus propios exchanges y brokers.'}
-                </p>
-              </div>
+            {/* Clean Navigation Links - Unboxed & Minimalist */}
+            <nav className="flex flex-wrap items-center gap-x-8 gap-y-3 font-mono text-sm text-slate-200 font-semibold drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
+              <button 
+                onClick={() => scrollTo('programs')} 
+                className="hover:text-amber-300 transition-colors cursor-pointer"
+              >
+                {isEn ? 'Programs' : 'Fondeo'}
+              </button>
+              <button 
+                onClick={() => scrollTo('terminal')} 
+                className="hover:text-amber-300 transition-colors cursor-pointer"
+              >
+                {isEn ? 'Terminal' : 'Terminal'}
+              </button>
+              <button 
+                onClick={() => scrollTo('rules')} 
+                className="hover:text-amber-300 transition-colors cursor-pointer"
+              >
+                {isEn ? 'Rules' : 'Reglas'}
+              </button>
+              <button 
+                onClick={() => scrollTo('markets')} 
+                className="hover:text-amber-300 transition-colors cursor-pointer"
+              >
+                {isEn ? 'Markets' : 'Mercados'}
+              </button>
+              <button 
+                onClick={() => scrollTo('payout')} 
+                className="hover:text-amber-300 transition-colors cursor-pointer"
+              >
+                {isEn ? 'Payouts' : 'Retiros'}
+              </button>
+              <button 
+                onClick={() => scrollTo('faq')} 
+                className="hover:text-amber-300 transition-colors cursor-pointer"
+              >
+                {isEn ? 'FAQ' : 'FAQ'}
+              </button>
+            </nav>
 
-              {/* Feature 2: Hardware KMS & AES-256 */}
-              <div className="p-2.5 rounded-xl bg-purple-950/30 border border-purple-500/30">
-                <div className="flex items-center gap-2 text-purple-300 font-bold text-[11px] mb-1">
-                  <Lock className="w-3.5 h-3.5 shrink-0 text-purple-400" />
-                  <span>{language === 'en' ? 'Hardware KMS & Volatile Memory' : 'Cifrado Hardware KMS / AES-256'}</span>
-                </div>
-                <p className="text-[10px] text-slate-400 leading-snug">
-                  {language === 'en' 
-                    ? 'API credentials are encrypted in-memory and isolated in secure hardware enclaves with zero public database exposure.' 
-                    : 'Credenciales API cifradas en memoria volátil y aisladas en enclaves seguros sin persistencia en servidores públicos.'}
-                </p>
-              </div>
+            {/* Social Icons ONLY (No Names, Instagram Included, No Discord) */}
+            <div className="flex items-center gap-3">
+              {/* Telegram */}
+              <a 
+                href={`https://t.me/${botUsername}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-12 h-12 rounded-full bg-white/10 hover:bg-purple-600 border border-white/20 hover:border-purple-400 text-purple-300 hover:text-white flex items-center justify-center transition-all hover:scale-110 shadow-[0_4px_20px_rgba(0,0,0,0.6)] cursor-pointer backdrop-blur-md"
+                aria-label="Telegram"
+                title="Telegram"
+              >
+                <Send className="w-5 h-5 stroke-[2.2]" />
+              </a>
 
-              {/* Feature 3: IP Whitelist & 2FA */}
-              <div className="p-2.5 rounded-xl bg-indigo-950/30 border border-indigo-500/30">
-                <div className="flex items-center gap-2 text-indigo-300 font-bold text-[11px] mb-1">
-                  <KeyRound className="w-3.5 h-3.5 shrink-0 text-indigo-400" />
-                  <span>{language === 'en' ? 'Dedicated IP Whitelisting & 2FA' : 'IP Whitelisting & 2FA Biométrico'}</span>
-                </div>
-                <p className="text-[10px] text-slate-400 leading-snug">
-                  {language === 'en' 
-                    ? 'Cryptographic execution restricted to dedicated gateway IPs and verified Telegram biometric sessions.' 
-                    : 'Firmado de órdenes restringido por IPs fijas autorizadas y validación biométrica mediante Telegram.'}
-                </p>
-              </div>
+              {/* Instagram */}
+              <a 
+                href="https://instagram.com/eklipsefunded"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-12 h-12 rounded-full bg-white/10 hover:bg-amber-500 border border-white/20 hover:border-amber-400 text-amber-300 hover:text-slate-950 flex items-center justify-center transition-all hover:scale-110 shadow-[0_4px_20px_rgba(0,0,0,0.6)] cursor-pointer backdrop-blur-md"
+                aria-label="Instagram"
+                title="Instagram"
+              >
+                <Instagram className="w-5 h-5 stroke-[2.2]" />
+              </a>
+
+              {/* Support Email */}
+              <a 
+                href="mailto:support@eklipsefunded.com"
+                className="w-12 h-12 rounded-full bg-white/10 hover:bg-emerald-500 border border-white/20 hover:border-emerald-400 text-emerald-300 hover:text-slate-950 flex items-center justify-center transition-all hover:scale-110 shadow-[0_4px_20px_rgba(0,0,0,0.6)] cursor-pointer backdrop-blur-md"
+                aria-label="Support Email"
+                title="Support Email"
+              >
+                <Mail className="w-5 h-5 stroke-[2.2]" />
+              </a>
             </div>
-          </div>
 
-        </div>
-
-        {/* High-Risk Operational Disclaimer */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-amber-950/30 border border-amber-500/30 space-y-2">
-          <div className="flex items-center gap-2 text-amber-300 font-bold text-xs tracking-wide uppercase font-mono">
-            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-            <span>{t.footer.riskTitle}</span>
           </div>
-          <p className="text-[11px] text-slate-300 leading-relaxed text-justify">
-            {t.footer.riskDisclaimerFull}
+        </ScrollReveal>
+
+        {/* Institutional Risk Disclaimer - Clean Minimal Text (No Heavy Boxes) */}
+        <ScrollReveal animation="blur-reveal" delay={120} duration={700}>
+          <p className="text-[11px] text-slate-400 max-w-4xl mx-auto text-center leading-relaxed drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
+            {isEn 
+              ? 'Trading digital assets and crypto derivatives involves substantial market risk. All accounts provided by EKLIPSE are conducted in an institutional simulated trading environment with live market data. Performance rewards are settled directly in USDT according to program parameters.'
+              : 'La operativa con derivados de criptomonedas conlleva un riesgo sustancial de mercado. Todas las cuentas facilitadas por EKLIPSE operan en un entorno institucional simulado con cotizaciones en tiempo real. Los beneficios de rendimiento se liquidan directamente en USDT conforme a los términos del programa.'}
           </p>
-        </div>
+        </ScrollReveal>
 
-        {/* Legal Disclaimer & Copyright */}
-        <div className="pt-2 flex flex-col md:flex-row items-center justify-between gap-4 text-slate-400 text-[11px]">
-          <div>
-            © {new Date().getFullYear()} EKLIPSE FUNDED. {language === 'en' ? 'Prop Firm & Institutional High-Performance Trading Architecture. All rights reserved.' : 'Empresa de Fondeo & Arquitectura Institucional de Alto Rendimiento. Todos los derechos reservados.'}
+        {/* Bottom Bar: Copyright & Legal Links */}
+        <ScrollReveal animation="fade-up" delay={200} duration={700}>
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400 text-xs font-mono">
+            <div className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+              © {new Date().getFullYear()} <strong className="text-white font-bold">EKLIPSE FUNDED</strong>. {isEn ? 'All rights reserved.' : 'Todos los derechos reservados.'}
+            </div>
+            <div className="flex items-center gap-6 text-xs drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+              <a href="#rules" className="hover:text-amber-300 transition-colors">{isEn ? 'Terms of Service' : 'Términos de Servicio'}</a>
+              <span>·</span>
+              <a href="#rules" className="hover:text-amber-300 transition-colors">{isEn ? 'Privacy Policy' : 'Política de Privacidad'}</a>
+              <span>·</span>
+              <a href="#rules" className="hover:text-amber-300 transition-colors">{isEn ? 'Risk Disclosure' : 'Aviso de Riesgo'}</a>
+            </div>
           </div>
-          <div className="max-w-xl text-center md:text-right text-[10px] text-slate-500">
-            {t.footer.disclaimer}
-          </div>
-        </div>
+        </ScrollReveal>
 
       </div>
     </footer>

@@ -18,19 +18,19 @@ export const PayoutRoadmapSection: React.FC = () => {
 
   const steps = [
     { label: isEn ? 'Select Capital' : 'Elige Capital', sub: isEn ? '$1K - $100K' : '$1K - $100K', color: 'border-white/20 text-white' },
-    { label: isEn ? 'Instant Fund' : 'Fondeo Inmediato', sub: isEn ? 'Zero Waiting' : 'Sin Esperas', color: 'border-cyan-400 text-cyan-300' },
-    { label: isEn ? 'Trade Rules' : 'Opera con Reglas', sub: isEn ? '2% Day / 8% Max' : '2% Día / 8% Max', color: 'border-amber-400 text-amber-300' },
+    { label: isEn ? 'Instant Fund' : 'Fondeo Inmediato', sub: isEn ? 'Zero Waiting' : 'Sin Esperas', color: 'border-purple-400 text-purple-300' },
     { label: isEn ? '1st Payout' : '1er Retiro', sub: isEn ? '35% Split' : '35% Reparto', color: 'border-amber-400 text-amber-300' },
     { label: isEn ? '2nd Payout' : '2do Retiro', sub: isEn ? '50% Split' : '50% Reparto', color: 'border-yellow-400 text-yellow-300' },
-    { label: isEn ? '3rd+ Payout' : '3er+ Retiro', sub: isEn ? '80% Split & Scale' : '80% Reparto & Escala', color: 'border-emerald-400 text-emerald-300' },
+    { label: isEn ? '3rd Payout' : '3er Retiro', sub: isEn ? '80% Split' : '80% Reparto', color: 'border-emerald-400 text-emerald-300' },
+    { label: isEn ? '4th+ Payout' : '4to+ Retiro', sub: isEn ? '90% Max Split' : '90% Reparto Máx', color: 'border-purple-400 text-purple-300' },
   ];
 
   const highlights = [
     {
-      title: isEn ? 'Progression: 35% → 50% → 80% Split' : 'Progresión: 35% → 50% → 80% Reparto',
+      title: isEn ? 'Progression: 35/50/80/90 Split' : 'Progresión: Reparto 35/50/80/90',
       desc: isEn 
-        ? 'Begin your funded journey with 35% on your 1st payout, advance to 50% on your 2nd, and unlock a permanent 80% split on subsequent cycles.' 
-        : 'Inicia con un 35% en tu primer retiro, asciende al 50% en el segundo y asegura un 80% de reparto permanente en los siguientes ciclos.',
+        ? 'Begin your funded journey with 35% on your 1st payout, advance to 50% on your 2nd, 80% on your 3rd, and unlock the maximum 90% split on subsequent cycles.' 
+        : 'Inicia con un 35% en tu primer retiro, asciende al 50% en el segundo, 80% en el tercero y asegura un 90% de reparto máximo en los siguientes ciclos.',
       icon: Coins
     },
     {
@@ -52,7 +52,7 @@ export const PayoutRoadmapSection: React.FC = () => {
   return (
     <section 
       id="payout"
-      className="w-full py-20 sm:py-28 relative select-none bg-slate-950/70 border-t border-b border-white/10"
+      className="min-h-screen w-full flex flex-col justify-center items-center py-20 sm:py-28 relative select-none bg-slate-950/70 border-t border-b border-white/10"
     >
       <div className="w-full px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto relative z-10">
         

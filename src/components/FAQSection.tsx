@@ -23,8 +23,8 @@ export const FAQSection: React.FC = () => {
     {
       q: isEn ? 'How does instant funding without challenges work?' : '¿Cómo funciona el fondeo inmediato sin challenge?',
       a: isEn 
-        ? 'You select your funded account ($1K to $100K) for a single one-time activation fee (100% refundable with your first payout). There are zero evaluation phases or waiting periods: you start trading immediately on our proprietary terminal under disciplined 2% daily loss and 8% maximum drawdown rules. Once you complete 5 profitable days, you can request your payout.'
-        : 'Seleccionas tu cuenta de capital ($1K a $100K) mediante una tarifa única de activación (100% reembolsable en tu primer retiro). Cero fases de examen ni periodos de espera: comienzas a operar inmediatamente en nuestra terminal propia bajo 2% de pérdida diaria y 8% de drawdown máximo. Al cumplir 5 días rentables, solicitas tu retiro.'
+        ? 'You select your funded account ($1K to $100K) for a single one-time activation fee with zero recurring subscriptions. There are zero evaluation phases or waiting periods: you start trading immediately on our proprietary terminal under disciplined 2% daily loss and 8% maximum drawdown rules. Once you complete 5 profitable days, you can request your payout.'
+        : 'Seleccionas tu cuenta de capital ($1K a $100K) mediante una tarifa única de activación sin suscripciones mensuales recurrentes. Cero fases de examen ni periodos de espera: comienzas a operar inmediatamente en nuestra terminal propia bajo 2% de pérdida diaria y 8% de drawdown máximo. Al cumplir 5 días rentables, solicitas tu retiro.'
     },
     {
       q: isEn ? 'What markets can I trade?' : '¿Qué mercados puedo operar?',
@@ -53,8 +53,8 @@ export const FAQSection: React.FC = () => {
     {
       q: isEn ? 'How do payouts work?' : '¿Cómo funcionan los retiros?',
       a: isEn 
-        ? 'On your funded account, you can request profit withdrawals every 14 days after achieving at least 5 profitable trading days (+0.5% each). Profit split begins at 35% on payout 1, 50% on payout 2, and 80% permanently on payout 3+, sent directly in USDT or USDC.'
-        : 'En tu cuenta fondeada, puedes solicitar retiros de beneficios cada 14 días tras cumplir al menos 5 días rentables de operativa (+0,5% cada uno). El reparto inicia en 35% en el 1er retiro, 50% en el 2do y 80% permanente en el 3ero en adelante, transferido directamente en USDT o USDC.'
+        ? 'On your funded account, you can request profit withdrawals every 14 days after achieving at least 5 profitable trading days (+0.5% each). Profit split begins at 35% on payout 1, 50% on payout 2, 80% on payout 3, and reaches 90% on payout 4+, sent directly in USDT.'
+        : 'En tu cuenta fondeada, puedes solicitar retiros de beneficios cada 14 días tras cumplir al menos 5 días rentables de operativa (+0,5% cada uno). El reparto es progresivo: 35% en el 1er retiro, 50% en el 2do, 80% en el 3ero y 90% en el 4to en adelante, transferido directamente en USDT.'
     },
     {
       q: isEn ? 'Can I use my own strategy?' : '¿Puedo usar mi propia estrategia?',
@@ -97,7 +97,7 @@ export const FAQSection: React.FC = () => {
   return (
     <section 
       id="faq"
-      className="w-full py-20 sm:py-28 relative select-none bg-transparent"
+      className="min-h-screen w-full flex flex-col justify-center items-center py-20 sm:py-28 relative select-none bg-transparent"
     >
       <div className="w-full px-4 sm:px-6 lg:px-12 max-w-4xl mx-auto relative z-10">
         

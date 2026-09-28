@@ -24,7 +24,7 @@ export const WhyEklipseSection: React.FC = () => {
         ? 'Zero hidden clauses or subjective breaches. Your drawdown, targets, and parameters are calculated openly and in real time.' 
         : 'Cero cláusulas ocultas o faltas subjetivas. Tu drawdown, objetivos y parámetros se calculan en abierto y en tiempo real.',
       icon: ShieldCheck,
-      color: 'text-cyan-400'
+      color: 'text-purple-400'
     },
     {
       title: isEn ? 'Advanced risk engine' : 'Motor de riesgo avanzado',
@@ -42,14 +42,14 @@ export const WhyEklipseSection: React.FC = () => {
         ? 'Consistent traders unlock +25% capital bumps on every 3 profitable payout milestones, scaling up to $2,000,000 in institutional backing.' 
         : 'Los traders consistentes desbloquean aumentos del +25% de capital cada 3 ciclos de retiro rentables, escalando hasta $2,000,000.',
       icon: TrendingUp,
-      color: 'text-purple-400'
+      color: 'text-amber-400'
     }
   ];
 
   return (
     <section 
       id="why-eklipse"
-      className="w-full py-20 sm:py-28 relative select-none bg-transparent"
+      className="min-h-screen w-full flex flex-col justify-center items-center py-20 sm:py-28 relative select-none bg-transparent"
     >
       <div className="w-full px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto relative z-10 space-y-16">
         

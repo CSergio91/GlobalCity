@@ -21,8 +21,8 @@ export const Hero: React.FC<HeroProps> = ({ onOpenTerminal }) => {
   const [wordIndex, setWordIndex] = React.useState(0);
   const [isFlipping, setIsFlipping] = React.useState(false);
 
-  const spanishWords = ['Challenge', 'Estrés', 'Presión', 'Miedo'];
-  const englishWords = ['Challenges', 'Stress', 'Pressure', 'Fear'];
+  const spanishWords = ['Challenge', 'Reglas Ocultas', 'Estrés', 'Presión', 'Miedo'];
+  const englishWords = ['Challenges', 'Hidden Rules', 'Stress', 'Pressure', 'Fear'];
 
   React.useEffect(() => {
     const interval = setInterval(() => {
@@ -59,18 +59,20 @@ export const Hero: React.FC<HeroProps> = ({ onOpenTerminal }) => {
             {isEn ? 'Instant Crypto Funding.' : 'Fondeo Cripto Inmediato.'}
           </span>
           
-          <span className="flex items-center justify-center gap-3 mt-3 sm:mt-4 text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-snug">
-            <span className="text-white/90">
+          <div className="grid grid-cols-2 items-baseline mt-3 sm:mt-4 text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-snug w-full max-w-2xl mx-auto">
+            <span className="text-right pr-2 sm:pr-4 text-white/90 select-none">
               {isEn ? 'Zero' : 'Sin'}
             </span>
-            <span 
-              className={`inline-block pb-3 pt-1 transition-all duration-300 ease-out text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-emerald-300 to-cyan-400 drop-shadow-[0_0_35px_rgba(6,182,212,0.65)] ${
-                isFlipping ? 'opacity-0 -translate-y-2' : 'opacity-100 translate-y-0'
-              }`}
-            >
-              {currentDynamicWord}.
+            <span className="text-left pl-2 sm:pl-4 whitespace-nowrap overflow-visible">
+              <span 
+                className={`inline-block pb-3 pt-1 transition-all duration-300 ease-out text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-violet-200 to-amber-300 drop-shadow-[0_0_35px_rgba(168,85,247,0.65)] ${
+                  isFlipping ? 'opacity-0 -translate-y-2' : 'opacity-100 translate-y-0'
+                }`}
+              >
+                {currentDynamicWord}.
+              </span>
             </span>
-          </span>
+          </div>
         </h1>
 
         {/* 2. Action Button: Single Centered Primary CTA */}

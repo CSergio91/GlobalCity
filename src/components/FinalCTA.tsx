@@ -19,7 +19,7 @@ export const FinalCTA: React.FC = () => {
   };
 
   return (
-    <section className="py-24 sm:py-36 px-4 sm:px-6 relative overflow-hidden bg-slate-950 border-t border-white/10 select-none">
+    <section className="min-h-screen w-full flex flex-col justify-center items-center py-24 sm:py-36 px-4 sm:px-6 relative overflow-hidden bg-slate-950 border-t border-white/10 select-none">
       {/* Ambient Celestial Eclipse Core Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-gradient-to-r from-amber-500/20 via-yellow-400/15 to-amber-600/10 blur-[140px] pointer-events-none" />
 

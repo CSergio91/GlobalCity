@@ -47,25 +47,26 @@ export const RiskRulesSection: React.FC = () => {
         ? 'Achieve at least 5 profitable days generating at least +0.5% profit each before requesting a withdrawal.' 
         : 'Alcanza al menos 5 días rentables con un beneficio mínimo de +0,5% en cada sesión antes de solicitar retiro.',
       icon: Clock,
-      border: 'border-cyan-500/30',
-      badgeColor: 'text-cyan-400 bg-cyan-500/10'
+      border: 'border-purple-500/30',
+      badgeColor: 'text-purple-400 bg-purple-500/10'
     },
     {
-      label: isEn ? 'PROFIT TARGET' : 'PROFIT TARGET',
-      value: '8%',
+      label: isEn ? 'TARGET FOR 90% PAYOUT' : 'OBJETIVO PAGO 90%',
+      value: '15%',
+      subValue: isEn ? 'to unlock 90% split' : 'para pago del 90%',
       desc: isEn 
-        ? 'Achieve 8% simulated gain with zero time limits. Take as many days as you need to trade disciplined.' 
-        : 'Alcanza el 8% de ganancia simulada sin prisas ni límites de tiempo. Tómate los días que necesites.',
+        ? 'No initial target required to trade or receive your first payouts. Reach 15% cumulative profit to permanently unlock the maximum 90% payout split.' 
+        : 'Sin objetivos obligatorios para operar ni cobrar tus primeros retiros. Alcanza un 15% acumulado para lograr el pago del 90% permanente.',
       icon: Target,
       border: 'border-emerald-500/30',
       badgeColor: 'text-emerald-400 bg-emerald-500/10'
     },
     {
       label: isEn ? 'LEVERAGE' : 'APALANCAMIENTO',
-      value: '10x',
+      value: '20x – 100x',
       desc: isEn 
-        ? 'Disciplined 10x max leverage on all Crypto Futures contracts, preventing catastrophic liquidation.' 
-        : 'Apalancamiento máximo de 10x en todos los contratos de futuros cripto, garantizando disciplina y gestión de margen.',
+        ? 'Flexible 20x to 100x leverage across all Crypto Futures contracts with strict margin risk guardrails.' 
+        : 'Apalancamiento de 20x hasta 100x en todos los contratos de futuros cripto con protección de margen integrada.',
       icon: Zap,
       border: 'border-amber-500/30',
       badgeColor: 'text-amber-400 bg-amber-500/10'
@@ -75,7 +76,7 @@ export const RiskRulesSection: React.FC = () => {
   return (
     <section 
       id="rules"
-      className="w-full py-20 sm:py-28 relative select-none bg-slate-950/80 border-t border-b border-white/10"
+      className="min-h-screen w-full flex flex-col justify-center items-center py-16 sm:py-24 relative select-none bg-slate-950/80 border-t border-b border-white/10"
     >
       <div className="w-full px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto relative z-10">
         

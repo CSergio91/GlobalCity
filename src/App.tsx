@@ -3,7 +3,6 @@ import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { HeroScrollCanvas } from './components/HeroScrollCanvas';
 import { ProgramsSection } from './components/ProgramsSection';
-import { TerminalSection } from './components/TerminalSection';
 import { HorizontalShowcase } from './components/HorizontalShowcase';
 import { RiskRulesSection } from './components/RiskRulesSection';
 import { MarketsSection } from './components/MarketsSection';
@@ -108,11 +107,8 @@ function MainAppContent() {
           </div>
         </div>
 
-        {/* Section 3: Proprietary Terminal (Your trading. Our technology.) */}
-        <TerminalSection onOpenTerminal={handleOpenTerminal} />
-
-        {/* Horizontal Parallax Showcase */}
-        <HorizontalShowcase />
+        {/* Horizontal Terminal Showcase (Eklipse OS Experience) */}
+        <HorizontalShowcase onOpenTerminal={handleOpenTerminal} />
 
         {/* Section 5: Risk & Rules (Clear rules. No surprises. 5% Daily, 10% DD, 8% Target, 10x Lev) */}
         <RiskRulesSection />
