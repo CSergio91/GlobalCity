@@ -282,8 +282,3 @@
   will-change: transform;
 }
 
-.pause-on-hover:hover .animate-marquee-left,
-.pause-on-hover:hover .animate-marquee-right {
-  animation-play-state: paused;
-}
-

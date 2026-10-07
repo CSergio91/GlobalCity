@@ -161,8 +161,8 @@ export const MarketsSection: React.FC = () => {
       id="markets"
       className="relative min-h-screen h-screen max-h-screen w-full flex flex-col justify-center items-center overflow-hidden select-none bg-[#05070B]"
     >
-      {/* 1. SEAMLESS MOVING ASSETS BACKGROUND WALL (Dense Tighter Grid, Opposing Marquee Streams) */}
-      <div className="absolute inset-0 z-0 w-full h-full flex flex-col justify-center gap-1.5 sm:gap-2 py-1 overflow-hidden pause-on-hover">
+      {/* 1. SEAMLESS MOVING ASSETS BACKGROUND WALL (Dense Tighter Grid, Continuous Non-Stopping Marquee) */}
+      <div className="absolute inset-0 z-0 w-full h-full flex flex-col justify-center gap-1.5 sm:gap-2 py-1 overflow-hidden pointer-events-none">
         
         {/* Row 1: Flowing Left */}
         <div className="w-full flex overflow-hidden">
