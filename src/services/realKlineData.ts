@@ -44,7 +44,7 @@ export async function fetchRealHistoricalKlines(
   }
 
   // Generador de contingencia si el backend está offline o sin conexión
-  return generateFallbackHistoricalBars(fallbackPrice, limit, interval, endTime);
+  return generateFallbackHistoricalBars(fallbackPrice, limit, interval as any, endTime);
 }
 
 // Fallback generator if offline, network error or non-crypto asset (Forex/Metals/Futures)

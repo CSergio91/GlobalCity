@@ -1224,7 +1224,7 @@ export const TradingTerminal: React.FC<TradingTerminalProps> = ({
   }, []);
 
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
-  const chartInstanceRef = useRef<Chart | null>(null);
+  const chartInstanceRef = useRef<any>(null);
   const workerRef = useRef<Worker | null>(null);
 
   // Centrar milimétricamente el gráfico KLineChart en una vela/timestamp específico en medio de la pantalla
@@ -1520,7 +1520,7 @@ export const TradingTerminal: React.FC<TradingTerminalProps> = ({
 
     registerCustomChartOverlays();
 
-    const chart = init(container, {
+    const chart: any = init(container, {
       styles: ZYTI_CHART_THEME,
       locale: isEs ? 'es' : 'en'
     });

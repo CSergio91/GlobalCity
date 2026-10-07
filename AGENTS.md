@@ -67,24 +67,36 @@ El proyecto cuenta con todos los componentes esenciales sincronizados directamen
 
 Para probar la plataforma en local antes de desplegar en el VPS:
 
-### 1. Levantar Servicios de Infraestructura con Docker
-```bash
-docker compose up -d
+### 1. Requisito WSL 2 en Windows
+Si Docker Desktop muestra *"WSL needs updating"*:
+```powershell
+wsl --update
 ```
-* Levanta **Redis 7** en `localhost:6379` con política LRU para idempotencia de órdenes, cachés y locks distribuidos.
+Una vez actualizado, reiniciar Docker Desktop o pulsar *"Try Again"*.
 
-### 2. Base de Datos Supabase
-* Ejecutar el script `supabase/prop_firm_complete_schema_init.sql` en el SQL Editor de tu proyecto de Supabase (o mediante `npx supabase db push`).
+### 2. Levantar Servicios de Infraestructura con Docker
+```bash
+docker compose up -d eklipse-db eklipse-redis
+```
+* **PostgreSQL 16 (`eklipse_postgres`)** en `localhost:5432`: Ejecuta automáticamente el script DDL institucional de `docker/init.sql` (`/docker-entrypoint-initdb.d/01_init.sql`), aprovisionando las 8 tablas relacionales (`prop_firms`, `profiles`, `risk_rule_configs`, `trading_accounts`, `account_trades`, `equity_snapshots`, `api_credentials`, `risk_audit_events`), índices y semillas de reto.
+* **Redis 7 (`eklipse_redis`)** en `localhost:6379`: Con política LRU y AOF para cerrojos de idempotencia de órdenes (`SET NX`), cachés y locks distribuidos.
+* **Comprobación de tablas:**
+  ```bash
+  docker exec eklipse_postgres psql -U eklipse_admin -d eklipse_funded -c "\dt"
+  ```
 
-### 3. Levantar Servidores en Paralelo
+### 3. Base de Datos en la Nube (Alternativa Supabase Cloud)
+* Si no se usa Docker, ejecutar el script `supabase/prop_firm_complete_schema_init.sql` en el SQL Editor del panel de Supabase.
+
+### 4. Levantar Servidores en Paralelo
 ```bash
 # Terminal 1: Backend / Motor de Riesgo WebSocket & Cron
 npm run server
-# o directamente: node server/tradingHub.js
+# o directamente: node server/tradingHub.js (Escuchando en http://localhost:8080)
 
-# Terminal 2: Frontend Web
-pnpm dev
-# Escuchando en http://localhost:3000
+# Terminal 2: Frontend Web (Terminal & CRM Nexus)
+npm run dev
+# Escuchando en http://localhost:3100 (para coexistir con ZYTI Trade en 3000)
 ```
 
 ---

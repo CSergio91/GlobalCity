@@ -4,7 +4,7 @@ import { ALL_INDICATORS } from './types';
 /**
  * Estilo institucional de KLineChart integrado con el tema Warm Cream de ZYTI Trade
  */
-export const ZYTI_CHART_THEME: DeepPartial<Styles> = {
+export const ZYTI_CHART_THEME: any = {
   grid: {
     show: true,
     horizontal: {
@@ -190,7 +190,7 @@ export const ZYTI_CHART_THEME: DeepPartial<Styles> = {
 /**
  * Función reutilizable para montar o restaurar los indicadores técnicos activos en KLineChart
  */
-export const applyIndicatorsToChart = (chart: Chart, indicators: string[]): void => {
+export const applyIndicatorsToChart = (chart: any, indicators: string[]): void => {
   if (!chart) return;
   const hasOhlc = indicators.includes('OHLC');
   chart.setStyles({
