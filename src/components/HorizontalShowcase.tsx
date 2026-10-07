@@ -1,6 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
 import footerBg from '../assets/images/footer.webp';
 import eklipseEmblemImg from '../assets/images/eklipse_sol_luna_emblem_transparent.png';
+import terminalExecutionImg from '../assets/images/terminal/terminal_execution_chart.png';
+import terminalBracketsImg from '../assets/images/terminal/terminal_risk_reward_brackets.png';
+import terminalCurveImg from '../assets/images/terminal/terminal_equity_curve.png';
+import terminalDepthImg from '../assets/images/terminal/terminal_orderbook_l2_depth.png';
 import { 
   ArrowRight, 
   Terminal, 
@@ -9,7 +13,9 @@ import {
   Coins, 
   Zap, 
   CheckCircle2, 
-  SlidersHorizontal 
+  SlidersHorizontal,
+  Maximize2,
+  ExternalLink
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppRouter } from '../context/RouterContext';
@@ -25,15 +31,6 @@ export const HorizontalShowcase: React.FC<HorizontalShowcaseProps> = ({ onOpenTe
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
-
-  // Active pair in mini preview
-  const [activePreviewPair, setActivePreviewPair] = useState<'BTC' | 'ETH' | 'SOL'>('BTC');
-
-  const pairPrices = {
-    BTC: { price: '$64,820.50', change: '+3.42%' },
-    ETH: { price: '$3,485.20', change: '+2.18%' },
-    SOL: { price: '$152.40', change: '+5.74%' },
-  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -63,59 +60,67 @@ export const HorizontalShowcase: React.FC<HorizontalShowcaseProps> = ({ onOpenTe
   const slides = [
     {
       index: '01',
-      tag: isEn ? 'PROPRIETARY TERMINAL' : 'TERMINAL PROPIA',
-      title: isEn ? 'Built Exclusively for Crypto Futures' : 'Diseñada para Futuros Cripto',
+      tag: isEn ? 'PROPRIETARY TERMINAL · TRADER COMFORT' : 'TERMINAL PROPIA · COMODIDAD TOTAL',
+      title: isEn ? 'Built for Trader Comfort & Peak Precision' : 'Diseñada para la Comodidad del Trader',
       desc: isEn 
-        ? 'Trade your funded account directly in our web terminal. Real-time candlestick charts, order books, and positions tracker in a fast, clean interface with zero downloads.'
-        : 'Opera tus cuentas de fondeo directamente en nuestra terminal web. Gráficos de velas en tiempo real, libro de órdenes y panel de posiciones en una interfaz limpia y sin descargas.',
+        ? 'A dedicated, fluid trading environment engineered from scratch. High-FPS candlestick charts, integrated order ticket on the right, and interactive position tags on chart with zero lag.'
+        : 'Un entorno de trading dedicado y fluido creado desde cero. Gráficos de velas de alta tasa de refresco a 60 FPS, panel de órdenes lateral integrado y posiciones interactivas en pantalla sin demoras.',
       features: [
-        { label: isEn ? 'Available Pairs' : 'Pares Disponibles', value: 'BTC · ETH · SOL' },
-        { label: isEn ? 'Platform Access' : 'Acceso', value: isEn ? '100% Web Terminal' : 'Terminal 100% Web' },
-        { label: isEn ? 'Trading Hours' : 'Horario', value: isEn ? '24/7 Continuous' : '24/7 Continuo' },
+        { label: isEn ? 'Chart Engine' : 'Motor Gráfico', value: 'KLineCharts GPU (60 FPS)' },
+        { label: isEn ? 'Data Feed' : 'Conexión en Vivo', value: 'WebSocket (< 15ms)' },
+        { label: isEn ? 'Zero Downloads' : 'Sin Instalación', value: isEn ? '100% Web Terminal' : 'Terminal 100% Web' },
       ],
-      type: 'chart-preview'
+      image: terminalExecutionImg,
+      windowTitle: 'EKLIPSE OS · Execution Terminal (BTC/USDT 5m)',
+      highlightBadge: '60 FPS GPU'
     },
     {
       index: '02',
-      tag: isEn ? 'ORDER EXECUTION' : 'GESTIÓN DE ÓRDENES',
-      title: isEn ? 'Direct Execution with Stop Loss & Take Profit' : 'Ejecución Directa con Stop Loss y Take Profit',
+      tag: isEn ? 'VISUAL RISK/REWARD · PRE-TRADE BRACKETS' : 'PROYECCIÓN VISUAL · BRACKETS R:B',
+      title: isEn ? 'Project R:R Brackets Directly on Candlesticks' : 'Proyecta Tu Ratio R:B en el Gráfico',
       desc: isEn 
-        ? 'Place market and limit orders with built-in protection brackets. Set your exact Stop Loss and Take Profit levels to safeguard your equity automatically on every position.'
-        : 'Abre órdenes a mercado o límite con protección integrada. Define tus niveles exactos de Stop Loss y Take Profit para proteger tu capital de forma automática en cada operación.',
+        ? 'Plan and visualize your Take Profit (green) and Stop Loss (red) target zones directly on the candles before executing. Quick buttons for 1:1 to 1:4 ratios with instant automatic margin calculation.'
+        : 'Visualiza tus zonas de Take Profit (área verde) y Stop Loss (área roja) directamente sobre las velas antes de disparar al mercado. Ratios rápidos de 1:1 a 1:4 con cálculo de margen automático.',
       features: [
-        { label: isEn ? 'Protection' : 'Protección', value: 'SL & TP Automático' },
-        { label: isEn ? 'Order Types' : 'Tipos de Orden', value: 'Market & Limit' },
-        { label: isEn ? 'Profit Tracking' : 'Seguimiento', value: isEn ? 'Live Unrealized PnL' : 'PnL en Tiempo Real' },
+        { label: isEn ? 'R:R Projection' : 'Proyección R:B', value: '1:1 · 1:1.5 · 1:2 · 1:3 · 1:4' },
+        { label: isEn ? 'Order Types' : 'Tipos de Orden', value: 'Market & Limit Brackets' },
+        { label: isEn ? 'Protection' : 'Protección', value: isEn ? 'Auto SL/TP Calculation' : 'Cálculo Automático SL/TP' },
       ],
-      type: 'orders'
+      image: terminalBracketsImg,
+      windowTitle: 'EKLIPSE OS · Visual R:R Bracket Engine',
+      highlightBadge: isEn ? 'Visual Brackets' : 'Brackets Visuales'
     },
     {
       index: '03',
-      tag: isEn ? 'RISK ENGINE' : 'CONTROL DE RIESGO',
-      title: isEn ? 'Clear Rules Visible at All Times' : 'Reglas Claras y Visibles en Todo Momento',
+      tag: isEn ? 'EQUITY CURVE · DETERMINISTIC SAFETY' : 'CURVA DE RENDIMIENTO · CONTROL TOTAL',
+      title: isEn ? 'Real-Time Equity Curve with Safety Buffers' : 'Curva de Rendimiento y Umbrales en Vivo',
       desc: isEn 
-        ? 'Know your exact risk limits with continuous monitoring. Track your 2% maximum daily loss and 8% overall drawdown openly so you trade with clarity and discipline.'
-        : 'Conoce tus límites exactos con monitoreo continuo. Consulta tu pérdida máxima diaria del 2% y drawdown del 8% de forma abierta para operar con disciplina y sin sorpresas.',
+        ? 'Keep total control without external spreadsheets. See your exact real-time distance to TP Target ($106K), Break-Even Base ($100K), Daily Loss Limit (2%), and Max Drawdown (8%) plotted continuously.'
+        : 'Control total de tu cuenta sin hojas de cálculo externas. Visualiza en vivo tu distancia exacta al TP Target ($106K), Break-Even ($100K), Pérdida Diaria (2%) y Drawdown Máximo (8%).',
       features: [
-        { label: isEn ? 'Daily Loss Limit' : 'Pérdida Diaria', value: '2% por Sesión' },
-        { label: isEn ? 'Max Drawdown' : 'Drawdown Máximo', value: '8% de Capital' },
-        { label: isEn ? 'Account Status' : 'Auditoría', value: isEn ? 'Real-Time Equity Sync' : 'Balance en Directo' },
+        { label: isEn ? 'Daily Loss Limit' : 'Límite Diario', value: '2% Fijo (00:00 UTC)' },
+        { label: isEn ? 'Max Drawdown' : 'Drawdown Máximo', value: '8% de Capital Inicial' },
+        { label: isEn ? 'In-RAM Telemetry' : 'Auditoría en RAM', value: isEn ? '< 1ms Synchronous' : '< 1ms Síncrono' },
       ],
-      type: 'risk'
+      image: terminalCurveImg,
+      windowTitle: 'EKLIPSE OS · Performance Curve & Risk Thresholds',
+      highlightBadge: isEn ? 'Dynamic Safety Buffers' : 'Colchón de Seguridad'
     },
     {
       index: '04',
-      tag: isEn ? 'CRYPTO PAYOUTS' : 'RETIROS EN USDT',
-      title: isEn ? 'Keep Your Profits. Paid On-Chain in USDT.' : 'Conserva tus Ganancias. Pagos en USDT.',
+      tag: isEn ? 'L2 DEPTH & BREAK-EVEN SHIELD' : 'PROFUNDIDAD L2 · PROTECCIÓN BREAK-EVEN',
+      title: isEn ? 'L2 Order Book Depth & 1-Click Break-Even' : 'Profundidad L2 y Protección con 1 Clic',
       desc: isEn 
-        ? 'Complete 5 profitable trading days and request bi-weekly withdrawals. Profits are sent directly to your crypto wallet in USDT with zero waiting and zero hidden clauses.'
-        : 'Cumple 5 días rentables y solicita retiros cada 14 días. Las ganancias se envían directamente a tu billetera en USDT, sin esperas ni cláusulas ocultas.',
+        ? 'Inspect live bids and asks depth with ultra-tight spreads ($0.01). When in profit, lock in capital instantly with our 1-click Break-Even button, eliminating trade risk effortlessly.'
+        : 'Supervisa la profundidad del libro L2 con micro-spreads de $0.01. Cuando tu trade esté en positivo, asegura tu capital al instante con el botón de Break-Even en 1 clic para eliminar el riesgo.',
       features: [
-        { label: isEn ? 'Profit Split' : 'Reparto de Ganancias', value: '35% → 50% → 80% → 90%' },
-        { label: isEn ? 'Payout Frequency' : 'Frecuencia', value: isEn ? 'Every 14 Days' : 'Cada 14 Días' },
-        { label: isEn ? 'Billing' : 'Suscripción', value: isEn ? 'Zero Monthly Fees' : 'Sin Mensualidades' },
+        { label: isEn ? 'L2 Order Book' : 'Libro de Órdenes L2', value: isEn ? 'Live Micro-Spread ($0.01)' : 'Micro-Spread ($0.01)' },
+        { label: isEn ? 'Safety Trigger' : 'Gatillo de Seguridad', value: isEn ? '1-Click Trailing BE' : 'Trailing BE en 1 Clic' },
+        { label: isEn ? 'Settlement' : 'Cobro de Retiros', value: isEn ? 'USDT On-Chain (< 24h)' : 'USDT On-Chain (< 24h)' },
       ],
-      type: 'payouts'
+      image: terminalDepthImg,
+      windowTitle: 'EKLIPSE OS · L2 Order Book & Trailing Break-Even',
+      highlightBadge: isEn ? 'Spread $0.01 · 1-Click BE' : 'Spread $0.01 · BE en 1 Clic'
     }
   ];
 
@@ -176,10 +181,10 @@ export const HorizontalShowcase: React.FC<HorizontalShowcaseProps> = ({ onOpenTe
             {slides.map((slide, idx) => (
               <div 
                 key={idx} 
-                className="w-screen h-full flex flex-col justify-center px-4 sm:px-10 lg:px-20 xl:px-28 flex-shrink-0 py-6 sm:py-0"
+                className="w-screen h-full flex flex-col justify-center px-4 sm:px-8 lg:px-16 xl:px-24 flex-shrink-0 py-6 sm:py-0"
               >
                 {/* Eklipse Dark Glass Console Box - High Readability & Contrast */}
-                <div className="max-w-5xl mx-auto w-full p-6 sm:p-10 lg:p-12 rounded-3xl bg-slate-950/80 border border-white/20 backdrop-blur-3xl shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_50px_rgba(245,158,11,0.2),inset_0_1px_1px_rgba(255,255,255,0.2)] my-auto relative z-10 overflow-hidden text-white">
+                <div className="max-w-6xl mx-auto w-full p-6 sm:p-8 lg:p-10 rounded-3xl bg-slate-950/85 border border-white/20 backdrop-blur-3xl shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_50px_rgba(245,158,11,0.2),inset_0_1px_1px_rgba(255,255,255,0.2)] my-auto relative z-10 overflow-hidden text-white">
                   
                   {/* Top Bar: Tag & Index */}
                   <div className="flex items-center justify-between mb-4 sm:mb-6 border-b border-white/10 pb-3">
@@ -194,30 +199,30 @@ export const HorizontalShowcase: React.FC<HorizontalShowcaseProps> = ({ onOpenTe
                     </span>
                   </div>
 
-                  {/* Main Grid: Info (Left) + Visual Preview (Right) */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                  {/* Main Grid: Info (Left 5 cols) + Visual Framed Terminal Screenshot (Right 7 cols) */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
                     
-                    {/* Left Column: Text & Features (7 cols) */}
-                    <div className="lg:col-span-7 space-y-4 sm:space-y-6">
-                      <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+                    {/* Left Column: Text & Features (5 cols) */}
+                    <div className="lg:col-span-5 space-y-4 sm:space-y-5">
+                      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
                         {slide.title}
                       </h2>
 
-                      <p className="text-sm sm:text-base text-slate-200 font-normal leading-relaxed">
+                      <p className="text-xs sm:text-sm text-slate-200 font-normal leading-relaxed">
                         {slide.desc}
                       </p>
 
                       {/* 3 Clear Feature Metric Cells */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
                         {slide.features.map((f, fIdx) => (
                           <div 
                             key={fIdx} 
-                            className="p-3.5 rounded-xl bg-slate-900/80 border border-white/10 backdrop-blur-md"
+                            className="p-3 rounded-xl bg-slate-900/80 border border-white/10 backdrop-blur-md"
                           >
-                            <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+                            <div className="text-[9px] font-mono uppercase tracking-wider text-slate-400 font-bold">
                               {f.label}
                             </div>
-                            <div className="text-sm font-mono font-bold text-amber-300 mt-1 truncate">
+                            <div className="text-xs font-mono font-bold text-amber-300 mt-1 truncate">
                               {f.value}
                             </div>
                           </div>
@@ -228,124 +233,64 @@ export const HorizontalShowcase: React.FC<HorizontalShowcaseProps> = ({ onOpenTe
                       <div className="pt-2">
                         <button
                           onClick={handleAction}
-                          className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 font-mono font-black text-xs sm:text-sm uppercase tracking-wider shadow-[0_4px_20px_rgba(245,158,11,0.35)] hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center gap-2.5 cursor-pointer group"
+                          className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 font-mono font-black text-xs uppercase tracking-wider shadow-[0_4px_20px_rgba(245,158,11,0.35)] hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer group"
                         >
                           <Terminal className="w-4 h-4 text-slate-950" />
-                          <span>{isEn ? 'Explore Terminal' : 'Explorar la Terminal'}</span>
-                          <ArrowRight className="w-4 h-4 stroke-[3] group-hover:translate-x-1 transition-transform" />
+                          <span>{isEn ? 'Open Web Terminal' : 'Abrir Terminal Web'}</span>
+                          <ArrowRight className="w-3.5 h-3.5 stroke-[3] group-hover:translate-x-1 transition-transform" />
                         </button>
                       </div>
                     </div>
 
-                    {/* Right Column: Visual Component Preview (5 cols) */}
-                    <div className="lg:col-span-5">
-                      {slide.type === 'chart-preview' && (
-                        <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-white/10 shadow-xl space-y-4">
-                          {/* Pair Switcher */}
-                          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                            <div className="flex items-center gap-1.5">
-                              {(['BTC', 'ETH', 'SOL'] as const).map(p => (
-                                <button
-                                  key={p}
-                                  type="button"
-                                  onClick={() => setActivePreviewPair(p)}
-                                  className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
-                                    activePreviewPair === p
-                                      ? 'bg-amber-400 text-slate-950 shadow-sm'
-                                      : 'bg-white/5 text-slate-400 hover:text-white'
-                                  }`}
-                                >
-                                  {p}
-                                </button>
-                              ))}
-                            </div>
-                            <div className="text-xs font-mono font-bold text-emerald-400">
-                              {pairPrices[activePreviewPair].price}
-                            </div>
+                    {/* Right Column: Framed High-Resolution Terminal Screenshot (7 cols) */}
+                    <div className="lg:col-span-7">
+                      <div 
+                        onClick={handleAction}
+                        className="relative group/window rounded-2xl bg-slate-950/90 border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.9),0_0_35px_rgba(245,158,11,0.15)] overflow-hidden transition-all duration-300 hover:border-amber-400/50 cursor-pointer"
+                      >
+                        {/* macOS / Obsidian Style Window Titlebar */}
+                        <div className="px-4 py-2.5 bg-slate-900/90 border-b border-white/10 flex items-center justify-between font-mono text-[11px]">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80 shrink-0" />
+                            <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80 shrink-0" />
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80 shrink-0" />
+                            <span className="text-slate-300 font-semibold ml-2 truncate text-[10px] sm:text-[11px]">
+                              {slide.windowTitle}
+                            </span>
                           </div>
 
-                          {/* Simplified Candlestick Graph Graphic */}
-                          <div className="h-36 w-full bg-slate-950/80 rounded-xl p-3 flex items-end gap-2 border border-white/5">
-                            {[30, 45, 25, 55, 70, 50, 85, 65, 95, 80, 110, 120].map((h, bIdx) => (
-                              <div key={bIdx} className="flex-1 flex flex-col items-center justify-end h-full">
-                                <div className={`w-full rounded-sm ${bIdx % 3 === 1 ? 'bg-rose-500/80' : 'bg-emerald-400/80'}`} style={{ height: `${h}%` }} />
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Quick Stats */}
-                          <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
-                            <span>{isEn ? 'Mark Price' : 'Precio de Marca'}</span>
-                            <span className="text-white font-bold">{pairPrices[activePreviewPair].price}</span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              <span>{slide.highlightBadge}</span>
+                            </span>
+                            <Maximize2 className="w-3.5 h-3.5 text-slate-400 group-hover/window:text-amber-300 transition-colors hidden sm:inline" />
                           </div>
                         </div>
-                      )}
 
-                      {slide.type === 'orders' && (
-                        <div className="p-5 rounded-2xl bg-slate-900/90 border border-white/10 shadow-xl space-y-3 font-mono text-xs">
-                          <div className="text-slate-400 uppercase text-[10px] tracking-wider border-b border-white/10 pb-2">
-                            {isEn ? 'Active Order Safeguard' : 'Protección de Orden'}
-                          </div>
-                          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-emerald-400">
-                            <span>Take Profit (TP)</span>
-                            <span className="font-bold">+15% Objetivo (90% Payout)</span>
-                          </div>
-                          <div className="p-3 rounded-xl bg-slate-950/70 border border-white/5 flex items-center justify-between text-white">
-                            <span>{isEn ? 'Leverage' : 'Apalancamiento'}</span>
-                            <span className="font-bold text-amber-300">20x – 100x</span>
-                          </div>
-                          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between text-rose-400">
-                            <span>Stop Loss (SL)</span>
-                            <span className="font-bold">-2% Límite</span>
-                          </div>
+                        {/* High-Resolution Screenshot with Smooth Ambient Zoom */}
+                        <div className="relative overflow-hidden bg-slate-950/80 aspect-[16/10] sm:aspect-[16/9] flex items-center justify-center">
+                          <img 
+                            src={slide.image} 
+                            alt={slide.title}
+                            className="w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover/window:scale-[1.03] filter brightness-[1.03] contrast-[1.08]"
+                            loading="lazy"
+                          />
+                          
+                          {/* Ambient Glass Vignette & Hover Sheen */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent pointer-events-none" />
+                          <div className="absolute inset-0 opacity-0 group-hover/window:opacity-100 transition-opacity duration-300 bg-amber-400/[0.03] pointer-events-none" />
                         </div>
-                      )}
 
-                      {slide.type === 'risk' && (
-                        <div className="p-5 rounded-2xl bg-slate-900/90 border border-white/10 shadow-xl space-y-3 font-mono text-xs">
-                          <div className="text-slate-400 uppercase text-[10px] tracking-wider border-b border-white/10 pb-2">
-                            {isEn ? 'Risk Monitor Status' : 'Panel de Control de Riesgo'}
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-slate-300">{isEn ? 'Daily Loss' : 'Pérdida Diaria'}</span>
-                              <span className="text-rose-400 font-bold">2.00% Max</span>
-                            </div>
-                            <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden border border-white/10">
-                              <div className="h-full bg-rose-500 rounded-full" style={{ width: '25%' }} />
-                            </div>
-                          </div>
-                          <div className="space-y-2 pt-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-slate-300">{isEn ? 'Max Drawdown' : 'Drawdown Total'}</span>
-                              <span className="text-amber-400 font-bold">8.00% Max</span>
-                            </div>
-                            <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden border border-white/10">
-                              <div className="h-full bg-amber-400 rounded-full" style={{ width: '15%' }} />
-                            </div>
-                          </div>
+                        {/* Interactive Click Hint Bar */}
+                        <div className="px-4 py-1.5 bg-slate-900/60 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-slate-400">
+                          <span className="truncate">{isEn ? 'Interactive Institutional Workspace' : 'Espacio de Trabajo Institucional'}</span>
+                          <span className="text-amber-300 font-bold flex items-center gap-1 shrink-0">
+                            <span>{isEn ? 'Click to Launch' : 'Clic para Explorar'}</span>
+                            <ExternalLink className="w-2.5 h-2.5" />
+                          </span>
                         </div>
-                      )}
-
-                      {slide.type === 'payouts' && (
-                        <div className="p-5 rounded-2xl bg-slate-900/90 border border-white/10 shadow-xl space-y-3 font-mono text-xs">
-                          <div className="text-slate-400 uppercase text-[10px] tracking-wider border-b border-white/10 pb-2">
-                            {isEn ? 'Reward Distribution' : 'Distribución de Pagos'}
-                          </div>
-                          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/70 border border-white/5">
-                            <span className="text-slate-300">{isEn ? 'Currency' : 'Moneda'}</span>
-                            <span className="text-emerald-400 font-bold">USDT On-Chain</span>
-                          </div>
-                          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/70 border border-white/5">
-                            <span className="text-slate-300">{isEn ? 'Scale Progression' : 'Escala'}</span>
-                            <span className="text-amber-400 font-bold">35% → 50% → 80% → 90%</span>
-                          </div>
-                          <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
-                            <span className="text-emerald-300">{isEn ? 'Billing' : 'Cobro'}</span>
-                            <span className="text-emerald-400 font-bold">{isEn ? 'One-time only' : 'Pago único'}</span>
-                          </div>
-                        </div>
-                      )}
+                      </div>
                     </div>
 
                   </div>

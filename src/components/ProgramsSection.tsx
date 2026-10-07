@@ -149,14 +149,19 @@ export const ProgramsSection: React.FC = () => {
         
         {/* Section Header */}
         <ScrollReveal animation="fade-up" duration={500}>
-          <div className="text-center space-y-2 max-w-xl mx-auto">
+          <div className="text-center space-y-3 max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-amber-300 font-mono text-[10px] font-bold uppercase tracking-widest shadow-md">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              <span>{isEn ? 'DIRECT CAPITAL ALLOCATION · USDT FUTURES' : 'ASIGNACIÓN DIRECTA · DERIVADOS EN USDT'}</span>
+            </div>
+            
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-              {isEn ? 'Choose Your Account' : 'Elige Tu Cuenta'}
+              {isEn ? 'Choose Your Capital Tier' : 'Elige Tu Nivel de Capital'}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300">
+            <p className="text-xs sm:text-sm text-slate-300 max-w-lg mx-auto leading-relaxed">
               {isEn 
-                ? 'Instant crypto funding with clear rules. Select your capital and start trading.' 
-                : 'Fondeo cripto inmediato con reglas claras. Selecciona tu capital y comienza.'}
+                ? 'Direct institutional capital accounts from $1,000 to $100,000 USDT. Zero evaluation traps: start trading immediately with up to 90% profit split.' 
+                : 'Cuentas de capital corporativo directo de $1,000 a $100,000 USDT. Cero trampas de examen: comienzas a operar de inmediato con hasta 90% de reparto.'}
             </p>
           </div>
         </ScrollReveal>
@@ -316,7 +321,7 @@ export const ProgramsSection: React.FC = () => {
 
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase tracking-wider bg-amber-400/15 text-amber-300 border border-amber-400/40 backdrop-blur-md shadow-[0_0_12px_rgba(245,158,11,0.2)] flex items-center gap-1">
                             <Flame className="w-3 h-3 text-amber-400" />
-                            {size.popular ? 'Más Popular' : 'Instantáneo'}
+                            {size.popular ? (isEn ? 'Most Popular' : 'Más Popular') : (isEn ? 'Instant' : 'Instantáneo')}
                           </span>
                         </div>
 
@@ -344,7 +349,7 @@ export const ProgramsSection: React.FC = () => {
                               : 'text-slate-400 hover:text-white'
                           }`}
                         >
-                          20% Estándar
+                          {isEn ? '20% Standard' : '20% Estándar'}
                         </button>
 
                         <button
@@ -369,47 +374,65 @@ export const ProgramsSection: React.FC = () => {
                         {/* Columna Izquierda: Parámetros de Riesgo */}
                         <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-xl space-y-2.5 shadow-[inset_0_1px_0px_rgba(255,255,255,0.1)]">
                           <div>
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Apalancamiento</div>
+                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+                              {isEn ? 'Leverage' : 'Apalancamiento'}
+                            </div>
                             <div className="text-xs font-black text-white mt-0.5">20x – 100x</div>
                           </div>
 
                           <div className="pt-1.5 border-t border-white/10">
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Pérdida Diaria</div>
+                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+                              {isEn ? 'Daily Loss' : 'Pérdida Diaria'}
+                            </div>
                             <div className="text-xs font-black text-rose-400 mt-0.5">2% (-${dailyLossAmount})</div>
                           </div>
 
                           <div className="pt-1.5 border-t border-white/10">
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Drawdown Máx</div>
+                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+                              {isEn ? 'Max Drawdown' : 'Drawdown Máx'}
+                            </div>
                             <div className="text-xs font-black text-rose-400 mt-0.5">8% (-${maxDrawdownAmount})</div>
                           </div>
 
                           <div className="pt-1.5 border-t border-white/10">
                             <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Target</div>
-                            <div className="text-xs font-black text-white mt-0.5">Sin Límite</div>
+                            <div className="text-xs font-black text-white mt-0.5">
+                              {isEn ? 'No Target' : 'Sin Límite'}
+                            </div>
                           </div>
                         </div>
 
                         {/* Columna Derecha: Reglas y Payouts */}
                         <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-xl space-y-2.5 shadow-[inset_0_1px_0px_rgba(255,255,255,0.1)]">
                           <div>
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Consistencia</div>
+                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+                              {isEn ? 'Consistency' : 'Consistencia'}
+                            </div>
                             <div className={`text-xs font-black mt-0.5 ${isFlexAddon ? 'text-amber-300' : 'text-purple-300'}`}>
-                              {isFlexAddon ? '40% Flex' : '20% Base'}
+                              {isFlexAddon ? '40% Flex' : (isEn ? '20% Base' : '20% Base')}
                             </div>
                           </div>
 
                           <div className="pt-1.5 border-t border-white/10">
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Días Mínimos</div>
-                            <div className="text-xs font-black text-purple-300 mt-0.5">5 Días</div>
+                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+                              {isEn ? 'Min Days' : 'Días Mínimos'}
+                            </div>
+                            <div className="text-xs font-black text-purple-300 mt-0.5">
+                              {isEn ? '5 Days' : '5 Días'}
+                            </div>
                           </div>
 
                           <div className="pt-1.5 border-t border-white/10">
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Reparto</div>
+                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+                              {isEn ? 'Profit Split' : 'Reparto'}
+                            </div>
                             <div className="text-xs font-black text-emerald-400 mt-0.5">35/50/80/90</div>
                           </div>
 
                           <div className="pt-1.5 border-t border-white/10">
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Puntos 5x</div>
+                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+                              {isEn ? 'Loyalty Points' : 'Puntos 5x'}
+                            </div>
                             <div className="text-xs font-black text-emerald-400 mt-0.5 flex items-center gap-0.5">
                               {Math.round(size.basePriceUSDT * (isFlexAddon ? 2.3 : 2))} Pts <Check className="w-3 h-3 stroke-[3]" />
                             </div>
@@ -433,7 +456,7 @@ export const ProgramsSection: React.FC = () => {
                           </div>
                           {isFlexAddon && (
                             <span className="text-[10px] font-mono text-amber-300 font-bold">
-                              Add-on 40% Incluido
+                              {isEn ? '40% Add-on Active' : 'Add-on 40% Incluido'}
                             </span>
                           )}
                         </div>
@@ -441,7 +464,7 @@ export const ProgramsSection: React.FC = () => {
                         {/* Coupon Banner in Glass */}
                         <div className="p-1.5 rounded-lg bg-white/[0.04] border border-white/15 backdrop-blur-md flex items-center justify-between text-[10px] font-mono shadow-inner">
                           <span className="text-slate-300 truncate">
-                            💳 Código <strong className="text-white">EKLIPSE</strong> (-{discountPercent}%)
+                            💳 {isEn ? 'Code' : 'Código'} <strong className="text-white">EKLIPSE</strong> (-{discountPercent}%)
                           </span>
                           <div className="flex items-center gap-1 shrink-0 ml-1">
                             {[0, 10].map(pct => (
@@ -473,7 +496,7 @@ export const ProgramsSection: React.FC = () => {
                           }}
                           className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:brightness-110 text-slate-950 font-mono font-black text-xs uppercase tracking-wider shadow-[0_0_22px_rgba(245,158,11,0.4),inset_0_1px_1px_rgba(255,255,255,0.5)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
                         >
-                          <span>Empezar con ${size.capital.toLocaleString()}{isFlexAddon ? ' Flex' : ''}</span>
+                          <span>{isEn ? `Start with $${size.capital.toLocaleString()}${isFlexAddon ? ' Flex' : ''}` : `Empezar con $${size.capital.toLocaleString()}${isFlexAddon ? ' Flex' : ''}`}</span>
                           <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
                         </button>
                       </div>
@@ -483,6 +506,28 @@ export const ProgramsSection: React.FC = () => {
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Institutional Trust Guarantees Row */}
+        <div className="w-full max-w-4xl pt-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 text-center font-mono text-[11px] text-slate-300">
+            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-white/10 backdrop-blur-md flex items-center justify-center gap-1.5">
+              <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>{isEn ? 'Instant Credentials' : 'Entrega Inmediata'}</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-white/10 backdrop-blur-md flex items-center justify-center gap-1.5">
+              <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>{isEn ? 'Direct USDT Futures' : 'Futuros en USDT'}</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-white/10 backdrop-blur-md flex items-center justify-center gap-1.5">
+              <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>{isEn ? 'No Evaluation Traps' : 'Sin Fases Trampa'}</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-white/10 backdrop-blur-md flex items-center justify-center gap-1.5">
+              <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>{isEn ? 'Bi-Weekly Payouts' : 'Retiros Quincenales'}</span>
+            </div>
           </div>
         </div>
 

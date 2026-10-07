@@ -135,9 +135,48 @@ export const RiskRulesSection: React.FC = () => {
           })}
         </div>
 
+        {/* Autonomous RAM Risk Engine Architecture Guarantee Banner */}
+        <ScrollReveal animation="fade-up" delay={250} duration={750}>
+          <div className="mt-12 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-950/95 to-slate-900/90 border border-white/15 backdrop-blur-2xl p-6 sm:p-8 shadow-[0_10px_35px_rgba(0,0,0,0.8)]">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              
+              <div className="md:col-span-8 space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-black uppercase tracking-wider">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{isEn ? 'SUB-MILLISECOND IN-RAM PIPELINE' : 'PIPELINE EN MEMORIA RAM < 1MS'}</span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                  {isEn ? 'Deterministic Pre-Trade Execution Protection' : 'Protección Determinista de Ejecución Pre-Trade'}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-300 font-normal leading-relaxed">
+                  {isEn 
+                    ? 'Our proprietary Risk Engine validates margin and limits in microsecond RAM before orders reach the book. Zero human intervention, zero arbitrary account liquidations, and deterministic daily reset at 00:00 UTC.' 
+                    : 'Nuestro motor de riesgo propio valida margen y límites en microsegundos de RAM antes de que las órdenes lleguen al libro. Cero intervención humana, cero liquidaciones arbitrarias y reinicio diario determinista a las 00:00 UTC.'}
+                </p>
+              </div>
+
+              <div className="md:col-span-4 grid grid-cols-2 gap-3 font-mono text-xs">
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-center">
+                  <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+                    {isEn ? 'Latency' : 'Latencia'}
+                  </div>
+                  <div className="text-base font-black text-amber-300 mt-0.5">&lt; 1ms</div>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-center">
+                  <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+                    {isEn ? 'Reset Sync' : 'Reinicio EOD'}
+                  </div>
+                  <div className="text-base font-black text-emerald-400 mt-0.5">00:00 UTC</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </ScrollReveal>
+
         {/* Mandated Lead Subtitle */}
         <ScrollReveal animation="fade-up" delay={300}>
-          <div className="mt-14 text-center">
+          <div className="mt-12 text-center">
             <p className="text-base sm:text-xl font-mono font-bold text-amber-300 max-w-xl mx-auto drop-shadow-sm">
               {isEn ? 'Know exactly where you stand at every moment.' : 'Conoce exactamente tu posición en todo momento.'}
             </p>
