@@ -1,5 +1,5 @@
 # ============================================================================
-# ZYTI TRADE - INSTITUTIONAL WEBSOCKET & REDIS TRADING GATEWAY
+# EKLIPSE FUNDED - INSTITUTIONAL WEBSOCKET & REDIS TRADING GATEWAY
 # ============================================================================
 FROM node:22-alpine
 

@@ -10,17 +10,19 @@
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "server": "node server/tradingHub.js",
+    "db:migrate": "node scripts/migrate.js",
     "supabase:start": "npx supabase start",
     "supabase:stop": "npx supabase stop",
     "supabase:push": "npx supabase db push",
-    "docker:redis": "docker compose up -d"
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
   },
   "dependencies": {
     "@icons-pack/react-simple-icons": "^13.15.1",
     "@lottiefiles/dotlottie-react": "^0.19.16",
     "@supabase/supabase-js": "^2.117.2",
     "@tailwindcss/vite": "^4.0.0",
-    "@types/ioredis": "^5.0.0",
     "@types/ws": "^8.18.2",
     "@vitejs/plugin-react": "^4.3.4",
     "dotenv": "^16.4.7",
@@ -42,10 +44,12 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.21",
-    "esbuild": "^0.25.0",
     "tailwindcss": "^4.0.0",
     "tsx": "^4.21.0",
     "typescript": "^5.7.3",
     "vite": "^6.2.0"
+  },
+  "allowScripts": {
+    "esbuild": true
   }
 }

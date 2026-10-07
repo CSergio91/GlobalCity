@@ -1,28 +1,43 @@
+# ============================================================================
+# EKLIPSE FUNDED — INSTITUTIONAL DOCKER COMPOSE STACK
+# ============================================================================
+# Infraestructura completa de producción y desarrollo local para Empresa de Fondeo.
+# Incluye:
+# 1. PostgreSQL 16 Alpine con migraciones automáticas (/docker-entrypoint-initdb.d)
+# 2. Redis 7.2 Alpine In-Memory con persistencia AOF y desalojo LRU
+# 3. PostgREST v12 Engine (API REST relacional de baja latencia)
+# 4. Supabase API Gateway (Nginx proxy /rest/v1 con CORS universales en :54321)
+# 5. Eklipse Trading Gateway & Risk Daemon (WebSocket multiplexado, cron weekend)
+# 6. Eklipse Web Frontend (Compilación SPA optimizada con caché inmutable)
+# ============================================================================
+
 services:
   # ============================================================================
-  # 1. BASE DE DATOS POSTGRESQL 16 (Compatible con Supabase / Migraciones Locales)
+  # 1. BASE DE DATOS POSTGRESQL 16 (Persistencia Relacional Eklipse Funded)
   # ============================================================================
   eklipse-db:
     image: postgres:16-alpine
     container_name: eklipse_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: eklipse_funded
-      POSTGRES_USER: eklipse_admin
-      POSTGRES_PASSWORD: eklipse_secret_pass_local
+      POSTGRES_DB: ${POSTGRES_DB:-eklipse_funded}
+      POSTGRES_USER: ${POSTGRES_USER:-eklipse_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eklipse_secret_pass_local}
     ports:
-      - "5432:5432"
+      - "${PORT_DB:-5432}:5432"
     volumes:
       - eklipse_pg_data:/var/lib/postgresql/data
-      - ./docker/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+      - ./docker/migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U eklipse_admin -d eklipse_funded"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-eklipse_admin} -d ${POSTGRES_DB:-eklipse_funded}"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - eklipse_net
 
   # ============================================================================
-  # 2. REDIS 7 IN-MEMORY (Hot State, Streams, Pre-Trade Locks y Fan-Out)
+  # 2. REDIS 7.2 IN-MEMORY (Hot State, Streams, Pre-Trade Locks y Fan-Out)
   # ============================================================================
   eklipse-redis:
     image: redis:7.2-alpine
@@ -30,7 +45,7 @@ services:
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
     ports:
-      - "6379:6379"
+      - "${PORT_REDIS:-6379}:6379"
     volumes:
       - eklipse_redis_data:/data
     healthcheck:
@@ -38,9 +53,51 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - eklipse_net
 
   # ============================================================================
-  # 3. EKLIPSE TRADING GATEWAY & RISK DAEMON (Servidor de Producción / Pre-VPS)
+  # 3. POSTGREST REST ENGINE (Motor REST interno sobre PostgreSQL)
+  # ============================================================================
+  eklipse-api:
+    image: postgrest/postgrest:v12.2.0
+    container_name: eklipse_postgrest
+    restart: unless-stopped
+    environment:
+      PGRST_DB_URI: postgresql://${POSTGRES_USER:-eklipse_admin}:${POSTGRES_PASSWORD:-eklipse_secret_pass_local}@eklipse-db:5432/${POSTGRES_DB:-eklipse_funded}
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET:-eklipse_jwt_secret_super_secure_institutional_32bytes_min}
+      PGRST_DB_POOL: 10
+    depends_on:
+      eklipse-db:
+        condition: service_healthy
+    networks:
+      - eklipse_net
+
+  # ============================================================================
+  # 4. SUPABASE API GATEWAY (NGINX Proxy con paridad 1:1 para @supabase/supabase-js)
+  # ============================================================================
+  eklipse-gateway:
+    image: nginx:alpine
+    container_name: eklipse_supabase_gateway
+    restart: unless-stopped
+    ports:
+      - "${PORT_SUPABASE:-54321}:54321"
+    volumes:
+      - ./docker/nginx-gateway.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - eklipse-api
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:54321/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - eklipse_net
+
+  # ============================================================================
+  # 5. EKLIPSE TRADING GATEWAY & RISK DAEMON (WebSocket Server y Risk Guardian)
   # ============================================================================
   eklipse-server:
     build:
@@ -49,25 +106,58 @@ services:
     container_name: eklipse_trading_server
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "${PORT_SERVER:-8088}:8080"
     environment:
       PORT: 8080
       NODE_ENV: production
       REDIS_URL: redis://eklipse-redis:6379
-      DATABASE_URL: postgresql://eklipse_admin:eklipse_secret_pass_local@eklipse-db:5432/eklipse_funded
+      DATABASE_URL: postgresql://${POSTGRES_USER:-eklipse_admin}:${POSTGRES_PASSWORD:-eklipse_secret_pass_local}@eklipse-db:5432/${POSTGRES_DB:-eklipse_funded}
+      SUPABASE_URL: http://eklipse-gateway:54321
+      SUPABASE_SERVICE_ROLE_KEY: ${JWT_SECRET:-eklipse_jwt_secret_super_secure_institutional_32bytes_min}
     depends_on:
       eklipse-redis:
         condition: service_healthy
       eklipse-db:
         condition: service_healthy
+      eklipse-gateway:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - eklipse_net
+
+  # ============================================================================
+  # 6. EKLIPSE WEB FRONTEND & CRM (Servidor Nginx para Despliegue VPS / Producción)
+  # ============================================================================
+  eklipse-web:
+    profiles: ["production"]
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: eklipse_web_frontend
+    restart: unless-stopped
+    ports:
+      - "${PORT_WEB:-3180}:80"
+    depends_on:
+      - eklipse-server
+      - eklipse-gateway
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:80/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - eklipse_net
 
 volumes:
   eklipse_pg_data:
     driver: local
   eklipse_redis_data:
     driver: local
+
+networks:
+  eklipse_net:
+    driver: bridge
