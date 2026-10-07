@@ -86,7 +86,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
   const handleLoginClick = () => {
     setIsMobileMenuOpen(false);
     if (hasConnection || isAuthenticated) {
-      navigate('/operations');
+      navigate('/dashboard');
     } else {
       navigate('/login');
     }
@@ -158,18 +158,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
             <CandlestickLanguageSelector compactMobile />
           </div>
 
-          {/* Action Button: Dashboard if connection detected in localStorage, otherwise Start Challenge / Login */}
+          {/* Action Button: Dashboard if authenticated, otherwise Portal Traders / Login */}
           <button
             onClick={handleLoginClick}
             className="px-4 sm:px-5 py-2 text-[11px] sm:text-xs font-mono font-black tracking-wider uppercase text-slate-950 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:brightness-110 rounded-xl border border-amber-200/60 shadow-[2px_2px_0px_#000000,0_0_15px_rgba(245,158,11,0.35)] flex items-center gap-1.5 cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5 group shrink-0"
-            title={hasConnection ? "Ir al Dashboard de Operaciones" : "Empezar Reto de Fondeo"}
+            title={hasConnection || isAuthenticated ? (language === 'en' ? "Trader Dashboard" : "Dashboard de Traders") : (language === 'en' ? "Trader Portal Login" : "Portal de Clientes")}
           >
-            {hasConnection ? (
+            {hasConnection || isAuthenticated ? (
               <LayoutDashboard className="w-3.5 h-3.5 text-slate-950" />
             ) : (
               <User className="w-3.5 h-3.5 text-slate-950" />
             )}
-            <span>{hasConnection ? "Dashboard" : "Empezar Reto"}</span>
+            <span>{hasConnection || isAuthenticated ? "Dashboard" : (language === 'en' ? "Portal Traders" : "Portal Traders")}</span>
             <ArrowRight className="hidden sm:inline w-3 h-3 text-slate-950 group-hover:translate-x-0.5 transition-transform" />
           </button>
 

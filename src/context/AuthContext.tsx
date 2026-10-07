@@ -5,6 +5,8 @@ import { authService } from '../services/authService';
 interface AuthContextType {
   user: UserProfile | null;
   isAuthenticated: boolean;
+  loginWithEmail: (email: string, password?: string) => Promise<boolean>;
+  loginWithGoogle: () => Promise<boolean>;
   loginWithTelegram: (payload: TelegramUserPayload) => void;
   loginWithCustomTelegram: (username: string, telegramId?: string) => void;
   syncWithTelegram: () => Promise<UserProfile | null>;
@@ -94,14 +96,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(newUser);
   };
 
+  const loginWithEmail = async (email: string, _password?: string): Promise<boolean> => {
+    const username = email.split('@')[0];
+    const newUser: UserProfile = {
+      id: Math.floor(100000 + Math.random() * 900000).toString(),
+      username: `@${username}`,
+      firstName: username.charAt(0).toUpperCase() + username.slice(1),
+      email: email,
+      authProvider: 'email',
+      role: 'institutional_trader',
+      createdAt: new Date().toISOString(),
+      twoFactorEnabled: true,
+    };
+    setUser(newUser);
+    return true;
+  };
+
+  const loginWithGoogle = async (): Promise<boolean> => {
+    const newUser: UserProfile = {
+      id: '984521',
+      username: '@google_trader',
+      firstName: 'Alex',
+      lastName: 'Vance',
+      email: 'alex.trader@gmail.com',
+      authProvider: 'google',
+      role: 'institutional_trader',
+      createdAt: new Date().toISOString(),
+      twoFactorEnabled: true,
+    };
+    setUser(newUser);
+    return true;
+  };
+
   const loginAsDemo = () => {
     const demoUser: UserProfile = {
-      id: 'demo_quant_01',
-      username: '@quant_institution_demo',
-      firstName: 'Institutional',
-      lastName: 'Trader',
+      id: '123456',
+      username: '@trader_pro_demo',
+      firstName: 'Trader Pro',
+      lastName: '',
+      email: 'demo@eklipsefunded.com',
       authProvider: 'demo',
-      telegramId: '884920194',
+      telegramId: '123456',
       role: 'institutional_trader',
       createdAt: new Date().toISOString(),
       twoFactorEnabled: true,
@@ -144,6 +179,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         isAuthenticated: !!user,
+        loginWithEmail,
+        loginWithGoogle,
         loginWithTelegram,
         loginWithCustomTelegram,
         syncWithTelegram,

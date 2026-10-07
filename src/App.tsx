@@ -18,13 +18,17 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { RouterProvider, useAppRouter } from './context/RouterContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { LoginPage } from './components/auth/LoginPage';
+import { TraderDashboardApp } from './modules/dashboard/TraderDashboardApp';
+import { InstitutionalCrmApp } from './modules/crm/InstitutionalCrmApp';
 
 function MainAppContent() {
-  const { currentPath, navigate } = useAppRouter();
+  const { currentPath, subdomain, navigate } = useAppRouter();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const { t } = useLanguage();
   const { isAuthenticated } = useAuth();
 
+  const isCrmRoute = currentPath === '/nexus' || currentPath === '/crm' || subdomain === 'nexus';
+  const isDashboardRoute = currentPath === '/dashboard' || subdomain === 'dashboard';
   const isLoginRoute = currentPath === '/login';
   const isTerminalRoute = 
     currentPath === '/terminal' || 
@@ -32,20 +36,16 @@ function MainAppContent() {
     currentPath === '/operations';
 
   const handleOpenTerminal = () => {
-    if (!isAuthenticated) {
-      navigate('/login');
-    } else {
-      navigate('/operations');
-    }
+    navigate('/operations');
   };
 
   const handleAuthSuccess = () => {
     setIsAuthModalOpen(false);
-    navigate('/operations');
+    navigate('/dashboard');
   };
 
   const handleNavigateSection = (sectionId: string) => {
-    if (isTerminalRoute || isLoginRoute) {
+    if (isTerminalRoute || isLoginRoute || isDashboardRoute || isCrmRoute) {
       navigate('/');
       setTimeout(() => {
         const el = document.getElementById(sectionId);
@@ -57,12 +57,31 @@ function MainAppContent() {
     }
   };
 
-  // If on /login route, render the full-screen split LoginPage
+  // 1. If on /nexus route or nexus.* subdomain, render the Institutional CRM Nexus
+  if (isCrmRoute) {
+    return (
+      <InstitutionalCrmApp 
+        onBackToTerminal={() => navigate('/')} 
+        onLogout={() => navigate('/')} 
+      />
+    );
+  }
+
+  // 2. If on /dashboard route or dashboard.* subdomain, render the Trader Dashboard
+  if (isDashboardRoute) {
+    return (
+      <TraderDashboardApp 
+        onBackToLanding={() => navigate('/')} 
+      />
+    );
+  }
+
+  // 3. If on /login route, render the full-screen LoginPage
   if (isLoginRoute) {
     return <LoginPage />;
   }
 
-  // If on /operaciones, /terminal or /operations route, render the Trading & Operations Terminal
+  // 4. If on /operaciones, /terminal or /operations route, render the Trading & Operations Terminal
   if (isTerminalRoute) {
     return (
       <>

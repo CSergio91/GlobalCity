@@ -13,8 +13,9 @@ export interface UserProfile {
   username: string;
   firstName: string;
   lastName?: string;
+  email?: string;
   photoUrl?: string;
-  authProvider: 'telegram' | 'demo' | 'email';
+  authProvider: 'telegram' | 'demo' | 'email' | 'google';
   telegramId?: number | string;
   role: 'institutional_trader' | 'quant_developer' | 'guest';
   createdAt: string;
