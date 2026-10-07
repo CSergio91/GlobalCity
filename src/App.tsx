@@ -4,7 +4,6 @@ import { Hero } from './components/Hero';
 import { HeroScrollCanvas } from './components/HeroScrollCanvas';
 import { ProgramsSection } from './components/ProgramsSection';
 import { HorizontalShowcase } from './components/HorizontalShowcase';
-import { RiskRulesSection } from './components/RiskRulesSection';
 import { MarketsSection } from './components/MarketsSection';
 import { PayoutRoadmapSection } from './components/PayoutRoadmapSection';
 import { WhyEklipseSection } from './components/WhyEklipseSection';
@@ -110,10 +109,7 @@ function MainAppContent() {
         {/* Horizontal Terminal Showcase (Eklipse OS Experience) */}
         <HorizontalShowcase onOpenTerminal={handleOpenTerminal} />
 
-        {/* Section 5: Risk & Rules (Clear rules. No surprises. 5% Daily, 10% DD, 8% Target, 10x Lev) */}
-        <RiskRulesSection />
-
-        {/* Section 6: Markets (Trade the market that never sleeps: BTC, ETH, SOL) */}
+        {/* Section 5: Markets (Trade the market that never sleeps: BTC, ETH, SOL) */}
         <MarketsSection />
 
         {/* Section 7: Funding & Payout Roadmap (Pass the challenge. Keep trading. Get rewarded.) */}

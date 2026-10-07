@@ -11,8 +11,7 @@ import {
   Share2,
   Bot,
   Zap,
-  Cpu,
-  ShieldCheck
+  Cpu
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { CandlestickLanguageSelector } from './CandlestickLanguageSelector';
@@ -64,7 +63,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 15);
 
-      const sectionIds = ["hero", "programs", "terminal", "rules", "markets", "faq"];
+      const sectionIds = ["hero", "programs", "terminal", "markets", "faq"];
       const scrollPosition = window.scrollY + 220;
 
       for (let i = sectionIds.length - 1; i >= 0; i--) {
@@ -103,7 +102,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
     { id: "hero", label: language === 'en' ? "Home" : "Inicio", icon: Compass },
     { id: "programs", label: language === 'en' ? "Funding" : "Fondeo", icon: Zap },
     { id: "terminal", label: language === 'en' ? "Terminal" : "Terminal", icon: Cpu },
-    { id: "rules", label: language === 'en' ? "Rules" : "Reglas", icon: ShieldCheck },
     { id: "markets", label: language === 'en' ? "Markets" : "Mercados", icon: Repeat },
     { id: "faq", label: "FAQ", icon: Bot }
   ];

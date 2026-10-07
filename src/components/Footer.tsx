@@ -66,12 +66,6 @@ export const Footer: React.FC = () => {
                 {isEn ? 'Terminal' : 'Terminal'}
               </button>
               <button 
-                onClick={() => scrollTo('rules')} 
-                className="hover:text-amber-300 transition-colors cursor-pointer"
-              >
-                {isEn ? 'Rules' : 'Reglas'}
-              </button>
-              <button 
                 onClick={() => scrollTo('markets')} 
                 className="hover:text-amber-300 transition-colors cursor-pointer"
               >
@@ -147,11 +141,11 @@ export const Footer: React.FC = () => {
               © {new Date().getFullYear()} <strong className="text-white font-bold">EKLIPSE FUNDED</strong>. {isEn ? 'All rights reserved.' : 'Todos los derechos reservados.'}
             </div>
             <div className="flex items-center gap-6 text-xs drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-              <a href="#rules" className="hover:text-amber-300 transition-colors">{isEn ? 'Terms of Service' : 'Términos de Servicio'}</a>
+              <a href="#faq" className="hover:text-amber-300 transition-colors">{isEn ? 'Terms of Service' : 'Términos de Servicio'}</a>
               <span>·</span>
-              <a href="#rules" className="hover:text-amber-300 transition-colors">{isEn ? 'Privacy Policy' : 'Política de Privacidad'}</a>
+              <a href="#faq" className="hover:text-amber-300 transition-colors">{isEn ? 'Privacy Policy' : 'Política de Privacidad'}</a>
               <span>·</span>
-              <a href="#rules" className="hover:text-amber-300 transition-colors">{isEn ? 'Risk Disclosure' : 'Aviso de Riesgo'}</a>
+              <a href="#faq" className="hover:text-amber-300 transition-colors">{isEn ? 'Risk Disclosure' : 'Aviso de Riesgo'}</a>
             </div>
           </div>
         </ScrollReveal>
