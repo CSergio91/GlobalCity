@@ -390,7 +390,7 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       status: 'healthy',
-      name: 'ZYTI Trading WebSocket & Redis Gateway (Risk Engine Active)',
+      name: 'Eklipse Trading Gateway & Risk Daemon (Risk Engine Active)',
       version: '2.0.0',
       uptimeSeconds: Math.floor(process.uptime()),
       activeAccounts: riskDaemon.accounts.size,
@@ -693,7 +693,7 @@ wss.on('connection', (ws, req) => {
     type: 'CONNECTED',
     clientId: ws.clientId,
     clientIp: ws.clientIp,
-    gateway: 'ZYTI-Realtime-v2',
+    gateway: 'Eklipse-Realtime-v2',
     riskDaemonStatus: 'ONLINE',
     mode: isRedisActive ? 'REDIS_CLUSTER' : 'LOCAL_IN_MEMORY'
   }));
@@ -1016,7 +1016,7 @@ wss.on('close', () => {
 // ----------------------------------------------------------------------------
 server.listen(PORT, () => {
   console.log(`\n===============================================================`);
-  console.log(`🚀 ZYTI TRADING WEBSOCKET & REDIS GATEWAY ACTIVO (CON RISK ENGINE)`);
+  console.log(`🚀 EKLIPSE TRADING GATEWAY & RISK DAEMON ACTIVO (CON RISK ENGINE)`);
   console.log(`===============================================================`);
   console.log(`• Puerto WebSocket & HTTP : \x1b[32mhttp://localhost:${PORT}\x1b[0m`);
   console.log(`• URL WebSocket           : \x1b[32mws://localhost:${PORT}\x1b[0m`);

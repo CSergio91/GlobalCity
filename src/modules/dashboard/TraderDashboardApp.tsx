@@ -35,9 +35,15 @@ import { BrandLogo } from '../../components/BrandLogo';
 
 interface TraderDashboardAppProps {
   onBackToLanding?: () => void;
+  onLogout?: () => void;
+  onGoToTerminal?: () => void;
 }
 
-export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({ onBackToLanding }) => {
+export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({ 
+  onBackToLanding,
+  onLogout,
+  onGoToTerminal
+}) => {
   const { user, logout } = useAuth();
   const { navigate } = useAppRouter();
   const { language, setLanguage } = useLanguage();
@@ -51,11 +57,19 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({ onBackTo
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    if (onLogout) {
+      onLogout();
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   const handleGoToTerminal = () => {
-    navigate('/operations');
+    if (onGoToTerminal) {
+      onGoToTerminal();
+    } else {
+      navigate('/operations');
+    }
   };
 
   // SVG Equity curve coordinate points for 7D timeframe

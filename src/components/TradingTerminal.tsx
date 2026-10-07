@@ -908,15 +908,6 @@ export const TradingTerminal: React.FC<TradingTerminalProps> = ({
           }
           break;
         }
-        case 'ACCOUNT_RESET': {
-          setPositions([]);
-          setTradeHistory([]);
-          setDemoBalance(100000);
-          try { localStorage.removeItem('zyti_open_positions'); } catch {}
-          try { localStorage.removeItem('zyti_trade_history'); } catch {}
-          try { localStorage.setItem('zyti_demo_balance', '100000'); } catch {}
-          break;
-        }
         case 'DRAWDOWN_BREACH': {
           setIsAccountBreached(true);
           isBreachedRef.current = true;

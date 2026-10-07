@@ -11,7 +11,8 @@ import { CommunitySection } from './components/CommunitySection';
 import { FAQSection } from './components/FAQSection';
 import { FinalCTA } from './components/FinalCTA';
 import { Footer } from './components/Footer';
-import { DemoTerminal } from './components/DemoTerminal';
+import { TradingTerminal } from './components/TradingTerminal';
+import { UserSession } from './lib/supabase';
 import { CandlestickCursor } from './components/CandlestickCursor';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -24,8 +25,8 @@ import { InstitutionalCrmApp } from './modules/crm/InstitutionalCrmApp';
 function MainAppContent() {
   const { currentPath, subdomain, navigate } = useAppRouter();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const { t } = useLanguage();
-  const { isAuthenticated } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const isCrmRoute = currentPath === '/nexus' || currentPath === '/crm' || subdomain === 'nexus';
   const isDashboardRoute = currentPath === '/dashboard' || subdomain === 'dashboard';
@@ -67,11 +68,19 @@ function MainAppContent() {
     );
   }
 
-  // 2. If on /dashboard route or dashboard.* subdomain, render the Trader Dashboard
+  // 2. If on /dashboard route or dashboard.* subdomain, render the Trader Dashboard (or Trader Login if unauthenticated)
   if (isDashboardRoute) {
+    if (!isAuthenticated) {
+      return <LoginPage />;
+    }
     return (
       <TraderDashboardApp 
         onBackToLanding={() => navigate('/')} 
+        onLogout={() => {
+          logout();
+          navigate('/dashboard');
+        }}
+        onGoToTerminal={() => navigate('/operations')}
       />
     );
   }
@@ -81,20 +90,33 @@ function MainAppContent() {
     return <LoginPage />;
   }
 
-  // 4. If on /operaciones, /terminal or /operations route, render the Trading & Operations Terminal
+  // 4. If on /operaciones, /terminal or /operations route, render the real Institutional Trading Platform (KLineCharts v10)
   if (isTerminalRoute) {
+    const terminalUser: UserSession | null = user ? {
+      id: user.id,
+      email: (user as any).email || `${user.username || 'trader'}@eklipsefunded.com`,
+      name: user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.username,
+      avatarUrl: user.photoUrl,
+      isDemo: user.authProvider === 'demo',
+      provider: (user.authProvider as any) || 'demo',
+      role: 'trader',
+      isVerified: true
+    } : null;
+
     return (
-      <>
-        <DemoTerminal 
-          onBackToLanding={() => navigate('/')} 
-          onOpenAuth={() => navigate('/login')}
-        />
-        <AuthModal 
-          isOpen={isAuthModalOpen} 
-          onClose={() => setIsAuthModalOpen(false)} 
-          onSuccess={handleAuthSuccess} 
-        />
-      </>
+      <TradingTerminal 
+        currentLang={language}
+        user={terminalUser}
+        onExit={() => {
+          if (isAuthenticated) {
+            navigate('/dashboard');
+          } else {
+            navigate('/');
+          }
+        }}
+        onOpenAuth={() => navigate('/login')}
+        onLanguageChange={(newLang) => setLanguage(newLang)}
+      />
     );
   }
 

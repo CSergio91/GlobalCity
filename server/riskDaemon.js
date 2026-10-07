@@ -366,8 +366,8 @@ export class RiskDaemon {
         const todayUtc = new Date().toISOString().split('T')[0];
         acc = {
           id: accountId,
-          accountNumber: `ZYTI-ACC-${accountId.slice(0, 6).toUpperCase()}`,
-          traderEmail: pos.traderEmail || 'trader@zyti.internal',
+          accountNumber: `EKL-ACC-${accountId.slice(0, 6).toUpperCase()}`,
+          traderEmail: pos.traderEmail || 'trader@eklipsefunded.com',
           initialBalance: templateBalance,
           currentBalance: templateBalance,
           equity: templateBalance,

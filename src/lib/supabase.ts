@@ -1,9 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase Cloud configuration
-// @supabase/supabase-js v2.117+ soporta el nuevo formato sb_publishable_...
-const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL || 'https://ujcnglkdwzqlwqgrkspz.supabase.co';
-const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_Vg2Hc-cvEpBj0TKBXB3Tmw_1PCxN9C0';
+// Eklipse Funded — Supabase Gateway Configuration (Local Docker Gateway en :54321 o Supabase Cloud)
+const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL || 'http://localhost:54321';
+const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjIwMDAwMDAwMDB9.J4Nc54mpNrnEUUNHnVZfNUyTbnX_ss1OzKsUnJRMvkw';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
