@@ -24,42 +24,41 @@ export const MarketsSection: React.FC = () => {
   const isEn = language === 'en';
   const { ticks } = useLiveMarketTicks();
 
-  // Curated assets distributed across 4 background marquee rows (compact uniform size, BTC standard size)
-  const row1Assets: AssetConfig[] = [
+  // Master catalog of 24 cryptocurrency perpetual assets
+  const masterAssets: AssetConfig[] = [
     { sym: 'BTC/USDT', name: 'Bitcoin', badge: '₿', color: '#f59e0b', fallbackPrice: 84310.20, fallbackChange: 3.82, volume24h: '$28.4B' },
     { sym: 'ETH/USDT', name: 'Ethereum', badge: 'Ξ', color: '#8b5cf6', fallbackPrice: 2728.50, fallbackChange: 2.15, volume24h: '$12.1B' },
     { sym: 'SOL/USDT', name: 'Solana', badge: '◎', color: '#14f195', fallbackPrice: 186.40, fallbackChange: 7.24, volume24h: '$4.8B' },
     { sym: 'BNB/USDT', name: 'BNB Chain', badge: 'BNB', color: '#eab308', fallbackPrice: 642.80, fallbackChange: 1.45, volume24h: '$1.9B' },
     { sym: 'XRP/USDT', name: 'Ripple', badge: '✕', color: '#38bdf8', fallbackPrice: 2.18, fallbackChange: 4.12, volume24h: '$3.5B' },
-    { sym: 'DOGE/USDT', name: 'Dogecoin', badge: 'Ð', color: '#f59e0b', fallbackPrice: 0.245, fallbackChange: 6.85, volume24h: '$2.7B' }
-  ];
-
-  const row2Assets: AssetConfig[] = [
+    { sym: 'DOGE/USDT', name: 'Dogecoin', badge: 'Ð', color: '#f59e0b', fallbackPrice: 0.245, fallbackChange: 6.85, volume24h: '$2.7B' },
     { sym: 'ADA/USDT', name: 'Cardano', badge: '₳', color: '#60a5fa', fallbackPrice: 0.784, fallbackChange: -1.82, volume24h: '$850M' },
     { sym: 'AVAX/USDT', name: 'Avalanche', badge: '▲', color: '#f43f5e', fallbackPrice: 34.20, fallbackChange: -2.10, volume24h: '$620M' },
     { sym: 'LINK/USDT', name: 'Chainlink', badge: '⬡', color: '#3b82f6', fallbackPrice: 18.90, fallbackChange: 5.45, volume24h: '$480M' },
     { sym: 'SUI/USDT', name: 'Sui Network', badge: '💧', color: '#06b6d4', fallbackPrice: 3.25, fallbackChange: -1.35, volume24h: '$740M' },
     { sym: 'PEPE/USDT', name: 'Pepe', badge: '🐸', color: '#10b981', fallbackPrice: 0.0000104, fallbackChange: 12.80, volume24h: '$1.1B' },
-    { sym: 'NEAR/USDT', name: 'NEAR Protocol', badge: 'Ⓝ', color: '#10b981', fallbackPrice: 4.85, fallbackChange: 4.60, volume24h: '$390M' }
-  ];
-
-  const row3Assets: AssetConfig[] = [
+    { sym: 'NEAR/USDT', name: 'NEAR Protocol', badge: 'Ⓝ', color: '#10b981', fallbackPrice: 4.85, fallbackChange: 4.60, volume24h: '$390M' },
     { sym: 'DOT/USDT', name: 'Polkadot', badge: '●', color: '#ec4899', fallbackPrice: 6.20, fallbackChange: -2.45, volume24h: '$310M' },
     { sym: 'SHIB/USDT', name: 'Shiba Inu', badge: 'SHIB', color: '#f97316', fallbackPrice: 0.0000215, fallbackChange: 3.20, volume24h: '$480M' },
     { sym: 'ARB/USDT', name: 'Arbitrum', badge: 'ARB', color: '#38bdf8', fallbackPrice: 0.72, fallbackChange: -3.15, volume24h: '$290M' },
     { sym: 'OP/USDT', name: 'Optimism', badge: 'OP', color: '#ef4444', fallbackPrice: 1.45, fallbackChange: -1.40, volume24h: '$220M' },
     { sym: 'TIA/USDT', name: 'Celestia', badge: 'TIA', color: '#a855f7', fallbackPrice: 5.80, fallbackChange: 2.90, volume24h: '$180M' },
-    { sym: 'RENDER/USDT', name: 'Render', badge: 'RNDR', color: '#f43f5e', fallbackPrice: 6.10, fallbackChange: 5.15, volume24h: '$260M' }
-  ];
-
-  const row4Assets: AssetConfig[] = [
+    { sym: 'RENDER/USDT', name: 'Render', badge: 'RNDR', color: '#f43f5e', fallbackPrice: 6.10, fallbackChange: 5.15, volume24h: '$260M' },
     { sym: 'INJ/USDT', name: 'Injective', badge: 'INJ', color: '#06b6d4', fallbackPrice: 21.40, fallbackChange: 4.30, volume24h: '$310M' },
     { sym: 'APT/USDT', name: 'Aptos', badge: 'APT', color: '#2dd4bf', fallbackPrice: 8.90, fallbackChange: -2.05, volume24h: '$240M' },
-    { sym: 'SOL/USDT', name: 'Solana', badge: '◎', color: '#14f195', fallbackPrice: 186.40, fallbackChange: 7.24, volume24h: '$4.8B' },
-    { sym: 'BTC/USDT', name: 'Bitcoin', badge: '₿', color: '#f59e0b', fallbackPrice: 84310.20, fallbackChange: 3.82, volume24h: '$28.4B' },
-    { sym: 'ETH/USDT', name: 'Ethereum', badge: 'Ξ', color: '#8b5cf6', fallbackPrice: 2728.50, fallbackChange: 2.15, volume24h: '$12.1B' },
-    { sym: 'AVAX/USDT', name: 'Avalanche', badge: '▲', color: '#f43f5e', fallbackPrice: 34.20, fallbackChange: -2.10, volume24h: '$620M' }
+    { sym: 'FET/USDT', name: 'Artificial Superintelligence', badge: 'FET', color: '#3b82f6', fallbackPrice: 1.34, fallbackChange: 4.80, volume24h: '$190M' },
+    { sym: 'KAS/USDT', name: 'Kaspa', badge: 'KAS', color: '#14b8a6', fallbackPrice: 0.142, fallbackChange: -1.15, volume24h: '$95M' },
+    { sym: 'TAO/USDT', name: 'Bittensor', badge: 'TAO', color: '#f59e0b', fallbackPrice: 520.40, fallbackChange: 6.10, volume24h: '$280M' },
+    { sym: 'STX/USDT', name: 'Stacks', badge: 'STX', color: '#8b5cf6', fallbackPrice: 1.88, fallbackChange: -2.80, volume24h: '$120M' }
   ];
+
+  // Distribute across 6 continuous wallpaper rows (each has 12 items, duplicated for seamless 4000px+ infinite loop)
+  const row1 = [...masterAssets.slice(0, 12)];
+  const row2 = [...masterAssets.slice(6, 18)];
+  const row3 = [...masterAssets.slice(12, 24)];
+  const row4 = [...masterAssets.slice(3, 15)];
+  const row5 = [...masterAssets.slice(9, 21)];
+  const row6 = [...masterAssets.slice(0, 6), ...masterAssets.slice(18, 24)];
 
   const getTick = (config: AssetConfig): MarketAssetTick => {
     const live = ticks.find(t => t.symbol === config.sym);
@@ -83,7 +82,7 @@ export const MarketsSection: React.FC = () => {
     }
   };
 
-  // Render a single sleek asset card in the moving background wall with square edges
+  // Render a single sleek square-edged asset card
   const renderAssetCard = (item: AssetConfig, key: string | number) => {
     const data = getTick(item);
     const isPositive = data.change24h >= 0;
@@ -91,31 +90,27 @@ export const MarketsSection: React.FC = () => {
     return (
       <div
         key={key}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        className={`w-48 sm:w-56 shrink-0 p-3 sm:p-3.5 rounded-sm border backdrop-blur-md transition-all duration-200 select-none cursor-default group hover:scale-[1.03] hover:z-30 hover:brightness-125 ${
+        className={`w-44 sm:w-52 shrink-0 p-2.5 sm:p-3 rounded-none border backdrop-blur-md select-none pointer-events-none ${
           isPositive
-            ? 'bg-gradient-to-b from-emerald-950/30 via-[#070A10]/95 to-[#040609] border-emerald-500/30 hover:border-emerald-400/80 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]'
-            : 'bg-gradient-to-b from-rose-950/30 via-[#070A10]/95 to-[#040609] border-rose-500/30 hover:border-rose-400/80 hover:shadow-[0_0_20px_rgba(244,63,94,0.3)]'
+            ? 'bg-gradient-to-b from-emerald-950/25 via-[#070A10]/95 to-[#040609] border-emerald-500/25'
+            : 'bg-gradient-to-b from-rose-950/25 via-[#070A10]/95 to-[#040609] border-rose-500/25'
         }`}
       >
         {/* Top: Badge + Symbol + 24h Change Pill */}
-        <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-1.5">
             <span 
-              className="font-mono text-[10px] font-black px-1.5 py-0.5 rounded-none border border-white/10 bg-white/5"
+              className="font-mono text-[9px] font-black px-1 py-0.2 rounded-none border border-white/10 bg-white/5"
               style={{ color: item.color }}
             >
               {item.badge}
             </span>
-            <span className="font-mono font-bold text-xs text-slate-200 group-hover:text-white transition-colors">
+            <span className="font-mono font-bold text-[11px] sm:text-xs text-slate-200">
               {item.sym.split('/')[0]}
             </span>
           </div>
 
-          <span className={`font-mono font-bold text-[10px] flex items-center gap-0.5 px-1.5 py-0.5 rounded-none border ${
+          <span className={`font-mono font-bold text-[9px] sm:text-[10px] flex items-center gap-0.5 px-1.5 py-0.2 rounded-none border ${
             isPositive 
               ? 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30' 
               : 'text-rose-400 bg-rose-500/15 border-rose-500/30'
@@ -126,12 +121,12 @@ export const MarketsSection: React.FC = () => {
         </div>
 
         {/* Center: Live Price */}
-        <div className="my-1">
-          <div className="text-[9px] font-mono uppercase tracking-wider text-slate-400">
+        <div className="my-0.5">
+          <div className="text-[8px] font-mono uppercase tracking-wider text-slate-400 truncate">
             {data.name}
           </div>
-          <div className={`font-mono font-black text-base sm:text-lg tracking-tight transition-colors ${
-            isPositive ? 'text-emerald-200 group-hover:text-emerald-300' : 'text-rose-200 group-hover:text-rose-300'
+          <div className={`font-mono font-black text-sm sm:text-base tracking-tight ${
+            isPositive ? 'text-emerald-200' : 'text-rose-200'
           }`}>
             ${data.price < 0.01 
               ? data.price.toFixed(6) 
@@ -142,9 +137,9 @@ export const MarketsSection: React.FC = () => {
         </div>
 
         {/* Bottom Row: Volume + Leverage */}
-        <div className="pt-1.5 mt-1 border-t border-white/5 flex items-center justify-between font-mono text-[9px] text-slate-400">
+        <div className="pt-1 mt-0.5 border-t border-white/5 flex items-center justify-between font-mono text-[8px] text-slate-400">
           <span>Vol <strong className="text-slate-300 font-semibold">{data.volume24h}</strong></span>
-          <span className={`font-semibold px-1 py-0.2 rounded-none border text-[8px] ${
+          <span className={`font-semibold px-1 py-0.2 rounded-none border text-[7px] ${
             isPositive 
               ? 'text-emerald-400/90 border-emerald-500/25 bg-emerald-500/10' 
               : 'text-rose-400/90 border-rose-500/25 bg-rose-500/10'
@@ -159,52 +154,64 @@ export const MarketsSection: React.FC = () => {
   return (
     <section 
       id="markets"
-      className="relative min-h-screen h-screen max-h-screen w-full flex flex-col justify-center items-center overflow-hidden select-none bg-[#05070B]"
+      className="relative h-screen min-h-screen max-h-screen w-full flex flex-col justify-center items-center overflow-hidden select-none bg-[#05070B]"
     >
-      {/* 1. SEAMLESS MOVING ASSETS BACKGROUND WALL (Dense Tighter Grid, Continuous Non-Stopping Marquee) */}
-      <div className="absolute inset-0 z-0 w-full h-full flex flex-col justify-center gap-1.5 sm:gap-2 py-1 overflow-hidden pointer-events-none">
+      {/* 1. SEAMLESS MOVING ASSETS BACKGROUND WALL - Covers 100% of the entire section */}
+      <div className="absolute inset-0 z-0 w-full h-full flex flex-col justify-between py-1 overflow-hidden pointer-events-none">
         
         {/* Row 1: Flowing Left */}
         <div className="w-full flex overflow-hidden">
-          <div className="animate-marquee-left flex gap-1.5 sm:gap-2 py-0.5">
-            {row1Assets.map((item, idx) => renderAssetCard(item, `r1-a-${idx}`))}
-            {row1Assets.map((item, idx) => renderAssetCard(item, `r1-b-${idx}`))}
+          <div className="animate-marquee-left flex gap-1.5 sm:gap-2" style={{ animationDuration: '46s' }}>
+            {row1.map((item, idx) => renderAssetCard(item, `r1-a-${idx}`))}
+            {row1.map((item, idx) => renderAssetCard(item, `r1-b-${idx}`))}
           </div>
         </div>
 
         {/* Row 2: Flowing Right */}
         <div className="w-full flex overflow-hidden">
-          <div className="animate-marquee-right flex gap-1.5 sm:gap-2 py-0.5">
-            {row2Assets.map((item, idx) => renderAssetCard(item, `r2-a-${idx}`))}
-            {row2Assets.map((item, idx) => renderAssetCard(item, `r2-b-${idx}`))}
+          <div className="animate-marquee-right flex gap-1.5 sm:gap-2" style={{ animationDuration: '52s' }}>
+            {row2.map((item, idx) => renderAssetCard(item, `r2-a-${idx}`))}
+            {row2.map((item, idx) => renderAssetCard(item, `r2-b-${idx}`))}
           </div>
         </div>
 
         {/* Row 3: Flowing Left */}
         <div className="w-full flex overflow-hidden">
-          <div className="animate-marquee-left flex gap-1.5 sm:gap-2 py-0.5">
-            {row3Assets.map((item, idx) => renderAssetCard(item, `r3-a-${idx}`))}
-            {row3Assets.map((item, idx) => renderAssetCard(item, `r3-b-${idx}`))}
+          <div className="animate-marquee-left flex gap-1.5 sm:gap-2" style={{ animationDuration: '44s' }}>
+            {row3.map((item, idx) => renderAssetCard(item, `r3-a-${idx}`))}
+            {row3.map((item, idx) => renderAssetCard(item, `r3-b-${idx}`))}
           </div>
         </div>
 
         {/* Row 4: Flowing Right */}
         <div className="w-full flex overflow-hidden">
-          <div className="animate-marquee-right flex gap-1.5 sm:gap-2 py-0.5">
-            {row4Assets.map((item, idx) => renderAssetCard(item, `r4-a-${idx}`))}
-            {row4Assets.map((item, idx) => renderAssetCard(item, `r4-b-${idx}`))}
+          <div className="animate-marquee-right flex gap-1.5 sm:gap-2" style={{ animationDuration: '50s' }}>
+            {row4.map((item, idx) => renderAssetCard(item, `r4-a-${idx}`))}
+            {row4.map((item, idx) => renderAssetCard(item, `r4-b-${idx}`))}
+          </div>
+        </div>
+
+        {/* Row 5: Flowing Left */}
+        <div className="w-full flex overflow-hidden">
+          <div className="animate-marquee-left flex gap-1.5 sm:gap-2" style={{ animationDuration: '48s' }}>
+            {row5.map((item, idx) => renderAssetCard(item, `r5-a-${idx}`))}
+            {row5.map((item, idx) => renderAssetCard(item, `r5-b-${idx}`))}
+          </div>
+        </div>
+
+        {/* Row 6: Flowing Right */}
+        <div className="w-full flex overflow-hidden">
+          <div className="animate-marquee-right flex gap-1.5 sm:gap-2" style={{ animationDuration: '54s' }}>
+            {row6.map((item, idx) => renderAssetCard(item, `r6-a-${idx}`))}
+            {row6.map((item, idx) => renderAssetCard(item, `r6-b-${idx}`))}
           </div>
         </div>
 
       </div>
 
-      {/* 2. CINEMATIC VIGNETTE OVERLAY (Guarantees foreground text readability while leaving background cards glowing & visible) */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#05070B] via-transparent to-[#05070B] pointer-events-none z-10 opacity-85" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(5,7,11,0.85)_0%,rgba(5,7,11,0.50)_55%,rgba(5,7,11,0.92)_100%)] pointer-events-none z-10" />
-
-      {/* Edge Fades for Smooth Side Transitions */}
-      <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-r from-[#05070B] to-transparent z-10" />
-      <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-l from-[#05070B] to-transparent z-10" />
+      {/* 2. CINEMATIC VIGNETTE OVERLAY - Guarantees 100% foreground text clarity while leaving entire matrix wallpaper visible */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#05070B] via-transparent to-[#05070B] pointer-events-none z-10 opacity-90" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(5,7,11,0.88)_0%,rgba(5,7,11,0.55)_55%,rgba(5,7,11,0.95)_100%)] pointer-events-none z-10" />
 
       {/* 3. FOREGROUND HERO FLOATING CONTENT */}
       <div className="relative z-20 w-full max-w-4xl mx-auto px-4 sm:px-6 flex flex-col items-center text-center space-y-6 sm:space-y-8 pointer-events-none">
