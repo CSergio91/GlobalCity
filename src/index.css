@@ -282,3 +282,46 @@
   will-change: transform;
 }
 
+/* Zero-Cost GPU Compositor Floating Animations */
+@keyframes floatGentle1 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -7px, 0);
+  }
+}
+
+@keyframes floatGentle2 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, 6px, 0);
+  }
+}
+
+@keyframes floatGentle3 {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -5px, 0);
+  }
+}
+
+.animate-float-1 {
+  animation: floatGentle1 4.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-float-2 {
+  animation: floatGentle2 5.4s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-float-3 {
+  animation: floatGentle3 6.0s ease-in-out infinite;
+  will-change: transform;
+}
+

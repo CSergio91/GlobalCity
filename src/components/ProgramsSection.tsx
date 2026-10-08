@@ -1,539 +1,559 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ArrowRight, 
   Check, 
-  Info,
-  Zap,
+  Sparkles, 
+  ShieldCheck, 
+  Zap, 
+  Clock, 
   Flame,
-  ChevronLeft,
-  ChevronRight
+  Award,
+  Sun,
+  Moon,
+  Coins,
+  ChevronRight,
+  TrendingUp,
+  Sliders,
+  DollarSign,
+  AlertCircle
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppRouter } from '../context/RouterContext';
-import { ScrollReveal } from './common/ScrollReveal';
-
-export interface AccountSizeConfig {
-  id: string;
-  sizeLabel: string;
-  capital: number;
-  capitalFormatted: string;
-  basePriceUSDT: number;
-  avgRewardUSDT: string;
-  popular?: boolean;
-}
+import { 
+  PlanCategory, 
+  PaymentMode, 
+  ChallengePlan, 
+  SOLAR_CHALLENGE_PLANS, 
+  LUNAR_CHALLENGE_PLANS,
+  AVAILABLE_ADDONS,
+  calculateDynamicPlanPricing,
+  getLiveChallengePlans 
+} from '../data/challengePlans';
 
 export const ProgramsSection: React.FC = () => {
   const { language } = useLanguage();
   const { navigate } = useAppRouter();
   const isEn = language === 'en';
 
-  const accountSizes: AccountSizeConfig[] = [
-    { id: '1k', sizeLabel: '$1K', capital: 1000, capitalFormatted: '$1,000', basePriceUSDT: 15, avgRewardUSDT: '340 USDT' },
-    { id: '2.5k', sizeLabel: '$2.5K', capital: 2500, capitalFormatted: '$2,500', basePriceUSDT: 25, avgRewardUSDT: '850 USDT' },
-    { id: '5k', sizeLabel: '$5K', capital: 5000, capitalFormatted: '$5,000', basePriceUSDT: 49, avgRewardUSDT: '1,700 USDT' },
-    { id: '10k', sizeLabel: '$10K', capital: 10000, capitalFormatted: '$10,000', basePriceUSDT: 89, avgRewardUSDT: '3,400 USDT' },
-    { id: '25k', sizeLabel: '$25K', capital: 25000, capitalFormatted: '$25,000', basePriceUSDT: 159, avgRewardUSDT: '8,500 USDT' },
-    { id: '50k', sizeLabel: '$50K', capital: 50000, capitalFormatted: '$50,000', basePriceUSDT: 249, avgRewardUSDT: '17,000 USDT', popular: true },
-    { id: '100k', sizeLabel: '$100K', capital: 100000, capitalFormatted: '$100,000', basePriceUSDT: 399, avgRewardUSDT: '34,000 USDT' }
-  ];
+  // 1. Category Switch: Solar (Crypto DMA) vs Lunar (Meme Titans)
+  const [category, setCategory] = useState<PlanCategory>('solar');
 
-  // Two rows: row 1 (1k, 2.5k, 5k) and row 2 (10k, 25k, 50k, 100k)
-  const row1Sizes = accountSizes.slice(0, 3);
-  const row2Sizes = accountSizes.slice(3);
+  // 2. Payment Mode: One-time fee vs Monthly subscription
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>('one-time');
 
-  // Default index is 5 (50k)
-  const [currentIndex, setCurrentIndex] = useState<number>(5);
+  // 3. Plans State for current category
+  const [plans, setPlans] = useState<ChallengePlan[]>(SOLAR_CHALLENGE_PLANS);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('solar-50k');
 
-  // Consistency 40% Add-on - Enabled by DEFAULT
-  const [isFlexAddon, setIsFlexAddon] = useState<boolean>(true);
+  // 4. Directional animation tracking (Enter from right if capital increases, enter from left if it decreases)
+  const [direction, setDirection] = useState<number>(1);
+  const prevIndexRef = useRef<number>(5);
 
-  // Coupon / Loyalty Discount Toggle (0, 10%)
-  const [discountPercent, setDiscountPercent] = useState<number>(10);
+  // 5. Selected Add-ons
+  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
 
-  // Drag & Swipe State
-  const [dragOffset, setDragOffset] = useState<number>(0);
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const dragStartX = useRef<number>(0);
-  const carouselContainerRef = useRef<HTMLDivElement>(null);
+  // Update plans on category switch
+  useEffect(() => {
+    const defaultList = category === 'solar' ? SOLAR_CHALLENGE_PLANS : LUNAR_CHALLENGE_PLANS;
+    getLiveChallengePlans(category).then((live) => {
+      setPlans(live || defaultList);
+    });
 
-  const currentSize = accountSizes[currentIndex];
+    // Default to 50k in the new category
+    const defaultId = category === 'solar' ? 'solar-50k' : 'lunar-50k';
+    setSelectedPlanId(defaultId);
+    prevIndexRef.current = 5;
+  }, [category]);
 
-  const handleSelectSize = (id: string) => {
-    const idx = accountSizes.findIndex(s => s.id === id);
-    if (idx !== -1) {
-      setCurrentIndex(idx);
+  // Current active plan
+  const currentIndex = plans.findIndex(p => p.id === selectedPlanId);
+  const currentPlan = plans[currentIndex >= 0 ? currentIndex : 0] || plans[0];
+
+  // Handle plan selection with directional tracking
+  const handleSelectPlan = (planId: string) => {
+    const newIdx = plans.findIndex(p => p.id === planId);
+    if (newIdx === -1) return;
+
+    if (newIdx > prevIndexRef.current) {
+      setDirection(1); // Increasing capital -> Enters from right
+    } else if (newIdx < prevIndexRef.current) {
+      setDirection(-1); // Decreasing capital -> Enters from left
     }
+    prevIndexRef.current = newIdx;
+    setSelectedPlanId(planId);
   };
 
-  const handlePrev = () => {
-    setCurrentIndex(prev => Math.max(0, prev - 1));
+  // Toggle Add-on
+  const handleToggleAddon = (addonId: string) => {
+    setSelectedAddons((prev) => 
+      prev.includes(addonId) 
+        ? prev.filter(id => id !== addonId) 
+        : [...prev, addonId]
+    );
   };
 
-  const handleNext = () => {
-    setCurrentIndex(prev => Math.min(accountSizes.length - 1, prev + 1));
-  };
+  // Dynamic pricing & rules calculation
+  const dynamicPricing = calculateDynamicPlanPricing(currentPlan, paymentMode, selectedAddons);
 
-  // Touch Swipe Handlers
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setIsDragging(true);
-    dragStartX.current = e.touches[0].clientX;
-    setDragOffset(0);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
-    const currentX = e.touches[0].clientX;
-    const diff = currentX - dragStartX.current;
-    setDragOffset(diff);
-  };
-
-  const handleTouchEnd = () => {
-    if (!isDragging) return;
-    setIsDragging(false);
-    if (dragOffset > 45) {
-      handlePrev();
-    } else if (dragOffset < -45) {
-      handleNext();
-    }
-    setDragOffset(0);
-  };
-
-  // Mouse Drag Handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
-    // Only drag with primary mouse button
-    if (e.button !== 0) return;
-    setIsDragging(true);
-    dragStartX.current = e.clientX;
-    setDragOffset(0);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    const diff = e.clientX - dragStartX.current;
-    setDragOffset(diff);
-  };
-
-  const handleMouseUp = () => {
-    if (!isDragging) return;
-    setIsDragging(false);
-    if (dragOffset > 45) {
-      handlePrev();
-    } else if (dragOffset < -45) {
-      handleNext();
-    }
-    setDragOffset(0);
-  };
-
-  const handleMouseLeave = () => {
-    if (isDragging) {
-      setIsDragging(false);
-      if (dragOffset > 45) {
-        handlePrev();
-      } else if (dragOffset < -45) {
-        handleNext();
-      }
-      setDragOffset(0);
-    }
-  };
-
-  const handleStart = () => {
+  const handleCheckout = () => {
     navigate('/login');
   };
+
+  // Directional slide animation variants (GPU-accelerated, zero lag)
+  const cardSlideVariants = {
+    enter: (dir: number) => ({
+      x: dir > 0 ? 70 : -70,
+      opacity: 0,
+      scale: 0.985,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      scale: 1,
+      transition: {
+        x: { type: 'spring' as const, stiffness: 380, damping: 32, mass: 0.8 },
+        opacity: { duration: 0.22 },
+        scale: { duration: 0.22 }
+      }
+    },
+    exit: (dir: number) => ({
+      x: dir > 0 ? -70 : 70,
+      opacity: 0,
+      scale: 0.985,
+      transition: {
+        x: { type: 'spring' as const, stiffness: 380, damping: 32, mass: 0.8 },
+        opacity: { duration: 0.18 },
+        scale: { duration: 0.18 }
+      }
+    })
+  };
+
+  const isSolar = category === 'solar';
 
   return (
     <section 
       id="programs"
-      className="min-h-screen w-full flex flex-col justify-center items-center py-12 sm:py-16 relative select-none bg-transparent overflow-hidden"
+      className="relative w-full h-full max-h-screen text-white select-none flex flex-col justify-center items-center px-3 sm:px-6 lg:px-10 py-2 sm:py-4 overflow-y-auto no-scrollbar bg-transparent pointer-events-auto"
     >
-      <div className="w-full max-w-6xl mx-auto px-4 relative z-10 space-y-6 sm:space-y-8 flex flex-col items-center">
+      <div className="w-full max-w-6xl mx-auto relative z-10 flex flex-col items-center space-y-4 sm:space-y-6 my-auto">
         
-        {/* Section Header */}
-        <ScrollReveal animation="fade-up" duration={500}>
-          <div className="text-center space-y-3 max-w-2xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-amber-300 font-mono text-[10px] font-bold uppercase tracking-widest shadow-md">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-              <span>{isEn ? 'DIRECT CAPITAL ALLOCATION · USDT FUTURES' : 'ASIGNACIÓN DIRECTA · DERIVADOS EN USDT'}</span>
-            </div>
-            
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
-              {isEn ? 'Choose Your Capital Tier' : 'Elige Tu Nivel de Capital'}
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-lg mx-auto leading-relaxed">
-              {isEn 
-                ? 'Direct institutional capital accounts from $1,000 to $100,000 USDT. Zero evaluation traps: start trading immediately with up to 90% profit split.' 
-                : 'Cuentas de capital corporativo directo de $1,000 a $100,000 USDT. Cero trampas de examen: comienzas a operar de inmediato con hasta 90% de reparto.'}
-            </p>
-          </div>
-        </ScrollReveal>
-
-        {/* 2-Row Pill Selector (Synchronized with Carousel) */}
-        <ScrollReveal animation="blur-reveal" delay={80} duration={500}>
-          <div className="flex flex-col items-center gap-2">
-            {/* Row 1: 1K, 2.5K, 5K */}
-            <div className="inline-flex items-center p-1 rounded-full bg-slate-950/90 border border-white/10 backdrop-blur-xl shadow-lg">
-              {row1Sizes.map((s) => {
-                const isSelected = currentSize.id === s.id;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => handleSelectSize(s.id)}
-                    className={`px-4 sm:px-6 py-1.5 rounded-full font-mono text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-purple-600 text-white font-black shadow-[0_0_16px_rgba(147,51,234,0.6)] scale-[1.03]'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {s.sizeLabel}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Row 2: 10K, 25K, 50K, 100K */}
-            <div className="inline-flex items-center p-1 rounded-full bg-slate-950/90 border border-white/10 backdrop-blur-xl shadow-lg">
-              {row2Sizes.map((s) => {
-                const isSelected = currentSize.id === s.id;
-                const is50k = s.id === '50k';
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => handleSelectSize(s.id)}
-                    className={`px-3.5 sm:px-5 py-1.5 rounded-full font-mono text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                      isSelected
-                        ? 'bg-purple-600 text-white font-black shadow-[0_0_16px_rgba(147,51,234,0.6)] scale-[1.03]'
-                        : is50k 
-                          ? 'text-purple-300 font-extrabold hover:text-white' 
-                          : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <span>{s.sizeLabel}</span>
-                    {is50k && (
-                      <span className={`text-[10px] ${isSelected ? 'text-amber-300' : 'text-amber-400'}`}>★</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </ScrollReveal>
-
-        {/* 3D Animated Carousel Container - FOCUSED CARD DEAD CENTER */}
-        <div className="relative w-full max-w-5xl py-2 flex items-center justify-center">
+        {/* ========================================================================= */}
+        {/* 1. TOP HEADER: Dual Orbit Categories (Solar vs Lunar)                     */}
+        {/* ========================================================================= */}
+        <div className="w-full flex flex-col items-center text-center space-y-3">
           
-          {/* Navigation Arrows */}
-          <div className="flex items-center justify-between absolute inset-y-0 left-2 right-2 sm:left-4 sm:right-4 z-40 pointer-events-none">
+          {/* Cosmic Orbit Switcher: Cuentas Solares vs Cuentas Lunares */}
+          <div className="flex items-center p-1 rounded-2xl bg-black/40 border border-white/10 backdrop-blur-xl shadow-2xl">
+            
+            {/* Solar (Crypto DMA) Button */}
             <button
-              type="button"
-              onClick={handlePrev}
-              disabled={currentIndex === 0}
-              className={`p-2.5 sm:p-3 rounded-full bg-slate-950/85 border border-white/15 text-white backdrop-blur-xl shadow-2xl transition-all pointer-events-auto cursor-pointer ${
-                currentIndex === 0 ? 'opacity-0 pointer-events-none' : 'hover:bg-purple-600 hover:border-purple-400 hover:scale-110 active:scale-95'
+              onClick={() => setCategory('solar')}
+              className={`relative px-4 sm:px-6 py-2 rounded-xl font-mono text-xs sm:text-sm font-bold flex items-center gap-2 transition-all duration-300 cursor-pointer ${
+                isSolar 
+                  ? 'bg-gradient-to-r from-amber-500/90 to-yellow-500/90 text-black shadow-[0_0_25px_rgba(245,158,11,0.5)] font-black' 
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
-              <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+              <Sun className={`w-4 h-4 ${isSolar ? 'text-black' : 'text-amber-400'}`} />
+              <span>{isEn ? 'Solar Orbit (Crypto DMA)' : 'Cuentas Solares (Cripto DMA)'}</span>
             </button>
+
+            {/* Lunar (Meme Titans) Button */}
             <button
-              type="button"
-              onClick={handleNext}
-              disabled={currentIndex === accountSizes.length - 1}
-              className={`p-2.5 sm:p-3 rounded-full bg-slate-950/85 border border-white/15 text-white backdrop-blur-xl shadow-2xl transition-all pointer-events-auto cursor-pointer ${
-                currentIndex === accountSizes.length - 1 ? 'opacity-0 pointer-events-none' : 'hover:bg-purple-600 hover:border-purple-400 hover:scale-110 active:scale-95'
+              onClick={() => setCategory('lunar')}
+              className={`relative px-4 sm:px-6 py-2 rounded-xl font-mono text-xs sm:text-sm font-bold flex items-center gap-2 transition-all duration-300 cursor-pointer ${
+                !isSolar 
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-[0_0_25px_rgba(147,51,234,0.55)] font-black' 
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
-              <ChevronRight className="w-5 h-5 stroke-[2.5]" />
+              <Moon className={`w-4 h-4 ${!isSolar ? 'text-purple-200' : 'text-purple-400'}`} />
+              <span>{isEn ? 'Lunar Orbit (Meme Titans)' : 'Cuentas Lunares (Memecoins)'}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-sans uppercase font-bold tracking-wider ${
+                !isSolar ? 'bg-purple-900/80 text-purple-200 border border-purple-400/40' : 'bg-white/10 text-slate-300'
+              }`}>
+                PEPE
+              </span>
             </button>
+
           </div>
 
-          {/* Carousel Viewport - Height constrained, cards anchored to center */}
-          <div 
-            ref={carouselContainerRef}
-            className="w-full h-[510px] sm:h-[530px] relative flex items-center justify-center overflow-visible cursor-grab active:cursor-grabbing select-none"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-          >
-            {accountSizes.map((size, index) => {
-              const delta = index - currentIndex;
-              const isCurrent = delta === 0;
-              const isPrev = delta === -1;
-              const isNext = delta === 1;
-              const isVisible = Math.abs(delta) <= 1;
+          {/* Subtitle with category context */}
+          <p className="text-xs sm:text-sm text-slate-300/85 font-normal max-w-xl mx-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
+            {isSolar 
+              ? (isEn 
+                  ? 'Institutional crypto futures liquidity with direct DMA book execution.' 
+                  : 'Liquidez institucional de futuros de criptomonedas con ejecución directa en libros DMA.')
+              : (isEn 
+                  ? 'High-leverage memecoin accounts (PEPE, DOGE, BONK) without microscalping traps.' 
+                  : 'Cuentas especiales para memecoins de alta volatilidad sin trampas por microscalping en pumps.')}
+          </p>
 
-              // Price calculations for this card
-              const addOnCost = Math.max(5, Math.round(size.basePriceUSDT * 0.15));
-              const activeBasePrice = isFlexAddon ? size.basePriceUSDT + addOnCost : size.basePriceUSDT;
-              const discountAmount = Math.round(activeBasePrice * (discountPercent / 100));
-              const finalPrice = activeBasePrice - discountAmount;
-              const dailyLossAmount = Math.round(size.capital * 0.02);
-              const maxDrawdownAmount = Math.round(size.capital * 0.08);
+        </div>
 
-              // Responsive step offset: 350px on desktop, 300px on mobile
-              const stepOffset = typeof window !== 'undefined' && window.innerWidth < 640 ? 300 : 360;
-              const cardOffset = delta * stepOffset + dragOffset;
 
+        {/* ========================================================================= */}
+        {/* 2. CAPITAL TIER SELECTOR: 7 Sizes with Directional Motion Activation      */}
+        {/* ========================================================================= */}
+        <div className="w-full flex items-center justify-center">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 p-1 rounded-2xl bg-white/[0.02] border border-white/10 backdrop-blur-md shadow-2xl">
+            {plans.map((plan) => {
+              const isSelected = plan.id === selectedPlanId;
               return (
-                <div
-                  key={size.id}
-                  onClick={() => {
-                    if (!isCurrent) setCurrentIndex(index);
-                  }}
-                  style={{
-                    position: 'absolute',
-                    left: '50%',
-                    transform: `translateX(calc(-50% + ${cardOffset}px)) scale(${isCurrent ? 1 : 0.88})`,
-                    zIndex: isCurrent ? 30 : isVisible ? 20 : 0,
-                    opacity: isCurrent ? 1 : isVisible ? 0.45 : 0,
-                    pointerEvents: isCurrent ? 'auto' : isVisible ? 'auto' : 'none',
-                    filter: isCurrent ? 'none' : 'blur(0.5px)',
-                    transition: isDragging ? 'none' : 'all 450ms cubic-bezier(0.16, 1, 0.3, 1)',
-                    width: 'min(370px, 86vw)'
-                  }}
-                  className="transition-all"
+                <button
+                  key={plan.id}
+                  onClick={() => handleSelectPlan(plan.id)}
+                  className={`relative px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl font-mono text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                    isSelected
+                      ? isSolar 
+                        ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black shadow-[0_0_20px_rgba(245,158,11,0.5)] scale-105 font-black' 
+                        : 'bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] text-white shadow-[0_0_20px_rgba(99,102,241,0.5)] scale-105 font-black'
+                      : 'bg-transparent text-slate-300/80 hover:text-white hover:bg-white/[0.04]'
+                  }`}
                 >
-                  <div 
-                    className={`rounded-2xl p-4 sm:p-5 relative overflow-hidden backdrop-blur-3xl transition-all duration-300 ${
-                      isCurrent 
-                        ? 'bg-gradient-to-b from-white/[0.12] via-slate-950/70 to-black/85 border border-purple-400/60 border-t-purple-300/80 shadow-[0_0_50px_rgba(168,85,247,0.35),0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.4)]' 
-                        : 'bg-gradient-to-b from-white/[0.05] via-slate-950/50 to-black/75 border border-white/15 border-t-white/25 shadow-[0_12px_36px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)]'
-                    }`}
-                  >
-                    {/* Crystal refraction sheen flare */}
-                    <div className="absolute -top-20 -left-20 w-64 h-64 bg-gradient-to-br from-white/15 via-purple-500/10 to-transparent rounded-full blur-2xl pointer-events-none" />
-                    {isCurrent && (
-                      <div className="absolute top-0 right-0 w-52 h-52 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
-                    )}
-
-                    <div className="space-y-3.5 relative z-10">
-                      {/* Header: Title & Badges */}
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-baseline gap-2">
-                            <h3 className="text-xl sm:text-2xl font-black text-white font-display tracking-tight drop-shadow-sm">
-                              {isEn ? 'Direct Funded' : 'Fondeo Directo'}
-                            </h3>
-                          </div>
-
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase tracking-wider bg-amber-400/15 text-amber-300 border border-amber-400/40 backdrop-blur-md shadow-[0_0_12px_rgba(245,158,11,0.2)] flex items-center gap-1">
-                            <Flame className="w-3 h-3 text-amber-400" />
-                            {size.popular ? (isEn ? 'Most Popular' : 'Más Popular') : (isEn ? 'Instant' : 'Instantáneo')}
-                          </span>
-                        </div>
-
-                        <div className="mt-1 flex items-baseline justify-between">
-                          <div className="text-3xl font-black text-white font-mono tracking-tight drop-shadow-md">
-                            ${size.capital.toLocaleString()}
-                          </div>
-                          <div className="text-xs font-mono text-purple-300 font-black tracking-wider">
-                            USDT
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Consistency 40% Add-on Selector in Crystal Bar */}
-                      <div className="p-1 rounded-xl bg-white/[0.04] border border-white/15 backdrop-blur-xl shadow-inner grid grid-cols-2 gap-1 text-[11px] font-mono">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsFlexAddon(false);
-                          }}
-                          className={`py-1.5 px-2 rounded-lg font-bold transition-all cursor-pointer text-center ${
-                            !isFlexAddon
-                              ? 'bg-white/20 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] border border-white/30'
-                              : 'text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          {isEn ? '20% Standard' : '20% Estándar'}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsFlexAddon(true);
-                          }}
-                          className={`py-1.5 px-2 rounded-lg font-black transition-all cursor-pointer text-center flex items-center justify-center gap-1 ${
-                            isFlexAddon
-                              ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-[0_0_16px_rgba(147,51,234,0.6),inset_0_1px_1px_rgba(255,255,255,0.4)] border border-purple-300/40'
-                              : 'text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          <span>40% Flex</span>
-                          <span className="text-[8px] px-1 py-0.2 rounded bg-amber-400 text-slate-950 font-black">+15%</span>
-                        </button>
-                      </div>
-
-                      {/* Specs - 2 Distinct Defined Frosted Glass Column Panels */}
-                      <div className="grid grid-cols-2 gap-2.5 py-1 font-mono text-xs">
-                        {/* Columna Izquierda: Parámetros de Riesgo */}
-                        <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-xl space-y-2.5 shadow-[inset_0_1px_0px_rgba(255,255,255,0.1)]">
-                          <div>
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                              {isEn ? 'Leverage' : 'Apalancamiento'}
-                            </div>
-                            <div className="text-xs font-black text-white mt-0.5">20x – 100x</div>
-                          </div>
-
-                          <div className="pt-1.5 border-t border-white/10">
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                              {isEn ? 'Daily Loss' : 'Pérdida Diaria'}
-                            </div>
-                            <div className="text-xs font-black text-rose-400 mt-0.5">2% (-${dailyLossAmount})</div>
-                          </div>
-
-                          <div className="pt-1.5 border-t border-white/10">
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                              {isEn ? 'Max Drawdown' : 'Drawdown Máx'}
-                            </div>
-                            <div className="text-xs font-black text-rose-400 mt-0.5">8% (-${maxDrawdownAmount})</div>
-                          </div>
-
-                          <div className="pt-1.5 border-t border-white/10">
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Target</div>
-                            <div className="text-xs font-black text-white mt-0.5">
-                              {isEn ? 'No Target' : 'Sin Límite'}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Columna Derecha: Reglas y Payouts */}
-                        <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 backdrop-blur-xl space-y-2.5 shadow-[inset_0_1px_0px_rgba(255,255,255,0.1)]">
-                          <div>
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                              {isEn ? 'Consistency' : 'Consistencia'}
-                            </div>
-                            <div className={`text-xs font-black mt-0.5 ${isFlexAddon ? 'text-amber-300' : 'text-purple-300'}`}>
-                              {isFlexAddon ? '40% Flex' : (isEn ? '20% Base' : '20% Base')}
-                            </div>
-                          </div>
-
-                          <div className="pt-1.5 border-t border-white/10">
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                              {isEn ? 'Min Days' : 'Días Mínimos'}
-                            </div>
-                            <div className="text-xs font-black text-purple-300 mt-0.5">
-                              {isEn ? '5 Days' : '5 Días'}
-                            </div>
-                          </div>
-
-                          <div className="pt-1.5 border-t border-white/10">
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                              {isEn ? 'Profit Split' : 'Reparto'}
-                            </div>
-                            <div className="text-xs font-black text-emerald-400 mt-0.5">35/50/80/90</div>
-                          </div>
-
-                          <div className="pt-1.5 border-t border-white/10">
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                              {isEn ? 'Loyalty Points' : 'Puntos 5x'}
-                            </div>
-                            <div className="text-xs font-black text-emerald-400 mt-0.5 flex items-center gap-0.5">
-                              {Math.round(size.basePriceUSDT * (isFlexAddon ? 2.3 : 2))} Pts <Check className="w-3 h-3 stroke-[3]" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Price, Coupon & Action Button */}
-                      <div className="space-y-2.5 pt-1 relative z-10">
-                        <div className="flex items-baseline justify-between">
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="text-2xl sm:text-3xl font-black text-white font-mono drop-shadow-md">
-                              ${finalPrice}
-                            </span>
-                            <span className="text-xs font-mono text-purple-300 font-bold">USDT</span>
-                            {discountPercent > 0 && (
-                              <span className="text-xs font-mono text-slate-500 line-through">
-                                ${activeBasePrice}
-                              </span>
-                            )}
-                          </div>
-                          {isFlexAddon && (
-                            <span className="text-[10px] font-mono text-amber-300 font-bold">
-                              {isEn ? '40% Add-on Active' : 'Add-on 40% Incluido'}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Coupon Banner in Glass */}
-                        <div className="p-1.5 rounded-lg bg-white/[0.04] border border-white/15 backdrop-blur-md flex items-center justify-between text-[10px] font-mono shadow-inner">
-                          <span className="text-slate-300 truncate">
-                            💳 {isEn ? 'Code' : 'Código'} <strong className="text-white">EKLIPSE</strong> (-{discountPercent}%)
-                          </span>
-                          <div className="flex items-center gap-1 shrink-0 ml-1">
-                            {[0, 10].map(pct => (
-                              <button
-                                key={pct}
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setDiscountPercent(pct);
-                                }}
-                                className={`px-1.5 py-0.5 rounded text-[8px] font-bold cursor-pointer transition-all ${
-                                  discountPercent === pct
-                                    ? 'bg-purple-600 text-white font-black shadow-[0_0_8px_rgba(147,51,234,0.6)]'
-                                    : 'bg-white/5 text-slate-400 hover:text-white'
-                                }`}
-                              >
-                                {pct === 0 ? 'Off' : '10%'}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Primary CTA Button */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStart();
-                          }}
-                          className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:brightness-110 text-slate-950 font-mono font-black text-xs uppercase tracking-wider shadow-[0_0_22px_rgba(245,158,11,0.4),inset_0_1px_1px_rgba(255,255,255,0.5)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
-                        >
-                          <span>{isEn ? `Start with $${size.capital.toLocaleString()}${isFlexAddon ? ' Flex' : ''}` : `Empezar con $${size.capital.toLocaleString()}${isFlexAddon ? ' Flex' : ''}`}</span>
-                          <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
-                        </button>
-                      </div>
-
-                    </div>
-                  </div>
-                </div>
+                  <span>{plan.sizeLabel}</span>
+                  {plan.popular && (
+                    <span className={`text-[9px] font-black uppercase ml-0.5 ${isSelected && isSolar ? 'text-black' : 'text-amber-300'}`}>
+                      ★
+                    </span>
+                  )}
+                </button>
               );
             })}
           </div>
         </div>
 
-        {/* Institutional Trust Guarantees Row */}
-        <div className="w-full max-w-4xl pt-2">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 text-center font-mono text-[11px] text-slate-300">
-            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-white/10 backdrop-blur-md flex items-center justify-center gap-1.5">
-              <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>{isEn ? 'Instant Credentials' : 'Entrega Inmediata'}</span>
-            </div>
-            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-white/10 backdrop-blur-md flex items-center justify-center gap-1.5">
-              <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>{isEn ? 'Direct USDT Futures' : 'Futuros en USDT'}</span>
-            </div>
-            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-white/10 backdrop-blur-md flex items-center justify-center gap-1.5">
-              <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>{isEn ? 'No Evaluation Traps' : 'Sin Fases Trampa'}</span>
-            </div>
-            <div className="p-2.5 rounded-xl bg-slate-950/70 border border-white/10 backdrop-blur-md flex items-center justify-center gap-1.5">
-              <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>{isEn ? 'Bi-Weekly Payouts' : 'Retiros Quincenales'}</span>
-            </div>
-          </div>
+
+        {/* ========================================================================= */}
+        {/* 3. TWO-COLUMN SPLIT SHOWCASE: (Left: Pricing + Addons | Right: Rules)     */}
+        {/* GPU-Accelerated Directional Slide: Left on Decrease, Right on Increase    */}
+        {/* ========================================================================= */}
+        <div className="w-full max-w-5xl relative min-h-[440px] sm:min-h-[480px]">
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={`${category}-${selectedPlanId}-${paymentMode}`}
+              custom={direction}
+              variants={cardSlideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className={`w-full rounded-3xl bg-white/[0.03] border ${
+                isSolar ? 'border-amber-500/20 shadow-[0_15px_50px_rgba(245,158,11,0.08)]' : 'border-purple-500/25 shadow-[0_15px_50px_rgba(147,51,234,0.12)]'
+              } backdrop-blur-xl p-5 sm:p-8 relative overflow-hidden transform-gpu`}
+            >
+              
+              {/* Subtle Refraction Glow */}
+              <div className={`absolute top-0 left-8 right-8 h-[1px] bg-gradient-to-r from-transparent ${
+                isSolar ? 'via-amber-400/50' : 'via-purple-400/50'
+              } to-transparent`} />
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+                
+                {/* ------------------------------------------------------------------- */}
+                {/* LADO IZQUIERDO: Monto + Selector Pago + Precio + Addons + Checkout */}
+                {/* ------------------------------------------------------------------- */}
+                <div className="lg:col-span-6 space-y-4 sm:space-y-5 text-left border-b lg:border-b-0 lg:border-r border-white/10 pb-6 lg:pb-0 lg:pr-6">
+                  
+                  {/* Top Bar: Astronomical Tier Name & Mode Switch */}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    
+                    {/* Astronomical Name (e.g. SOLAR ECLIPSE $50K or LUNA DE SANGRE $50K) */}
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2.5 h-2.5 rounded-full ${isSolar ? 'bg-amber-400 shadow-[0_0_8px_#f59e0b]' : 'bg-purple-400 shadow-[0_0_8px_#c084fc]'}`} />
+                      <span className="font-mono text-xs sm:text-sm font-black tracking-wider uppercase text-slate-200">
+                        {isEn ? currentPlan.astronomicalName.en : currentPlan.astronomicalName.es}
+                      </span>
+                    </div>
+
+                    {/* Payment Mode Switch: Pago Único vs Mensualidad */}
+                    <div className="flex items-center p-1 rounded-xl bg-black/40 border border-white/10 text-[11px] font-mono">
+                      <button
+                        onClick={() => setPaymentMode('one-time')}
+                        className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                          paymentMode === 'one-time' ? 'bg-white/15 text-white font-bold' : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {isEn ? 'One-time' : 'Pago Único'}
+                      </button>
+                      <button
+                        onClick={() => setPaymentMode('monthly')}
+                        className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                          paymentMode === 'monthly' ? 'bg-white/15 text-white font-bold' : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {isEn ? 'Monthly' : 'Mensual'}
+                      </button>
+                    </div>
+
+                  </div>
+
+                  {/* Monumental Capital Display */}
+                  <div className="space-y-1">
+                    <div className="text-3xl sm:text-4xl md:text-5xl font-black font-mono text-white tracking-tight drop-shadow-[0_4px_25px_rgba(0,0,0,0.9)]">
+                      {currentPlan.capitalFormatted} <span className={`text-lg sm:text-xl font-bold ${isSolar ? 'text-amber-400' : 'text-purple-300'}`}>USDT</span>
+                    </div>
+                    <div className="text-[11px] font-mono text-slate-400">
+                      {isEn ? currentPlan.marketSpecialty.en : currentPlan.marketSpecialty.es}
+                    </div>
+                  </div>
+
+                  {/* Dynamic Price Display */}
+                  <div className="p-3 rounded-2xl bg-black/30 border border-white/10 flex items-baseline justify-between">
+                    <div>
+                      <div className="text-[10px] font-mono text-slate-400 uppercase">
+                        {paymentMode === 'one-time' 
+                          ? (isEn ? 'Total Activation Fee' : 'Precio de Activación') 
+                          : (isEn ? 'Monthly Subscription Fee' : 'Cuota Mensual')}
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className={`text-2xl sm:text-3xl font-mono font-black ${isSolar ? 'text-amber-300 drop-shadow-[0_0_15px_rgba(245,158,11,0.4)]' : 'text-purple-300 drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]'}`}>
+                          {dynamicPricing.totalPrice} USDT
+                        </span>
+                        {dynamicPricing.addonsCost > 0 && (
+                          <span className="text-[11px] font-mono text-emerald-400">
+                            (+{dynamicPricing.addonsCost} USDT addons)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="text-right text-[10px] font-mono text-slate-400">
+                      {paymentMode === 'one-time' ? (isEn ? 'Zero subscriptions' : 'Sin suscripción') : (isEn ? 'Cancel anytime' : 'Cancela cuando quieras')}
+                    </div>
+                  </div>
+
+                  {/* Nexus Add-ons Selector (4 Upgrades) */}
+                  <div className="space-y-2 pt-1">
+                    <div className="text-[11px] font-mono uppercase text-slate-300 font-bold flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Sliders className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{isEn ? 'Custom Add-Ons (Nexus Modifiers)' : 'Add-Ons Personalizables'}</span>
+                      </span>
+                      <span className="text-[9.5px] font-normal text-slate-400">
+                        {isEn ? 'Configurable in Nexus' : 'Sincronizado vía Nexus'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      {AVAILABLE_ADDONS.map((addon) => {
+                        const isChecked = selectedAddons.includes(addon.id);
+                        const cost = Math.max(addon.minPriceUSDT, Math.round(dynamicPricing.basePrice * addon.priceDeltaPct));
+
+                        return (
+                          <button
+                            key={addon.id}
+                            type="button"
+                            onClick={() => handleToggleAddon(addon.id)}
+                            className={`p-2 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
+                              isChecked 
+                                ? isSolar
+                                  ? 'bg-amber-500/15 border-amber-400/50 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
+                                  : 'bg-purple-600/20 border-purple-400/50 shadow-[0_0_10px_rgba(147,51,234,0.2)]'
+                                : 'bg-white/[0.02] border-white/10 hover:border-white/20'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <span className="text-[10px] font-mono font-bold text-slate-200 truncate">
+                                {isEn ? addon.nameEn : addon.nameEs}
+                              </span>
+                              <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
+                                isChecked 
+                                  ? isSolar ? 'bg-amber-400 border-amber-400 text-black' : 'bg-purple-500 border-purple-400 text-white' 
+                                  : 'border-white/20'
+                              }`}>
+                                {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                              </div>
+                            </div>
+                            <div className="text-[9px] font-mono text-slate-400 mt-1">
+                              +{cost} USDT
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Primary Checkout Button */}
+                  <div className="pt-2">
+                    <button
+                      onClick={handleCheckout}
+                      className={`w-full py-3.5 sm:py-4 rounded-2xl text-xs sm:text-sm font-mono font-black uppercase tracking-wider text-white transition-all duration-200 flex items-center justify-center gap-3 cursor-pointer hover:scale-[1.01] active:scale-95 shadow-xl ${
+                        isSolar
+                          ? 'bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:brightness-110 text-black shadow-[0_0_30px_rgba(245,158,11,0.4)]'
+                          : 'bg-gradient-to-r from-[#6366F1] via-[#7C3AED] to-[#9333EA] hover:brightness-110 shadow-[0_0_30px_rgba(124,58,237,0.45)]'
+                      }`}
+                    >
+                      <Flame className={`w-4 h-4 ${isSolar ? 'text-black' : 'text-amber-300'}`} />
+                      <span>
+                        {isEn 
+                          ? `Activate ${currentPlan.sizeLabel} Account` 
+                          : `Comprar Cuenta ${currentPlan.sizeLabel}`}
+                      </span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                </div>
+
+
+                {/* ------------------------------------------------------------------- */}
+                {/* LADO DERECHO: Reglas Completas y Claras del Plan                    */}
+                {/* ------------------------------------------------------------------- */}
+                <div className="lg:col-span-6 space-y-4 text-left">
+                  
+                  {/* Header of the Rules Side */}
+                  <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                    <div className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
+                      <ShieldCheck className={`w-4 h-4 ${isSolar ? 'text-amber-400' : 'text-purple-400'}`} />
+                      <span>{isEn ? 'Institutional Risk & Rules' : 'Reglas Completas de la Cuenta'}</span>
+                    </div>
+                    <span className="text-[10px] font-mono text-emerald-400">
+                      {isEn ? '100% DMA Simulated Books' : 'Libros Reales DMA'}
+                    </span>
+                  </div>
+
+                  {/* 4 Primary Highlight Rule Cards */}
+                  <div className="grid grid-cols-2 gap-2.5">
+                    
+                    {/* 1. Daily Loss Limit */}
+                    <div className="p-3 rounded-2xl bg-black/25 border border-white/10">
+                      <div className="text-[10px] font-mono uppercase text-slate-400 flex items-center justify-between">
+                        <span>{isEn ? 'Daily Loss' : 'Pérdida Diaria'}</span>
+                        <span className="text-rose-400 font-bold">{dynamicPricing.effectiveDailyLossPct}%</span>
+                      </div>
+                      <div className="text-lg font-mono font-black text-white mt-1">
+                        ${(currentPlan.capital * (dynamicPricing.effectiveDailyLossPct / 100)).toLocaleString()} USDT
+                      </div>
+                      <div className="w-full bg-white/10 h-1 rounded-full mt-2 overflow-hidden">
+                        <div className="bg-rose-500 h-full w-[25%]" />
+                      </div>
+                      <div className="text-[9px] font-mono text-slate-400 mt-1">
+                        {isEn ? 'Reset at 00:00 UTC' : 'Reinicio a las 00:00 UTC'}
+                      </div>
+                    </div>
+
+                    {/* 2. Max Total Drawdown */}
+                    <div className="p-3 rounded-2xl bg-black/25 border border-white/10">
+                      <div className="text-[10px] font-mono uppercase text-slate-400 flex items-center justify-between">
+                        <span>{isEn ? 'Max Drawdown' : 'Drawdown Total'}</span>
+                        <span className="text-amber-400 font-bold">{dynamicPricing.effectiveDrawdownPct}%</span>
+                      </div>
+                      <div className="text-lg font-mono font-black text-white mt-1">
+                        ${(currentPlan.capital * (dynamicPricing.effectiveDrawdownPct / 100)).toLocaleString()} USDT
+                      </div>
+                      <div className="w-full bg-white/10 h-1 rounded-full mt-2 overflow-hidden">
+                        <div className="bg-amber-400 h-full w-[35%]" />
+                      </div>
+                      <div className="text-[9px] font-mono text-slate-400 mt-1">
+                        {selectedAddons.includes('extra_drawdown') 
+                          ? (isEn ? '+2% Shield active' : 'Escudo +2% activo') 
+                          : (isEn ? 'Trailing EOD equity' : 'Trailing EOD')}
+                      </div>
+                    </div>
+
+                    {/* 3. Leverage */}
+                    <div className="p-3 rounded-2xl bg-black/25 border border-white/10">
+                      <div className="text-[10px] font-mono uppercase text-slate-400 flex items-center justify-between">
+                        <span>{isEn ? 'Leverage' : 'Apalancamiento'}</span>
+                        <Zap className="w-3 h-3 text-blue-400" />
+                      </div>
+                      <div className="text-lg font-mono font-black text-white mt-1">
+                        {dynamicPricing.effectiveLeverage}
+                      </div>
+                      <div className="text-[9px] font-mono text-blue-300 mt-1">
+                        {selectedAddons.includes('boost_leverage') 
+                          ? (isEn ? 'Boosted tier active' : 'Apalancamiento boost') 
+                          : (isEn ? 'Standard crypto leverage' : 'Apalancamiento base')}
+                      </div>
+                    </div>
+
+                    {/* 4. Profit Split */}
+                    <div className="p-3 rounded-2xl bg-black/25 border border-white/10">
+                      <div className="text-[10px] font-mono uppercase text-slate-400 flex items-center justify-between">
+                        <span>{isEn ? 'Profit Split' : 'Reparto Ganancias'}</span>
+                        <Award className="w-3 h-3 text-amber-400" />
+                      </div>
+                      <div className="text-lg font-mono font-black text-white mt-1">
+                        {dynamicPricing.effectiveProfitSplit}%
+                      </div>
+                      <div className="text-[9px] font-mono text-purple-300 mt-1">
+                        {isEn ? 'Direct USDT wallet payout' : 'Liquidación directa en USDT'}
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Secondary Rules List (Airy, institutional, crystal-clear) */}
+                  <div className="p-3.5 rounded-2xl bg-black/30 border border-white/10 space-y-2 text-xs">
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{isEn ? 'Payout Frequency & Speed' : 'Frecuencia de Retiros'}</span>
+                      </span>
+                      <span className="font-mono font-bold text-slate-200">
+                        {dynamicPricing.effectivePayoutSpeed}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{isEn ? 'Minimum Trading Days' : 'Días Mínimos de Trading'}</span>
+                      </span>
+                      <span className="font-mono font-bold text-emerald-400">
+                        {isEn ? '0 Days (No restrictions)' : '0 Días (Sin trabas)'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 flex items-center gap-1.5">
+                        <TrendingUp className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{isEn ? 'Weekend & Overnight Crypto' : 'Fin de Semana Cripto'}</span>
+                      </span>
+                      <span className="font-mono font-bold text-slate-200">
+                        {isEn ? 'Allowed 24/7' : 'Permitido 24/7'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 flex items-center gap-1.5">
+                        <Coins className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{isEn ? 'Meme Scalping Protection' : 'Operativa en Volatilidad'}</span>
+                      </span>
+                      <span className="font-mono font-bold text-slate-200">
+                        {isSolar 
+                          ? (isEn ? 'Crypto Top 100 DMA' : 'Cripto Top 100 DMA') 
+                          : (isEn ? 'Unrestricted Meme Trading' : 'Sin filtro en Memecoins')}
+                      </span>
+                    </div>
+
+                  </div>
+
+                  {/* Bullet features */}
+                  <div className="space-y-1.5 pt-1">
+                    {(isEn ? currentPlan.features.en : currentPlan.features.es).slice(0, 3).map((feat, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-[11px] text-slate-300">
+                        <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${
+                          isSolar ? 'bg-amber-500/20 text-amber-300' : 'bg-purple-500/20 text-purple-300'
+                        }`}>
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </div>
+                        <span>{feat}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                </div>
+
+              </div>
+
+            </motion.div>
+          </AnimatePresence>
         </div>
 
       </div>
     </section>
   );
 };
-
-

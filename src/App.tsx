@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { Navbar } from './components/Navbar';
-import { Hero } from './components/Hero';
-import { HeroScrollCanvas } from './components/HeroScrollCanvas';
-import { ProgramsSection } from './components/ProgramsSection';
+import { HeroExperienceStage } from './components/HeroExperienceStage';
 import { HorizontalShowcase } from './components/HorizontalShowcase';
 import { MarketsSection } from './components/MarketsSection';
 import { PayoutRoadmapSection } from './components/PayoutRoadmapSection';
@@ -13,7 +11,7 @@ import { FinalCTA } from './components/FinalCTA';
 import { Footer } from './components/Footer';
 import { TradingTerminal } from './components/TradingTerminal';
 import { UserSession } from './lib/supabase';
-import { CandlestickCursor } from './components/CandlestickCursor';
+import { CelestialCursor } from './components/CelestialCursor';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { RouterProvider, useAppRouter } from './context/RouterContext';
@@ -46,15 +44,29 @@ function MainAppContent() {
   };
 
   const handleNavigateSection = (sectionId: string) => {
-    if (isTerminalRoute || isLoginRoute || isDashboardRoute || isCrmRoute) {
-      navigate('/');
-      setTimeout(() => {
-        const el = document.getElementById(sectionId);
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    } else {
+    const doScroll = () => {
+      if (sectionId === 'hero') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      if (sectionId === 'programs') {
+        const container = document.getElementById('hero-experience');
+        if (container) {
+          const scrollable = container.offsetHeight - window.innerHeight;
+          const targetScroll = container.offsetTop + scrollable * 0.75;
+          window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+          return;
+        }
+      }
       const el = document.getElementById(sectionId);
       if (el) el.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    if (isTerminalRoute || isLoginRoute || isDashboardRoute || isCrmRoute) {
+      navigate('/');
+      setTimeout(doScroll, 100);
+    } else {
+      doScroll();
     }
   };
 
@@ -130,51 +142,28 @@ function MainAppContent() {
         onNavigateSection={handleNavigateSection} 
       />
 
-      {/* Main Content Layer */}
+      {/* Main Content Layer: Only Hero Experience is active for initial divine presentation */}
       <main className="flex-1">
         
-        {/* Unified 2-Section Video Atmosphere (Hero + Instant Funding Programs) */}
-        <div id="hero-experience" className="relative w-full">
-          {/* Pinned Video Canvas */}
-          <div className="sticky top-0 h-screen w-full overflow-hidden pointer-events-none z-0">
-            <HeroScrollCanvas totalFrames={160} containerId="hero-experience" />
-          </div>
+        {/* Single Page Pinned Viewport Stage (Hero + ProgramsSection over continuous 240-frame eclipse) */}
+        <HeroExperienceStage 
+          onOpenTerminal={handleOpenTerminal} 
+          onNavigateSection={handleNavigateSection} 
+        />
 
-          {/* Content Layer: Hero + Programs Section flowing seamlessly over the video */}
-          <div className="relative z-10 -mt-[100vh]">
-            <Hero onOpenTerminal={handleOpenTerminal} />
-            <ProgramsSection />
-          </div>
-        </div>
-
-        {/* Horizontal Terminal Showcase (Eklipse OS Experience) */}
-        <HorizontalShowcase onOpenTerminal={handleOpenTerminal} />
-
-        {/* Section 5: Markets (Trade the market that never sleeps: BTC, ETH, SOL) */}
-        <MarketsSection />
-
-        {/* Section 7: Funding & Payout Roadmap (Pass the challenge. Keep trading. Get rewarded.) */}
-        <PayoutRoadmapSection />
-
-        {/* Section 8: Why EKLIPSE (Built for traders, not spreadsheets.) */}
-        <WhyEklipseSection />
-
-        {/* Section 9: Social Proof / Community */}
-        <CommunitySection />
-
-        {/* Section 10: FAQ (13 Questions) */}
-        <FAQSection />
-
-        {/* Section 11: Final CTA (Ready to prove your edge?) */}
-        <FinalCTA />
+        {/* 
+          Note: Subsequent sections (ProgramsSection, HorizontalShowcase, MarketsSection, 
+          PayoutRoadmapSection, WhyEklipseSection, CommunitySection, FAQSection, FinalCTA)
+          are preserved intact in the codebase to be progressively enhanced and reintroduced.
+        */}
 
       </main>
 
       {/* Global Footer */}
       <Footer />
 
-      {/* High-Performance Candlestick Laser Cursor */}
-      <CandlestickCursor />
+      {/* High-Performance Celestial Cursor with orbital ring and core star */}
+      <CelestialCursor />
 
       {/* Auth Modal for Quick Login / Registration */}
       <AuthModal 

@@ -7,9 +7,9 @@ interface HeroScrollCanvasProps {
   containerId?: string;
 }
 
-const CACHE_NAME = 'eklipse-sequence-v4';
+const CACHE_NAME = 'eklipse-sequence-v5';
 
-// Automatically purge legacy caches to prevent stale city video frames
+// Automatically purge legacy caches to prevent stale video frames
 if (typeof window !== 'undefined' && 'caches' in window) {
   caches.keys().then((keys) => {
     keys.forEach((k) => {
@@ -21,17 +21,21 @@ if (typeof window !== 'undefined' && 'caches' in window) {
 }
 
 export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
-  totalFrames = 160,
+  totalFrames = 240,
   className = '',
   scrollProgress,
   containerId,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerWrapperRef = useRef<HTMLDivElement>(null);
   const framesRef = useRef<(ImageBitmap | HTMLImageElement | null)[]>([]);
   const currentFrameRef = useRef(0);
   const targetFrameRef = useRef(0);
   const rafIdRef = useRef<number | null>(null);
   const [isFirstFrameReady, setIsFirstFrameReady] = useState(false);
+
+  // Mouse tracking for silky 3D parallax and celestial lighting
+  const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
 
   // Helper: Load a single frame through persistent CacheStorage + ImageBitmap
   const loadSingleFrame = useCallback(async (idx: number): Promise<ImageBitmap | HTMLImageElement | null> => {
@@ -93,10 +97,10 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
       }
     });
 
-    // 2. Priority Chunk: Frames 1 to 24 (Initial scroll horizon)
+    // 2. Priority Chunk: Frames 1 to 32 (Initial scroll horizon)
     const loadPriorityChunk = async () => {
       const priorityPromises: Promise<any>[] = [];
-      const priorityLimit = Math.min(25, totalFrames);
+      const priorityLimit = Math.min(32, totalFrames);
       for (let i = 1; i < priorityLimit; i++) {
         priorityPromises.push(loadSingleFrame(i));
       }
@@ -108,7 +112,7 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
 
     const loadRemainingFrames = (startIdx: number) => {
       let currentIdx = startIdx;
-      const batchSize = 8;
+      const batchSize = 10;
 
       const scheduleNextBatch = () => {
         if (currentIdx >= totalFrames) return;
@@ -129,12 +133,12 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
       if ('requestIdleCallback' in window) {
         (window as any).requestIdleCallback(scheduleNextBatch);
       } else {
-        setTimeout(scheduleNextBatch, 35);
+        setTimeout(scheduleNextBatch, 30);
       }
     };
 
-    // Stagger priority load by 30ms to let page finish rendering main layout
-    const timer = setTimeout(loadPriorityChunk, 30);
+    // Stagger priority load by 20ms to allow layout bootstrap
+    const timer = setTimeout(loadPriorityChunk, 20);
 
     return () => {
       clearTimeout(timer);
@@ -172,8 +176,8 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
     const canvasHeight = canvas.height;
     if (canvasWidth <= 0 || canvasHeight <= 0) return;
 
-    const imgWidth = (frame as any).width || (frame as any).naturalWidth || 1280;
-    const imgHeight = (frame as any).height || (frame as any).naturalHeight || 720;
+    const imgWidth = (frame as any).width || (frame as any).naturalWidth || 1600;
+    const imgHeight = (frame as any).height || (frame as any).naturalHeight || 900;
     if (imgWidth <= 0 || imgHeight <= 0) return;
 
     // High quality aspect ratio cover scaling
@@ -238,20 +242,50 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [scrollProgress, totalFrames, containerId]);
 
-  // Smooth lerp loop that ONLY animates towards targetFrame when the user scrolls
+  // Track mouse movement for subtle, cinematic 3D parallax tilt
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const nx = (e.clientX / window.innerWidth - 0.5) * 2; // -1 to +1
+      const ny = (e.clientY / window.innerHeight - 0.5) * 2; // -1 to +1
+      mouseRef.current.targetX = nx;
+      mouseRef.current.targetY = ny;
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Smooth lerp loop that animates towards targetFrame on scroll & adds mouse parallax
   useEffect(() => {
     let lastRenderedFrame = -1;
 
     const updateLoop = () => {
+      // 1. Scroll-driven frame interpolation
       const diff = targetFrameRef.current - currentFrameRef.current;
-      
-      // Ultra-smooth easing dampener for silky, cinematic transitions
       if (Math.abs(diff) > 0.005) {
-        currentFrameRef.current += diff * 0.09;
+        currentFrameRef.current += diff * 0.085;
         const frameToRender = Math.round(currentFrameRef.current);
         if (frameToRender !== lastRenderedFrame) {
           renderFrame(frameToRender);
           lastRenderedFrame = frameToRender;
+        }
+      }
+
+      // 2. Mouse-driven silky 3D perspective parallax (only update if delta is significant)
+      const m = mouseRef.current;
+      const dx = m.targetX - m.x;
+      const dy = m.targetY - m.y;
+      
+      if (Math.abs(dx) > 0.001 || Math.abs(dy) > 0.001) {
+        m.x += dx * 0.06;
+        m.y += dy * 0.06;
+
+        if (containerWrapperRef.current) {
+          const tiltX = -m.y * 2.2; // degrees
+          const tiltY = m.x * 2.8;  // degrees
+          const panX = m.x * 6;     // pixels
+          const panY = m.y * 5;     // pixels
+          containerWrapperRef.current.style.transform = `perspective(1000px) rotateX(${tiltX.toFixed(2)}deg) rotateY(${tiltY.toFixed(2)}deg) translate3d(${panX.toFixed(1)}px, ${panY.toFixed(1)}px, 0) scale(1.025)`;
         }
       }
 
@@ -265,31 +299,38 @@ export const HeroScrollCanvas: React.FC<HeroScrollCanvasProps> = ({
   }, [renderFrame]);
 
   return (
-    <div className={`absolute inset-0 z-0 overflow-hidden pointer-events-none ${className}`}>
-      {/* 
-        Instant Pre-Paint Poster (Frame 000 from fondo Eklipse):
-        Guarantees 0ms blank time before canvas initializes
-      */}
-      <img
-        src="/eklipse-sequence/frame_000.webp"
-        alt="Eklipse Background Poster"
-        fetchPriority="high"
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 pointer-events-none ${
-          isFirstFrameReady ? 'opacity-0' : 'opacity-100'
-        }`}
-      />
+    <div className={`absolute inset-0 z-0 overflow-hidden pointer-events-none select-none ${className}`}>
+      {/* 3D Parallax Transform Wrapper (Clean GPU composition, no CSS transition fighting) */}
+      <div 
+        ref={containerWrapperRef}
+        className="w-full h-full will-change-transform transform-gpu"
+        style={{ transformStyle: 'preserve-3d' }}
+      >
+        {/* 
+          Instant Pre-Paint Poster (hero.webp):
+          Enhanced 1080p WebP matching Frame 000 for instant 0ms LCP
+        */}
+        <img
+          src="/hero.webp"
+          alt="Eklipse Background Hero Poster"
+          fetchPriority="high"
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 pointer-events-none ${
+            isFirstFrameReady ? 'opacity-0' : 'opacity-100'
+          }`}
+        />
 
-      {/* Hardware-Accelerated Video Sequence Canvas */}
-      <canvas 
-        ref={canvasRef} 
-        className="w-full h-full object-cover transition-opacity duration-500 will-change-transform"
-        style={{ opacity: isFirstFrameReady ? 1 : 0 }}
-      />
+        {/* Hardware-Accelerated Video Sequence Canvas (240 Frames) */}
+        <canvas 
+          ref={canvasRef} 
+          className="w-full h-full object-cover transition-opacity duration-500 will-change-transform"
+          style={{ opacity: isFirstFrameReady ? 1 : 0 }}
+        />
+      </div>
 
       {/* Atmospheric Cinematic Eclipse Overlays */}
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/40 pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/45 via-transparent to-slate-950/45 pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_65%_at_50%_35%,rgba(245,158,11,0.06),transparent_80%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#06070B] via-transparent to-[#06070B]/50 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#06070B]/60 via-transparent to-[#06070B]/60 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_75%_60%_at_50%_35%,rgba(245,158,11,0.08),transparent_80%)] pointer-events-none" />
     </div>
   );
 };
