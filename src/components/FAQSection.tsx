@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, HelpCircle, Sparkles } from 'lucide-react';
+import { Plus, Sparkles, HelpCircle, ShieldCheck, Zap } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { ScrollReveal } from './common/ScrollReveal';
 
@@ -15,138 +15,163 @@ export const FAQSection: React.FC = () => {
 
   const faqs = [
     {
-      q: isEn ? 'What is EKLIPSE?' : '¿Qué es EKLIPSE?',
+      q: isEn ? 'What is EKLIPSE FUNDED and how is it different from traditional prop firms?' : '¿Qué es EKLIPSE FUNDED y en qué se diferencia de una prop firm convencional?',
       a: isEn 
-        ? 'EKLIPSE is a next-generation proprietary trading platform and prop firm focused on Crypto Futures. We provide skilled traders with simulated capital accounts up to $100,000 with Instant Funding (no evaluation challenge), our own proprietary GPU-accelerated terminal, and up to 80% profit payouts based on performance.'
-        : 'EKLIPSE es una empresa de fondeo y plataforma de trading de última generación enfocada en Futuros Cripto. Ofrecemos a los traders cuentas de capital simulado de hasta $100,000 con Fondeo Inmediato (sin fases de examen ni retos), terminal propia acelerada por GPU y repartos de beneficio de hasta el 80% basados en su rendimiento.'
+        ? 'EKLIPSE is an institutional crypto proprietary trading firm. Unlike legacy firms using slow MetaTrader 4/5 bridges with inflated spreads, we operate our own 60 FPS GPU terminal connected directly via DMA WebSocket to real exchange order books (Binance and Bybit). We provide simulated capital accounts up to $100,000, sub-millisecond execution, and on-chain USDT payouts in under 8 hours.'
+        : 'EKLIPSE es una empresa de fondeo institucional cripto. A diferencia de las firmas tradicionales que utilizan pasarelas lentas de MetaTrader 4/5 con spreads inflados de brokers b-book, operamos nuestra propia terminal web con GPU a 60 FPS conectada por WebSocket DMA directo a libros de Binance y Bybit. Ofrecemos cuentas de capital simulado de hasta $100,000, ejecución en sub-milisegundo y pagos on-chain en USDT en menos de 8 horas.'
     },
     {
-      q: isEn ? 'How does instant funding without challenges work?' : '¿Cómo funciona el fondeo inmediato sin challenge?',
+      q: isEn ? 'What is the difference between Solar (Instant Funding) and Lunar (2-Phase Challenge)?' : '¿Cuál es la diferencia entre Chispa Solar (Fondeo Inmediato) y Luna Creciente (Reto 2 Fases)?',
       a: isEn 
-        ? 'You select your funded account ($1K to $100K) for a single one-time activation fee with zero recurring subscriptions. There are zero evaluation phases or waiting periods: you start trading immediately on our proprietary terminal under disciplined 2% daily loss and 8% maximum drawdown rules. Once you complete 5 profitable days, you can request your payout.'
-        : 'Seleccionas tu cuenta de capital ($1K a $100K) mediante una tarifa única de activación sin suscripciones mensuales recurrentes. Cero fases de examen ni periodos de espera: comienzas a operar inmediatamente en nuestra terminal propia bajo 2% de pérdida diaria y 8% de drawdown máximo. Al cumplir 5 días rentables, solicitas tu retiro.'
+        ? 'Solar Accounts (Chispa Solar, Corona Solar, Eclipse Solar) provide Instant Funding with ZERO evaluation phases or waiting periods: you start trading immediately under disciplined risk rules. Lunar Accounts (Luna Creciente, Superluna, Luna de Sangre) follow a traditional 2-phase evaluation (Phase 1: 8% target, Phase 2: 5% target) with 10% maximum drawdown and up to 90% profit split, designed for traders who want to prove their edge at a lower activation fee.'
+        : 'Las cuentas Solares (Chispa Solar, Corona Solar, Eclipse Solar) ofrecen Fondeo Inmediato sin exámenes ni fases de espera: comienzas a operar desde el primer minuto bajo reglas claras de gestión. Las cuentas Lunares (Luna Creciente, Superluna, Luna de Sangre) son retos de evaluación en 2 fases (Fase 1: 8% objetivo, Fase 2: 5% objetivo) con 10% de drawdown total y hasta 90% de reparto de ganancias, pensadas para traders que prefieren demostrar consistencia con un costo de activación menor.'
     },
     {
-      q: isEn ? 'What markets can I trade?' : '¿Qué mercados puedo operar?',
+      q: isEn ? 'What are the exact Drawdown and Daily Loss rules?' : '¿Cuáles son las reglas exactas de Drawdown y Pérdida Diaria?',
       a: isEn 
-        ? 'You can trade major Crypto Futures contracts including BTC/USDT, ETH/USDT, and SOL/USDT perpetuals 24 hours a day, 7 days a week, with additional high-liquidity crypto derivative pairs launching continuously.'
-        : 'Puedes operar los principales contratos de futuros perpetuos: BTC/USDT, ETH/USDT y SOL/USDT las 24 horas del día, los 7 días de la semana, con nuevos pares de alta liquidez agregándose periódicamente.'
+        ? '1) Maximum Daily Loss: 2% of the day’s starting balance (calculated transparently at 00:00 UTC). 2) Maximum Total Drawdown: 8% for Solar Instant accounts and 10% for Lunar Challenge accounts from initial capital. We use static balance/equity limits with zero deceptive intraday trailing drawdown recalculations.'
+        : '1) Pérdida Máxima Diaria: 2% del balance inicial del día (calculado de forma transparente a las 00:00 UTC). 2) Drawdown Máximo Total: 8% en cuentas Solares de Fondeo Inmediato y 10% en cuentas Lunares respecto al capital inicial. Utilizamos límites estáticos y transparentes, sin trampas de trailing drawdown intradía ocultas ni comisiones sorpresa.'
     },
     {
-      q: isEn ? 'Is the account simulated?' : '¿La cuenta es simulada?',
+      q: isEn ? 'How and when are profit payouts processed?' : '¿Cómo y con qué rapidez se procesan los retiros de beneficios (Payouts)?',
       a: isEn 
-        ? 'Yes. All trading occurs in a high-fidelity simulated environment matching real orderbook liquidity, depth, and live market pricing. Successful traders who meet the risk rules receive real crypto payouts (USDT/USDC) backed by our capital reserve.'
-        : 'Sí. Toda la operativa se realiza en un entorno de simulación de alta fidelidad que replica la liquidez, profundidad y precios de mercado en tiempo real. Los traders que cumplen las reglas de riesgo reciben retiros reales en criptomonedas (USDT/USDC) respaldados por nuestro capital.'
+        ? 'Payouts are requested directly through your Trader Dashboard once you achieve at least 5 profitable trading days (+0.5% daily gain). Profits are paid directly on-chain in USDT (TRC-20 / BEP-20 / ERC-20) within 8 hours. Default profit splits range from 80% to 90%, or direct 90% from day 1 with the Payout Add-on.'
+        : 'Los retiros se solicitan directamente desde tu Trader Dashboard Nexus al cumplir un mínimo de 5 días de consistencia rentables (+0.5% por día). Los pagos se liquidan en USDT on-chain (TRC-20 / BEP-20 / ERC-20) en menos de 8 horas sin demoras burocráticas de intermediarios. El profit split estándar es del 80% al 90%, o 90% directo desde el primer retiro con el Add-on de Payout.'
     },
     {
-      q: isEn ? 'What are the drawdown rules?' : '¿Cuáles son las reglas de drawdown?',
+      q: isEn ? 'Which markets and cryptocurrencies can I trade?' : '¿Qué mercados y criptomonedas puedo operar en la Terminal?',
       a: isEn 
-        ? 'There are two clear limits: 1) Maximum Daily Loss of 2% (calculated from the day’s starting balance at 00:00 UTC), and 2) Maximum Overall Drawdown of 8% from your starting account balance. These rules protect capital and ensure long-term risk discipline.'
-        : 'Existen dos límites transparentes: 1) Pérdida Máxima Diaria del 2% (calculada sobre el balance inicial del día a las 00:00 UTC), y 2) Drawdown Máximo Total del 8% respecto al saldo inicial. Estas reglas protegen el capital y garantizan la disciplina de riesgo.'
+        ? 'You can trade high-liquidity Crypto Perpetual Futures including BTC/USDT, ETH/USDT, and SOL/USDT, as well as verified high-volume meme contracts like PEPE/USDT. All pairs trade 24 hours a day, 7 days a week with zero weekend market interruptions.'
+        : 'Puedes operar los contratos de Futuros Perpetuos de mayor liquidez global: BTC/USDT, ETH/USDT, SOL/USDT y memecoins verificadas de alto volumen como PEPE/USDT. Todos los pares operan 24 horas al día, 7 días a la semana sin parones de fin de semana.'
     },
     {
-      q: isEn ? 'How are profits calculated?' : '¿Cómo se calculan los beneficios?',
+      q: isEn ? 'Why do you use a proprietary Web Terminal instead of MT4 or MT5?' : '¿Por qué una Terminal Web Institucional propia y no MetaTrader 4 o 5?',
       a: isEn 
-        ? 'Profits are calculated continuously using real-time mark-to-market prices. Your closed PnL and floating open PnL are updated tick-by-tick directly in your terminal dashboard.'
-        : 'Los beneficios se calculan de manera continua mark-to-market con precios en vivo. Tu PnL cerrado y flotante se actualiza tick a tick directamente en el panel de tu terminal.'
+        ? 'MetaTrader was built in the early 2000s for retail forex. In crypto, MT4/MT5 requires third-party bridge plugins that add 200-500ms of latency, synthetic slippage, and synthetic quotes. Our proprietary terminal is engineered in TypeScript with a 60 FPS GPU KLine canvas connected directly via WebSocket to exchange order books with sub-0.5ms execution and integrated pre-trade risk validation.'
+        : 'MetaTrader fue diseñado en la década del 2000 para forex minorista. En cripto, MT4/MT5 requiere puentes de terceros que añaden demoras de 200 a 500ms, deslizamientos artificiales y cotizaciones manipuladas. Nuestra terminal propietaria está construida en TypeScript con motor gráfico GPU a 60 FPS y conectividad WebSocket directa a libros de exchange con ejecución en sub-0.5ms y validación de riesgo previa a cada orden.'
     },
     {
-      q: isEn ? 'How do payouts work?' : '¿Cómo funcionan los retiros?',
+      q: isEn ? 'How does the Trader Dashboard update in real time?' : '¿Cómo se actualiza el Dashboard del Trader en tiempo real?',
       a: isEn 
-        ? 'On your funded account, you can request profit withdrawals every 14 days after achieving at least 5 profitable trading days (+0.5% each). Profit split begins at 35% on payout 1, 50% on payout 2, 80% on payout 3, and reaches 90% on payout 4+, sent directly in USDT.'
-        : 'En tu cuenta fondeada, puedes solicitar retiros de beneficios cada 14 días tras cumplir al menos 5 días rentables de operativa (+0,5% cada uno). El reparto es progresivo: 35% en el 1er retiro, 50% en el 2do, 80% en el 3ero y 90% en el 4to en adelante, transferido directamente en USDT.'
+        ? 'Our background Sentinel Risk Daemon operates in RAM via WebSockets and Redis caching. Every market tick, position price movement, and closed trade immediately recalculates your net equity, profit target, and drawdown status in <1ms without database polling delays.'
+        : 'Nuestro centinela de servidor opera en memoria RAM conectado por WebSockets y caché caliente de Redis. Cada tick del mercado, fluctuación de margen y orden cerrada recalcula tu equity neto, objetivo de beneficio y drawdown en menos de 1ms sin depender de consultas lentas de base de datos.'
     },
     {
-      q: isEn ? 'Can I use my own strategy?' : '¿Puedo usar mi propia estrategia?',
+      q: isEn ? 'Are algorithmic bots and copy trading permitted?' : '¿Están permitidos los bots algorítmicos y el copy trading?',
       a: isEn 
-        ? 'Absolutely. You are free to trade scalp setups, intraday momentum, swing positions, or price action strategies as long as you respect the risk limits and do not engage in toxic latency exploits or orderbook manipulation.'
-        : 'Por supuesto. Tienes total libertad para operar scalping, intradía, swing trading o acción de precio, siempre que respetes los límites de riesgo y no realices prácticas abusivas de latencia o manipulación artificial.'
+        ? 'Yes. Algorithmic strategies and bots are fully allowed via our direct API endpoints. Internal copy trading between your own accounts or connected personal exchanges is also permitted. Toxic latency arbitrage (exploiting stale feeds) and multi-account hedging are strictly prohibited.'
+        : 'Sí. Las estrategias algorítmicas y bots están totalmente permitidos mediante nuestras APIs directas. El copy trading interno para replicar tus operaciones entre tus propias cuentas o exchanges conectados también está habilitado. Queda estrictamente prohibido el arbitraje tóxico de latencia y el hedging de cuentas opuestas.'
     },
     {
-      q: isEn ? 'Are bots allowed?' : '¿Se permiten bots o EAs?',
+      q: isEn ? 'Can I trade during high-impact news and over weekends?' : '¿Puedo operar durante noticias de alto impacto y fines de semana?',
       a: isEn 
-        ? 'Algorithmic trading and trading bots are permitted via our API connectivity, provided they operate standard technical trading logic and do not perform platform latency arbitrage or tick manipulation.'
-        : 'El trading algorítmico y bots están permitidos mediante conectividad API, siempre que ejecuten lógica técnica estándar y no arbitrajes de latencia de plataforma ni manipulación de ticks.'
+        ? 'Yes. Crypto futures markets run 24/7 without weekend closures. You have full freedom to hold positions over the weekend and trade high-impact macroeconomic events (CPI, FOMC, rate decisions), provided your positions respect the 2% daily loss limit.'
+        : 'Sí. El mercado cripto opera 24/7 de forma ininterrumpida. Tienes total libertad para mantener posiciones abiertas el fin de semana y operar eventos macroeconómicos de alta volatilidad (IPC, FOMC, tipos de interés), siempre que tu riesgo no vulnere el límite diario del 2%.'
     },
     {
-      q: isEn ? 'Is copy trading allowed?' : '¿Se permite el copy trading?',
+      q: isEn ? 'What are the customizable Add-ons available at checkout?' : '¿Qué son los Add-ons personalizables y cómo benefician mi cuenta?',
       a: isEn 
-        ? 'Yes, you can copy trade your own trades between your own accounts or from your connected exchanges using our built-in API tools. Mass commercial mirror copying between unrelated traders is prohibited.'
-        : 'Sí, puedes replicar tus propias operaciones entre tus propias cuentas o desde tus exchanges conectados mediante nuestras herramientas internas. Está prohibido el copiado masivo entre cuentas de terceros distintos.'
+        ? 'You can enhance any account with 4 modular add-ons: 1) +50% Leverage boost, 2) Extended Drawdown (+2% buffer), 3) Instant 90% Profit Split from day one, and 4) Weekly Payouts (request withdrawals every 7 days instead of 14).'
+        : 'Puedes potenciar cualquier cuenta con 4 complementos modulares: 1) +50% de Apalancamiento dinámico, 2) Drawdown extendido (+2% de colchón de seguridad), 3) Payout directo al 90% desde el día 1, y 4) Retiros semanales (solicita tus ganancias cada 7 días en lugar de 14).'
     },
     {
-      q: isEn ? 'Can I trade news?' : '¿Puedo operar noticias de alta volatilidad?',
+      q: isEn ? 'What happens if I accidentally breach a risk limit?' : '¿Qué ocurre si alcanzo accidentalmente un límite de riesgo?',
       a: isEn 
-        ? 'Yes. You can hold and execute positions during macro economic news releases (CPI, FOMC, crypto announcements). However, remember that sudden volatility still affects your 2% daily loss limit.'
-        : 'Sí. Puedes mantener y abrir posiciones durante eventos macroeconómicos (IPC, FOMC o noticias cripto). No obstante, recuerda que la volatilidad extrema sigue sujeta al límite de pérdida diaria del 2%.'
-    },
-    {
-      q: isEn ? 'Can I hold positions overnight?' : '¿Puedo mantener posiciones abiertas de un día para otro o fin de semana?',
-      a: isEn 
-        ? 'Yes. Crypto futures markets operate 24/7 without weekend closures. You are fully permitted to hold swing positions overnight and over weekends.'
-        : 'Sí. Los mercados de futuros cripto funcionan 24/7 sin parón de fin de semana. Tienes plena libertad para mantener posiciones swing abiertas de un día para otro o durante el fin de semana.'
-    },
-    {
-      q: isEn ? 'What happens if I breach a rule?' : '¿Qué sucede si infrinjo una regla?',
-      a: isEn 
-        ? 'If your account breaches the 2% daily loss or 8% max drawdown limit, your open positions are automatically closed by our risk engine to protect capital. You can reset or activate a new funded account with a special trader discount at any time.'
-        : 'Si la cuenta supera el 2% de pérdida diaria o el 8% de drawdown total, el motor de riesgo cierra automáticamente las posiciones abiertas para salvaguardar el capital. Puedes reiniciar o activar una nueva cuenta de fondeo con tarifa reducida en cualquier momento.'
+        ? 'If your account touches the 2% daily loss or overall drawdown limit, our synchronous risk engine automatically closes open positions to protect balance. You will never owe any money, and you can reset your account or activate a new program at a discounted trader rate.'
+        : 'Si la cuenta alcanza el 2% de pérdida diaria o el límite de drawdown total, el motor de riesgo síncrono cierra automáticamente las operaciones abiertas para proteger el capital. Nunca deberás dinero y puedes reiniciar tu cuenta o activar un nuevo programa con descuento preferencial para la comunidad.'
     }
   ];
 
   return (
     <section 
       id="faq"
-      className="min-h-screen w-full flex flex-col justify-center items-center py-20 sm:py-28 relative select-none bg-transparent"
+      className="w-full flex flex-col justify-center items-center py-6 sm:py-12 relative select-none bg-[#06070B] text-white"
     >
-      <div className="w-full px-4 sm:px-6 lg:px-12 max-w-4xl mx-auto relative z-10">
-        
-        {/* Section Header without top tag */}
-        <ScrollReveal animation="fade-up">
-          <div className="text-center space-y-4 mb-14">
-            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-              {isEn ? 'Frequently Asked Questions' : 'Preguntas Frecuentes'}
-            </h2>
+      {/* Background Ambience */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.03),transparent_60%)] pointer-events-none" />
 
-            <p className="text-sm sm:text-base text-slate-300 font-normal">
+      <div className="w-full px-3 sm:px-6 lg:px-10 max-w-6xl mx-auto relative z-10">
+        
+        {/* Section Header */}
+        <ScrollReveal animation="fade-up">
+          <div className="w-full flex flex-col items-center text-center space-y-1 sm:space-y-2 mb-4 sm:mb-8 max-w-4xl mx-auto">
+            
+            {/* Overline Pre-title */}
+            <div className="text-[10px] sm:text-xs font-semibold tracking-[0.2em] text-slate-300/90 uppercase font-sans">
+              {isEn ? 'KNOWLEDGE BASE & GOVERNANCE' : 'BASE DE CONOCIMIENTO Y REGLAS INSTITUCIONALES'}
+            </div>
+
+            {/* Master Visual Headline H1 */}
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-[-0.03em] leading-[1.1] text-white">
+              <span className="inline-block drop-shadow-[0_4px_30px_rgba(0,0,0,0.85)]">
+                {isEn ? 'Frequently Asked ' : 'Preguntas '}{' '}
+              </span>
+              <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-500 drop-shadow-[0_0_35px_rgba(245,158,11,0.45)]">
+                {isEn ? 'Questions.' : 'Frecuentes.'}
+              </span>
+            </h1>
+
+            {/* Subtitle */}
+            <p className="text-xs sm:text-sm text-slate-300/85 font-normal max-w-xl mx-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
               {isEn 
-                ? 'Everything you need to know about our instant funding, rules, terminal, and payouts.' 
-                : 'Todo lo que necesitas saber sobre nuestro fondeo inmediato, reglas, terminal y retiros.'}
+                ? 'Clear answers regarding our instant funding, terminal latency, risk metrics, and guaranteed crypto payouts.' 
+                : 'Respuestas claras sobre nuestro fondeo inmediato, latencia de terminal, métricas de riesgo y retiros garantizados en cripto.'}
             </p>
           </div>
         </ScrollReveal>
 
-        {/* Accordion Items with Cascading Ripple ScrollReveal */}
-        <div className="space-y-3">
+        {/* Accordion List: 2-Column Grid on Desktop (6 + 5 items) for Perfect Viewport Fit */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-2.5 max-h-[75vh] lg:max-h-none overflow-y-auto no-scrollbar pr-0.5">
           {faqs.map((faq, idx) => {
             const isOpen = openIdx === idx;
             return (
               <ScrollReveal 
                 key={idx} 
                 animation="fade-up" 
-                delay={Math.min(idx * 45, 360)} 
-                duration={550}
+                delay={Math.min(idx * 20, 200)} 
+                duration={400}
               >
                 <div 
-                  className="rounded-xl border border-white/10 bg-slate-900/60 backdrop-blur-xl overflow-hidden transition-colors"
+                  className={`rounded-xl sm:rounded-2xl border transition-all duration-300 overflow-hidden ${
+                    isOpen 
+                      ? 'border-amber-400/40 bg-white/[0.04] shadow-[0_10px_35px_rgba(0,0,0,0.6),0_0_20px_rgba(245,158,11,0.08)]' 
+                      : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.035] hover:border-white/20'
+                  }`}
                 >
                   <button
                     onClick={() => toggleAccordion(idx)}
-                    className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-white/5 transition-colors"
+                    className="w-full p-2.5 sm:p-4 text-left flex items-center justify-between gap-2 sm:gap-3 cursor-pointer group"
+                    aria-expanded={isOpen}
                   >
-                    <span className="font-mono font-bold text-sm sm:text-base text-white">
+                    <span className={`font-mono text-xs sm:text-[13px] font-bold transition-colors leading-snug break-words flex-1 pr-1 ${
+                      isOpen ? 'text-amber-300' : 'text-white group-hover:text-amber-200'
+                    }`}>
                       {faq.q}
                     </span>
-                    <div className={`p-1.5 rounded-lg bg-white/5 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 text-amber-400' : 'text-slate-400'}`}>
-                      <ChevronDown className="w-4 h-4" />
+                    
+                    {/* Animated '+' Icon (Rotates 45deg smoothly to transform into '×') */}
+                    <div 
+                      className={`w-5 h-5 sm:w-6 sm:h-6 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 border transition-all duration-300 ${
+                        isOpen 
+                          ? 'bg-amber-400/20 border-amber-400/50 text-amber-300 rotate-45 scale-110 shadow-[0_0_15px_rgba(245,158,11,0.4)]' 
+                          : 'bg-white/5 border-white/10 text-slate-400 group-hover:text-white group-hover:border-white/25 rotate-0'
+                      }`}
+                    >
+                      <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[2.5]" />
                     </div>
                   </button>
 
-                  {isOpen && (
-                    <div className="px-5 sm:px-6 pb-6 pt-1 text-xs sm:text-sm text-slate-300 font-normal leading-relaxed border-t border-white/5">
+                  {/* Expandable Answer Content */}
+                  <div 
+                    className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                      isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
+                    }`}
+                  >
+                    <div className="px-2.5 sm:px-4 pb-3 sm:pb-4 pt-1 text-[10.5px] sm:text-xs text-slate-300/90 font-normal leading-relaxed border-t border-white/5 break-words">
                       {faq.a}
                     </div>
-                  )}
+                  </div>
+
                 </div>
               </ScrollReveal>
             );
@@ -157,4 +182,3 @@ export const FAQSection: React.FC = () => {
     </section>
   );
 };
-

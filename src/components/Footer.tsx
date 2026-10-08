@@ -24,6 +24,14 @@ export const Footer: React.FC = () => {
       const container = document.getElementById('hero-experience');
       if (container) {
         const scrollable = container.offsetHeight - window.innerHeight;
+        window.scrollTo({ top: container.offsetTop + scrollable * 0.35, behavior: 'smooth' });
+        return;
+      }
+    }
+    if (id === 'terminal') {
+      const container = document.getElementById('hero-experience');
+      if (container) {
+        const scrollable = container.offsetHeight - window.innerHeight;
         window.scrollTo({ top: container.offsetTop + scrollable * 0.75, behavior: 'smooth' });
         return;
       }
@@ -42,16 +50,16 @@ export const Footer: React.FC = () => {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(245,158,11,0.03),transparent_60%)] pointer-events-none" />
 
       {/* 2. Top & Middle Content Container: Brand Identity, Navigation, Socials, Risk & Legal */}
-      <div className="relative z-20 w-full px-6 sm:px-12 lg:px-16 max-w-7xl mx-auto pt-16 sm:pt-20 pb-8 flex flex-col gap-10">
+      <div className="relative z-20 w-full px-3.5 sm:px-10 lg:px-16 max-w-7xl mx-auto pt-10 sm:pt-20 pb-6 sm:pb-8 flex flex-col gap-8 sm:gap-10">
         
         {/* ========================================================================= */}
         {/* TOP ROW: Brand Identity + Navigation + Social Icons                       */}
         {/* ========================================================================= */}
         <ScrollReveal animation="fade-up" duration={600}>
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 pb-10 border-b border-white/10">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 sm:gap-8 pb-8 sm:pb-10 border-b border-white/10">
             
             {/* Brand Logo & Mission */}
-            <div className="space-y-3 max-w-md text-left">
+            <div className="space-y-2.5 max-w-md text-left">
               <BrandLogo size="lg" lightMode={false} />
               <p className="text-slate-400 text-xs sm:text-sm font-normal leading-relaxed">
                 {isEn 
@@ -61,7 +69,7 @@ export const Footer: React.FC = () => {
             </div>
 
             {/* Clean Navigation Links (Unboxed, Pure Typography) */}
-            <nav className="flex flex-wrap items-center gap-x-8 gap-y-3 font-mono text-sm text-slate-300 font-medium">
+            <nav className="flex flex-wrap items-center gap-x-4 sm:gap-x-8 gap-y-2 font-mono text-xs sm:text-sm text-slate-300 font-medium">
               <button 
                 onClick={() => scrollTo('hero')} 
                 className="hover:text-amber-300 transition-colors cursor-pointer"
@@ -101,36 +109,36 @@ export const Footer: React.FC = () => {
             </nav>
 
             {/* Social Icons (Telegram, Instagram, Email) */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 sm:gap-3">
               <a 
                 href={`https://t.me/${botUsername}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-white/[0.04] hover:bg-purple-600/30 border border-white/10 hover:border-purple-400/50 text-slate-300 hover:text-white flex items-center justify-center transition-all hover:scale-110 shadow-lg cursor-pointer"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/[0.04] hover:bg-purple-600/30 border border-white/10 hover:border-purple-400/50 text-slate-300 hover:text-white flex items-center justify-center transition-all hover:scale-110 shadow-lg cursor-pointer"
                 aria-label="Telegram"
                 title="Telegram"
               >
-                <Send className="w-4 h-4 stroke-[2]" />
+                <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2]" />
               </a>
 
               <a 
                 href="https://instagram.com/eklipsefunded"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-white/[0.04] hover:bg-amber-500/30 border border-white/10 hover:border-amber-400/50 text-slate-300 hover:text-amber-300 flex items-center justify-center transition-all hover:scale-110 shadow-lg cursor-pointer"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/[0.04] hover:bg-amber-500/30 border border-white/10 hover:border-amber-400/50 text-slate-300 hover:text-amber-300 flex items-center justify-center transition-all hover:scale-110 shadow-lg cursor-pointer"
                 aria-label="Instagram"
                 title="Instagram"
               >
-                <Instagram className="w-4 h-4 stroke-[2]" />
+                <Instagram className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2]" />
               </a>
 
               <a 
                 href="mailto:support@eklipsefunded.com"
-                className="w-10 h-10 rounded-full bg-white/[0.04] hover:bg-emerald-500/30 border border-white/10 hover:border-emerald-400/50 text-slate-300 hover:text-emerald-300 flex items-center justify-center transition-all hover:scale-110 shadow-lg cursor-pointer"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/[0.04] hover:bg-emerald-500/30 border border-white/10 hover:border-emerald-400/50 text-slate-300 hover:text-emerald-300 flex items-center justify-center transition-all hover:scale-110 shadow-lg cursor-pointer"
                 aria-label="Support Email"
                 title="Support Email"
               >
-                <Mail className="w-4 h-4 stroke-[2]" />
+                <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2]" />
               </a>
             </div>
 
@@ -140,18 +148,18 @@ export const Footer: React.FC = () => {
         {/* ========================================================================= */}
         {/* MIDDLE ROW: Institutional Risk Disclaimer + Copyright & Legal Links       */}
         {/* ========================================================================= */}
-        <div className="space-y-4 max-w-5xl mx-auto w-full text-center">
-          <p className="text-[11px] text-slate-500 leading-relaxed">
+        <div className="space-y-3.5 max-w-5xl mx-auto w-full text-center">
+          <p className="text-[10px] sm:text-[11px] text-slate-500 leading-relaxed break-words px-1">
             {isEn 
               ? 'Trading digital assets and crypto derivatives involves substantial market risk. All accounts provided by EKLIPSE are conducted in an institutional simulated trading environment with live market data. Performance rewards are settled directly in USDT according to program parameters.'
               : 'La operativa con derivados de criptomonedas conlleva un riesgo sustancial de mercado. Todas las cuentas facilitadas por EKLIPSE operan en un entorno institucional simulado con cotizaciones en tiempo real. Los beneficios de rendimiento se liquidan directamente en USDT conforme a los términos del programa.'}
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500 text-xs font-mono pt-4 border-t border-white/5">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-500 text-[10.5px] sm:text-xs font-mono pt-3 border-t border-white/5">
             <div>
               © {new Date().getFullYear()} <strong className="text-slate-300 font-bold">EKLIPSE FUNDED</strong>. {isEn ? 'All rights reserved.' : 'Todos los derechos reservados.'}
             </div>
-            <div className="flex items-center gap-6 text-xs">
+            <div className="flex items-center gap-3 sm:gap-6 text-[10.5px] sm:text-xs flex-wrap justify-center">
               <a href="#faq" className="hover:text-amber-300 transition-colors">{isEn ? 'Terms of Service' : 'Términos de Servicio'}</a>
               <span>·</span>
               <a href="#faq" className="hover:text-amber-300 transition-colors">{isEn ? 'Privacy Policy' : 'Política de Privacidad'}</a>
@@ -167,11 +175,11 @@ export const Footer: React.FC = () => {
       {/* GRAND FINALE AT THE BOTTOM OF THE PAGE:                                   */}
       {/* Pepe emerging flush from the bottom floor with giant "EKLIPSE" behind him */}
       {/* ========================================================================= */}
-      <div className="relative w-full flex flex-col items-center justify-end overflow-hidden pt-8 sm:pt-14">
+      <div className="relative w-full flex flex-col items-center justify-end overflow-hidden pt-6 sm:pt-14">
         
         {/* Monumental Background Typography: "EKLIPSE" */}
         <div className="absolute inset-x-0 bottom-0 flex items-center justify-center pointer-events-none select-none z-10 leading-none">
-          <span className="text-[19vw] sm:text-[21vw] md:text-[22vw] lg:text-[23vw] font-black tracking-[-0.03em] uppercase leading-none select-none text-transparent bg-clip-text bg-gradient-to-b from-white/[0.18] via-white/[0.06] to-transparent font-sans drop-shadow-[0_0_90px_rgba(124,58,237,0.14)]">
+          <span className="text-[18vw] sm:text-[21vw] md:text-[22vw] lg:text-[23vw] font-black tracking-[-0.03em] uppercase leading-none select-none text-transparent bg-clip-text bg-gradient-to-b from-white/[0.18] via-white/[0.06] to-transparent font-sans drop-shadow-[0_0_90px_rgba(124,58,237,0.14)]">
             EKLIPSE
           </span>
         </div>
@@ -181,7 +189,7 @@ export const Footer: React.FC = () => {
           <img 
             src={pepeFooterImg} 
             alt="Eklipse Mascot" 
-            className="w-[300px] sm:w-[400px] md:w-[480px] lg:w-[540px] max-w-[90vw] h-auto object-contain block select-none pointer-events-none drop-shadow-[0_25px_60px_rgba(0,0,0,0.95)]"
+            className="w-[240px] sm:w-[380px] md:w-[480px] lg:w-[540px] max-w-[85vw] h-auto object-contain block select-none pointer-events-none drop-shadow-[0_25px_60px_rgba(0,0,0,0.95)]"
           />
         </div>
 

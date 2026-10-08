@@ -21,26 +21,26 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       badge: 'text-[8px] px-1.5 py-0.5' 
     },
     md: { 
-      img: 'w-11 h-11 sm:w-13 sm:h-13', 
-      text: 'text-sm sm:text-base', 
-      badge: 'text-[9px] px-2 py-0.5' 
+      img: 'w-9 h-9 sm:w-12 sm:h-12', 
+      text: 'text-xs sm:text-base', 
+      badge: 'text-[8px] sm:text-[9px] px-1.5 sm:px-2 py-0.5' 
     },
     lg: { 
-      img: 'w-16 h-16 sm:w-20 sm:h-20', 
-      text: 'text-xl sm:text-2xl', 
-      badge: 'text-[10px] sm:text-[11px] px-2.5 py-0.5' 
+      img: 'w-9 h-9 sm:w-16 sm:h-16 lg:w-20 lg:h-20', 
+      text: 'text-sm sm:text-xl lg:text-2xl', 
+      badge: 'text-[8px] sm:text-[10px] lg:text-[11px] px-1.5 sm:px-2.5 py-0.5' 
     },
     xl: { 
-      img: 'w-24 h-24 sm:w-28 sm:h-28', 
-      text: 'text-3xl sm:text-4xl', 
-      badge: 'text-xs px-3 py-1' 
+      img: 'w-16 h-16 sm:w-24 sm:h-24 lg:w-28 lg:h-28', 
+      text: 'text-2xl sm:text-3xl lg:text-4xl', 
+      badge: 'text-[10px] sm:text-xs px-2.5 sm:px-3 py-0.5 sm:py-1' 
     },
   };
 
   const current = dimensionMap[size];
 
   return (
-    <div className={`flex items-center gap-3 sm:gap-4 select-none ${className}`}>
+    <div className={`flex items-center gap-2 sm:gap-4 select-none ${className}`}>
       {/* Brand Emblem: Eklipse Sol & Luna Architectural Eclipse Emblem */}
       <div className={`relative ${current.img} flex-shrink-0 group cursor-pointer`}>
         <img 

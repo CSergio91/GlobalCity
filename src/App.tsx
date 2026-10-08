@@ -7,8 +7,7 @@ import { PayoutRoadmapSection } from './components/PayoutRoadmapSection';
 import { WhyEklipseSection } from './components/WhyEklipseSection';
 import { CommunitySection } from './components/CommunitySection';
 import { FAQSection } from './components/FAQSection';
-import { FinalCTA } from './components/FinalCTA';
-import { Footer } from './components/Footer';
+import { ParallaxFaqFooterStage } from './components/ParallaxFaqFooterStage';
 import { TradingTerminal } from './components/TradingTerminal';
 import { UserSession } from './lib/supabase';
 import { CelestialCursor } from './components/CelestialCursor';
@@ -50,6 +49,15 @@ function MainAppContent() {
         return;
       }
       if (sectionId === 'programs') {
+        const container = document.getElementById('hero-experience');
+        if (container) {
+          const scrollable = container.offsetHeight - window.innerHeight;
+          const targetScroll = container.offsetTop + scrollable * 0.35;
+          window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+          return;
+        }
+      }
+      if (sectionId === 'terminal') {
         const container = document.getElementById('hero-experience');
         if (container) {
           const scrollable = container.offsetHeight - window.innerHeight;
@@ -151,16 +159,10 @@ function MainAppContent() {
           onNavigateSection={handleNavigateSection} 
         />
 
-        {/* 
-          Note: Subsequent sections (ProgramsSection, HorizontalShowcase, MarketsSection, 
-          PayoutRoadmapSection, WhyEklipseSection, CommunitySection, FAQSection, FinalCTA)
-          are preserved intact in the codebase to be progressively enhanced and reintroduced.
-        */}
-
       </main>
 
-      {/* Global Footer */}
-      <Footer />
+      {/* Parallax Stage: FAQs in background layer, Footer sliding over like a curtain */}
+      <ParallaxFaqFooterStage />
 
       {/* High-Performance Celestial Cursor with orbital ring and core star */}
       <CelestialCursor />
