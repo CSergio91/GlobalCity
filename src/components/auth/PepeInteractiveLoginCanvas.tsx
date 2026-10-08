@@ -2,13 +2,16 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 
 interface PepeInteractiveLoginCanvasProps {
   focusedField?: 'email' | 'password' | 'captcha' | null;
+  facingSide?: 'right' | 'left'; // 'right' when Pepe is on left, 'left' when Pepe is on right
   className?: string;
 }
 
 const TOTAL_SUB_FRAMES = 16;
+const CACHE_NAME = 'eklipse-pepe-v3';
 
 export const PepeInteractiveLoginCanvas: React.FC<PepeInteractiveLoginCanvasProps> = ({
   focusedField,
+  facingSide = 'right',
   className = '',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -29,29 +32,58 @@ export const PepeInteractiveLoginCanvas: React.FC<PepeInteractiveLoginCanvasProp
     up_right: new Array(TOTAL_SUB_FRAMES).fill(null),
   });
 
-  // State coordinates: X in [-1 (left), +1 (right)], Y in [-1 (down), +1 (up)]
-  // Initial target is pointing RIGHT (+0.85, 0.0) directly towards the login form
-  const targetCoordRef = useRef({ x: 0.85, y: 0.0 });
-  const currentCoordRef = useRef({ x: 0.85, y: 0.0 });
+  // Default coordinate according to facingSide:
+  // If facingSide is 'right' -> target X is +0.85 (towards modal on right)
+  // If facingSide is 'left'  -> target X is -0.85 (towards modal on left)
+  const defaultTargetX = facingSide === 'right' ? 0.85 : -0.85;
+
+  const targetCoordRef = useRef({ x: defaultTargetX, y: 0.0 });
+  const currentCoordRef = useRef({ x: defaultTargetX, y: 0.0 });
   const lastInteractionTimeRef = useRef(Date.now());
+  const isIdleRef = useRef(false);
   const rafIdRef = useRef<number | null>(null);
 
   const [isInitialReady, setIsInitialReady] = useState(false);
 
-  // Helper to load an individual frame
+  // Update default target when facingSide changes (e.g. switching between Login & Register)
+  useEffect(() => {
+    targetCoordRef.current = {
+      x: facingSide === 'right' ? 0.85 : -0.85,
+      y: 0.0,
+    };
+    lastInteractionTimeRef.current = Date.now();
+  }, [facingSide]);
+
+  // Helper to load an individual frame with CacheStorage API for ultra-fast browser disk caching
   const loadFrame = useCallback(async (path: string): Promise<HTMLImageElement | ImageBitmap | null> => {
-    try {
-      if (typeof window !== 'undefined' && 'createImageBitmap' in window) {
-        const resp = await fetch(path);
-        if (resp.ok) {
-          const blob = await resp.blob();
-          return await createImageBitmap(blob);
+    // 1. Try CacheStorage API for instant persistent caching
+    if (typeof window !== 'undefined' && 'caches' in window) {
+      try {
+        const fullUrl = new URL(path, window.location.href).toString();
+        const cache = await caches.open(CACHE_NAME);
+        let resp = await cache.match(fullUrl);
+        if (!resp) {
+          resp = await fetch(fullUrl);
+          if (resp && resp.ok) {
+            try {
+              cache.put(fullUrl, resp.clone());
+            } catch {
+              // Ignore cache storage quota errors
+            }
+          }
         }
+        if (resp && resp.ok) {
+          const blob = await resp.blob();
+          if ('createImageBitmap' in window) {
+            return await createImageBitmap(blob);
+          }
+        }
+      } catch {
+        // Fallback
       }
-    } catch {
-      // Fallback
     }
 
+    // 2. Standard HTMLImageElement fallback
     return new Promise((resolve) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -66,45 +98,44 @@ export const PepeInteractiveLoginCanvas: React.FC<PepeInteractiveLoginCanvasProp
     let isCancelled = false;
 
     const preloadAll = async () => {
-      // 1. Initial essential frames
-      const [initialRight, centerImg] = await Promise.all([
-        loadFrame('/pepe-login/right_12.webp'),
+      // 1. Load initial frames immediately
+      const initialKey = facingSide === 'right' ? '/pepe-login/right_12.webp' : '/pepe-login/left_12.webp';
+      const [initialSide, centerImg] = await Promise.all([
+        loadFrame(initialKey),
         loadFrame('/pepe-login/center.webp'),
       ]);
 
       if (isCancelled) return;
-      framesRef.current.right[12] = initialRight;
+      if (facingSide === 'right') {
+        framesRef.current.right[12] = initialSide;
+      } else {
+        framesRef.current.left[12] = initialSide;
+      }
       framesRef.current.center = centerImg;
       setIsInitialReady(true);
 
-      // 2. Load Right frames (towards form)
+      // 2. Load Right & Left frames
       for (let i = 0; i < TOTAL_SUB_FRAMES; i++) {
         if (isCancelled) return;
+        const idxStr = String(i).padStart(2, '0');
         if (!framesRef.current.right[i]) {
-          const idxStr = String(i).padStart(2, '0');
           framesRef.current.right[i] = await loadFrame(`/pepe-login/right_${idxStr}.webp`);
+        }
+        if (!framesRef.current.left[i]) {
+          framesRef.current.left[i] = await loadFrame(`/pepe-login/left_${idxStr}.webp`);
         }
       }
 
-      // 3. Load Up-Right frames (top right)
+      // 3. Load Up-Right & Up-Left frames
       for (let i = 0; i < TOTAL_SUB_FRAMES; i++) {
         if (isCancelled) return;
         const idxStr = String(i).padStart(2, '0');
-        framesRef.current.up_right[i] = await loadFrame(`/pepe-login/up_right_${idxStr}.webp`);
-      }
-
-      // 4. Load Up-Left frames (top left)
-      for (let i = 0; i < TOTAL_SUB_FRAMES; i++) {
-        if (isCancelled) return;
-        const idxStr = String(i).padStart(2, '0');
-        framesRef.current.up_left[i] = await loadFrame(`/pepe-login/up_left_${idxStr}.webp`);
-      }
-
-      // 5. Load Left frames (left)
-      for (let i = 0; i < TOTAL_SUB_FRAMES; i++) {
-        if (isCancelled) return;
-        const idxStr = String(i).padStart(2, '0');
-        framesRef.current.left[i] = await loadFrame(`/pepe-login/left_${idxStr}.webp`);
+        if (!framesRef.current.up_right[i]) {
+          framesRef.current.up_right[i] = await loadFrame(`/pepe-login/up_right_${idxStr}.webp`);
+        }
+        if (!framesRef.current.up_left[i]) {
+          framesRef.current.up_left[i] = await loadFrame(`/pepe-login/up_left_${idxStr}.webp`);
+        }
       }
     };
 
@@ -113,26 +144,34 @@ export const PepeInteractiveLoginCanvas: React.FC<PepeInteractiveLoginCanvasProp
     return () => {
       isCancelled = true;
     };
-  }, [loadFrame]);
+  }, [loadFrame, facingSide]);
 
-  // Handle focus changes (Easter eggs and form gaze)
+  // Focus easter eggs
   useEffect(() => {
     if (focusedField === 'password') {
-      // Pepe looks up and away playfully ("I'm not peeking!")
-      targetCoordRef.current = { x: -0.5, y: 0.9 };
+      // Pepe looks up and away playfully ("I'm not looking at your password!")
+      targetCoordRef.current = {
+        x: facingSide === 'right' ? -0.5 : 0.5,
+        y: 0.9,
+      };
       lastInteractionTimeRef.current = Date.now();
     } else if (focusedField === 'email' || focusedField === 'captcha') {
       // Pepe focuses intently on the form
-      targetCoordRef.current = { x: 0.95, y: 0.0 };
+      targetCoordRef.current = {
+        x: facingSide === 'right' ? 0.95 : -0.95,
+        y: 0.0,
+      };
       lastInteractionTimeRef.current = Date.now();
     } else {
-      // Default gaze looking at form
-      targetCoordRef.current = { x: 0.85, y: 0.0 };
+      targetCoordRef.current = {
+        x: facingSide === 'right' ? 0.85 : -0.85,
+        y: 0.0,
+      };
       lastInteractionTimeRef.current = Date.now();
     }
-  }, [focusedField]);
+  }, [focusedField, facingSide]);
 
-  // Global mouse & touch tracker with immediate responsive normalized coordinates
+  // Global mouse & touch tracker
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!containerRef.current) return;
@@ -151,6 +190,7 @@ export const PepeInteractiveLoginCanvas: React.FC<PepeInteractiveLoginCanvasProp
         y: Math.max(-1, Math.min(1, rawY)),
       };
       lastInteractionTimeRef.current = Date.now();
+      isIdleRef.current = false;
     };
 
     const handleTouchMove = (e: TouchEvent) => {
@@ -168,6 +208,7 @@ export const PepeInteractiveLoginCanvas: React.FC<PepeInteractiveLoginCanvasProp
         y: Math.max(-1, Math.min(1, rawY)),
       };
       lastInteractionTimeRef.current = Date.now();
+      isIdleRef.current = false;
     };
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
@@ -179,31 +220,55 @@ export const PepeInteractiveLoginCanvas: React.FC<PepeInteractiveLoginCanvasProp
     };
   }, []);
 
-  // Main 60 FPS Canvas Render Loop
+  // Main 60 FPS Canvas Render Loop with Organic Idle Animation
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d', { alpha: false }); // pure solid black canvas context
+    const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
     let animId: number;
 
     const render = () => {
       const now = Date.now();
-      // If idle for 4s and no field focused, return to looking at the form
-      if (now - lastInteractionTimeRef.current > 4000 && !focusedField) {
-        const idleWobble = Math.sin(now * 0.002) * 0.05;
-        targetCoordRef.current = {
-          x: 0.85 + idleWobble,
-          y: Math.cos(now * 0.002) * 0.04,
-        };
+      const idleTime = now - lastInteractionTimeRef.current;
+
+      // ORGANIC IDLE ANIMATION:
+      // If user stops moving mouse for > 1.8s and no input is focused,
+      // Pepe naturally animates, shifts gaze, breathes, and tilts his head!
+      if (idleTime > 1800 && !focusedField) {
+        isIdleRef.current = true;
+        const timeSec = now * 0.001;
+
+        if (facingSide === 'right') {
+          // Base gaze towards modal on right (+0.75 to +0.95), with gentle breathing oscillation
+          const gazeShift = Math.sin(timeSec * 0.8) * 0.12; // slow gaze shift
+          const headBob = Math.cos(timeSec * 1.6) * 0.08;   // rhythmic breathing tilt
+          const occasionalUp = Math.sin(timeSec * 0.3) > 0.7 ? 0.35 : 0.0; // occasional glance up
+
+          targetCoordRef.current = {
+            x: 0.82 + gazeShift,
+            y: headBob + occasionalUp,
+          };
+        } else {
+          // Base gaze towards modal on left (-0.75 to -0.95)
+          const gazeShift = Math.sin(timeSec * 0.8) * 0.12;
+          const headBob = Math.cos(timeSec * 1.6) * 0.08;
+          const occasionalUp = Math.sin(timeSec * 0.3) > 0.7 ? 0.35 : 0.0;
+
+          targetCoordRef.current = {
+            x: -0.82 - gazeShift,
+            y: headBob + occasionalUp,
+          };
+        }
       }
 
-      // Fast, agile Lerp (0.26)
+      // Snappy lerp when user is active (0.28), softer cinematic easing when idle (0.08)
+      const lerpFactor = isIdleRef.current ? 0.08 : 0.28;
       const current = currentCoordRef.current;
       const target = targetCoordRef.current;
-      current.x += (target.x - current.x) * 0.26;
-      current.y += (target.y - current.y) * 0.26;
+      current.x += (target.x - current.x) * 0.28; // always responsive to prevent lag
+      current.y += (target.y - current.y) * 0.28;
 
       const curX = current.x;
       const curY = current.y;
@@ -215,21 +280,19 @@ export const PepeInteractiveLoginCanvas: React.FC<PepeInteractiveLoginCanvasProp
         const upProgress = Math.min(1, Math.max(0, (curY - 0.15) / 0.85));
         const frameIndex = Math.min(TOTAL_SUB_FRAMES - 1, Math.round(upProgress * (TOTAL_SUB_FRAMES - 1)));
 
-        // If cursor is on the right, use UP-RIGHT!
         if (curX >= 0) {
           selectedFrame = framesRef.current.up_right[frameIndex] || framesRef.current.right[frameIndex];
         } else {
-          // If cursor is on the left, use UP-LEFT!
           selectedFrame = framesRef.current.up_left[frameIndex] || framesRef.current.left[frameIndex];
         }
       } 
-      // 2. Horizontal RIGHT (curX > 0.04) -> looking at form
+      // 2. Horizontal RIGHT (curX > 0.04)
       else if (curX > 0.04) {
         const rightProgress = Math.min(1, Math.max(0, curX));
         const frameIndex = Math.min(TOTAL_SUB_FRAMES - 1, Math.round(rightProgress * (TOTAL_SUB_FRAMES - 1)));
         selectedFrame = framesRef.current.right[frameIndex] || framesRef.current.center;
       } 
-      // 3. Horizontal LEFT (curX < -0.04) -> looking left
+      // 3. Horizontal LEFT (curX < -0.04)
       else if (curX < -0.04) {
         const leftProgress = Math.min(1, Math.max(0, Math.abs(curX)));
         const frameIndex = Math.min(TOTAL_SUB_FRAMES - 1, Math.round(leftProgress * (TOTAL_SUB_FRAMES - 1)));
@@ -241,10 +304,12 @@ export const PepeInteractiveLoginCanvas: React.FC<PepeInteractiveLoginCanvasProp
       }
 
       if (!selectedFrame) {
-        selectedFrame = framesRef.current.right[12] || framesRef.current.center;
+        selectedFrame = facingSide === 'right' 
+          ? (framesRef.current.right[12] || framesRef.current.center)
+          : (framesRef.current.left[12] || framesRef.current.center);
       }
 
-      // Render onto Canvas: Pure direct blit without artificial vignette
+      // Render onto Canvas
       if (selectedFrame) {
         const dpr = window.devicePixelRatio || 1;
         const rect = canvas.getBoundingClientRect();
@@ -258,7 +323,6 @@ export const PepeInteractiveLoginCanvas: React.FC<PepeInteractiveLoginCanvasProp
 
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-        // Draw image directly at native quality: its background is pure #000000 matching page #000000
         ctx.drawImage(selectedFrame as CanvasImageSource, 0, 0, canvas.width, canvas.height);
       }
 
@@ -273,7 +337,7 @@ export const PepeInteractiveLoginCanvas: React.FC<PepeInteractiveLoginCanvasProp
         cancelAnimationFrame(rafIdRef.current);
       }
     };
-  }, [focusedField]);
+  }, [focusedField, facingSide]);
 
   return (
     <div 

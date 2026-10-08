@@ -14,7 +14,7 @@ export default defineConfig(() => {
       },
     },
     build: {
-      chunkSizeWarningLimit: 1200,
+      chunkSizeWarningLimit: 2000,
       rollupOptions: {
         output: {
           manualChunks(id) {
@@ -24,8 +24,17 @@ export default defineConfig(() => {
             if (id.includes('node_modules/klinecharts/')) {
               return 'vendor-charts';
             }
-            if (id.includes('node_modules/lucide-react/')) {
+            if (id.includes('node_modules/lucide-react/') || id.includes('node_modules/@icons-pack/')) {
               return 'vendor-icons';
+            }
+            if (id.includes('node_modules/@supabase/')) {
+              return 'vendor-supabase';
+            }
+            if (id.includes('node_modules/motion/') || id.includes('node_modules/framer-motion/')) {
+              return 'vendor-motion';
+            }
+            if (id.includes('node_modules/@lottiefiles/') || id.includes('node_modules/lottie-react/')) {
+              return 'vendor-lottie';
             }
           },
         },
