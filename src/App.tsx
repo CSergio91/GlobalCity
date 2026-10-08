@@ -58,39 +58,7 @@ function MainAppContent() {
     }
   };
 
-  // 1. If on /nexus route or nexus.* subdomain, render the Institutional CRM Nexus
-  if (isCrmRoute) {
-    return (
-      <InstitutionalCrmApp 
-        onBackToTerminal={() => navigate('/')} 
-        onLogout={() => navigate('/')} 
-      />
-    );
-  }
-
-  // 2. If on /dashboard route or dashboard.* subdomain, render the Trader Dashboard (or Trader Login if unauthenticated)
-  if (isDashboardRoute) {
-    if (!isAuthenticated) {
-      return <LoginPage />;
-    }
-    return (
-      <TraderDashboardApp 
-        onBackToLanding={() => navigate('/')} 
-        onLogout={() => {
-          logout();
-          navigate('/dashboard');
-        }}
-        onGoToTerminal={() => navigate('/operations')}
-      />
-    );
-  }
-
-  // 3. If on /login route, render the full-screen LoginPage
-  if (isLoginRoute) {
-    return <LoginPage />;
-  }
-
-  // 4. If on /operaciones, /terminal or /operations route, render the real Institutional Trading Platform (KLineCharts v10)
+  // 1. If on /operaciones, /terminal or /operations route, render the real Institutional Trading Platform
   if (isTerminalRoute) {
     const terminalUser: UserSession | null = user ? {
       id: user.id,
@@ -118,6 +86,38 @@ function MainAppContent() {
         onLanguageChange={(newLang) => setLanguage(newLang)}
       />
     );
+  }
+
+  // 2. If on /nexus route or nexus.* subdomain, render the Institutional CRM Nexus
+  if (isCrmRoute) {
+    return (
+      <InstitutionalCrmApp 
+        onBackToTerminal={() => navigate('/')} 
+        onLogout={() => navigate('/')} 
+      />
+    );
+  }
+
+  // 3. If on /dashboard route or dashboard.* subdomain, render the Trader Dashboard (or Trader Login if unauthenticated)
+  if (isDashboardRoute) {
+    if (!isAuthenticated) {
+      return <LoginPage />;
+    }
+    return (
+      <TraderDashboardApp 
+        onBackToLanding={() => navigate('/')} 
+        onLogout={() => {
+          logout();
+          navigate('/dashboard');
+        }}
+        onGoToTerminal={() => navigate('/operations')}
+      />
+    );
+  }
+
+  // 4. If on /login route, render the full-screen LoginPage
+  if (isLoginRoute) {
+    return <LoginPage />;
   }
 
   // Otherwise, render the Landing Page with the 11-section master architecture

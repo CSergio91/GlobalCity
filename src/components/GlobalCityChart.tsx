@@ -1,7 +1,12 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { init, dispose, Chart, KLineData, DeepPartial, Styles, Period } from 'klinecharts';
+import { init, dispose, Chart, KLineData, DeepPartial, Styles } from 'klinecharts';
 import { ChevronDown, Star } from 'lucide-react';
 import { fetchRealHistoricalKlines } from '../services/realKlineData';
+
+export type Period = {
+  type: string;
+  span: number;
+};
 
 export interface GlobalCityChartProps {
   symbol: string;
@@ -54,7 +59,7 @@ export const ALL_TIMEFRAMES: TimeframeItem[] = [
 const DEFAULT_FAVORITE_TIMEFRAMES = ['1m', '5m', '15m', '1h', '4h', '1D'];
 
 // Pro Dark Theme tailored for Global City Institutional Terminal
-const GLOBAL_CITY_CHART_THEME: DeepPartial<Styles> = {
+const GLOBAL_CITY_CHART_THEME: any = {
   grid: {
     show: true,
     horizontal: { color: 'rgba(255, 255, 255, 0.04)', style: 'dashed', dashedValue: [4, 4] },
@@ -157,7 +162,7 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
   className = "w-full h-full min-h-[440px]"
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const chartInstanceRef = useRef<Chart | null>(null);
+  const chartInstanceRef = useRef<any>(null);
 
   // Active Timeframe state
   const [activeInterval, setActiveInterval] = useState<string>('15m');
@@ -240,8 +245,8 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
       dispose(containerRef.current);
     } catch {}
 
-    const chart = init(containerRef.current, {
-      styles: 'dark'
+    const chart: any = init(containerRef.current, {
+      styles: 'dark' as any
     });
 
     if (!chart) return;
@@ -346,7 +351,7 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
         chart.setPaneOptions({ id: volPaneId, height: 75, minHeight: 40 });
       }
       // Superponer SMA en el panel principal de velas (candle_pane) para no robar altura vertical
-      chart.createIndicator({ name: 'SMA', paneId: 'candle_pane' }, true);
+      chart.createIndicator('SMA', false, { id: 'candle_pane' });
     } catch (e) {
       console.warn('Indicator initialization note:', e);
     }
@@ -434,17 +439,17 @@ export const GlobalCityChart: React.FC<GlobalCityChartProps> = ({
 
     try {
       if (ind === 'ma') {
-        if (nextState) chart.createIndicator({ name: 'SMA', paneId: 'candle_pane' }, true);
-        else chart.removeIndicator({ name: 'SMA', paneId: 'candle_pane' });
+        if (nextState) chart.createIndicator('SMA', false, { id: 'candle_pane' });
+        else chart.removeIndicator('candle_pane', 'SMA');
       } else if (ind === 'ema') {
-        if (nextState) chart.createIndicator({ name: 'EMA', paneId: 'candle_pane' }, true);
-        else chart.removeIndicator({ name: 'EMA', paneId: 'candle_pane' });
+        if (nextState) chart.createIndicator('EMA', false, { id: 'candle_pane' });
+        else chart.removeIndicator('candle_pane', 'EMA');
       } else if (ind === 'boll') {
-        if (nextState) chart.createIndicator({ name: 'BOLL', paneId: 'candle_pane' }, true);
-        else chart.removeIndicator({ name: 'BOLL', paneId: 'candle_pane' });
+        if (nextState) chart.createIndicator('BOLL', false, { id: 'candle_pane' });
+        else chart.removeIndicator('candle_pane', 'BOLL');
       } else if (ind === 'rsi') {
-        if (nextState) chart.createIndicator({ name: 'RSI' }, false);
-        else chart.removeIndicator({ name: 'RSI' });
+        if (nextState) chart.createIndicator('RSI', false);
+        else chart.removeIndicator('rsi');
       }
     } catch {}
   };

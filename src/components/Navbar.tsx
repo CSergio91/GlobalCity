@@ -24,7 +24,7 @@ interface NavbarProps {
   onNavigateSection: (sectionId: string) => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSection }) => {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("hero");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -95,7 +95,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigateSection }) => {
   const handleNavClick = (sectionId: string) => {
     setActiveSection(sectionId);
     setIsMobileMenuOpen(false);
-    onNavigateSection(sectionId);
+    if (sectionId === "terminal" && onOpenTerminal) {
+      onOpenTerminal();
+    } else {
+      onNavigateSection(sectionId);
+    }
   };
 
   const navItems = [
