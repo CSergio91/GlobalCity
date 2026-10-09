@@ -28,29 +28,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
-  // Si no hay usuario en localStorage al iniciar, intentar detectar si el usuario ya inició sesión con el bot
-  useEffect(() => {
-    if (!user) {
-      authService.getLatestTelegramAuthUser().then((detected) => {
-        if (detected) {
-          const newUser: UserProfile = {
-            id: `tg_${detected.id}`,
-            username: detected.username ? `@${detected.username.replace('@', '')}` : `@tg_${detected.id}`,
-            firstName: detected.first_name || 'Trader',
-            lastName: detected.last_name,
-            photoUrl: detected.photo_url,
-            authProvider: 'telegram',
-            telegramId: detected.id,
-            role: 'institutional_trader',
-            createdAt: new Date().toISOString(),
-            twoFactorEnabled: true,
-          };
-          setUser(newUser);
-          authService.saveSession(newUser);
-        }
-      }).catch(() => {});
-    }
-  }, []);
 
   useEffect(() => {
     try {

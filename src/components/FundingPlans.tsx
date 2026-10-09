@@ -60,11 +60,13 @@ export const FundingPlans: React.FC<FundingPlansProps> = ({ onSelectPlan }) => {
     try {
       sessionStorage.setItem('eklipse_auth_mode', 'register');
       sessionStorage.setItem('eklipse_target_plan', `solar-${selectedTier}`);
+      sessionStorage.setItem('eklipse_target_addons', JSON.stringify(hasConsistencyAddon ? ['extra_drawdown'] : []));
     } catch {}
     if (onSelectPlan) {
       onSelectPlan(`${planKey}-tier-${selectedTier}-${fundingMarket}-addon-${hasConsistencyAddon ? '40' : '20'}`);
     }
-    navigate('/login?mode=register');
+    const addonsParam = hasConsistencyAddon ? '&addons=extra_drawdown' : '';
+    navigate(`/login?mode=register&plan=solar-${selectedTier}${addonsParam}`);
   };
 
   return (

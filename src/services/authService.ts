@@ -1,5 +1,5 @@
 import { UserProfile, TelegramUserPayload } from '../types/auth';
-import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export interface AuthResult {
   success: boolean;
@@ -46,7 +46,7 @@ export const authService = {
   },
 
   /**
-   * Obtiene la última autorización de Telegram enviada al bot
+   * Obtiene la última autorización de Telegram si el usuario está autenticado
    */
   async getLatestTelegramAuthUser(): Promise<TelegramUserPayload | null> {
     // 1. Si ya existe sesión activa en localStorage, retornarla de inmediato
@@ -62,7 +62,7 @@ export const authService = {
       };
     }
 
-    // 2. Consultar al endpoint backend de Vite / Control Plane
+    // 2. Consultar al endpoint backend seguro de Vite / Control Plane si está activo
     try {
       const res = await fetch('/api/auth/telegram-latest');
       if (res.ok) {
@@ -75,173 +75,29 @@ export const authService = {
       // Ignorar fallback
     }
 
-    // 3. Consultar a Supabase Cloud / Local si está disponible
-    if (isSupabaseConfigured && supabase) {
-      try {
-        const { data } = await supabase
-          .from('telegram_auth_sessions')
-          .select('*')
-          .eq('status', 'authenticated')
-          .order('authenticated_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (data && data.telegram_id) {
-          return {
-            id: data.telegram_id,
-            first_name: data.first_name,
-            last_name: data.last_name,
-            username: data.username,
-            photo_url: data.photo_url,
-            auth_date: data.auth_date || Math.floor(Date.now() / 1000)
-          };
-        }
-      } catch {
-        // Silencioso
-      }
-    }
-
-    // 4. Fallback directo a Telegram API si las anteriores no respondieron
-    const token = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '';
-    if (!token) return null;
-    try {
-      const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=-10`);
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (!data.ok || !data.result) return null;
-
-      for (let i = data.result.length - 1; i >= 0; i--) {
-        const update = data.result[i];
-        const msg = update.message;
-        if (msg && msg.from && !msg.from.is_bot) {
-          const text = msg.text || '';
-          if (text.startsWith('/start') || text.startsWith('/')) {
-            const from = msg.from;
-            return {
-              id: from.id,
-              first_name: from.first_name,
-              last_name: from.last_name,
-              username: from.username,
-              photo_url: undefined,
-              auth_date: msg.date
-            };
-          }
-        }
-      }
-      return null;
-    } catch (err) {
-      console.warn('[authService] Error al consultar Telegram API:', err);
-      return null;
-    }
+    return null;
   },
 
   /**
-   * Sondea el estado de autorización de Telegram
-   * Verifica primero el backend/servidor local, luego Supabase y finalmente Telegram Bot API
+   * Sondea el estado de autorización de Telegram de forma segura vía backend por nonce
    */
   async checkTelegramBotUpdates(authNonce?: string): Promise<TelegramUserPayload | null> {
-    // 1. Consultar endpoint dev/backend /api/auth/telegram-status
-    if (authNonce) {
-      try {
-        const res = await fetch(`/api/auth/telegram-status?nonce=${encodeURIComponent(authNonce)}`);
-        const contentType = res.headers.get('content-type') || '';
-        if (res.ok && contentType.includes('application/json')) {
-          const json = await res.json();
-          if (json.authenticated && json.user) {
-            return json.user;
-          }
-        }
-      } catch {
-        // Continuar con fallback
-      }
-    }
+    if (!authNonce) return null;
 
-    // 2. Consultar en Supabase Cloud / Local por nonce
-    if (isSupabaseConfigured && supabase && authNonce) {
-      try {
-        const { data } = await supabase
-          .from('telegram_auth_sessions')
-          .select('*')
-          .eq('nonce', authNonce)
-          .maybeSingle();
-
-        if (data && data.status === 'authenticated') {
-          return {
-            id: data.telegram_id,
-            first_name: data.first_name,
-            last_name: data.last_name,
-            username: data.username,
-            photo_url: data.photo_url,
-            auth_date: data.auth_date || Math.floor(Date.now() / 1000)
-          };
-        }
-      } catch {
-        // Continuar con fallback
-      }
-    }
-
-    // 2b. Consultar en Supabase Cloud cualquier sesión autorizada en los últimos 5 minutos
-    if (isSupabaseConfigured && supabase) {
-      try {
-        const fiveMinAgo = new Date(Date.now() - 300000).toISOString();
-        const { data } = await supabase
-          .from('telegram_auth_sessions')
-          .select('*')
-          .eq('status', 'authenticated')
-          .gte('authenticated_at', fiveMinAgo)
-          .order('authenticated_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (data && data.telegram_id) {
-          return {
-            id: data.telegram_id,
-            first_name: data.first_name,
-            last_name: data.last_name,
-            username: data.username,
-            photo_url: data.photo_url,
-            auth_date: data.auth_date || Math.floor(Date.now() / 1000)
-          };
-        }
-      } catch {
-        // Continuar con fallback
-      }
-    }
-
-    // 3. Fallback directo a Telegram Bot API
-    const token = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '';
-    if (!token) return null;
     try {
-      const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=-10`);
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (!data.ok || !data.result) return null;
-
-      for (let i = data.result.length - 1; i >= 0; i--) {
-        const update = data.result[i];
-        const text = update.message?.text || '';
-        const msgDate = update.message?.date || 0;
-        const nowSec = Math.floor(Date.now() / 1000);
-
-        const matchesNonce = authNonce && text.includes(authNonce);
-        const isRecentStart = text.startsWith('/start') && (nowSec - msgDate < 3600);
-
-        if ((matchesNonce || isRecentStart) && update.message?.from) {
-          const from = update.message.from;
-          return {
-            id: from.id,
-            first_name: from.first_name,
-            last_name: from.last_name,
-            username: from.username,
-            auth_date: msgDate || nowSec
-          };
+      const res = await fetch(`/api/auth/telegram-status?nonce=${encodeURIComponent(authNonce)}`);
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const json = await res.json();
+        if (json.authenticated && json.user) {
+          return json.user;
         }
       }
-      return null;
-    } catch (err) {
-      console.warn('[authService] Error polling Telegram bot updates:', err);
-      return null;
+    } catch {
+      // Silencioso
     }
+
+    return null;
   },
 
   /**

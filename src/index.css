@@ -340,4 +340,65 @@
   scrollbar-width: none !important;
 }
 
+/* ========================================================================== */
+/* EKLIPSE AUTH LAYOUT (Pepe Fijo a la Izquierda & Formulario a la Derecha)    */
+/* ========================================================================== */
+.auth-split-container {
+  display: flex !important;
+  flex-direction: row !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.auth-pepe-col {
+  display: flex !important;
+  width: 46% !important;
+  max-width: 48% !important;
+  flex: 0 0 46% !important;
+  height: 100% !important;
+  position: relative !important;
+  align-items: flex-end !important;
+  justify-content: flex-start !important;
+  user-select: none !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  overflow: hidden !important;
+  z-index: 10 !important;
+}
+
+.auth-form-stage {
+  width: 54% !important;
+  max-width: 54% !important;
+  flex: 1 1 54% !important;
+  height: 100% !important;
+  position: relative !important;
+  overflow-y: auto !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
+  z-index: 20 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+@media (max-width: 767px) {
+  .auth-split-container {
+    flex-direction: column !important;
+    height: 100dvh !important;
+    overflow-y: auto !important;
+  }
+  .auth-pepe-col {
+    display: none !important;
+  }
+  .auth-form-stage {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 1 100% !important;
+    border-left: none !important;
+    height: auto !important;
+    min-height: 100dvh !important;
+  }
+}
+
+
 

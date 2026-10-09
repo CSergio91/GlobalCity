@@ -116,8 +116,10 @@ export const ProgramsSection: React.FC = () => {
     try {
       sessionStorage.setItem('eklipse_auth_mode', 'register');
       sessionStorage.setItem('eklipse_target_plan', currentPlan.id);
+      sessionStorage.setItem('eklipse_target_addons', JSON.stringify(selectedAddons));
     } catch {}
-    navigate('/login?mode=register');
+    const addonsParam = selectedAddons.length > 0 ? `&addons=${selectedAddons.join(',')}` : '';
+    navigate(`/login?mode=register&plan=${currentPlan.id}${addonsParam}`);
   };
 
   // Directional slide animation variants (GPU-accelerated, zero lag)

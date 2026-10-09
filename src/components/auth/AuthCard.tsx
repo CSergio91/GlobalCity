@@ -9,7 +9,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import { authService, AuthResult } from '../../services/authService';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '../../lib/supabase';
 import presentationVideo from '../../assets/video/global_city_presentation_logo.mp4';
 import lastFrameLogo from '../../assets/video/global_city_presentation_logo_last_frame.webp';
 
@@ -103,13 +103,6 @@ export const AuthCard: React.FC<AuthCardProps> = ({ onSuccess, onClose, isModal 
         }
       }
     } catch {}
-
-    // Auto-detección inmediata si el usuario ya verificó en Telegram
-    authService.checkTelegramBotUpdates().then((u) => {
-      if (u) {
-        handleTelegramSuccess(u);
-      }
-    });
   }, [hasExistingSession]);
 
   // Polling automático y escucha en tiempo real para cuando el usuario pulsa START en Telegram
