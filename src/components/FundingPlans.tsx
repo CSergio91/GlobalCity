@@ -57,11 +57,14 @@ export const FundingPlans: React.FC<FundingPlansProps> = ({ onSelectPlan }) => {
   const finalPrice = Math.max(9, currentTier.price + addonCost - pointsDiscount);
 
   const handleCheckout = (planKey: string) => {
+    try {
+      sessionStorage.setItem('eklipse_auth_mode', 'register');
+      sessionStorage.setItem('eklipse_target_plan', `solar-${selectedTier}`);
+    } catch {}
     if (onSelectPlan) {
       onSelectPlan(`${planKey}-tier-${selectedTier}-${fundingMarket}-addon-${hasConsistencyAddon ? '40' : '20'}`);
-    } else {
-      navigate('/login');
     }
+    navigate('/login?mode=register');
   };
 
   return (

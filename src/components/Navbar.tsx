@@ -140,7 +140,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
 
           {/* Pill "Get Funded" Button */}
           <button
-            onClick={() => navigate('/login')}
+            onClick={() => {
+              try {
+                sessionStorage.setItem('eklipse_auth_mode', 'register');
+              } catch {}
+              navigate('/login?mode=register');
+            }}
             className="px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-full text-[11px] sm:text-sm font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] hover:brightness-110 shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all active:scale-95 cursor-pointer hover:scale-105 whitespace-nowrap"
           >
             {language === 'en' ? 'Get Funded' : 'Obtener Fondeo'}

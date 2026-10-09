@@ -43,7 +43,7 @@ export const PepeInteractiveLoginCanvas: React.FC<PepeInteractiveLoginCanvasProp
   const isIdleRef = useRef(false);
   const rafIdRef = useRef<number | null>(null);
 
-  const [isInitialReady, setIsInitialReady] = useState(false);
+  const [isInitialReady, setIsInitialReady] = useState(true);
 
   // Update default target when facingSide changes (e.g. switching between Login & Register)
   useEffect(() => {
@@ -79,7 +79,7 @@ export const PepeInteractiveLoginCanvas: React.FC<PepeInteractiveLoginCanvasProp
           }
         }
       } catch {
-        // Fallback
+        // Fallback to Image()
       }
     }
 
@@ -98,44 +98,50 @@ export const PepeInteractiveLoginCanvas: React.FC<PepeInteractiveLoginCanvasProp
     let isCancelled = false;
 
     const preloadAll = async () => {
-      // 1. Load initial frames immediately
-      const initialKey = facingSide === 'right' ? '/pepe-login/right_12.webp' : '/pepe-login/left_12.webp';
-      const [initialSide, centerImg] = await Promise.all([
-        loadFrame(initialKey),
-        loadFrame('/pepe-login/center.webp'),
-      ]);
+      try {
+        // 1. Load initial frames immediately
+        const initialKey = facingSide === 'right' ? '/pepe-login/right_12.webp' : '/pepe-login/left_12.webp';
+        const [initialSide, centerImg] = await Promise.all([
+          loadFrame(initialKey),
+          loadFrame('/pepe-login/center.webp'),
+        ]);
 
-      if (isCancelled) return;
-      if (facingSide === 'right') {
-        framesRef.current.right[12] = initialSide;
-      } else {
-        framesRef.current.left[12] = initialSide;
-      }
-      framesRef.current.center = centerImg;
-      setIsInitialReady(true);
-
-      // 2. Load Right & Left frames
-      for (let i = 0; i < TOTAL_SUB_FRAMES; i++) {
         if (isCancelled) return;
-        const idxStr = String(i).padStart(2, '0');
-        if (!framesRef.current.right[i]) {
-          framesRef.current.right[i] = await loadFrame(`/pepe-login/right_${idxStr}.webp`);
+        if (facingSide === 'right') {
+          framesRef.current.right[12] = initialSide;
+        } else {
+          framesRef.current.left[12] = initialSide;
         }
-        if (!framesRef.current.left[i]) {
-          framesRef.current.left[i] = await loadFrame(`/pepe-login/left_${idxStr}.webp`);
-        }
-      }
+        framesRef.current.center = centerImg;
+        setIsInitialReady(true);
 
-      // 3. Load Up-Right & Up-Left frames
-      for (let i = 0; i < TOTAL_SUB_FRAMES; i++) {
-        if (isCancelled) return;
-        const idxStr = String(i).padStart(2, '0');
-        if (!framesRef.current.up_right[i]) {
-          framesRef.current.up_right[i] = await loadFrame(`/pepe-login/up_right_${idxStr}.webp`);
+        // 2. Load Right & Left frames
+        for (let i = 0; i < TOTAL_SUB_FRAMES; i++) {
+          if (isCancelled) return;
+          const idxStr = String(i).padStart(2, '0');
+          if (!framesRef.current.right[i]) {
+            framesRef.current.right[i] = await loadFrame(`/pepe-login/right_${idxStr}.webp`);
+          }
+          if (!framesRef.current.left[i]) {
+            framesRef.current.left[i] = await loadFrame(`/pepe-login/left_${idxStr}.webp`);
+          }
         }
-        if (!framesRef.current.up_left[i]) {
-          framesRef.current.up_left[i] = await loadFrame(`/pepe-login/up_left_${idxStr}.webp`);
+
+        // 3. Load Up-Right & Up-Left frames
+        for (let i = 0; i < TOTAL_SUB_FRAMES; i++) {
+          if (isCancelled) return;
+          const idxStr = String(i).padStart(2, '0');
+          if (!framesRef.current.up_right[i]) {
+            framesRef.current.up_right[i] = await loadFrame(`/pepe-login/up_right_${idxStr}.webp`);
+          }
+          if (!framesRef.current.up_left[i]) {
+            framesRef.current.up_left[i] = await loadFrame(`/pepe-login/up_left_${idxStr}.webp`);
+          }
         }
+      } catch (err) {
+        console.warn('[PepeInteractiveLoginCanvas] Frame preload warning:', err);
+      } finally {
+        setIsInitialReady(true);
       }
     };
 
@@ -316,14 +322,16 @@ export const PepeInteractiveLoginCanvas: React.FC<PepeInteractiveLoginCanvasProp
         const displayWidth = Math.round(rect.width * dpr);
         const displayHeight = Math.round(rect.height * dpr);
 
-        if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
-          canvas.width = displayWidth;
-          canvas.height = displayHeight;
-        }
+        if (displayWidth > 0 && displayHeight > 0) {
+          if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+            canvas.width = displayWidth;
+            canvas.height = displayHeight;
+          }
 
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(selectedFrame as CanvasImageSource, 0, 0, canvas.width, canvas.height);
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(selectedFrame as CanvasImageSource, 0, 0, canvas.width, canvas.height);
+        }
       }
 
       animId = requestAnimationFrame(render);

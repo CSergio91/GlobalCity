@@ -113,7 +113,11 @@ export const ProgramsSection: React.FC = () => {
   const dynamicPricing = calculateDynamicPlanPricing(currentPlan, paymentMode, selectedAddons);
 
   const handleCheckout = () => {
-    navigate('/login');
+    try {
+      sessionStorage.setItem('eklipse_auth_mode', 'register');
+      sessionStorage.setItem('eklipse_target_plan', currentPlan.id);
+    } catch {}
+    navigate('/login?mode=register');
   };
 
   // Directional slide animation variants (GPU-accelerated, zero lag)

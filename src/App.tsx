@@ -27,7 +27,7 @@ function MainAppContent() {
 
   const isCrmRoute = currentPath === '/nexus' || currentPath === '/crm' || subdomain === 'nexus';
   const isDashboardRoute = currentPath === '/dashboard' || subdomain === 'dashboard';
-  const isLoginRoute = currentPath === '/login';
+  const isLoginRoute = currentPath === '/login' || currentPath.startsWith('/login?') || currentPath.startsWith('/login/');
   const isTerminalRoute = 
     currentPath === '/terminal' || 
     currentPath === '/operaciones' || 
