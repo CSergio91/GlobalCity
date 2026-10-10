@@ -5,9 +5,15 @@ import {defineConfig} from 'vite';
 import { telegramAuthPlugin } from './src/server/telegramAuthPlugin.ts';
 import { marketDataGatewayPlugin } from './src/server/marketDataGatewayPlugin.ts';
 
-export default defineConfig(() => {
+export default defineConfig(({ command }) => {
+  const isDev = command === 'serve';
+
   return {
-    plugins: [react(), tailwindcss(), telegramAuthPlugin(), marketDataGatewayPlugin()],
+    plugins: [
+      react(), 
+      tailwindcss(), 
+      ...(isDev ? [telegramAuthPlugin(), marketDataGatewayPlugin()] : [])
+    ],
     resolve: {
       alias: {
         '@': path.resolve(import.meta.dirname, '.'),

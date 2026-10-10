@@ -32,9 +32,9 @@ class LightweightRedisClient {
     try {
       this.client = net.createConnection({ host: this.host, port: this.port }, () => {
         this.isConnected = true;
-        // console.log(`[MarketDataEngine:Redis] Conectado exitosamente a Redis en ${this.host}:${this.port}`);
       });
 
+      this.client.unref();
       this.client.setTimeout(2500);
 
       this.client.on('data', (data) => {
