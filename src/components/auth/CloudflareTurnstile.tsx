@@ -54,7 +54,7 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
 
-  const configuredKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAAFLVenRf1JsvExUr';
+  const configuredKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
   const isLocalHost = typeof window !== 'undefined' && (
     window.location.hostname === 'localhost' || 
     window.location.hostname === '127.0.0.1' ||
