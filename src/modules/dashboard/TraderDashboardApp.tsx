@@ -28,7 +28,8 @@ import {
   RefreshCw,
   Clock,
   MoreVertical,
-  Receipt
+  Receipt,
+  PenTool
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAppRouter } from '../../context/RouterContext';
@@ -36,6 +37,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { BrandLogo } from '../../components/BrandLogo';
 import { supabase } from '../../lib/supabase';
 import { TraderBillingView } from './components/TraderBillingView';
+import { TraderContractSigningModal } from './components/TraderContractSigningModal';
 
 export interface UserTradingAccount {
   id: string;
@@ -55,6 +57,9 @@ export interface UserTradingAccount {
   leverage: string;
   tradingDays: number;
   createdAt: string;
+  contractSigned?: boolean;
+  contractSignedAt?: string;
+  contractSignature?: string;
 }
 
 interface TraderDashboardAppProps {
@@ -105,6 +110,48 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
   const [chartTimeframe, setChartTimeframe] = useState<'7D' | '30D' | '90D' | '1A' | 'Todo'>('7D');
   const [recentTrades, setRecentTrades] = useState<any[]>([]);
 
+  // Estado para modal y feedback de firma de contrato
+  const [contractModalAccount, setContractModalAccount] = useState<UserTradingAccount | null>(null);
+  const [contractToastMessage, setContractToastMessage] = useState<string | null>(null);
+
+  // Acción para firmar el acuerdo institucional
+  const handleSignContract = async (signature: string) => {
+    if (!contractModalAccount) return;
+    const now = new Date().toISOString();
+
+    try {
+      await supabase
+        .from('trading_accounts')
+        .update({
+          contract_signed_at: now,
+          contract_signature: signature
+        })
+        .eq('id', contractModalAccount.id);
+    } catch (dbErr) {
+      console.warn('[Contract] Fallback guardando firma en PostgreSQL:', dbErr);
+    }
+
+    // Actualizar estado reactivo
+    setAccounts(prev => prev.map(acc => {
+      if (acc.id === contractModalAccount.id) {
+        return {
+          ...acc,
+          contractSigned: true,
+          contractSignedAt: now,
+          contractSignature: signature
+        };
+      }
+      return acc;
+    }));
+
+    setContractToastMessage(
+      isEn 
+        ? '✓ Evaluation Agreement signed successfully! Terminal trading unlocked.' 
+        : '✓ ¡Acuerdo de Evaluación firmado exitosamente! Trading en terminal habilitado.'
+    );
+    setTimeout(() => setContractToastMessage(null), 4500);
+  };
+
   // Cargar cuentas reales del usuario desde PostgreSQL y localStorage
   const loadUserAccounts = async (forceRefresh = false) => {
     if (forceRefresh || accounts.length === 0) {
@@ -148,7 +195,10 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
               profitTargetPct: Number(rules.profitTargetPct || 8),
               leverage: rules.effectiveLeverage || '1:100',
               tradingDays: Number(row.trading_days_count || 0),
-              createdAt: row.created_at || new Date().toISOString()
+              createdAt: row.created_at || new Date().toISOString(),
+              contractSigned: !!(row.contract_signed_at || rules.contractSigned),
+              contractSignedAt: row.contract_signed_at || rules.contractSignedAt,
+              contractSignature: row.contract_signature || rules.contractSignature
             });
           });
         }
@@ -413,6 +463,11 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
   };
 
   const handleGoToTerminal = () => {
+    // Si la cuenta activa no ha firmado el contrato, bloquear acceso y abrir modal de firma
+    if (activeAccount && !activeAccount.contractSigned) {
+      setContractModalAccount(activeAccount);
+      return;
+    }
     if (onGoToTerminal) {
       onGoToTerminal();
     } else {
@@ -794,13 +849,44 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
                             </span>
                           </div>
 
-                          <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
-                            acc.status === 'ACTIVE'
-                              ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                              : 'bg-rose-500/15 text-rose-400 border-rose-500/30'
-                          }`}>
-                            {acc.status}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            {/* Estado del Contrato */}
+                            {acc.contractSigned ? (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setContractModalAccount(acc);
+                                }}
+                                className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                                title={isEn ? 'View Signed Agreement' : 'Ver Contrato Firmado'}
+                              >
+                                <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                                <span>{isEn ? 'Signed' : 'Firmado'}</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setContractModalAccount(acc);
+                                }}
+                                className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30 hover:bg-amber-400/25 transition-colors cursor-pointer animate-pulse"
+                                title={isEn ? 'Sign Agreement to Trade' : 'Firmar Contrato para Operar'}
+                              >
+                                <FileText className="w-3 h-3 text-amber-400" />
+                                <span>{isEn ? 'Sign' : 'Firmar'}</span>
+                              </button>
+                            )}
+
+                            <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
+                              acc.status === 'ACTIVE'
+                                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                                : 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                            }`}>
+                              {acc.status}
+                            </span>
+                          </div>
                         </div>
 
                         {/* Capital inicial y balance real */}
@@ -850,9 +936,20 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
                           </button>
 
                           <button
-                            onClick={handleGoToTerminal}
-                            className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 transition-colors cursor-pointer"
-                            title={isEn ? 'Open Trading Terminal' : 'Abrir Terminal de Trading'}
+                            onClick={() => {
+                              if (!acc.contractSigned) {
+                                setContractModalAccount(acc);
+                              } else {
+                                setSelectedAccountId(acc.id);
+                                handleGoToTerminal();
+                              }
+                            }}
+                            className={`p-2.5 rounded-xl border transition-colors cursor-pointer ${
+                              acc.contractSigned
+                                ? 'bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border-white/10'
+                                : 'bg-amber-400/10 text-amber-300 border-amber-400/30 hover:bg-amber-400/20'
+                            }`}
+                            title={acc.contractSigned ? (isEn ? 'Open Trading Terminal' : 'Abrir Terminal de Trading') : (isEn ? 'Sign Agreement to Trade' : 'Firmar Acuerdo para Operar')}
                           >
                             <Monitor className="w-4 h-4" />
                           </button>
@@ -928,6 +1025,60 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
                   </button>
                 </div>
               </div>
+
+              {/* Banner de Firma de Contrato Obligatorio */}
+              {activeAccount && !activeAccount.contractSigned && (
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 backdrop-blur-md">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 uppercase">
+                          {isEn ? 'Signature Required' : 'Firma Requerida'}
+                        </span>
+                        <h4 className="text-xs sm:text-sm font-bold text-white">
+                          {isEn ? 'Evaluation Agreement Pending' : 'Acuerdo de Evaluación Institucional Pendiente'}
+                        </h4>
+                      </div>
+                      <p className="text-[11px] text-slate-300 mt-0.5 font-mono">
+                        {isEn 
+                          ? 'You must review and electronically sign your evaluation terms before trading in the terminal.' 
+                          : 'Debes revisar y firmar electrónicamente los términos del reto para desbloquear la ejecución de órdenes.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setContractModalAccount(activeAccount)}
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-mono text-xs font-bold uppercase tracking-wider shrink-0 transition-all shadow-md shadow-amber-400/20 flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <PenTool className="w-3.5 h-3.5" />
+                    <span>{isEn ? 'Sign Agreement Now' : 'Firmar Acuerdo Ahora'}</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Confirmación si el contrato ya está firmado */}
+              {activeAccount && activeAccount.contractSigned && (
+                <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20 text-xs font-mono">
+                  <div className="flex items-center gap-2 text-emerald-300">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>
+                      {isEn ? 'Evaluation Agreement Signed & Verified' : 'Acuerdo de Evaluación Firmado y Verificado'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setContractModalAccount(activeAccount)}
+                    className="text-slate-400 hover:text-white underline cursor-pointer"
+                  >
+                    {isEn ? 'View Agreement ↗' : 'Ver Contrato Firmado ↗'}
+                  </button>
+                </div>
+              )}
 
               {/* Si no tiene ninguna cuenta activa */}
               {!activeAccount ? (
@@ -1559,6 +1710,27 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
         </main>
 
       </div>
+
+      {/* Toast de confirmación de firma de contrato */}
+      {contractToastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 p-4 rounded-2xl bg-emerald-950/90 border border-emerald-500/50 text-emerald-200 text-xs font-mono shadow-2xl backdrop-blur-md flex items-center gap-3 animate-in fade-in slide-in-from-bottom-3 duration-300">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          <span>{contractToastMessage}</span>
+        </div>
+      )}
+
+      {/* Modal Institucional de Firma de Acuerdo de Evaluación */}
+      {contractModalAccount && (
+        <TraderContractSigningModal
+          account={contractModalAccount}
+          userName={userDisplayName}
+          userEmail={user?.email}
+          isOpen={!!contractModalAccount}
+          onClose={() => setContractModalAccount(null)}
+          onSignedSuccess={handleSignContract}
+          isEnDefault={isEn}
+        />
+      )}
 
     </div>
   );

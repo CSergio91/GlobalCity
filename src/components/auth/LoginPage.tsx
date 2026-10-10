@@ -717,10 +717,21 @@ export const LoginPage: React.FC = () => {
         const generatedAccountNumber = `EKL-${selectedCategory.toUpperCase()}-${Math.floor(10000 + Math.random() * 90000)}`;
         const generatedAccessToken = `tok_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 
+        const defaultFirmId = 'a0000000-0000-0000-0000-000000000001';
+        let profileUserId: string | null = null;
+        try {
+          const { data: prof } = await supabase.from('profiles').select('id').eq('email', cleanEmail).maybeSingle();
+          if (prof?.id) {
+            profileUserId = prof.id;
+          }
+        } catch (_) {}
+
         let createdAccountId: string | null = null;
         try {
           const { data: newTradingAccount, error: accInsertErr } = await supabase.from('trading_accounts').insert({
             account_number: generatedAccountNumber,
+            firm_id: defaultFirmId,
+            user_id: profileUserId,
             trader_email: cleanEmail,
             initial_balance: activePlan.capital,
             current_balance: activePlan.capital,
@@ -736,7 +747,8 @@ export const LoginPage: React.FC = () => {
               maxTotalDrawdownPct: selectedAddons.includes('extra_drawdown') ? 12 : 10,
               profitTargetPct: 8,
               effectiveLeverage: selectedAddons.includes('boost_leverage') ? '1:100' : '1:50',
-              addons: selectedAddons
+              addons: selectedAddons,
+              contractSigned: false
             },
             access_token: generatedAccessToken
           }).select().single();
@@ -803,7 +815,7 @@ export const LoginPage: React.FC = () => {
             orderNumber: orderNumber,
             totalPriceFormatted: `$${dynamicPricing.totalPrice.toFixed(2)}`,
             paymentGateway: paymentGateway,
-            dashboardUrl: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : 'http://localhost:3100/dashboard'
+            dashboardUrl: 'https://eklipsefunded.com/dashboard'
           });
         } catch (emailErr) {
           console.warn('[Checkout] Fallback enviando correo:', emailErr);
