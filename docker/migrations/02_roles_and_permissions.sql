@@ -15,6 +15,31 @@ BEGIN
   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'service_role') THEN
     CREATE ROLE service_role NOLOGIN;
   END IF;
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'postgres') THEN
+    CREATE ROLE postgres SUPERUSER;
+  END IF;
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'supabase_auth_admin') THEN
+    CREATE ROLE supabase_auth_admin;
+  END IF;
+END
+$$;
+
+-- Inicializar esquema auth y enums para GoTrue si no existen
+CREATE SCHEMA IF NOT EXISTS auth;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE t.typname = 'factor_type' AND n.nspname = 'auth') THEN
+    CREATE TYPE auth.factor_type AS ENUM ('totp', 'webauthn', 'phone');
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE t.typname = 'factor_status' AND n.nspname = 'auth') THEN
+    CREATE TYPE auth.factor_status AS ENUM ('unverified', 'verified');
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE t.typname = 'aal_level' AND n.nspname = 'auth') THEN
+    CREATE TYPE auth.aal_level AS ENUM ('aal1', 'aal2', 'aal3');
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE t.typname = 'code_challenge_method' AND n.nspname = 'auth') THEN
+    CREATE TYPE auth.code_challenge_method AS ENUM ('s256', 'plain');
+  END IF;
 END
 $$;
 

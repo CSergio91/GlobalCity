@@ -192,7 +192,7 @@ const ToastItem: React.FC<{
       {/* BARRA DE PROGRESO DE AUTO-DISMISS */}
       <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black/20">
         <div
-          className="h-full bg-white/70 transition-all duration-75"
+          className="h-full bg-white/90 transition-all duration-75"
           style={{ width: `${progress}%` }}
         />
       </div>

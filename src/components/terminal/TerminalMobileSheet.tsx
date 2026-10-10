@@ -224,7 +224,7 @@ export const TerminalMobileSheet: React.FC<TerminalMobileSheetProps> = ({
           } left-2 right-2 z-30 flex flex-col gap-1.5 animate-zoom-in transition-all duration-300 pointer-events-auto`}
         >
           {/* BARRA SUPERIOR PEGADA: CONTROL RÁPIDO DEL RIESGO (%) */}
-          <div className="flex items-center justify-between px-2.5 py-1 rounded-xl bg-white/95 backdrop-blur-md border border-[#ded5c5] shadow-md font-sans text-xs">
+          <div className="flex items-center justify-between px-2.5 py-1 rounded-xl bg-white/95 backdrop-blur-md border border-slate-200 shadow-md font-sans text-xs">
             <div className="flex items-center gap-1.5">
               <Shield className="w-3.5 h-3.5 text-amber-600 shrink-0" />
               <span className="text-[10px] font-black uppercase text-slate-700 tracking-tight">
@@ -296,7 +296,7 @@ export const TerminalMobileSheet: React.FC<TerminalMobileSheetProps> = ({
       )}
 
       {/* 2. BARRA DE NAVEGACIÓN INFERIOR FIJA (MÓVIL < 1024px) */}
-      <nav className="lg:hidden terminal-mobile-only terminal-mobile-bottom-nav fixed bottom-0 left-0 right-0 z-40 h-14 border-t border-[#ded5c5] bg-white flex items-center justify-around px-2 shadow-2xl select-none">
+      <nav className="lg:hidden terminal-mobile-only terminal-mobile-bottom-nav fixed bottom-0 left-0 right-0 z-40 h-14 border-t border-slate-200 bg-white flex items-center justify-around px-2 shadow-2xl select-none">
         {/* BOTÓN OPERAR */}
         <button
           type="button"
@@ -423,7 +423,7 @@ export const TerminalMobileSheet: React.FC<TerminalMobileSheetProps> = ({
           {/* Panel inferior que ocupa más espacio hacia arriba (75dvh para perfil profesional) */}
           <div className={`${
             activeSheet === 'profile' ? 'h-[75dvh] max-h-[640px]' : 'h-[50dvh] max-h-[520px]'
-          } bg-[#fbf9f4] border-t border-[#ded5c5] rounded-t-3xl shadow-2xl flex flex-col overflow-hidden animate-slide-up-sheet transition-all duration-300`}>
+          } bg-white border-t border-slate-200 rounded-t-3xl shadow-2xl flex flex-col overflow-hidden animate-slide-up-sheet transition-all duration-300`}>
             {/* Header del sheet con barra de arrastre y botón cerrar */}
             <div className="px-4 py-2 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
@@ -492,7 +492,7 @@ export const TerminalMobileSheet: React.FC<TerminalMobileSheetProps> = ({
               {activeSheet === 'positions' && (
                 <div className="space-y-3">
                   {/* CARD DE BALANCE DE LA CUENTA */}
-                  <div className="p-2.5 rounded-2xl bg-white border border-[#ded5c5] shadow-xs">
+                  <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
                     <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
                       <span className="text-[10px] font-mono uppercase font-bold text-slate-400 tracking-wider">
                         {isEs ? 'Balance de la Cuenta' : 'Account Balance'}
@@ -569,7 +569,7 @@ export const TerminalMobileSheet: React.FC<TerminalMobileSheetProps> = ({
                           <div
                             key={ord.id}
                             onClick={() => onSelectLimitOrder ? onSelectLimitOrder(ord) : onSelectPosition?.({ symbol: ord.symbol, exchange: ord.exchange, marketType: ord.marketType } as any)}
-                            className="p-2.5 rounded-xl bg-white border border-[#ded5c5] shadow-xs flex items-center justify-between font-mono text-xs cursor-pointer active:bg-amber-50/70 transition-colors"
+                            className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between font-mono text-xs cursor-pointer active:bg-amber-50/70 transition-colors"
                           >
                             <div>
                               <div className="flex items-center gap-1.5">
@@ -630,7 +630,7 @@ export const TerminalMobileSheet: React.FC<TerminalMobileSheetProps> = ({
                       <div
                         key={pos.id}
                         onClick={() => onSelectPosition?.(pos)}
-                        className="p-2.5 rounded-xl bg-white border border-[#ded5c5] shadow-xs flex items-center justify-between font-mono text-xs cursor-pointer active:bg-amber-50/70 transition-colors"
+                        className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-between font-mono text-xs cursor-pointer active:bg-amber-50/70 transition-colors"
                       >
                         <div>
                           <div className="flex items-center gap-1.5">
@@ -711,7 +711,7 @@ export const TerminalMobileSheet: React.FC<TerminalMobileSheetProps> = ({
               {activeSheet === 'history' && (
                 <div className="space-y-2.5">
                   {/* BARRA DE FILTRO POR FECHAS Y DESCARGA CSV */}
-                  <div className="p-2.5 rounded-xl bg-white border border-[#ded5c5] shadow-xs flex flex-col gap-2">
+                  <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-xs flex flex-col gap-2">
                     <div className="flex items-center justify-between gap-1.5">
                       <div className="flex items-center gap-1 text-[11px] font-bold text-slate-700">
                         <Calendar className="w-3.5 h-3.5 text-amber-600" />
@@ -746,7 +746,7 @@ export const TerminalMobileSheet: React.FC<TerminalMobileSheetProps> = ({
                             className={`flex-1 py-1 rounded-lg text-[10px] font-bold transition-all text-center cursor-pointer ${
                               isSelected
                                 ? 'bg-amber-600 text-white shadow-xs'
-                                : 'bg-[#fbf9f4] text-slate-600 border border-[#ded5c5]'
+                                : 'bg-white text-slate-600 border border-slate-200'
                             }`}
                           >
                             {labels[preset]}
@@ -779,7 +779,7 @@ export const TerminalMobileSheet: React.FC<TerminalMobileSheetProps> = ({
                         className={`p-2.5 rounded-xl border shadow-xs flex items-center justify-between font-mono text-xs cursor-pointer transition-all active:scale-[0.99] select-none ${
                           isSelected
                             ? 'bg-amber-50/80 border-amber-400 ring-2 ring-amber-400'
-                            : 'bg-white hover:bg-slate-50 border-[#ded5c5]'
+                            : 'bg-white hover:bg-slate-50 border-slate-200'
                         }`}
                         title={isEs ? 'Tocar para ver este trade en el gráfico' : 'Tap to view this trade on chart'}
                       >
@@ -919,7 +919,7 @@ export const TerminalMobileSheet: React.FC<TerminalMobileSheetProps> = ({
                     </div>
 
                     {/* 2. TARJETA EDITAR PERFIL */}
-                    <div className="p-3.5 rounded-2xl bg-white border border-[#ded5c5] shadow-xs">
+                    <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
                       <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                           <Edit3 className="w-3.5 h-3.5 text-amber-600" />
@@ -1068,7 +1068,7 @@ export const TerminalMobileSheet: React.FC<TerminalMobileSheetProps> = ({
                     </div>
 
                     {/* 3. SELECCIÓN DE IDIOMA (ESPAÑOL / ENGLISH) */}
-                    <div className="p-3.5 rounded-2xl bg-white border border-[#ded5c5] shadow-xs">
+                    <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
                       <div className="flex items-center gap-1.5 pb-2.5 mb-2.5 border-b border-slate-100 text-xs font-bold text-slate-800">
                         <Globe className="w-3.5 h-3.5 text-amber-600" />
                         <span>{isEs ? 'Selección de Idioma' : 'Language Selection'}</span>
@@ -1116,7 +1116,7 @@ export const TerminalMobileSheet: React.FC<TerminalMobileSheetProps> = ({
                     </div>
 
                     {/* 4. PREFERENCIAS DE INTERFAZ & OPERATIVA */}
-                    <div className="p-3.5 rounded-2xl bg-white border border-[#ded5c5] shadow-xs space-y-3">
+                    <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
                       <div className="flex items-center gap-1.5 pb-2 border-b border-slate-100 text-xs font-bold text-slate-800">
                         <Settings className="w-3.5 h-3.5 text-amber-600" />
                         <span>{isEs ? 'Preferencias de Interfaz' : 'Interface Preferences'}</span>
@@ -1173,7 +1173,7 @@ export const TerminalMobileSheet: React.FC<TerminalMobileSheetProps> = ({
                     </div>
 
                     {/* 5. DATOS DE SESIÓN Y CUENTA (SIN DRAWDOWN NI BALANCE) */}
-                    <div className="p-3 rounded-2xl bg-white/70 border border-[#ded5c5] space-y-1.5 text-xs text-slate-600">
+                    <div className="p-3 rounded-2xl bg-white/90 border border-slate-200 space-y-1.5 text-xs text-slate-600">
                       <div className="flex justify-between items-center text-[10.5px]">
                         <span className="text-slate-400">{isEs ? 'ID de Usuario' : 'User ID'}:</span>
                         <span className="font-mono font-bold text-slate-800">#{user?.id ? user.id.slice(0, 10).toUpperCase() : 'ZYTI-USER-01'}</span>

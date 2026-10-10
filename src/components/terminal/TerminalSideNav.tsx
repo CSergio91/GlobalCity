@@ -166,15 +166,15 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
   };
 
   const renderProfilePanel = () => (
-    <div className="absolute inset-0 bg-[#fbf9f4] z-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300 ease-out">
+    <div className="absolute inset-0 bg-white z-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300 ease-out">
       {/* HEADER DEL PANEL DE PERFIL */}
-      <div className="px-3.5 py-3 border-b border-[#ded5c5] flex items-center justify-between bg-[#f6f2e9] shrink-0">
+      <div className="px-3.5 py-3 border-b border-slate-200 flex items-center justify-between bg-[#f6f2e9] shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-xl bg-amber-500/20 border border-amber-400/60 flex items-center justify-center text-amber-900">
             <User className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-black text-slate-900 leading-tight">
+            <h3 className="text-xs font-black text-white leading-tight">
               {isEs ? 'Perfil de Usuario' : 'User Profile'}
             </h3>
             <p className="text-[10px] text-slate-500 font-medium leading-tight">
@@ -185,7 +185,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
         <button
           type="button"
           onClick={() => setIsProfileOpen(false)}
-          className="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-200/60 flex items-center justify-center transition-colors cursor-pointer"
+          className="w-7 h-7 rounded-lg text-slate-400 hover:text-white hover:bg-slate-200/60 flex items-center justify-center transition-colors cursor-pointer"
           title={isEs ? 'Cerrar' : 'Close'}
         >
           <X className="w-4 h-4" />
@@ -195,7 +195,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
       {/* CONTENIDO SCROLLEABLE IDÉNTICO AL MÓVIL */}
       <div className="flex-1 overflow-y-auto p-3.5 space-y-3.5 custom-scrollbar">
         {/* 1. TARJETA DE IDENTIDAD */}
-        <div className="p-3.5 rounded-2xl bg-white border border-[#ded5c5] shadow-xs flex flex-col items-center text-center relative overflow-hidden">
+        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col items-center text-center relative overflow-hidden">
           <div className="relative mb-2">
             {user?.avatarUrl ? (
               <img
@@ -218,7 +218,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
           </div>
 
           {/* Nombre y referencia centrados */}
-          <h3 className="text-sm font-black text-slate-900 leading-tight">
+          <h3 className="text-sm font-black text-white leading-tight">
             {user?.name || (user?.telegramUsername ? `@${user.telegramUsername}` : (isEs ? 'Trader ZYTI' : 'ZYTI Trader'))}
           </h3>
           <p className="text-[11px] text-slate-500 mt-0.5 font-medium truncate max-w-full">
@@ -256,9 +256,9 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
         </div>
 
         {/* 2. TARJETA EDITAR PERFIL */}
-        <div className="p-3.5 rounded-2xl bg-white border border-[#ded5c5] shadow-xs">
+        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-white">
               <Edit3 className="w-3.5 h-3.5 text-amber-600" />
               <span>{isEs ? 'Editar Perfil' : 'Edit Profile'}</span>
             </div>
@@ -282,7 +282,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   placeholder={isEs ? 'Ej: Alex Trader' : 'e.g. Alex Trader'}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition-colors"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-white text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition-colors"
                   required
                 />
               </div>
@@ -296,7 +296,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
                   placeholder={isEs ? 'ej: usuario@gmail.com' : 'e.g. user@gmail.com'}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition-colors"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-white text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition-colors"
                 />
               </div>
 
@@ -367,7 +367,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
                   value={editAvatarUrl.startsWith('data:') ? '' : editAvatarUrl}
                   onChange={(e) => setEditAvatarUrl(e.target.value)}
                   placeholder={editAvatarUrl.startsWith('data:') ? (isEs ? 'Foto cargada desde dispositivo (WebP)' : 'Photo loaded from device (WebP)') : 'https://...'}
-                  className="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition-colors"
+                  className="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-slate-50 text-white text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition-colors"
                 />
               </div>
 
@@ -384,7 +384,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between items-center py-1">
                 <span className="text-slate-400">{isEs ? 'Nombre' : 'Name'}:</span>
-                <span className="font-bold text-slate-900 truncate max-w-[150px]">{user?.name || (isEs ? 'Sin definir' : 'Not set')}</span>
+                <span className="font-bold text-white truncate max-w-[150px]">{user?.name || (isEs ? 'Sin definir' : 'Not set')}</span>
               </div>
               {user?.telegramUsername && (
                 <div className="flex justify-between items-center py-1">
@@ -394,7 +394,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
               )}
               <div className="flex justify-between items-center py-1">
                 <span className="text-slate-400">{isEs ? 'Correo' : 'Email'}:</span>
-                <span className="font-mono text-slate-700 truncate max-w-[150px]">
+                <span className="font-mono text-slate-300 truncate max-w-[150px]">
                   {user?.email && !user.email.endsWith('@telegram.org') 
                     ? user.email 
                     : (isEs ? 'No configurado (Opcional)' : 'Not configured (Optional)')}
@@ -405,8 +405,8 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
         </div>
 
         {/* 3. SELECCIÓN DE IDIOMA (ESPAÑOL / ENGLISH) */}
-        <div className="p-3.5 rounded-2xl bg-white border border-[#ded5c5] shadow-xs">
-          <div className="flex items-center gap-1.5 pb-2.5 mb-2.5 border-b border-slate-100 text-xs font-bold text-slate-800">
+        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
+          <div className="flex items-center gap-1.5 pb-2.5 mb-2.5 border-b border-slate-100 text-xs font-bold text-white">
             <Globe className="w-3.5 h-3.5 text-amber-600" />
             <span>{isEs ? 'Selección de Idioma' : 'Language Selection'}</span>
           </div>
@@ -419,7 +419,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
               className={`py-2 px-2 rounded-xl border flex items-center justify-between transition-all cursor-pointer ${
                 currentLang === 'es'
                   ? 'bg-amber-500/15 border-amber-500 text-amber-950 font-black shadow-xs ring-2 ring-amber-400/20'
-                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                  : 'bg-slate-50 border-slate-200 text-slate-300 hover:bg-slate-100'
               }`}
             >
               <div className="flex items-center gap-1.5 min-w-0">
@@ -438,7 +438,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
               className={`py-2 px-2 rounded-xl border flex items-center justify-between transition-all cursor-pointer ${
                 currentLang === 'en'
                   ? 'bg-amber-500/15 border-amber-500 text-amber-950 font-black shadow-xs ring-2 ring-amber-400/20'
-                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                  : 'bg-slate-50 border-slate-200 text-slate-300 hover:bg-slate-100'
               }`}
             >
               <div className="flex items-center gap-1.5 min-w-0">
@@ -453,8 +453,8 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
         </div>
 
         {/* 4. PREFERENCIAS DE INTERFAZ & OPERATIVA */}
-        <div className="p-3.5 rounded-2xl bg-white border border-[#ded5c5] shadow-xs space-y-3">
-          <div className="flex items-center gap-1.5 pb-2 border-b border-slate-100 text-xs font-bold text-slate-800">
+        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
+          <div className="flex items-center gap-1.5 pb-2 border-b border-slate-100 text-xs font-bold text-white">
             <Settings className="w-3.5 h-3.5 text-amber-600" />
             <span>{isEs ? 'Preferencias de Interfaz' : 'Interface Preferences'}</span>
           </div>
@@ -463,7 +463,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
           {onToggleQuickTrade && (
             <div className="flex items-center justify-between text-xs">
               <div>
-                <span className="font-bold text-slate-800 block">
+                <span className="font-bold text-white block">
                   {isEs ? 'Operaciones Rápidas (1-Toque)' : 'Quick 1-Tap Trading'}
                 </span>
                 <span className="text-[10px] text-slate-400 block">
@@ -490,7 +490,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
           {onToggleNavPosition && (
             <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
               <div>
-                <span className="font-bold text-slate-800 block">
+                <span className="font-bold text-white block">
                   {isEs ? 'Lado de Navegación Lateral' : 'Lateral Navigation Position'}
                 </span>
                 <span className="text-[10px] text-slate-400 block">
@@ -500,7 +500,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
               <button
                 type="button"
                 onClick={onToggleNavPosition}
-                className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-slate-200 transition-colors"
+                className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-slate-200 transition-colors"
               >
                 <ArrowLeftRight className="w-3 h-3 text-amber-600" />
                 <span>{isEs ? 'Alternar' : 'Toggle'}</span>
@@ -510,14 +510,14 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
         </div>
 
         {/* 5. DATOS DE SESIÓN Y CUENTA */}
-        <div className="p-3 rounded-2xl bg-white/70 border border-[#ded5c5] space-y-1.5 text-xs text-slate-600">
+        <div className="p-3 rounded-2xl bg-white/90 border border-slate-200 space-y-1.5 text-xs text-slate-600">
           <div className="flex justify-between items-center text-[10.5px]">
             <span className="text-slate-400">{isEs ? 'ID de Usuario' : 'User ID'}:</span>
-            <span className="font-mono font-bold text-slate-800">#{user?.id ? user.id.slice(0, 10).toUpperCase() : 'ZYTI-USER-01'}</span>
+            <span className="font-mono font-bold text-white">#{user?.id ? user.id.slice(0, 10).toUpperCase() : 'ZYTI-USER-01'}</span>
           </div>
           <div className="flex justify-between items-center text-[10.5px]">
             <span className="text-slate-400">{isEs ? 'Método de Acceso' : 'Login Method'}:</span>
-            <span className="font-bold text-slate-800 capitalize">{user?.provider || 'Telegram'}</span>
+            <span className="font-bold text-white capitalize">{user?.provider || 'Telegram'}</span>
           </div>
           <div className="flex justify-between items-center text-[10.5px]">
             <span className="text-slate-400">{isEs ? 'Estado de Cuenta' : 'Account Status'}:</span>
@@ -550,7 +550,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
         }}
       >
         {/* Contenedor base de 48px para reservar el espacio permanente en el layout */}
-        <div className={`w-12 h-full ${navPosition === 'left' ? 'border-r' : 'border-l'} border-[#ded5c5] bg-[#fbf9f4]`} />
+        <div className={`w-12 h-full ${navPosition === 'left' ? 'border-r' : 'border-l'} border-slate-200 bg-white`} />
         
         {/* Menú flotante al hover o al click que vuela por encima del gráfico sin redimensionarlo ni empujarlo */}
         <div 
@@ -563,7 +563,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
               : isClickedExpanded
                 ? 'w-64 shadow-2xl z-40'
                 : 'w-12 hover:w-64 shadow-xs hover:shadow-2xl z-40'
-          } bg-[#fbf9f4] border-[#ded5c5] transition-all duration-300 ease-out flex flex-col justify-between py-3 px-1.5 group overflow-hidden`}
+          } bg-white border-slate-200 transition-all duration-300 ease-out flex flex-col justify-between py-3 px-1.5 group overflow-hidden`}
         >
           {/* PANEL DESPLEGABLE HACIA ARRIBA DE PERFIL EN LA MISMA NAVEGACIÓN LATERAL */}
           {isProfileOpen && renderProfilePanel()}
@@ -575,7 +575,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
                 className={`w-full flex items-center justify-between p-1.5 rounded-xl transition-all ${
                   isTradingSidebarOpen && showOrderForm
                     ? 'bg-amber-100/90 text-amber-950 font-black shadow-xs'
-                    : 'text-slate-700 hover:text-slate-950 hover:bg-white/90'
+                    : 'text-slate-300 hover:text-slate-950 hover:bg-white/90'
                 }`}
               >
                 {/* Botón principal Trading: Abre panel si está oculto y expande opciones */}
@@ -610,7 +610,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
                     setIsClickedExpanded(true);
                     handleToggleTradingSubmenu(e);
                   }}
-                  className={`p-1 rounded-md hover:bg-amber-200/70 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer outline-none ${
+                  className={`p-1 rounded-md hover:bg-amber-200/70 text-slate-600 hover:text-white transition-colors cursor-pointer outline-none ${
                     isClickedExpanded ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                   }`}
                   title={isTradingSubmenuOpen ? (isEs ? 'Plegar submenú' : 'Collapse submenu') : (isEs ? 'Desplegar submenú' : 'Expand submenu')}
@@ -631,7 +631,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
                         setIsClickedExpanded(true);
                         onToggleOrderForm();
                       }}
-                      className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] font-medium text-slate-700 hover:text-slate-950 hover:bg-white transition-all cursor-pointer"
+                      className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] font-medium text-slate-300 hover:text-slate-950 hover:bg-white transition-all cursor-pointer"
                     >
                       <div className="flex items-center gap-2">
                         <SlidersHorizontal className="w-3 h-3 text-slate-500" />
@@ -654,7 +654,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
                         setIsClickedExpanded(true);
                         onToggleOrderBook();
                       }}
-                      className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] font-medium text-slate-700 hover:text-slate-950 hover:bg-white transition-all cursor-pointer"
+                      className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] font-medium text-slate-300 hover:text-slate-950 hover:bg-white transition-all cursor-pointer"
                     >
                       <div className="flex items-center gap-2">
                         <BookOpen className="w-3 h-3 text-slate-500" />
@@ -677,7 +677,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
                         setIsClickedExpanded(true);
                         onTogglePositions();
                       }}
-                      className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] font-medium text-slate-700 hover:text-slate-950 hover:bg-white transition-all cursor-pointer"
+                      className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] font-medium text-slate-300 hover:text-slate-950 hover:bg-white transition-all cursor-pointer"
                     >
                       <div className="flex items-center gap-2">
                         <ListFilter className="w-3 h-3 text-slate-500" />
@@ -704,12 +704,12 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
               className={`w-full flex items-center gap-3 p-2 rounded-xl transition-all cursor-pointer ${
                 activeSection === 'exchange'
                   ? 'bg-amber-100 text-amber-950 font-black shadow-xs'
-                  : 'text-slate-700 hover:text-slate-950 hover:bg-white/80'
+                  : 'text-slate-300 hover:text-slate-950 hover:bg-white/80'
               }`}
               title="Exchange"
             >
               <div className="w-6 h-6 flex items-center justify-center shrink-0">
-                <Repeat className={`w-4 h-4 ${activeSection === 'exchange' ? 'text-amber-600' : 'text-slate-700'}`} />
+                <Repeat className={`w-4 h-4 ${activeSection === 'exchange' ? 'text-amber-600' : 'text-slate-300'}`} />
               </div>
               <span className={`text-xs font-bold whitespace-nowrap ${isClickedExpanded ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity duration-200`}>
                 Exchange
@@ -745,7 +745,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
                 <img src="/logo-zyti.png" alt="ZYTI Trade" className="w-5 h-5 object-contain shrink-0" />
               )}
               <div className={`flex flex-col text-left leading-tight min-w-0 ${isClickedExpanded ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity duration-200`}>
-                <span className="text-[11px] font-black text-slate-900 truncate">
+                <span className="text-[11px] font-black text-white truncate">
                   {user ? (user?.name || (user?.telegramUsername ? `@${user.telegramUsername}` : (user?.email && !user.email.endsWith('@telegram.org') ? user.email.split('@')[0] : 'Trader'))) : 'ZYTI Trade'}
                 </span>
                 <span className="text-[9px] font-bold text-amber-800 truncate">
@@ -779,7 +779,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
             <button
               type="button"
               onClick={onToggleNavPosition}
-              className="w-full flex items-center gap-3 p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-white/80 transition-colors cursor-pointer"
+              className="w-full flex items-center gap-3 p-2 rounded-xl text-slate-500 hover:text-white hover:bg-white/80 transition-colors cursor-pointer"
               title={navPosition === 'left' ? (isEs ? 'Mover menú a la derecha' : 'Move menu to right') : (isEs ? 'Mover menú a la izquierda' : 'Move menu to left')}
             >
               <div className="w-6 h-6 flex items-center justify-center shrink-0">
@@ -811,15 +811,15 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
       {/* 2. DRAWER DE NAVEGACIÓN EN MÓVIL (< 1024px) */}
       {isMobileNavOpen && (
         <div className="lg:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex justify-end">
-          <div className="w-72 h-full bg-[#fbf9f4] border-l border-[#ded5c5] shadow-2xl p-4 flex flex-col justify-between animate-slide-in-right relative overflow-hidden">
+          <div className="w-72 h-full bg-white border-l border-slate-200 shadow-2xl p-4 flex flex-col justify-between animate-slide-in-right relative overflow-hidden">
             {isProfileOpen && renderProfilePanel()}
             <div>
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200">
-                <span className="text-xs font-black text-slate-900">Menú ZYTI Trade</span>
+                <span className="text-xs font-black text-white">Menú ZYTI Trade</span>
                 <button
                   type="button"
                   onClick={onCloseMobileNav}
-                  className="p-1 rounded-lg text-slate-500 hover:text-slate-900 cursor-pointer"
+                  className="p-1 rounded-lg text-slate-500 hover:text-white cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -846,7 +846,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
                   <img src="/logo-zyti.png" alt="ZYTI Trade" className="w-7 h-7 object-contain shrink-0" />
                 )}
                 <div className="flex flex-col text-left leading-tight min-w-0">
-                  <span className="text-xs font-black text-slate-900 truncate">
+                  <span className="text-xs font-black text-white truncate">
                     {user ? (user?.name || (user?.telegramUsername ? `@${user.telegramUsername}` : (user?.email && !user.email.endsWith('@telegram.org') ? user.email.split('@')[0] : 'Trader'))) : 'ZYTI Trade'}
                   </span>
                   <span className="text-[10px] font-bold text-amber-800 truncate">
@@ -875,7 +875,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
                   className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-colors ${
                     isTradingSidebarOpen && showOrderForm
                       ? 'bg-amber-100 text-amber-950 font-black'
-                      : 'text-slate-700 hover:bg-white'
+                      : 'text-slate-300 hover:bg-white'
                   }`}
                 >
                   <button
@@ -893,7 +893,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
                   <button
                     type="button"
                     onClick={handleToggleTradingSubmenu}
-                    className="p-1 rounded text-slate-600 hover:text-slate-900 cursor-pointer"
+                    className="p-1 rounded text-slate-600 hover:text-white cursor-pointer"
                   >
                     {isTradingSubmenuOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                   </button>
@@ -905,7 +905,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
                       <button
                         type="button"
                         onClick={onToggleOrderForm}
-                        className="w-full flex items-center justify-between py-1 text-xs text-slate-700 cursor-pointer"
+                        className="w-full flex items-center justify-between py-1 text-xs text-slate-300 cursor-pointer"
                       >
                         <div className="flex items-center gap-2">
                           <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
@@ -920,7 +920,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
                       <button
                         type="button"
                         onClick={onToggleOrderBook}
-                        className="w-full flex items-center justify-between py-1 text-xs text-slate-700 cursor-pointer"
+                        className="w-full flex items-center justify-between py-1 text-xs text-slate-300 cursor-pointer"
                       >
                         <div className="flex items-center gap-2">
                           <BookOpen className="w-3.5 h-3.5 text-slate-500" />
@@ -935,7 +935,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
                       <button
                         type="button"
                         onClick={onTogglePositions}
-                        className="w-full flex items-center justify-between py-1 text-xs text-slate-700 cursor-pointer"
+                        className="w-full flex items-center justify-between py-1 text-xs text-slate-300 cursor-pointer"
                       >
                         <div className="flex items-center gap-2">
                           <ListFilter className="w-3.5 h-3.5 text-slate-500" />
@@ -958,7 +958,7 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
                   className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
                     activeSection === 'exchange'
                       ? 'bg-amber-100 text-amber-950 font-black'
-                      : 'text-slate-700 hover:bg-white'
+                      : 'text-slate-300 hover:bg-white'
                   }`}
                 >
                   <Repeat className="w-4 h-4 text-amber-600" />

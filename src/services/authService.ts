@@ -169,11 +169,51 @@ export const authService = {
       };
     }
 
-    // 2. Si Supabase estuviese configurado, aquí se delega:
+    // 2. Si Supabase / GoTrue está configurado, autenticar directamente con la base de datos
     if (this.isSupabaseConfigured()) {
-      // Futuro puente Supabase:
-      // const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password: pass });
-      // if (error) return { success: false, type: 'MARGIN_CALL', message: `Margin Call: ${error.message}` };
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: pass
+        });
+
+        if (error) {
+          return {
+            success: false,
+            type: 'MARGIN_CALL',
+            message: `Margin Call: ${error.message}`
+          };
+        }
+
+        if (data?.user) {
+          const userMeta = data.user.user_metadata || {};
+          const fullName = userMeta.full_name || cleanEmail.split('@')[0];
+          const nameParts = fullName.split(' ');
+          const user: UserProfile = {
+            id: data.user.id,
+            username: `@${cleanEmail.split('@')[0]}`,
+            firstName: nameParts[0] || 'Trader',
+            lastName: nameParts.slice(1).join(' ') || undefined,
+            email: cleanEmail,
+            photoUrl: userMeta.avatar_url || undefined,
+            authProvider: 'email',
+            role: 'institutional_trader',
+            createdAt: data.user.created_at || new Date().toISOString(),
+            twoFactorEnabled: false
+          };
+
+          this.saveSession(user);
+
+          return {
+            success: true,
+            type: 'TAKE_PROFIT',
+            message: 'Take Profit: Autenticación aprobada en base de datos. Conectando al terminal...',
+            user
+          };
+        }
+      } catch (err: any) {
+        console.warn('[AuthService] Fallback local tras error de red:', err?.message);
+      }
     }
 
     // 3. Fallback de verificación local
@@ -199,9 +239,9 @@ export const authService = {
   },
 
   /**
-   * Registro con Email y Contraseña
+   * Registro con Email y Contraseña conectado a Supabase GoTrue
    */
-  async registerWithEmail(email: string, pass: string, confirmPass: string): Promise<AuthResult> {
+  async registerWithEmail(email: string, pass: string, confirmPass: string, fullName?: string): Promise<AuthResult> {
     const cleanEmail = email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -229,6 +269,56 @@ export const authService = {
       };
     }
 
+    // Registrar en Supabase Auth / GoTrue
+    if (this.isSupabaseConfigured()) {
+      try {
+        const displayName = fullName?.trim() || cleanEmail.split('@')[0];
+        const { data, error } = await supabase.auth.signUp({
+          email: cleanEmail,
+          password: pass,
+          options: {
+            data: {
+              full_name: displayName
+            }
+          }
+        });
+
+        if (error) {
+          return {
+            success: false,
+            type: 'MARGIN_CALL',
+            message: `Margin Call: ${error.message}`
+          };
+        }
+
+        if (data?.user) {
+          const nameParts = displayName.split(' ');
+          const user: UserProfile = {
+            id: data.user.id,
+            username: `@${cleanEmail.split('@')[0]}`,
+            firstName: nameParts[0] || 'Trader',
+            lastName: nameParts.slice(1).join(' ') || undefined,
+            email: cleanEmail,
+            authProvider: 'email',
+            role: 'institutional_trader',
+            createdAt: data.user.created_at || new Date().toISOString(),
+            twoFactorEnabled: false
+          };
+
+          this.saveSession(user);
+
+          return {
+            success: true,
+            type: 'TAKE_PROFIT',
+            message: 'Take Profit: Cuenta institucional registrada y sincronizada con éxito.',
+            user
+          };
+        }
+      } catch (err: any) {
+        console.warn('[AuthService] Fallback local tras error de registro:', err?.message);
+      }
+    }
+
     const username = `@${cleanEmail.split('@')[0]}`;
     const user: UserProfile = {
       id: `usr_${Date.now()}`,
@@ -248,6 +338,37 @@ export const authService = {
       message: 'Take Profit: Cuenta institucional registrada y lista para operar.',
       user
     };
+  },
+
+  /**
+   * Inicio de sesión con Google OAuth vía Supabase GoTrue
+   */
+  async loginWithGoogle(): Promise<{ success: boolean; url?: string; message?: string }> {
+    if (!this.isSupabaseConfigured()) {
+      return { success: false, message: 'Supabase Gateway no está configurado.' };
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3100'
+        }
+      });
+
+      if (error) {
+        return { success: false, message: error.message };
+      }
+
+      if (data?.url && typeof window !== 'undefined') {
+        window.location.href = data.url;
+        return { success: true, url: data.url };
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'Error iniciando Google OAuth' };
+    }
   },
 
   /**

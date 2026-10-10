@@ -397,13 +397,79 @@ KLineChart soporta indicadores integrados y personalizados:
 
 ---
 
-## 9. CHECKLIST DE VERIFICACIÓN PARA AGENTES DE IA
+## 9. MULTI-CHART GRID ENGINE (1, 2, 3, 4, 6, 8 SUB-DIVISIONES & FOCUSED TRADING CONTEXT)
 
-Antes de dar por concluida cualquier tarea relacionada con gráficos en Global City:
+### 9.1 Filosofía de Diseño: Densidad Institucional sin Etiquetas Invasivas
+El Multi-Chart Grid Engine permite al trader monitorear de 1 a 8 gráficos de forma concurrente, ya sea con diferentes activos (ej. BTC, ETH, SOL, XAUUSD) o el mismo activo en análisis multi-temporal (1m, 5m, 1h, 1D).
+
+**Reglas de Oro de Ergonomía Visual:**
+1. **Cero Etiquetas Invasivas:** Prohibido saturar el canvas con badges gigantes o textos como `[MODO TRADING ACTIVO]`. La visualización de velas y niveles de liquidez es sagrada.
+2. **Indicador de Foco Minimalista:** El panel que tiene el foco activo de trading se distingue únicamente mediante un halo perimetral sutil obsidian/ámbar:
+   ```css
+   /* Contenedor del panel activo */
+   ring-1 ring-amber-500/60 border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.12)]
+   ```
+3. **Barra Superior Compacta por Panel (22px de alto):**
+   - Mini-ticker (`BTC/USDT`) y selector rápido de timeframe (`1m`, `5m`, `1h`).
+   - Botón de maximizar a pantalla completa temporal (Focus Solo Mode) y botón cerrar.
+
+---
+
+### 9.2 Iconos Matriciales Vectoriales (SVG Grid Layout Selector)
+En la barra de herramientas del gráfico, el control de división no es un botón de texto plano, sino un selector desplegable con iconos vectoriales geométricos que muestran de forma intuitiva la división exacta:
+
+| Layout | Tipo | Descripción | Representación SVG (18x18, stroke=1.5) |
+|---|---|---|---|
+| **1 Vista** | `1x1` | Canvas único completo | `<rect x="2" y="2" width="14" height="14" rx="2" fill="none" stroke="currentColor"/>` |
+| **2 Vertical** | `2x1` | 2 columnas x 1 fila | `<rect x="2" y="2" width="6" height="14" rx="1"/><rect x="10" y="2" width="6" height="14" rx="1"/>` |
+| **2 Horizontal** | `1x2` | 1 columna x 2 filas | `<rect x="2" y="2" width="14" height="6" rx="1"/><rect x="2" y="10" width="14" height="6" rx="1"/>` |
+| **3 Dividido** | `3_split` | 1 grande izq. + 2 apilados der. | `<rect x="2" y="2" width="6" height="14" rx="1"/><rect x="10" y="2" width="6" height="6" rx="1"/><rect x="10" y="10" width="6" height="6" rx="1"/>` |
+| **4 Cuadrícula** | `2x2` | Matriz 2x2 uniforme | `<rect x="2" y="2" width="6" height="6" rx="1"/><rect x="10" y="2" width="6" height="6" rx="1"/><rect x="2" y="10" width="6" height="6" rx="1"/><rect x="10" y="10" width="6" height="6" rx="1"/>` |
+| **6 Cuadrícula** | `3x2` | 3 columnas x 2 filas | 6 rectángulos de 4x6 px distribuidos en rejilla |
+| **8 Cuadrícula** | `4x2` | 4 columnas x 2 filas | 8 rectángulos de 3x6 px distribuidos en rejilla |
+
+*El botón principal de la toolbar siempre refleja el icono de la subdivisión actualmente activa.*
+
+---
+
+### 9.3 Arquitectura del Contexto de Trading con Foco Activo (`activePaneId`)
+
+1. **Captura Inmediata del Foco:**
+   Al hacer click o tap en cualquier punto de un panel (o interactuar con sus herramientas), se dispara:
+   ```typescript
+   setActivePaneId(pane.id);
+   ```
+2. **Sincronización Reactiva de la Boleta de Órdenes:**
+   * La boleta (`TerminalOrderForm`), los botones de compra/venta rápida (`QuickTradeButtons`) y la calculadora de riesgo leen reactivamente el símbolo y el último tick del panel activo:
+     - `currentSymbol = activePane.symbol`
+     - `currentPrice = activePane.lastPrice`
+     - `maxLeverage = getLeverageForSymbol(activePane.symbol)`
+   * El trader puede hacer click en el Gráfico 3 (ETH/USDT) y comprar ETH inmediatamente desde el panel lateral, y acto seguido hacer click en el Gráfico 1 (BTC/USDT) y vender BTC, sin necesidad de cambiar de pantalla ni recargar activos.
+3. **Overlays de Posiciones y SL/TP Segmentados:**
+   * Cada panel solo renderiza en su canvas las posiciones, órdenes limit y líneas de SL/TP correspondientes a su propio símbolo (`pos.symbol === pane.symbol`).
+
+---
+
+### 9.4 Rendimiento, Memoria y Conexión WebSocket
+
+1. **Gestión de Memoria y Destrucción Rigurosa (`dispose`):**
+   * Al reducir de 8 a 2 paneles, invocar `dispose(containerId)` en los 6 paneles desmontados de inmediato para liberar buffers de Canvas 2D/WebGL y evitar memory leaks.
+2. **WebSocket Singleton Multiplexado:**
+   * Jamás abrir 8 WebSockets separados. Una única conexión singleton envía un mensaje de suscripción agregada (`SUBSCRIBE btcusdt@kline_1m ethusdt@kline_5m ...`).
+   * El worker `marketData.worker.ts` distribuye los datos a cada instancia KLineChart en sub-0.1ms mediante un mapa interno de suscriptores por ID de panel.
+3. **Sincronización Opcional de Cursor (Crosshair Sync):**
+   * Cuando dos o más paneles muestran el mismo activo en distintas temporalidades, el movimiento del cursor en un gráfico emite `setCrosshairByTimestamp(timestamp)` a los paneles hermanos para un análisis multi-temporal perfecto.
+
+---
+
+## 10. CHECKLIST DE VERIFICACIÓN PARA AGENTES DE IA
+
+Antes de dar por concluida cualquier tarea relacionada con gráficos en Global City / Eklipse Funded:
 - [ ] ¿Se eliminó todo iframe externo y se utiliza `klinecharts` nativo?
 - [ ] ¿El contenedor tiene dimensiones `width` y `height` definidas antes de `init()`?
-- [ ] ¿Se implementó `ResizeObserver` con `chart.resize()`?
-- [ ] ¿Se limpia la memoria al desmontar con `dispose()`?
-- [ ] ¿Se utiliza la paleta de colores oficial de Global City (`#06070B`, `#00E575`, `#FF3B69`)?
-- [ ] ¿El streaming de datos usa `updateData()` sin recargar la página?
-- [ ] ¿Los overlays de SL/TP y Order Blocks tienen coordenadas válidas de precio y tiempo?
+- [ ] ¿Se implementó `ResizeObserver` con `chart.resize()` en cada cuadrante?
+- [ ] ¿Se limpia la memoria al desmontar paneles con `dispose()`?
+- [ ] ¿El selector de cuadrícula incluye los iconos matriciales SVG (1, 2, 3, 4, 6, 8) sin etiquetas de texto invasivas?
+- [ ] ¿El panel activo de trading (`activePaneId`) sincroniza de inmediato la boleta lateral de órdenes y el precio de tick?
+- [ ] ¿Los overlays de SL/TP y Order Blocks tienen coordenadas válidas de precio y tiempo y se filtran por el símbolo del panel?
+- [ ] ¿El streaming de datos usa una sola conexión WebSocket multiplexada y `updateData()` sin recargar la página?

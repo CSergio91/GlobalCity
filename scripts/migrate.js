@@ -25,8 +25,10 @@ const MIGRATIONS_DIR = path.resolve(__dirname, '../docker/migrations');
 const connectionString = process.env.DATABASE_URL || 
   `postgresql://${process.env.POSTGRES_USER || 'eklipse_admin'}:${process.env.POSTGRES_PASSWORD || 'eklipse_secret_pass_local'}@${process.env.POSTGRES_HOST || 'localhost'}:${process.env.POSTGRES_PORT || '5432'}/${process.env.POSTGRES_DB || 'eklipse_funded'}`;
 
+const appName = process.env.VITE_APP_NAME || 'Prop Firm Platform';
+
 console.log('\n===============================================================');
-console.log('⚡ EKLIPSE FUNDED — MIGRATION RUNNER INSTITUCIONAL');
+console.log(`⚡ ${appName.toUpperCase()} — MIGRATION RUNNER INSTITUCIONAL`);
 console.log('===============================================================');
 console.log(`• Conexión: ${connectionString.replace(/:[^:@]+@/, ':****@')}`);
 console.log(`• Directorio: ${MIGRATIONS_DIR}`);

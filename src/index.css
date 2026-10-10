@@ -401,4 +401,146 @@
 }
 
 
-
+/* ====================================================
+   EKLIPSE TRADING TERMINAL - GOBERNANZA DE LAYOUT INSTITUCIONAL (LIGHT)
+   ==================================================== */
+@media (min-width: 1024px) {
+  .terminal-main-layout {
+    display: flex !important;
+    flex-direction: row !important;
+    height: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    background-color: #f8f9fb !important;
+  }
+  .terminal-side-nav {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
+    height: 100% !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
+    z-index: 30 !important;
+    user-select: none !important;
+    background-color: #ffffff !important;
+    border-right: 1px solid #e2e8f0 !important;
+  }
+  .terminal-mobile-hamburger {
+    display: none !important;
+  }
+  .terminal-chart-wrapper {
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    background-color: #f8f9fb !important;
+  }
+  .terminal-chart-canvas-box {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+    position: relative !important;
+    background-color: #f8f9fb !important;
+  }
+  .terminal-desktop-positions {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-shrink: 0 !important;
+    border-top: 1px solid #e2e8f0 !important;
+    position: relative !important;
+    background-color: #ffffff !important;
+  }
+  .terminal-desktop-positions.is-collapsed {
+    height: 34px !important;
+    overflow: hidden !important;
+    transition: height 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+  .terminal-desktop-positions.is-expanded {
+    min-height: 100px !important;
+    max-height: 75vh !important;
+  }
+  .terminal-desktop-positions.is-animating {
+    transition: height 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+  .terminal-desktop-sidebar {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 320px !important;
+    min-width: 320px !important;
+    max-width: 320px !important;
+    height: 100% !important;
+    flex-shrink: 0 !important;
+    border-left: 1px solid #e2e8f0 !important;
+    background-color: #ffffff !important;
+    padding: 0.65rem !important;
+    gap: 0.65rem !important;
+    overflow-y: auto !important;
+  }
+  .terminal-mobile-controls,
+  .terminal-mobile-only,
+  .terminal-floating-quicktrade,
+  .terminal-mobile-sheet,
+  .terminal-mobile-bottom-nav {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+  }
+}
+@media (min-width: 1280px) {
+  .terminal-stats-24h { display: flex !important; }
+}
+@media (max-width: 1279.98px) {
+  .terminal-stats-24h { display: none !important; }
+}
+@media (min-width: 768px) {
+  .terminal-worker-badge { display: inline-flex !important; }
+}
+@media (max-width: 767.98px) {
+  .terminal-worker-badge { display: none !important; }
+}
+@media (max-width: 1023.98px) {
+  .terminal-main-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    position: relative !important;
+    background-color: #f8f9fb !important;
+  }
+  .terminal-chart-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    flex: 1 1 0% !important;
+    overflow: hidden !important;
+    position: relative !important;
+    background-color: #f8f9fb !important;
+  }
+  .terminal-chart-canvas-box {
+    flex: 1 1 0% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    position: relative !important;
+    touch-action: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    background-color: #f8f9fb !important;
+  }
+  #trading-terminal-chart, #trading-terminal-chart * { touch-action: none !important; }
+  .terminal-desktop-positions { display: none !important; }
+  .terminal-desktop-sidebar { display: none !important; }
+  .terminal-side-nav { display: none !important; }
+  .terminal-mobile-hamburger { display: inline-flex !important; }
+  .terminal-mobile-controls { display: none !important; }
+}

@@ -3355,7 +3355,7 @@ const parseTradeTimestamp = (d?: string | number | null): number | null => {
   const previewEstimatedProfitUsd = previewNotionalUsd * (tpPercent / 100);
 
   return (
-    <div className="h-screen w-screen bg-[#fbf9f4] text-slate-900 flex flex-col font-sans overflow-hidden select-none">
+    <div className="h-screen w-screen bg-[#f8f9fb] text-slate-900 flex flex-col font-sans overflow-hidden select-none">
       
       {/* 1. TOP HEADER INSTITUCIONAL */}
       <TerminalHeader
@@ -3443,7 +3443,7 @@ const parseTradeTimestamp = (d?: string | number | null): number | null => {
 
           {/* CONTENEDOR KLINECHART v9.8.6 OFICIAL */}
           <div 
-            className="terminal-chart-canvas-box overflow-hidden bg-[#fbf9f4] relative"
+            className="terminal-chart-canvas-box overflow-hidden bg-[#f8f9fb] relative"
             onContextMenu={(e) => {
               e.preventDefault();
               if (!chartInstanceRef.current || !chartContainerRef.current) return;

@@ -26,11 +26,22 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT UNIQUE NOT NULL,
   full_name TEXT,
+  first_name TEXT,
+  last_name TEXT,
+  phone TEXT,
+  company TEXT,
+  address_line1 TEXT,
+  address_line2 TEXT,
+  country TEXT,
+  postal_code TEXT,
+  city TEXT,
+  state TEXT,
   avatar_url TEXT,
   role TEXT DEFAULT 'trader', -- 'admin', 'trader', 'support'
   provider TEXT DEFAULT 'email', -- 'email', 'telegram', 'google'
   telegram_id BIGINT,
   telegram_username TEXT,
+  billing_metadata JSONB DEFAULT '{}'::jsonb,
   is_verified BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -69,6 +80,13 @@ CREATE TABLE IF NOT EXISTS public.risk_rule_configs (
   min_trade_duration_seconds INT DEFAULT 10,
   profit_split_percent NUMERIC(5, 2) DEFAULT 80.00,
   inactivity_days_limit INT DEFAULT 30,
+  one_time_price_usdt NUMERIC(10, 2) DEFAULT 99.00,
+  monthly_price_usdt NUMERIC(10, 2) DEFAULT 59.00,
+  category VARCHAR(20) DEFAULT 'solar',
+  astronomical_name_en VARCHAR(100),
+  astronomical_name_es VARCHAR(100),
+  is_popular BOOLEAN DEFAULT false,
+  display_order INT DEFAULT 0,
   is_active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -185,3 +203,29 @@ CREATE TABLE IF NOT EXISTS public.risk_audit_events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_risk_audit_account ON public.risk_audit_events(account_id);
+
+-- ============================================================================
+-- 9. TABLA: ÓRDENES DE RETO / CHECKOUT DE CLIENTES (AUDITORÍA DE COMPRAS)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  account_id UUID REFERENCES public.trading_accounts(id) ON DELETE SET NULL,
+  trader_email VARCHAR(150) NOT NULL,
+  order_number VARCHAR(50) NOT NULL UNIQUE,
+  plan_id VARCHAR(50) NOT NULL,
+  category VARCHAR(20) NOT NULL DEFAULT 'solar',
+  account_size NUMERIC(15, 2) NOT NULL,
+  base_price NUMERIC(15, 2) NOT NULL,
+  addons_cost NUMERIC(15, 2) DEFAULT 0.00,
+  total_price NUMERIC(15, 2) NOT NULL,
+  addons TEXT[] DEFAULT '{}',
+  payment_gateway VARCHAR(30) NOT NULL DEFAULT 'crypto',
+  payment_status VARCHAR(20) NOT NULL DEFAULT 'COMPLETED',
+  billing_address JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_orders_email ON public.orders(trader_email);
+CREATE INDEX IF NOT EXISTS idx_orders_user ON public.orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_orders_number ON public.orders(order_number);

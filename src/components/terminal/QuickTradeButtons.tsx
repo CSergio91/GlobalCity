@@ -22,7 +22,7 @@ export const QuickTradeButtons: React.FC<QuickTradeButtonsProps> = ({
   if (!isDesktop || !visible) return null;
 
   return (
-    <div className="absolute top-3 right-16 z-30 flex items-center gap-1.5 pointer-events-auto bg-[#fbf9f4]/90 backdrop-blur-md p-1 rounded-xl border border-[#ded5c5] shadow-lg animate-in fade-in zoom-in-95 duration-200">
+    <div className="absolute top-3 right-16 z-30 flex items-center gap-1.5 pointer-events-auto bg-white/90 backdrop-blur-md p-1 rounded-xl border border-slate-200 shadow-lg animate-in fade-in zoom-in-95 duration-200">
       {/* BOTÓN VENTA 1-CLICK */}
       <button
         type="button"

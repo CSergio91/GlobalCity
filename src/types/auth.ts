@@ -15,6 +15,12 @@ export interface UserProfile {
   lastName?: string;
   email?: string;
   photoUrl?: string;
+  phone?: string;
+  company?: string;
+  country?: string;
+  city?: string;
+  state?: string;
+  addressLine1?: string;
   authProvider: 'telegram' | 'demo' | 'email' | 'google';
   telegramId?: number | string;
   role: 'institutional_trader' | 'quant_developer' | 'guest';

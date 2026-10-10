@@ -66,7 +66,7 @@ export const TerminalHeader: React.FC<TerminalHeaderProps> = ({
   const isPnlProfit = unrealizedPnL >= 0;
 
   return (
-    <header className="h-10 sm:h-13 border-b border-[#ded5c5] bg-[#fbf9f4] px-1.5 sm:px-4 flex items-center justify-between shrink-0 z-50 select-none overflow-visible relative">
+    <header className="h-10 sm:h-13 border-b border-slate-200 bg-white px-1.5 sm:px-4 flex items-center justify-between shrink-0 z-50 select-none overflow-visible relative">
       {/* PARTE IZQUIERDA: SELECTOR DE EXCHANGE & PAR + PRECIO + PNL + SALDO CUENTA DEMO */}
       <div className="flex items-center gap-1 sm:gap-2.5 py-0.5 min-w-0 overflow-visible relative">
         {/* SELECTOR INTERACTIVO DE EXCHANGE (BINANCE, BYBIT, KUCOIN, OKX, ETC) Y PAR CON PRECIO INTEGRADO */}
@@ -88,7 +88,7 @@ export const TerminalHeader: React.FC<TerminalHeaderProps> = ({
           <button
             onClick={onOpenAuth}
             type="button"
-            className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 text-xs font-black text-slate-950 bg-[#eab308] hover:bg-[#ca8a04] rounded-xl shadow-xs transition-all duration-150 cursor-pointer transform hover:scale-105 active:scale-95 shrink-0"
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 text-xs font-black text-white bg-[#eab308] hover:bg-[#ca8a04] rounded-xl shadow-xs transition-all duration-150 cursor-pointer transform hover:scale-105 active:scale-95 shrink-0"
             title={isEs ? 'Iniciar sesión para operar' : 'Log in to trade'}
           >
             <Zap className="w-3.5 h-3.5 stroke-[2.5] fill-slate-950" />
@@ -113,12 +113,12 @@ export const TerminalHeader: React.FC<TerminalHeaderProps> = ({
         {/* PNL NO REALIZADO EN ESCRITORIO (OCULTO EN MÓVIL PORQUE SE GESTIONA ABAJO EN POSICIONES) */}
         <div className={`hidden lg:flex items-center gap-1 px-1.5 py-0.5 rounded-lg border text-[9.5px] sm:text-[10px] font-mono font-bold shrink-0 ${
           positionsCount === 0
-            ? 'bg-slate-100 text-slate-500 border-slate-200'
+            ? 'bg-slate-50 text-slate-400 border-slate-200'
             : isPnlProfit
               ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-xs'
               : 'bg-red-50 text-red-700 border-red-200 shadow-xs'
         }`}>
-          <span className="text-[8.5px] text-slate-500">{isEs ? 'PnL' : 'PnL'}:</span>
+          <span className="text-[8.5px] text-slate-400">{isEs ? 'PnL' : 'PnL'}:</span>
           <span>{positionsCount === 0 ? '$0.00' : `${isPnlProfit ? '+' : ''}$${unrealizedPnL.toFixed(2)}`}</span>
         </div>
       </div>
@@ -128,11 +128,11 @@ export const TerminalHeader: React.FC<TerminalHeaderProps> = ({
         <button
           type="button"
           onClick={onToggleMobileNav}
-          className="lg:hidden terminal-mobile-hamburger p-1.5 sm:p-2 rounded-xl text-slate-800 hover:text-slate-950 bg-white hover:bg-[#ede5d6] border border-[#ded5c5] cursor-pointer transition-all shadow-xs active:scale-95"
+          className="lg:hidden terminal-mobile-hamburger p-1.5 sm:p-2 rounded-xl text-white hover:text-white bg-slate-50 hover:bg-slate-50/10 border border-slate-200 cursor-pointer transition-all shadow-xs active:scale-95"
           title={isEs ? 'Menú ZYTI Trade' : 'ZYTI Trade Menu'}
           aria-label={isEs ? 'Abrir menú de navegación lateral' : 'Open lateral navigation menu'}
         >
-          <Menu className="w-4 h-4 text-slate-800" />
+          <Menu className="w-4 h-4 text-white" />
         </button>
       </div>
     </header>

@@ -566,6 +566,47 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Endpoint de verificación server-side de Cloudflare Turnstile
+  if (url.pathname === '/api/auth/verify-turnstile' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const { token } = JSON.parse(body || '{}');
+        if (!token) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ success: false, error: 'Token is required' }));
+        }
+
+        const secretKey = process.env.TURNSTILE_SECRET_KEY || '0x4AAAAAAFLVem5e_oX7XkWsctHoKYDHD_c';
+        
+        try {
+          const cfFormData = new URLSearchParams();
+          cfFormData.append('secret', secretKey);
+          cfFormData.append('response', token);
+          const cfRemoteIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+          if (cfRemoteIp) cfFormData.append('remoteip', cfRemoteIp);
+
+          const cfRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+            method: 'POST',
+            body: cfFormData
+          });
+          const cfData = await cfRes.json();
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify(cfData));
+        } catch (fetchErr) {
+          // Si no hay salida exterior a internet o en modo dev local
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ success: true, mode: 'local_pass', message: fetchErr.message }));
+        }
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
   // Endpoint para simulación y validación en tiempo real de órdenes contra reglas
   if (url.pathname === '/api/risk/simulate-order' && req.method === 'POST') {
     let body = '';

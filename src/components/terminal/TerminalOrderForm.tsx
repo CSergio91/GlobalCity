@@ -112,10 +112,10 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
   };
 
   return (
-    <div className="p-2.5 rounded-xl bg-white border border-[#ded5c5] shadow-xs space-y-2.5 transition-all">
+    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 shadow-xs space-y-2.5 transition-all">
       {/* BARRA SUPERIOR DEL PANEL DE ORDEN (TITULO + MINIMIZAR + CERRAR) */}
-      <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
-        <span className="text-[11px] font-black text-slate-900 flex items-center gap-1.5">
+      <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+        <span className="text-[11px] font-black text-white flex items-center gap-1.5">
           <TrendingUp className="w-3.5 h-3.5 text-amber-600" />
           <span>{isEs ? 'Panel de Trading' : 'Trading Order'}</span>
         </span>
@@ -124,7 +124,7 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
             <button
               type="button"
               onClick={onToggleMinimize}
-              className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-slate-900 cursor-pointer"
+              className="p-1 rounded hover:bg-slate-50 text-slate-500 hover:text-white cursor-pointer"
               title={isMinimized ? (isEs ? 'Expandir panel de trading' : 'Expand trading panel') : (isEs ? 'Minimizar panel de trading' : 'Minimize trading panel')}
             >
               {isMinimized ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
@@ -144,11 +144,11 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
       </div>
 
       {isMinimized ? (
-        <div className="flex items-center justify-between py-1 text-[10px] font-mono text-slate-600">
+        <div className="flex items-center justify-between py-1 text-[10px] font-mono text-slate-400">
           <span className={`px-1.5 py-0.5 rounded font-black text-white ${isLong ? 'bg-emerald-600' : 'bg-red-600'}`}>
             {isLong ? 'LONG' : 'SHORT'} {leverage}x
           </span>
-          <span className="font-bold text-slate-900">{selectedPair}</span>
+          <span className="font-bold text-white">{selectedPair}</span>
           <button
             type="button"
             onClick={onToggleMinimize}
@@ -161,7 +161,7 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
         <>
 
       {/* SELECTOR COMPRA / VENTA */}
-      <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-[#ede5d6]">
+      <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-50/10">
         <button
           type="button"
           onClick={() => setSide('buy')}
@@ -194,7 +194,7 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
           className={`flex-1 py-1 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer ${
             orderType === 'market'
               ? 'bg-slate-950 text-white border-slate-950'
-              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+              : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'
           }`}
         >
           Market
@@ -210,7 +210,7 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
           className={`flex-1 py-1 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer ${
             orderType === 'limit'
               ? 'bg-slate-950 text-white border-slate-950'
-              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+              : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'
           }`}
         >
           Limit
@@ -218,14 +218,14 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
       </div>
 
       {/* SELECTOR MODO: MONTO FIJO VS RIESGO % CUENTA */}
-      <div className="grid grid-cols-2 gap-1 p-0.5 rounded-lg bg-slate-100 border border-slate-200 text-[10px] font-bold">
+      <div className="grid grid-cols-2 gap-1 p-0.5 rounded-lg bg-slate-50 border border-slate-200 text-[10px] font-bold">
         <button
           type="button"
           onClick={() => setOrderMode('amount')}
           className={`py-1 rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer ${
             orderMode === 'amount'
-              ? 'bg-white text-slate-950 shadow-xs font-black'
-              : 'text-slate-500 hover:text-slate-900'
+              ? 'bg-slate-50 text-slate-950 shadow-xs font-black'
+              : 'text-slate-500 hover:text-white'
           }`}
         >
           <DollarSign className="w-3 h-3" />
@@ -237,7 +237,7 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
           className={`py-1 rounded-md flex items-center justify-center gap-1 transition-all cursor-pointer ${
             orderMode === 'risk'
               ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
-              : 'text-slate-500 hover:text-slate-900'
+              : 'text-slate-500 hover:text-white'
           }`}
         >
           <Percent className="w-3 h-3" />
@@ -262,12 +262,12 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
                         ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                         : limitPriceNum > currentPrice
                           ? 'bg-purple-100 text-purple-800 border-purple-300'
-                          : 'bg-slate-100 text-slate-700 border-slate-200')
+                          : 'bg-slate-50 text-slate-300 border-slate-200')
                     : (limitPriceNum > currentPrice
                         ? 'bg-rose-100 text-rose-800 border-rose-300'
                         : limitPriceNum < currentPrice
                           ? 'bg-purple-100 text-purple-800 border-purple-300'
-                          : 'bg-slate-100 text-slate-700 border-slate-200')
+                          : 'bg-slate-50 text-slate-300 border-slate-200')
                 }`}>
                   {isLong
                     ? (limitPriceNum < currentPrice ? 'BUY LIMIT' : limitPriceNum > currentPrice ? 'BUY STOP' : (isEs ? 'AL MERCADO' : 'AT MARKET'))
@@ -286,7 +286,7 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
                 value={limitPrice ?? ''}
                 onChange={(e) => setLimitPrice?.(e.target.value)}
                 placeholder={currentPrice.toString()}
-                className="w-full pl-2.5 pr-12 py-1.5 rounded-lg border border-amber-300 bg-white text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-amber-500 shadow-2xs"
+                className="w-full pl-2.5 pr-12 py-1.5 rounded-lg border border-amber-300 bg-slate-50 text-xs font-mono font-bold text-white focus:outline-none focus:border-amber-500 shadow-2xs"
                 required
               />
               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-slate-400">
@@ -299,7 +299,7 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
         {/* MONTO O RIESGO SEGÚN EL MODO */}
         {orderMode === 'amount' ? (
           <div>
-            <div className="flex justify-between text-[10px] font-bold text-slate-700 mb-0.5">
+            <div className="flex justify-between text-[10px] font-bold text-slate-300 mb-0.5">
               <span>{isEs ? 'Margen / Colateral (USDT)' : 'Margin / Collateral (USDT)'}</span>
               <span className="text-slate-400 font-mono text-[9px]">
                 Notional: ${(requiredMarginUsd * leverage).toLocaleString()}
@@ -312,7 +312,7 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
                 step="10"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full pl-2.5 pr-10 py-1.5 rounded-lg border border-slate-200 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-amber-500"
+                className="w-full pl-2.5 pr-10 py-1.5 rounded-lg border border-slate-200 text-xs font-mono font-bold text-white focus:outline-none focus:border-amber-500"
                 placeholder="1000"
                 required
               />
@@ -323,7 +323,7 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
           </div>
         ) : (
           <div>
-            <div className="flex justify-between text-[10px] font-bold text-slate-700 mb-1">
+            <div className="flex justify-between text-[10px] font-bold text-slate-300 mb-1">
               <span>{isEs ? 'Riesgo de Cuenta (%)' : 'Account Risk (%)'}</span>
               <span className="text-amber-600 font-mono font-black">{riskPercent}% (${riskAmountUsd.toFixed(2)})</span>
             </div>
@@ -336,7 +336,7 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
                   className={`py-1 rounded text-[10px] font-mono font-bold transition-all cursor-pointer ${
                     riskPercent === r
                       ? 'bg-slate-950 text-white'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      : 'bg-slate-50 text-slate-300 hover:bg-slate-200'
                   }`}
                 >
                   {r}%
@@ -351,7 +351,7 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
         )}
 
         {/* STOP LOSS (%) Y TAKE PROFIT (%) EDITABLES */}
-        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
+        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200">
           {/* STOP LOSS */}
           <div>
             <div className="flex items-center justify-between text-[10px] font-bold text-red-600 mb-0.5">
@@ -440,9 +440,9 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
         </div>
 
         {/* SELECTOR DE RATIO RIESGO / BENEFICIO (LIBRE ELECCIÓN) */}
-        <div className="p-1.5 rounded-lg bg-[#fbf9f4] border border-[#ded5c5] space-y-1">
+        <div className="p-1.5 rounded-lg bg-white border border-slate-200 space-y-1">
           <div className="flex items-center justify-between text-[9.5px] font-mono">
-            <span className="text-slate-600 font-bold">{isEs ? 'Ratio R:B Elegible:' : 'R:R Ratio:'}</span>
+            <span className="text-slate-400 font-bold">{isEs ? 'Ratio R:B Elegible:' : 'R:R Ratio:'}</span>
             <span className="font-black text-amber-800 bg-amber-100/80 px-1.5 py-0.2 rounded">
               1 : {currentRatioNum}
             </span>
@@ -456,7 +456,7 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
                 className={`py-0.5 rounded text-[8.5px] font-mono font-bold border transition-all cursor-pointer ${
                   currentRatioNum === r
                     ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
-                    : 'bg-white text-slate-700 border-slate-200 hover:bg-amber-50'
+                    : 'bg-slate-50 text-slate-300 border-slate-200 hover:bg-amber-50'
                 }`}
               >
                 1:{r}
@@ -467,7 +467,7 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
 
         {/* APALANCAMIENTO */}
         <div>
-          <div className="flex justify-between text-[10px] font-bold text-slate-700 mb-0.5">
+          <div className="flex justify-between text-[10px] font-bold text-slate-300 mb-0.5">
             <span>{isEs ? 'Apalancamiento' : 'Leverage'}</span>
             <span className="text-amber-600 font-mono font-black">{leverage}x</span>
           </div>
@@ -489,7 +489,7 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
                 className={`flex-1 py-0.5 rounded text-[8.5px] font-mono font-bold border transition-all cursor-pointer ${
                   leverage === lev
                     ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
-                    : 'bg-white text-slate-600 border-slate-200 hover:bg-amber-50'
+                    : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-amber-50'
                 }`}
               >
                 {lev}x
@@ -507,7 +507,7 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
         )}
 
         {/* CHECKBOX MOSTRAR ORDEN PREVIA EN EL GRÁFICO (PERSISTENTE EN LOCALSTORAGE) */}
-        <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+        <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
           <div className="flex flex-col pr-2">
             <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
               {showChartPreview ? (
@@ -529,15 +529,15 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
               onChange={onToggleChartPreview}
               className="sr-only peer"
             />
-            <div className="w-8 h-4.5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-amber-500 cursor-pointer" />
+            <div className="w-8 h-4.5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-50 after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-amber-500 cursor-pointer" />
           </label>
         </div>
 
         {/* CHECKBOX BOTONES FLOTANTES DE 1 TOQUE (EXCLUSIVO PARA MÓVILES < 1024px) */}
         {!isDesktop && (
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between lg:hidden terminal-mobile-only">
+          <div className="pt-2 border-t border-slate-200 flex items-center justify-between lg:hidden terminal-mobile-only">
             <div className="flex flex-col">
-              <span className="text-[11px] font-bold text-slate-900 flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-white flex items-center gap-1.5">
                 <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
                 <span>{isEs ? 'Botones Flotantes (1 Toque)' : '1-Tap Floating Buttons'}</span>
               </span>
@@ -553,7 +553,7 @@ export const TerminalOrderForm: React.FC<TerminalOrderFormProps> = ({
                 onChange={onToggleQuickTrade}
                 className="sr-only peer"
               />
-              <div className="w-8 h-4.5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-amber-500 cursor-pointer" />
+              <div className="w-8 h-4.5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-50 after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-amber-500 cursor-pointer" />
             </label>
           </div>
         )}

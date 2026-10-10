@@ -330,7 +330,7 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
     const timePart = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     return (
       <div className="flex flex-col leading-tight">
-        <span className="text-[10px] text-slate-700 font-bold">{timePart}</span>
+        <span className="text-[10px] text-slate-300 font-bold">{timePart}</span>
         <span className="text-[8.5px] text-slate-400 font-sans">{datePart}</span>
       </div>
     );
@@ -353,12 +353,12 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
       {/* BARRA SUPERIOR / PESTAÑA CLICKEABLE PARA PLEGAR O DESPLEGAR */}
       <div 
         onClick={toggleExpanded}
-        className="h-8.5 px-3 border-b border-slate-200 flex items-center justify-between text-xs bg-[#fbf9f4] hover:bg-[#f3ece0] transition-colors cursor-pointer select-none"
+        className="h-8.5 px-3 border-b border-slate-200 flex items-center justify-between text-xs bg-white hover:bg-slate-50 transition-colors cursor-pointer select-none"
       >
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="p-1 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 transition-colors cursor-pointer"
+            className="p-1 rounded-md text-slate-500 hover:text-white hover:bg-slate-200/60 transition-colors cursor-pointer"
             title={isExpanded ? (isEs ? 'Plegar panel' : 'Collapse panel') : (isEs ? 'Desplegar panel' : 'Expand panel')}
           >
             {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
@@ -374,13 +374,13 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
             }}
             className={`flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-bold transition-all ${
               activeTab === 'positions'
-                ? 'bg-white text-slate-900 shadow-sm border border-slate-200/80'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'bg-white text-white shadow-sm border border-slate-200/80'
+                : 'text-slate-500 hover:text-slate-200'
             }`}
           >
-            <Layers className="w-3 h-3 text-slate-600" />
+            <Layers className="w-3 h-3 text-slate-400" />
             <span>{isEs ? 'Posiciones' : 'Positions'}</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-800 text-[10px] font-mono font-bold">
+            <span className="px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-200 text-[10px] font-mono font-bold">
               {positions.length}
             </span>
           </button>
@@ -395,14 +395,14 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
             }}
             className={`flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-bold transition-all ${
               activeTab === 'limits'
-                ? 'bg-white text-slate-900 shadow-sm border border-slate-200/80'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'bg-white text-white shadow-sm border border-slate-200/80'
+                : 'text-slate-500 hover:text-slate-200'
             }`}
           >
             <Clock className="w-3 h-3 text-amber-600" />
             <span>{isEs ? 'Órdenes Límites' : 'Limit Orders'}</span>
             <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
-              limitOrders.length > 0 ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-slate-200 text-slate-800'
+              limitOrders.length > 0 ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-slate-200 text-slate-200'
             }`}>
               {limitOrders.length}
             </span>
@@ -418,14 +418,14 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
             }}
             className={`flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-bold transition-all ${
               activeTab === 'history'
-                ? 'bg-white text-slate-900 shadow-sm border border-slate-200/80'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'bg-white text-white shadow-sm border border-slate-200/80'
+                : 'text-slate-500 hover:text-slate-200'
             }`}
           >
-            <History className="w-3 h-3 text-slate-600" />
+            <History className="w-3 h-3 text-slate-400" />
             <span>{isEs ? 'Historial' : 'History'}</span>
             {history.length > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-800 text-[10px] font-mono font-bold">
+              <span className="px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-200 text-[10px] font-mono font-bold">
                 {history.length}
               </span>
             )}
@@ -489,7 +489,7 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
 
           <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
             positions.length === 0
-              ? 'bg-slate-100 text-slate-600 border-slate-200'
+              ? 'bg-slate-100 text-slate-400 border-slate-200'
               : isProfit
                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                 : 'bg-red-50 text-red-700 border-red-200'
@@ -497,7 +497,7 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
             PnL: {positions.length === 0 ? '$0.00' : `${isProfit ? '+' : ''}$${totalPnL.toFixed(2)}`} USDT
           </span>
 
-          <span className="text-[10px] font-semibold text-slate-400 hover:text-slate-700 hidden sm:inline">
+          <span className="text-[10px] font-semibold text-slate-400 hover:text-slate-300 hidden sm:inline">
             {isExpanded ? (isEs ? 'Plegar' : 'Collapse') : (isEs ? 'Desplegar' : 'Expand')}
           </span>
         </div>
@@ -513,7 +513,7 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
                 <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-sans">
                   {isEs ? 'Balance de Cuenta' : 'Account Balance'}
                 </span>
-                <span className="font-bold text-slate-900">${demoBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT</span>
+                <span className="font-bold text-white">${demoBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT</span>
               </div>
               <div className="h-6 w-px bg-slate-200" />
               <div>
@@ -573,11 +573,11 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
                     className="hover:bg-amber-50/70 cursor-pointer transition-colors group select-none"
                     title={isEs ? `Clic para cambiar al gráfico de ${pos.symbol}` : `Click to switch chart to ${pos.symbol}`}
                   >
-                    <td className="py-1 px-2 font-bold text-slate-900">
+                    <td className="py-1 px-2 font-bold text-white">
                       <div className="flex items-center gap-1.5">
                         <span className="group-hover:text-amber-700 transition-colors">{pos.symbol}</span>
                         {pos.exchange && (
-                          <span className="text-[8px] uppercase font-mono font-bold px-1 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                          <span className="text-[8px] uppercase font-mono font-bold px-1 py-0.2 rounded bg-slate-100 text-slate-400 border border-slate-200">
                             {pos.exchange}
                           </span>
                         )}
@@ -590,10 +590,10 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
                         {pos.side}
                       </span>
                     </td>
-                    <td className="py-1 px-2 text-slate-600">{pos.size}</td>
-                    <td className="py-1 px-2 font-bold text-slate-800">${pos.entry.toLocaleString()}</td>
-                    <td className="py-1 px-2 text-slate-600">${pos.mark.toLocaleString()}</td>
-                    <td className="py-1 px-2 text-[10px] text-slate-600">
+                    <td className="py-1 px-2 text-slate-400">{pos.size}</td>
+                    <td className="py-1 px-2 font-bold text-slate-200">${pos.entry.toLocaleString()}</td>
+                    <td className="py-1 px-2 text-slate-400">${pos.mark.toLocaleString()}</td>
+                    <td className="py-1 px-2 text-[10px] text-slate-400">
                       <span className="text-red-600">SL: {pos.slPrice ? `$${pos.slPrice.toLocaleString()}` : '-'}</span>
                       {' / '}
                       <span className="text-emerald-600">TP: {pos.tpPrice ? `$${pos.tpPrice.toLocaleString()}` : '-'}</span>
@@ -614,7 +614,7 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
                               ? 'bg-blue-100 text-blue-700 border border-blue-300 shadow-2xs'
                               : pos.isProfit
                               ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-xs active:scale-95'
-                              : 'bg-slate-100 hover:bg-slate-200 text-slate-500 border border-slate-300 hover:text-slate-800 active:scale-95'
+                              : 'bg-slate-100 hover:bg-slate-200 text-slate-500 border border-slate-300 hover:text-slate-200 active:scale-95'
                           }`}
                           title={
                             pos.slPrice && Math.abs(pos.slPrice - pos.entry) < 0.05
@@ -688,11 +688,11 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
                       className="hover:bg-amber-50/70 cursor-pointer transition-colors group select-none"
                       title={isEs ? `Clic para ver gráfico de ${ord.symbol}` : `Click to switch to ${ord.symbol}`}
                     >
-                      <td className="py-1 px-2 font-bold text-slate-900">
+                      <td className="py-1 px-2 font-bold text-white">
                         <div className="flex items-center gap-1.5">
                           <span className="group-hover:text-amber-700 transition-colors">{ord.symbol}</span>
                           {ord.exchange && (
-                            <span className="text-[8px] uppercase font-mono font-bold px-1 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                            <span className="text-[8px] uppercase font-mono font-bold px-1 py-0.2 rounded bg-slate-100 text-slate-400 border border-slate-200">
                               {ord.exchange}
                             </span>
                           )}
@@ -714,10 +714,10 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
                           );
                         })()}
                       </td>
-                      <td className="py-1 px-2 text-slate-600">{ord.size}</td>
+                      <td className="py-1 px-2 text-slate-400">{ord.size}</td>
                       <td className="py-1 px-2 font-bold text-amber-700">${ord.limitPrice.toLocaleString()}</td>
-                      <td className="py-1 px-2 text-slate-600">${ord.collateralUsdt.toFixed(2)} USDT</td>
-                      <td className="py-1 px-2 text-[10px] text-slate-600">
+                      <td className="py-1 px-2 text-slate-400">${ord.collateralUsdt.toFixed(2)} USDT</td>
+                      <td className="py-1 px-2 text-[10px] text-slate-400">
                         <span className="text-red-600">SL: {ord.slPrice ? `$${ord.slPrice.toLocaleString()}` : '-'}</span>
                         {' / '}
                         <span className="text-emerald-600">TP: {ord.tpPrice ? `$${ord.tpPrice.toLocaleString()}` : '-'}</span>
@@ -769,7 +769,7 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
               {/* BARRA DE FILTRO POR RANGO DE FECHAS Y EXPORTACIÓN */}
               <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-[#f8f5ee] rounded-lg border border-stone-200 text-xs font-sans">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <div className="flex items-center gap-1 text-[11px] font-bold text-slate-600 mr-1">
+                  <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 mr-1">
                     <Calendar className="w-3.5 h-3.5 text-amber-600" />
                     <span>{isEs ? 'Período:' : 'Period:'}</span>
                   </div>
@@ -792,7 +792,7 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
                         className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-amber-600 text-white shadow-xs'
-                            : 'bg-white hover:bg-amber-50 text-slate-600 hover:text-slate-900 border border-stone-200'
+                            : 'bg-white hover:bg-amber-50 text-slate-400 hover:text-white border border-stone-200'
                         }`}
                       >
                         {labelMap[preset]}
@@ -809,7 +809,7 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
                         setStartDate(e.target.value);
                         setDatePreset('custom');
                       }}
-                      className="px-2 py-0.5 rounded bg-white border border-stone-200 text-[10px] font-mono text-slate-700 focus:outline-none focus:border-amber-500 cursor-pointer"
+                      className="px-2 py-0.5 rounded bg-white border border-stone-200 text-[10px] font-mono text-slate-300 focus:outline-none focus:border-amber-500 cursor-pointer"
                       title={isEs ? 'Fecha de inicio' : 'Start date'}
                     />
                     <span className="text-[10px] text-slate-400">➔</span>
@@ -820,14 +820,14 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
                         setEndDate(e.target.value);
                         setDatePreset('custom');
                       }}
-                      className="px-2 py-0.5 rounded bg-white border border-stone-200 text-[10px] font-mono text-slate-700 focus:outline-none focus:border-amber-500 cursor-pointer"
+                      className="px-2 py-0.5 rounded bg-white border border-stone-200 text-[10px] font-mono text-slate-300 focus:outline-none focus:border-amber-500 cursor-pointer"
                       title={isEs ? 'Fecha de fin' : 'End date'}
                     />
                     {(startDate || endDate) && (
                       <button
                         type="button"
                         onClick={() => applyDatePreset('all')}
-                        className="p-1 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                        className="p-1 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-200 transition-colors cursor-pointer"
                         title={isEs ? 'Limpiar filtro de fechas' : 'Clear date filter'}
                       >
                         <X className="w-3 h-3" />
@@ -839,7 +839,7 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
                 {/* Resumen del filtro & Descarga CSV */}
                 <div className="flex items-center gap-3 font-mono">
                   <div className="text-[11px] text-slate-500">
-                    <span>{isEs ? 'Trades:' : 'Trades:'} <strong className="text-slate-800">{filteredHistory.length}</strong></span>
+                    <span>{isEs ? 'Trades:' : 'Trades:'} <strong className="text-slate-200">{filteredHistory.length}</strong></span>
                     <span className="mx-2 text-slate-300">|</span>
                     <span>
                       {isEs ? 'PnL Período:' : 'Period PnL:'}{' '}
@@ -898,7 +898,7 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
                         {formatTradeDateTime(item.closedAt)}
                       </td>
                       <td className="py-1 px-2">
-                        <span className="font-bold text-slate-900">{item.symbol}</span>
+                        <span className="font-bold text-white">{item.symbol}</span>
                         {item.leverage && (
                           <span className="ml-1.5 px-1 py-0.2 rounded text-[8.5px] font-mono font-bold bg-amber-100/70 text-amber-900 border border-amber-200">
                             {item.leverage}x
@@ -912,11 +912,11 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
                           {item.side}
                         </span>
                       </td>
-                      <td className="py-1 px-2 text-slate-600">{item.size}</td>
-                      <td className="py-1 px-2 text-[10px] text-slate-700 font-mono">
+                      <td className="py-1 px-2 text-slate-400">{item.size}</td>
+                      <td className="py-1 px-2 text-[10px] text-slate-300 font-mono">
                         ${Number(item.entry || 0).toLocaleString()}
                       </td>
-                      <td className="py-1 px-2 text-[10px] font-bold text-slate-900 font-mono">
+                      <td className="py-1 px-2 text-[10px] font-bold text-white font-mono">
                         ${Number(item.exitPrice || 0).toLocaleString()}
                       </td>
                       <td className="py-1 px-2 text-[10px]">
@@ -939,7 +939,7 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
                           </span>
                         )}
                         {(!item.closeReason || item.closeReason === 'MANUAL') && (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-bold border border-slate-300">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-300 font-bold border border-slate-300">
                             <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
                             {isEs ? 'Manual' : 'Manual'}
                           </span>
@@ -978,12 +978,12 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
                     ? (editingOrder.limitPrice <= (editingOrder.placedAtPrice || editingOrder.limitPrice) ? 'BUY LIMIT' : 'BUY STOP')
                     : (editingOrder.limitPrice >= (editingOrder.placedAtPrice || editingOrder.limitPrice) ? 'SELL LIMIT' : 'SELL STOP')}
                 </span>
-                <span className="font-bold text-xs text-slate-900">{editingOrder.symbol}</span>
+                <span className="font-bold text-xs text-white">{editingOrder.symbol}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setEditingOrder(null)}
-                className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-700 cursor-pointer"
+                className="p-1 rounded hover:bg-slate-50 text-slate-400 hover:text-slate-300 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -991,7 +991,7 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
 
             <form onSubmit={handleSaveOrderEdit} className="space-y-3">
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">
                   {isEs ? 'Precio Límite (USDT)' : 'Limit Price (USDT)'}
                 </label>
                 <input
@@ -1001,7 +1001,7 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
                   required
                   value={editLimitPrice}
                   onChange={(e) => setEditLimitPrice(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-500"
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono text-xs font-bold text-white focus:outline-none focus:border-amber-500"
                 />
               </div>
 
@@ -1041,7 +1041,7 @@ export const TerminalPositions: React.FC<TerminalPositionsProps> = ({
                 <button
                   type="button"
                   onClick={() => setEditingOrder(null)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:bg-slate-50 cursor-pointer"
                 >
                   {isEs ? 'Cancelar' : 'Cancel'}
                 </button>

@@ -40,7 +40,7 @@ export const IndicatorModal: React.FC<IndicatorModalProps> = ({
         className="fixed inset-0 -z-10" 
         onClick={onClose} 
       />
-      <div className="w-full max-w-lg max-h-[85vh] bg-white rounded-3xl border border-[#ded5c5] shadow-2xl p-4 flex flex-col animate-zoom-in text-slate-900 overflow-hidden">
+      <div className="w-full max-w-lg max-h-[85vh] bg-white rounded-3xl border border-slate-200 shadow-2xl p-4 flex flex-col animate-zoom-in text-slate-900 overflow-hidden">
         <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 shrink-0">
           <div>
             <h4 className="text-sm font-black text-slate-950 flex items-center gap-2">
@@ -71,7 +71,7 @@ export const IndicatorModal: React.FC<IndicatorModalProps> = ({
             value={indicatorSearchQuery}
             onChange={(e) => setIndicatorSearchQuery(e.target.value)}
             placeholder={isEs ? 'Buscar indicador (ej. RSI, OHLC, BOLL, EMA)...' : 'Search indicators (e.g. RSI, OHLC, BOLL, EMA)...'}
-            className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-amber-500 bg-[#fbf9f4]"
+            className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-amber-500 bg-white"
           />
         </div>
 
@@ -94,7 +94,7 @@ export const IndicatorModal: React.FC<IndicatorModalProps> = ({
                   <div className={`w-4.5 h-4.5 rounded-lg flex items-center justify-center border shrink-0 transition-colors ${
                     isActive
                       ? 'bg-amber-500 border-amber-500 text-white shadow-xs'
-                      : 'border-slate-300 bg-[#fbf9f4]'
+                      : 'border-slate-300 bg-white'
                   }`}>
                     {isActive && <Check className="w-3 h-3 stroke-[3]" />}
                   </div>

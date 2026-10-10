@@ -76,6 +76,50 @@ services:
       - eklipse_net
 
   # ============================================================================
+  # 3.5. SUPABASE AUTH ENGINE (GoTrue v2.177.0 — Autenticación Oficial Supabase)
+  # ============================================================================
+  eklipse-auth:
+    image: supabase/gotrue:v2.177.0
+    container_name: eklipse_auth
+    restart: unless-stopped
+    command: ["gotrue", "serve"]
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgresql://${POSTGRES_USER:-eklipse_admin}:${POSTGRES_PASSWORD:-eklipse_secret_pass_local}@eklipse-db:5432/${POSTGRES_DB:-eklipse_funded}?sslmode=disable
+      API_EXTERNAL_URL: ${API_EXTERNAL_URL:-http://localhost:54321}
+      GOTRUE_SITE_URL: ${GOTRUE_SITE_URL:-${VITE_APP_URL:-http://localhost:3100}}
+      GOTRUE_URI_ALLOW_LIST: ${GOTRUE_URI_ALLOW_LIST:-*}
+      GOTRUE_JWT_SECRET: ${JWT_SECRET:-eklipse_jwt_secret_super_secure_institutional_32bytes_min}
+      GOTRUE_JWT_EXP: ${GOTRUE_JWT_EXP:-3600}
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: ${GOTRUE_EXTERNAL_EMAIL_ENABLED:-true}
+      GOTRUE_MAILER_AUTOCONFIRM: ${GOTRUE_MAILER_AUTOCONFIRM:-true}
+      GOTRUE_DISABLE_SIGNUP: ${GOTRUE_DISABLE_SIGNUP:-false}
+      # Servidor SMTP Oficial Resend (Dominio eklipsefunded.com Verificado)
+      GOTRUE_SMTP_HOST: ${GOTRUE_SMTP_HOST:-smtp.resend.com}
+      GOTRUE_SMTP_PORT: ${GOTRUE_SMTP_PORT:-465}
+      GOTRUE_SMTP_USER: ${GOTRUE_SMTP_USER:-resend}
+      GOTRUE_SMTP_PASS: ${RESEND_API_KEY}
+      GOTRUE_SMTP_ADMIN_EMAIL: ${RESEND_FROM_EMAIL:-soporte@eklipsefunded.com}
+      GOTRUE_SMTP_SENDER_NAME: ${RESEND_SENDER_NAME:-Eklipse Funded}
+      # Google OAuth Provider (Parametrizado sin hardcodear)
+      GOTRUE_EXTERNAL_GOOGLE_ENABLED: ${GOTRUE_EXTERNAL_GOOGLE_ENABLED:-false}
+      GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID: ${GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID:-}
+      GOTRUE_EXTERNAL_GOOGLE_SECRET: ${GOTRUE_EXTERNAL_GOOGLE_SECRET:-}
+      GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI: ${GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI:-}
+    depends_on:
+      eklipse-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:9999/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - eklipse_net
+
+  # ============================================================================
   # 4. SUPABASE API GATEWAY (NGINX Proxy con paridad 1:1 para @supabase/supabase-js)
   # ============================================================================
   eklipse-gateway:
@@ -88,6 +132,7 @@ services:
       - ./docker/nginx-gateway.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - eklipse-api
+      - eklipse-auth
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:54321/health || exit 1"]
       interval: 5s
@@ -113,7 +158,7 @@ services:
       REDIS_URL: redis://eklipse-redis:6379
       DATABASE_URL: postgresql://${POSTGRES_USER:-eklipse_admin}:${POSTGRES_PASSWORD:-eklipse_secret_pass_local}@eklipse-db:5432/${POSTGRES_DB:-eklipse_funded}
       SUPABASE_URL: http://eklipse-gateway:54321
-      SUPABASE_SERVICE_ROLE_KEY: ${JWT_SECRET:-eklipse_jwt_secret_super_secure_institutional_32bytes_min}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MjUwMDAwMDAwMH0.yCCh-b9rqQG1HpSahN4yzA_XAMpk_ygf_LcjtFJQhUk}
     depends_on:
       eklipse-redis:
         condition: service_healthy
@@ -149,6 +194,22 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
+    networks:
+      - eklipse_net
+
+  # ============================================================================
+  # 7. VISUAL DATABASE STUDIO (Panel Web Visual para Explorar Tablas y Datos)
+  # ============================================================================
+  eklipse-studio:
+    image: adminer:latest
+    container_name: eklipse_db_studio
+    restart: unless-stopped
+    ports:
+      - "${PORT_STUDIO:-8082}:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: eklipse-db
+    depends_on:
+      - eklipse-db
     networks:
       - eklipse_net
 

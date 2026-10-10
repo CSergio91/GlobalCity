@@ -137,10 +137,10 @@ export const DemoAccountBalanceSelector: React.FC<DemoAccountBalanceSelectorProp
             className="fixed inset-0 z-40 bg-transparent" 
             onClick={() => setIsOpen(false)} 
           />
-          <div className="absolute top-full left-0 mt-1.5 w-80 sm:w-92 bg-white border border-[#ded5c5] rounded-2xl shadow-2xl py-3 px-3.5 z-50 animate-in fade-in-50 zoom-in-95 duration-150">
+          <div className="absolute top-full left-0 mt-1.5 w-80 sm:w-92 bg-white border border-slate-200 rounded-2xl shadow-2xl py-3 px-3.5 z-50 animate-in fade-in-50 zoom-in-95 duration-150">
             
             {/* Cabecera del Gestor de Cuentas */}
-            <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#ece7dc]">
+            <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
               <div className="flex items-center gap-1.5">
                 <Layers className="w-4 h-4 text-amber-600" />
                 <div>
@@ -229,7 +229,7 @@ export const DemoAccountBalanceSelector: React.FC<DemoAccountBalanceSelectorProp
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between pt-2 border-t border-[#ece7dc]/80 text-[11px]">
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-200/80 text-[11px]">
                         <div>
                           <span className="text-slate-400 text-[10px] uppercase font-bold block leading-none">
                             {isEs ? 'Balance Actual' : 'Current Balance'}
@@ -274,7 +274,7 @@ export const DemoAccountBalanceSelector: React.FC<DemoAccountBalanceSelectorProp
             </div>
 
             {/* PIE DEL DROPDOWN: ESTADO DEL CENTINELA Y ACCIÓN DE RESTABLECER */}
-            <div className="mt-3 pt-2.5 border-t border-[#ece7dc] flex items-center justify-between gap-2">
+            <div className="mt-3 pt-2.5 border-t border-slate-200 flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 text-[10px] font-mono">
                 {isBreached ? (
                   <div className="flex items-center gap-1 text-rose-700 font-bold">

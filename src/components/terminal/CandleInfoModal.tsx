@@ -30,7 +30,7 @@ export const CandleInfoModal: React.FC<CandleInfoModalProps> = ({
   });
 
   return (
-    <div className="absolute top-2 left-2 z-40 bg-white/95 backdrop-blur-md border border-[#ded5c5] rounded-2xl shadow-xl p-3 w-64 select-none animate-in fade-in-50 zoom-in-95 duration-150 font-sans">
+    <div className="absolute top-2 left-2 z-40 bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl shadow-xl p-3 w-64 select-none animate-in fade-in-50 zoom-in-95 duration-150 font-sans">
       {/* HEADER DEL MODALITO */}
       <div className="flex items-center justify-between pb-2 border-b border-slate-100">
         <div className="flex items-center gap-1.5">

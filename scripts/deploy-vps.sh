@@ -41,15 +41,17 @@ if [ ! -f .env ]; then
     DB_PASS=$(openssl rand -hex 16)
     JWT_SECRET=$(openssl rand -hex 32)
     sed -i "s/eklipse_secret_pass_local/${DB_PASS}/g" .env
-    sed -i "s/eklipse_jwt_secret_super_secure_institutional_32bytes_min/${JWT_SECRET}/g" .env
     sed -i "s/PORT_SERVER=8088/PORT_SERVER=8080/g" .env
     sed -i "s/PORT_WEB=3180/PORT_WEB=80/g" .env
+    if command -v node &> /dev/null; then
+        node scripts/generateKeys.js "${JWT_SECRET}" --write-env
+    fi
     echo "✔ Claves criptográficas generadas para el VPS."
 fi
 
 # 4. Levantar Servicios
 echo "🚀 Levantando servicios institucionales con Docker Compose..."
-docker compose pull eklipse-db eklipse-redis eklipse-api eklipse-gateway || true
+docker compose pull eklipse-db eklipse-redis eklipse-api eklipse-auth eklipse-gateway || true
 docker compose build
 docker compose up -d
 
@@ -69,6 +71,7 @@ echo "✅ DESPLIEGUE COMPLETADO CON ÉXITO EN EL VPS"
 echo "==============================================================="
 echo "• Web Terminal & CRM  : http://$(curl -s ifconfig.me):80"
 echo "• WebSocket & Server  : http://$(curl -s ifconfig.me):8080"
+echo "• Supabase Auth (GoTrue): http://$(curl -s ifconfig.me):54321/auth/v1"
 echo "• Supabase REST API   : http://$(curl -s ifconfig.me):54321/rest/v1"
 echo "• PostgreSQL          : puerto 5432"
 echo "• Redis Clúster       : puerto 6379"

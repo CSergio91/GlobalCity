@@ -36,10 +36,10 @@ export const TerminalOrderBook: React.FC<TerminalOrderBookProps> = ({
   const maxBidAmount = Math.max(1, ...displayBids.map((b) => b.amount || 0));
 
   return (
-    <div className="p-2 sm:p-2.5 rounded-xl bg-white border border-[#ded5c5] shadow-xs select-none">
+    <div className="p-2 sm:p-2.5 rounded-xl bg-slate-50 border border-slate-200 shadow-xs select-none">
       {/* HEADER DEL LIBRO DE ÓRDENES */}
-      <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
-        <span className="text-[11px] font-black text-slate-900 flex items-center gap-1.5">
+      <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+        <span className="text-[11px] font-black text-white flex items-center gap-1.5">
           <Activity className="w-3 h-3 text-slate-600" />
           <span>Order Book L2</span>
         </span>
@@ -49,7 +49,7 @@ export const TerminalOrderBook: React.FC<TerminalOrderBookProps> = ({
             <button
               type="button"
               onClick={onToggleMinimize}
-              className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-slate-900 cursor-pointer"
+              className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-white cursor-pointer"
               title={isMinimized ? 'Expandir Order Book' : 'Minimizar Order Book'}
             >
               {isMinimized ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
@@ -71,7 +71,7 @@ export const TerminalOrderBook: React.FC<TerminalOrderBookProps> = ({
       {!isMinimized && (
         <div className="mt-1.5">
           {/* CABECERA DE COLUMNAS PRECIO / CANTIDAD */}
-          <div className="flex justify-between px-1.5 pb-1 text-[9px] font-mono uppercase text-slate-400 font-bold border-b border-slate-50">
+          <div className="flex justify-between px-1.5 pb-1 text-[9px] font-mono uppercase text-slate-400 font-bold border-b border-slate-100">
             <span>Precio (USDT)</span>
             <span>Tamaño</span>
           </div>
@@ -98,7 +98,7 @@ export const TerminalOrderBook: React.FC<TerminalOrderBookProps> = ({
           </div>
 
           {/* SPREAD INDICATOR FIJO EN EL CENTRO */}
-          <div className="py-1 px-1.5 my-1 bg-[#fbf9f4] border-y border-slate-100 flex items-center justify-between font-mono text-[9.5px]">
+          <div className="py-1 px-1.5 my-1 bg-white border-y border-slate-200 flex items-center justify-between font-mono text-[9.5px]">
             <span className="text-slate-400 text-[8.5px] uppercase font-bold">Spread</span>
             <div className="flex items-center gap-1.5">
               <span className="text-slate-800 font-bold">

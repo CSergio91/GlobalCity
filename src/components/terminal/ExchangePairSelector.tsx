@@ -96,7 +96,7 @@ export const ExchangePairSelector: React.FC<ExchangePairSelectorProps> = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 sm:gap-2 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-xl bg-white border border-[#ded5c5] hover:border-amber-400 hover:shadow-sm font-sans transition-all cursor-pointer shadow-xs select-none group shrink-0"
+        className="flex items-center gap-1 sm:gap-2 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-xl bg-slate-50 border border-slate-200 hover:border-amber-400 hover:shadow-sm font-sans transition-all cursor-pointer shadow-xs select-none group shrink-0"
       >
         <div className="relative flex items-center justify-center shrink-0">
           <ExchangeIcon exchange={currentExchange} size={16} className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5" />
@@ -110,7 +110,7 @@ export const ExchangePairSelector: React.FC<ExchangePairSelectorProps> = ({
         <div className="flex flex-col text-left leading-tight min-w-0">
           {/* LÍNEA 1: PAR + SEGMENTO */}
           <div className="flex items-center gap-1">
-            <span className="font-black text-[10px] sm:text-xs text-slate-900 tracking-tight">
+            <span className="font-black text-[10px] sm:text-xs text-white tracking-tight">
               {selectedPair}
             </span>
             <span className="text-[7px] sm:text-[8px] uppercase font-bold px-0.5 sm:px-1 py-0 rounded bg-amber-100/80 text-amber-900 border border-amber-200">
@@ -160,7 +160,7 @@ export const ExchangePairSelector: React.FC<ExchangePairSelectorProps> = ({
             className="fixed inset-0 z-40 bg-transparent" 
             onClick={() => setIsOpen(false)} 
           />
-          <div className="absolute top-full left-0 mt-1.5 w-72 sm:w-80 bg-white border border-[#ded5c5] rounded-2xl shadow-2xl py-3 px-3 z-50 animate-in fade-in-50 zoom-in-95 duration-150">
+          <div className="absolute top-full left-0 mt-1.5 w-72 sm:w-80 bg-slate-50 border border-slate-200 rounded-2xl shadow-2xl py-3 px-3 z-50 animate-in fade-in-50 zoom-in-95 duration-150">
             {/* SECCIÓN 1: SELECCIONAR EXCHANGE */}
           <div className="mb-3">
             <div className="flex items-center justify-between mb-1.5 px-1">
@@ -186,7 +186,7 @@ export const ExchangePairSelector: React.FC<ExchangePairSelectorProps> = ({
                     className={`flex items-center gap-2 p-1.5 rounded-xl border text-left transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-amber-50/80 border-amber-300 text-amber-950 font-bold shadow-xs'
-                        : 'bg-slate-50/60 border-slate-200 hover:bg-amber-50/40 text-slate-700'
+                        : 'bg-slate-50/60 border-slate-200 hover:bg-amber-50/40 text-slate-300'
                     }`}
                   >
                     <ExchangeIcon exchange={ex.exchange} size={16} />
@@ -215,8 +215,8 @@ export const ExchangePairSelector: React.FC<ExchangePairSelectorProps> = ({
                 onClick={() => onSelectMarketType('futures')}
                 className={`py-1 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                   currentMarketType === 'futures'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-slate-50 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 <Layers className="w-3 h-3 text-amber-600" />
@@ -228,8 +228,8 @@ export const ExchangePairSelector: React.FC<ExchangePairSelectorProps> = ({
                 onClick={() => onSelectMarketType('spot')}
                 className={`py-1 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                   currentMarketType === 'spot'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-slate-50 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 <span>Spot</span>

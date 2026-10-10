@@ -9,7 +9,7 @@ interface TerminalExchangeModalProps {
 export const TerminalExchangeModal: React.FC<TerminalExchangeModalProps> = ({ isEs, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/30 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-zoom-in">
-      <div className="w-full max-w-2xl bg-white/90 dark:bg-[#111726]/90 backdrop-blur-2xl rounded-3xl border border-[#ded5c5]/80 shadow-2xl p-6 relative text-slate-900">
+      <div className="w-full max-w-2xl bg-white/90 dark:bg-[#111726]/90 backdrop-blur-2xl rounded-3xl border border-slate-200/80 shadow-2xl p-6 relative text-slate-900">
         {/* CABECERA */}
         <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-200/70">
           <div className="flex items-center gap-3">

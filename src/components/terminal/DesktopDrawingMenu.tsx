@@ -95,7 +95,7 @@ export const DesktopDrawingMenu: React.FC<DesktopDrawingMenuProps> = ({
 
       {/* DROPDOWN DE HERRAMIENTAS */}
       {isOpen && (
-        <div className="absolute left-0 top-full mt-1.5 w-60 rounded-xl bg-[#fcfbf9] border border-[#ded5c5] shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-md">
+        <div className="absolute left-0 top-full mt-1.5 w-60 rounded-xl bg-white border border-slate-200 shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-md">
           <div className="px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200/60 flex items-center justify-between">
             <span>{isEs ? 'Herramientas de Dibujo' : 'Drawing Tools'}</span>
             <span className="text-[9px] text-amber-600 font-normal">KLineChart</span>

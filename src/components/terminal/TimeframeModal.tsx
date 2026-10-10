@@ -32,7 +32,7 @@ export const TimeframeModal: React.FC<TimeframeModalProps> = ({
         className="fixed inset-0 -z-10" 
         onClick={onClose} 
       />
-      <div className="w-full max-w-md max-h-[85vh] bg-white rounded-3xl border border-[#ded5c5] shadow-2xl p-4 flex flex-col animate-zoom-in text-slate-900 overflow-hidden">
+      <div className="w-full max-w-md max-h-[85vh] bg-white rounded-3xl border border-slate-200 shadow-2xl p-4 flex flex-col animate-zoom-in text-slate-900 overflow-hidden">
         <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 shrink-0">
           <div>
             <h4 className="text-sm font-black text-slate-950 flex items-center gap-2">
@@ -83,7 +83,7 @@ export const TimeframeModal: React.FC<TimeframeModalProps> = ({
                         className={`flex items-center justify-between px-3 py-1.5 rounded-xl border text-xs font-mono transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-amber-100/90 border-amber-400 text-amber-950 font-black shadow-xs'
-                            : 'bg-[#fbf9f4] border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-white'
+                            : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-white'
                         }`}
                       >
                         <span className="font-bold">{tf.label}</span>

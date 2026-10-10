@@ -23,10 +23,13 @@ import {
   Award,
   Clock
 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth, checkUserHasPurchasedAccount, setAccountCacheValid } from '../../context/AuthContext';
 import { useAppRouter } from '../../context/RouterContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { BrandLogo } from '../BrandLogo';
+import { CloudflareTurnstile } from './CloudflareTurnstile';
+import { UserProfile } from '../../types/auth';
+import { supabase } from '../../lib/supabase';
 import pepeFooterImg from '../../assets/images/pepe_footer.webp';
 import { 
   PlanCategory, 
@@ -37,6 +40,7 @@ import {
 } from '../../data/challengePlans';
 import { motion, AnimatePresence } from 'motion/react';
 import loginBackgroundImg from '../../assets/images/Background-Login.webp';
+import { sendWelcomeEmail } from '../../services/emailService';
 
 // ============================================================================
 // SECURITY & ANTI-MALWARE / ANTI-INJECTION SANITIZATION ENGINE
@@ -186,7 +190,7 @@ const useIsDesktop = () => {
 // ============================================================================
 export const LoginPage: React.FC = () => {
   const isDesktop = useIsDesktop();
-  const { loginWithEmail, loginWithGoogle, loginAsDemo } = useAuth();
+  const { loginWithEmail, signUpWithEmail, loginWithGoogle, loginAsDemo } = useAuth();
   const { navigate } = useAppRouter();
   const { language } = useLanguage();
   const isEn = language === 'en';
@@ -202,11 +206,62 @@ export const LoginPage: React.FC = () => {
     return 'login';
   });
 
-  // Mounted state for smooth initial entrance
+  // Mounted state for smooth initial entrance & unauthorized access listener
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+
+    const checkUnauthorizedAttempt = () => {
+      try {
+        const attemptEmail = sessionStorage.getItem('eklipse_unauthorized_attempt_email');
+        if (attemptEmail) {
+          const attemptName = sessionStorage.getItem('eklipse_unauthorized_attempt_name') || '';
+          sessionStorage.removeItem('eklipse_unauthorized_attempt_email');
+          sessionStorage.removeItem('eklipse_unauthorized_attempt_name');
+
+          setMode('register');
+          setRegEmail(attemptEmail);
+          setRegConfirmEmail(attemptEmail);
+          if (attemptName) {
+            const parts = attemptName.split(' ');
+            setRegFirstName(parts[0] || '');
+            setRegLastName(parts.slice(1).join(' ') || '');
+          }
+          setError(
+            isEn
+              ? `No funded evaluation accounts found for ${attemptEmail}. Select your challenge plan below to activate your account.`
+              : `No se encontró ninguna cuenta de fondeo vinculada a ${attemptEmail}. Elige tu plan de reto a continuación para activar tu cuenta.`
+          );
+        }
+      } catch (_) {}
+    };
+
+    checkUnauthorizedAttempt();
+
+    const handleBlockedEvent = (e: any) => {
+      const { email, fullName } = e.detail || {};
+      if (email) {
+        setMode('register');
+        setRegEmail(email);
+        setRegConfirmEmail(email);
+        if (fullName) {
+          const parts = fullName.split(' ');
+          setRegFirstName(parts[0] || '');
+          setRegLastName(parts.slice(1).join(' ') || '');
+        }
+        setError(
+          isEn
+            ? `No funded evaluation accounts found for ${email}. Select your challenge plan below to activate your account.`
+            : `No se encontró ninguna cuenta de fondeo vinculada a ${email}. Elige tu plan de reto a continuación para activar tu cuenta.`
+        );
+      }
+    };
+
+    window.addEventListener('eklipse_unauthorized_login_blocked', handleBlockedEvent);
+    return () => {
+      window.removeEventListener('eklipse_unauthorized_login_blocked', handleBlockedEvent);
+    };
+  }, [isEn]);
 
   // Login form state
   const [email, setEmail] = useState('');
@@ -215,10 +270,12 @@ export const LoginPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [resetNotice, setResetNotice] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleConnecting, setIsGoogleConnecting] = useState(false);
+  const [googleSuccessUser, setGoogleSuccessUser] = useState<UserProfile | null>(null);
 
-  // Interactive reCAPTCHA state
+  // Cloudflare Turnstile Verification State
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaVerified, setCaptchaVerified] = useState(false);
-  const [captchaLoading, setCaptchaLoading] = useState(false);
 
   // Register & Challenge Checkout State
   const [selectedCategory, setSelectedCategory] = useState<PlanCategory>(() => {
@@ -436,17 +493,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-
-  const handleCaptchaClick = () => {
-    if (captchaVerified || captchaLoading) return;
-    setCaptchaLoading(true);
-    setTimeout(() => {
-      setCaptchaLoading(false);
-      setCaptchaVerified(true);
-      setError(null);
-    }, 600);
-  };
-
   const handleForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault();
     setError(null);
@@ -506,8 +552,8 @@ export const LoginPage: React.FC = () => {
       return;
     }
 
-    if (!password || password.length < 6) {
-      setError(isEn ? 'Password must be at least 6 characters' : 'La contraseña debe tener al menos 6 caracteres');
+    if (!password || password.length < 8) {
+      setError(isEn ? 'Password must be at least 8 characters' : 'La contraseña debe tener al menos 8 caracteres');
       return;
     }
 
@@ -526,8 +572,12 @@ export const LoginPage: React.FC = () => {
       return;
     }
 
-    if (!captchaVerified) {
-      setError(isEn ? 'Please complete the security check' : 'Por favor completa la verificación de seguridad');
+    if (!captchaVerified || !captchaToken) {
+      setError(
+        isEn 
+          ? 'Please complete the Cloudflare security verification' 
+          : 'Por favor completa la verificación de seguridad de Cloudflare'
+      );
       return;
     }
 
@@ -535,8 +585,11 @@ export const LoginPage: React.FC = () => {
     try {
       await loginWithEmail(cleanEmail, password);
       navigate('/dashboard');
-    } catch {
-      setError(isEn ? 'Error authenticating user credentials' : 'Error al autenticar las credenciales del usuario');
+    } catch (err: any) {
+      setError(
+        err?.message || 
+        (isEn ? 'Invalid login credentials' : 'Credenciales inválidas. Revisa tu correo o contraseña.')
+      );
     } finally {
       setIsLoading(false);
     }
@@ -626,9 +679,137 @@ export const LoginPage: React.FC = () => {
     }
 
     setIsLoading(true);
-    // Provision Account & Dispatch
+    // Provision Account & Dispatch to PostgreSQL and Supabase
     setTimeout(async () => {
       try {
+        const pendingGooglePhoto = typeof window !== 'undefined' 
+          ? sessionStorage.getItem('eklipse_pending_google_photo') || undefined
+          : undefined;
+
+        // 1. Registrar usuario en GoTrue / Supabase con metadatos completos del cliente
+        await signUpWithEmail(cleanEmail, regPassword, {
+          firstName: sanitizeCleanString(regFirstName),
+          lastName: sanitizeCleanString(regLastName),
+          fullName: `${sanitizeCleanString(regFirstName)} ${sanitizeCleanString(regLastName)}`.trim(),
+          phone: sanitizeCleanString(regPhone),
+          company: sanitizeCleanString(regCompany),
+          address_line1: sanitizeCleanString(regAddress1),
+          address_line2: sanitizeCleanString(regAddress2),
+          country: sanitizeCleanString(regCountry),
+          postal_code: sanitizeCleanString(regZip),
+          city: sanitizeCleanString(regCity),
+          state: sanitizeCleanString(regState),
+          avatar_url: pendingGooglePhoto,
+          billing_metadata: {
+            address1: sanitizeCleanString(regAddress1),
+            address2: sanitizeCleanString(regAddress2),
+            city: sanitizeCleanString(regCity),
+            state: sanitizeCleanString(regState),
+            country: sanitizeCleanString(regCountry),
+            zip: sanitizeCleanString(regZip),
+            phone: sanitizeCleanString(regPhone),
+            company: sanitizeCleanString(regCompany),
+            paymentGateway: paymentGateway
+          }
+        });
+
+        // 2. Aprovisionar Cuenta Institucional en public.trading_accounts en PostgreSQL
+        const generatedAccountNumber = `EKL-${selectedCategory.toUpperCase()}-${Math.floor(10000 + Math.random() * 90000)}`;
+        const generatedAccessToken = `tok_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+
+        let createdAccountId: string | null = null;
+        try {
+          const { data: newTradingAccount, error: accInsertErr } = await supabase.from('trading_accounts').insert({
+            account_number: generatedAccountNumber,
+            trader_email: cleanEmail,
+            initial_balance: activePlan.capital,
+            current_balance: activePlan.capital,
+            equity: activePlan.capital,
+            peak_equity: activePlan.capital,
+            daily_start_equity: activePlan.capital,
+            status: 'ACTIVE',
+            rules_config: {
+              tierName: activePlan.astronomicalName?.es || activePlan.sizeLabel || `$${activePlan.capital.toLocaleString()}`,
+              category: selectedCategory,
+              profitSplitPct: selectedAddons.includes('profit_split_90') ? 90 : 80,
+              maxDailyDrawdownPct: selectedCategory === 'lunar' ? 6 : 5,
+              maxTotalDrawdownPct: selectedAddons.includes('extra_drawdown') ? 12 : 10,
+              profitTargetPct: 8,
+              effectiveLeverage: selectedAddons.includes('boost_leverage') ? '1:100' : '1:50',
+              addons: selectedAddons
+            },
+            access_token: generatedAccessToken
+          }).select().single();
+
+          if (!accInsertErr && newTradingAccount) {
+            createdAccountId = newTradingAccount.id;
+          }
+        } catch (dbErr) {
+          console.warn('[Checkout] Fallback guardando trading_account en PostgreSQL:', dbErr);
+        }
+
+        // 3. Registrar Orden de Compra en public.orders en PostgreSQL
+        const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
+        try {
+          await supabase.from('orders').insert({
+            trader_email: cleanEmail,
+            account_id: createdAccountId,
+            order_number: orderNumber,
+            plan_id: selectedPlanId,
+            category: selectedCategory,
+            account_size: activePlan.capital,
+            base_price: dynamicPricing.basePrice,
+            addons_cost: dynamicPricing.addonsCost,
+            total_price: dynamicPricing.totalPrice,
+            addons: selectedAddons,
+            payment_gateway: paymentGateway,
+            payment_status: 'COMPLETED',
+            billing_address: {
+              firstName: regFirstName,
+              lastName: regLastName,
+              email: cleanEmail,
+              phone: regPhone,
+              company: regCompany,
+              address1: regAddress1,
+              address2: regAddress2,
+              city: regCity,
+              state: regState,
+              country: regCountry,
+              zip: regZip
+            }
+          });
+        } catch (orderErr) {
+          console.warn('[Checkout] Fallback guardando orden en PostgreSQL:', orderErr);
+        }
+
+        // 4. Validar caché caliente para acceso instantáneo al Dashboard en 0ms
+        setAccountCacheValid(cleanEmail);
+
+        // 5. Despachar Correo Institucional de Bienvenida con Detalles y Reglas
+        try {
+          await sendWelcomeEmail({
+            toEmail: cleanEmail,
+            traderName: `${sanitizeCleanString(regFirstName)} ${sanitizeCleanString(regLastName)}`.trim() || 'Trader',
+            accountNumber: generatedAccountNumber,
+            planName: activePlan.astronomicalName?.es || activePlan.sizeLabel || `$${activePlan.capital.toLocaleString()}`,
+            category: selectedCategory,
+            capitalFormatted: `$${activePlan.capital.toLocaleString()}`,
+            capitalAmount: activePlan.capital,
+            maxDailyDrawdownPct: selectedCategory === 'lunar' ? 6 : 5,
+            maxTotalDrawdownPct: selectedAddons.includes('extra_drawdown') ? 12 : 10,
+            profitTargetPct: 8,
+            profitSplitPct: selectedAddons.includes('profit_split_90') ? 90 : 80,
+            leverage: selectedAddons.includes('boost_leverage') ? '1:100' : '1:50',
+            orderNumber: orderNumber,
+            totalPriceFormatted: `$${dynamicPricing.totalPrice.toFixed(2)}`,
+            paymentGateway: paymentGateway,
+            dashboardUrl: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : 'http://localhost:3100/dashboard'
+          });
+        } catch (emailErr) {
+          console.warn('[Checkout] Fallback enviando correo:', emailErr);
+        }
+
+        // 6. Caché local en localStorage para redundancia
         const assignedAccounts = JSON.parse(localStorage.getItem('eklipse_assigned_accounts') || '[]');
         assignedAccounts.push({
           planId: selectedPlanId,
@@ -642,38 +823,124 @@ export const LoginPage: React.FC = () => {
           email: cleanEmail
         });
         localStorage.setItem('eklipse_assigned_accounts', JSON.stringify(assignedAccounts));
+        sessionStorage.removeItem('eklipse_pending_google_photo');
 
-        await loginWithEmail(cleanEmail, regPassword);
         setOrderSuccess(true);
         setTimeout(() => {
           navigate('/dashboard');
         }, 1200);
-      } catch {
-        // Fallback demo session so checkout never gets blocked
-        loginAsDemo();
-        setOrderSuccess(true);
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1200);
+      } catch (err: any) {
+        setError(err?.message || (isEn ? 'Error creating account' : 'Error al registrar la cuenta'));
       } finally {
         setIsLoading(false);
       }
-    }, 1000);
+    }, 800);
   };
 
   const handleGoogleLogin = async () => {
     setError(null);
-    if (!captchaVerified) {
-      setError(isEn ? 'Please complete the security check first' : 'Por favor completa la verificación de seguridad primero');
-      return;
-    }
-
     setIsLoading(true);
+    setIsGoogleConnecting(true);
+    setGoogleSuccessUser(null);
     try {
-      await loginWithGoogle();
-      navigate('/dashboard');
-    } catch {
+      const ok = await loginWithGoogle();
+      if (ok) {
+        // Recuperar perfil institucional autenticado desde localStorage o sesión activa
+        let authenticatedUser: UserProfile | null = null;
+        try {
+          const stored = localStorage.getItem('globalcity_auth_user');
+          if (stored) authenticatedUser = JSON.parse(stored);
+        } catch (_) {}
+
+        if (!authenticatedUser) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            const meta = session.user.user_metadata || {};
+            const email = session.user.email || '';
+            const fullName = meta.full_name || meta.name || email.split('@')[0] || 'Trader';
+            const nameParts = fullName.split(' ');
+            authenticatedUser = {
+              id: session.user.id,
+              username: `@${email.split('@')[0] || 'trader'}`,
+              firstName: nameParts[0] || 'Trader',
+              lastName: nameParts.slice(1).join(' ') || undefined,
+              email: email,
+              photoUrl: meta.avatar_url || meta.picture,
+              authProvider: 'google',
+              role: 'institutional_trader',
+              createdAt: session.user.created_at || new Date().toISOString(),
+              twoFactorEnabled: true,
+            };
+          }
+        }
+
+        const userEmail = (authenticatedUser?.email || '').trim().toLowerCase();
+        if (!userEmail) {
+          throw new Error('No se pudo obtener el correo de la cuenta de Google');
+        }
+
+        // ======================================================================
+        // CONTROL INSTITUCIONAL DE ACCESO (ZERO-EGRESS 0MS CACHE):
+        // ======================================================================
+        const hasAccounts = await checkUserHasPurchasedAccount(userEmail, authenticatedUser?.id);
+
+        // CASO 1: NO TIENE CUENTA COMPRADA — REDIRIGIR A CHECKOUT PARA CONVERTIR
+        if (!hasAccounts) {
+          if (authenticatedUser?.photoUrl) {
+            sessionStorage.setItem('eklipse_pending_google_photo', authenticatedUser.photoUrl);
+          }
+
+          // Cerrar sesión no autorizada de Supabase
+          try {
+            await supabase.auth.signOut();
+          } catch (_) {}
+
+          // Conmutar a la vista de Compra de Cuenta y pre-cargar datos de Google
+          setRegEmail(userEmail);
+          setRegConfirmEmail(userEmail);
+          if (authenticatedUser?.firstName) setRegFirstName(authenticatedUser.firstName);
+          if (authenticatedUser?.lastName) setRegLastName(authenticatedUser.lastName);
+          
+          triggerModeSwitch('register');
+
+          setError(
+            isEn
+              ? `No funded evaluation accounts found for ${userEmail}. Select your challenge plan below to complete registration.`
+              : `No se encontró ninguna cuenta vinculada a ${userEmail}. Elige tu plan de reto a continuación para activar tu cuenta.`
+          );
+
+          setIsGoogleConnecting(false);
+          setIsLoading(false);
+          return;
+        }
+
+        // CASO 2: SÍ ES CLIENTE — ACTUALIZAR AVATAR DE GOOGLE EN BD Y DAR ACCESO
+        if (authenticatedUser?.photoUrl) {
+          try {
+            await supabase.from('profiles').update({
+              avatar_url: authenticatedUser.photoUrl,
+              updated_at: new Date().toISOString()
+            }).eq('email', userEmail);
+          } catch (_) {}
+        }
+
+        if (authenticatedUser) {
+          setGoogleSuccessUser(authenticatedUser);
+        }
+
+        // Permitir contemplar la cápsula dorada/esmeralda verificada antes de entrar al cockpit
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1200);
+      } else {
+        setIsGoogleConnecting(false);
+        setGoogleSuccessUser(null);
+      }
+    } catch (err: any) {
+      console.error('[Google Login]', err);
       setError(isEn ? 'Google login failed' : 'Error al iniciar sesión con Google');
+      setIsGoogleConnecting(false);
+      setGoogleSuccessUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -684,6 +951,7 @@ export const LoginPage: React.FC = () => {
     setEmail('demo@eklipsefunded.com');
     setPassword('demo1234');
     setCaptchaVerified(true);
+    setCaptchaToken('demo_access_token');
     setTimeout(() => {
       loginAsDemo();
       navigate('/dashboard');
@@ -705,7 +973,6 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="h-screen max-h-screen w-full relative bg-[#06070B] text-white selection:bg-amber-400/20 selection:text-amber-300 overflow-hidden select-none">
-      
       {/* Top Left Navigation Back to Landing */}
       <button 
         onClick={() => navigate('/')}
@@ -722,6 +989,100 @@ export const LoginPage: React.FC = () => {
         <span className="text-slate-500">|</span>
         <span className="text-amber-400">Zero-Trust WAF</span>
       </div>
+
+      {/* Top Right Eklipse Celestial OAuth Capsule */}
+      {(isGoogleConnecting || googleSuccessUser) && (
+        <div className={`fixed top-4 right-4 sm:top-5 sm:right-6 z-[60] w-[calc(100vw-32px)] sm:w-88 p-4 rounded-2xl backdrop-blur-2xl border shadow-2xl flex flex-col gap-3 transition-all duration-300 animate-in fade-in slide-in-from-top-3 zoom-in-95 ${
+          googleSuccessUser
+            ? 'bg-[#090A10]/95 border-emerald-400/60 shadow-[0_20px_50px_rgba(0,0,0,0.9),0_0_35px_rgba(16,185,129,0.35)]'
+            : 'bg-[#090A10]/95 border-amber-400/50 shadow-[0_20px_50px_rgba(0,0,0,0.9),0_0_35px_rgba(245,158,11,0.3)]'
+        }`}>
+          {/* Header row with badge & close button */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full ${googleSuccessUser ? 'bg-emerald-400 animate-ping' : 'bg-amber-400 animate-ping'}`} />
+              <span className={`text-[10px] font-mono font-bold tracking-wider uppercase ${googleSuccessUser ? 'text-emerald-400' : 'text-amber-400'}`}>
+                {googleSuccessUser ? 'Identidad Trader Verificada' : 'Eklipse Solar Gateway'}
+              </span>
+            </div>
+            
+            <button
+              type="button"
+              onClick={() => {
+                setIsGoogleConnecting(false);
+                setGoogleSuccessUser(null);
+              }}
+              className="text-slate-400 hover:text-white text-xs font-mono px-1 py-0.5 rounded hover:bg-white/10 transition-colors cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* User info or Connecting info */}
+          <div className="flex items-center gap-3">
+            {googleSuccessUser ? (
+              // Usuario verificado con avatar real de Google
+              <div className="relative w-11 h-11 rounded-xl bg-black border border-emerald-400/60 flex items-center justify-center shrink-0 overflow-hidden shadow-lg">
+                {googleSuccessUser.photoUrl ? (
+                  <img 
+                    src={googleSuccessUser.photoUrl} 
+                    alt={googleSuccessUser.firstName} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-emerald-400 font-bold font-mono text-base">
+                    {googleSuccessUser.firstName?.charAt(0) || 'T'}
+                  </span>
+                )}
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border border-black flex items-center justify-center">
+                  <Check className="w-2.5 h-2.5 text-black stroke-[3]" />
+                </div>
+              </div>
+            ) : (
+              // Estado conectando con spinner orbital
+              <div className="relative w-11 h-11 rounded-xl bg-black/80 border border-amber-400/40 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
+                <span className="absolute inset-0 border border-amber-400/60 rounded-xl animate-spin" style={{ animationDuration: '3s' }} />
+                <svg className="w-5 h-5 z-10" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z" />
+                  <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.36 24 12 24z" />
+                  <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.04 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
+                  <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
+                </svg>
+              </div>
+            )}
+
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-white truncate">
+                {googleSuccessUser 
+                  ? `${googleSuccessUser.firstName} ${googleSuccessUser.lastName || ''}`.trim()
+                  : (isEn ? 'Authorizing in top window...' : 'Autorizando en ventana superior...')}
+              </p>
+              <p className="text-[10.5px] font-mono text-slate-300 truncate mt-0.5">
+                {googleSuccessUser
+                  ? googleSuccessUser.email
+                  : (isEn ? 'Google Account Handshake' : 'Conexión con cuenta Google')}
+              </p>
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="w-full bg-white/10 rounded-full h-1 overflow-hidden">
+            <div 
+              className={`h-full transition-all duration-700 ${
+                googleSuccessUser 
+                  ? 'bg-gradient-to-r from-emerald-400 to-teal-300 w-full' 
+                  : 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 animate-pulse w-full'
+              }`} 
+            />
+          </div>
+
+          <p className="text-[10px] font-mono text-slate-300 text-center">
+            {googleSuccessUser
+              ? (isEn ? '✓ Access granted · Launching Terminal...' : '✓ Acceso concedido · Abriendo Terminal...')
+              : (isEn ? 'Select your account in the compact popup' : 'Selecciona tu cuenta en la ventana emergente')}
+          </p>
+        </div>
+      )}
 
       {/* Imagen de fondo viva y atmosférica en toda la pantalla */}
       <div 
@@ -974,7 +1335,7 @@ export const LoginPage: React.FC = () => {
                         )}
                       </AnimatePresence>
 
-                      {/* PASO 3: reCAPTCHA */}
+                      {/* PASO 3: Cloudflare Turnstile Verification */}
                       <AnimatePresence initial={false}>
                         {isEmailValid && isPasswordStarted && (
                           <motion.div
@@ -986,38 +1347,23 @@ export const LoginPage: React.FC = () => {
                             className="overflow-hidden"
                           >
                             <div className="pt-0.5">
-                              <div 
-                                onClick={handleCaptchaClick}
-                                className={`h-11 sm:h-12 px-3.5 rounded-xl sm:rounded-2xl border transition-all flex items-center justify-between cursor-pointer select-none backdrop-blur-md shadow-md ${
-                                  captchaVerified 
-                                    ? 'bg-emerald-950/40 border-emerald-500/70 shadow-[0_0_15px_rgba(16,185,129,0.25)]' 
-                                    : 'bg-black/25 border-white/20 hover:border-amber-400/60'
-                                }`}
-                              >
-                                <div className="flex items-center gap-2.5">
-                                  <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${
-                                    captchaVerified 
-                                      ? 'bg-emerald-500 border-emerald-400 text-slate-950' 
-                                      : 'border-white/25 bg-white/5'
-                                  }`}>
-                                    {captchaLoading ? (
-                                      <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
-                                    ) : captchaVerified ? (
-                                      <CheckCircle2 className="w-3.5 h-3.5 stroke-[3]" />
-                                    ) : null}
-                                  </div>
-                                  <span className="text-[11px] sm:text-xs font-mono font-medium text-slate-200">
-                                    {captchaVerified 
-                                      ? (isEn ? 'Security Verified' : 'Verificado') 
-                                      : (isEn ? "I'm not a robot" : 'No soy un robot')}
-                                  </span>
-                                </div>
-
-                                <div className="flex items-center gap-1.5 text-[9.5px] font-mono font-bold text-slate-400">
-                                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                                  <span>reCAPTCHA</span>
-                                </div>
-                              </div>
+                              <CloudflareTurnstile
+                                action="login"
+                                theme="dark"
+                                onSuccess={(token) => {
+                                  setCaptchaToken(token);
+                                  setCaptchaVerified(true);
+                                  setError(null);
+                                }}
+                                onExpire={() => {
+                                  setCaptchaToken(null);
+                                  setCaptchaVerified(false);
+                                }}
+                                onError={() => {
+                                  setCaptchaToken(null);
+                                  setCaptchaVerified(false);
+                                }}
+                              />
                             </div>
                           </motion.div>
                         )}
@@ -1060,15 +1406,30 @@ export const LoginPage: React.FC = () => {
                           type="button"
                           onClick={handleGoogleLogin}
                           disabled={isLoading}
-                          className="w-full h-11 sm:h-12 px-4 rounded-xl sm:rounded-2xl border border-white/20 bg-black/25 hover:bg-black/45 backdrop-blur-md text-white font-mono text-xs sm:text-[13px] font-semibold flex items-center justify-center gap-2.5 transition-all cursor-pointer hover:border-white/30 active:scale-[0.99] disabled:opacity-50 shadow-md"
+                          className={`w-full h-11 sm:h-12 px-4 rounded-xl sm:rounded-2xl border transition-all cursor-pointer font-mono text-xs sm:text-[13px] font-semibold flex items-center justify-center gap-2.5 shadow-md active:scale-[0.99] disabled:opacity-50 ${
+                            isGoogleConnecting
+                              ? 'border-amber-400/70 bg-amber-500/15 text-amber-200 shadow-[0_0_25px_rgba(245,158,11,0.3)] animate-pulse'
+                              : 'border-white/20 bg-black/25 hover:bg-black/45 hover:border-amber-400/40 text-white'
+                          }`}
                         >
-                          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z" />
-                            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.36 24 12 24z" />
-                            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.04 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
-                            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
-                          </svg>
-                          <span>{isEn ? 'Continue with Google' : 'Continuar con Google'}</span>
+                          {isGoogleConnecting ? (
+                            <>
+                              <span className="w-3.5 h-3.5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin shrink-0" />
+                              <span className="text-amber-300 font-bold tracking-wide">
+                                {isEn ? 'Connecting in corner...' : 'Conectando en la esquina...'}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z" />
+                                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.36 24 12 24z" />
+                                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.04 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
+                                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
+                              </svg>
+                              <span>{isEn ? 'Continue with Google' : 'Continuar con Google'}</span>
+                            </>
+                          )}
                         </button>
                       </div>
 
@@ -1163,6 +1524,36 @@ export const LoginPage: React.FC = () => {
                         </motion.div>
                       )}
                     </AnimatePresence>
+
+                    {/* Google 1-Click Fast Access / Registration Button */}
+                    <div className="mb-4">
+                      <button
+                        type="button"
+                        onClick={handleGoogleLogin}
+                        disabled={isLoading}
+                        className={`w-full h-11 sm:h-12 px-4 rounded-xl sm:rounded-2xl border transition-all cursor-pointer font-mono text-xs sm:text-[13px] font-semibold flex items-center justify-center gap-2.5 shadow-md active:scale-[0.99] disabled:opacity-50 ${
+                          isGoogleConnecting
+                            ? 'border-amber-400/70 bg-amber-500/15 text-amber-200 shadow-[0_0_25px_rgba(245,158,11,0.3)] animate-pulse'
+                            : 'border-white/20 bg-black/25 hover:bg-black/45 hover:border-amber-400/40 text-white'
+                        }`}
+                      >
+                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z" />
+                          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.36 24 12 24z" />
+                          <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.04 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
+                          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
+                        </svg>
+                        <span>{isEn ? 'Fast Registration with Google' : 'Registro Rápido con Google'}</span>
+                      </button>
+
+                      <div className="flex items-center gap-2.5 my-3.5">
+                        <div className="flex-1 h-px bg-white/10" />
+                        <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+                          {isEn ? 'Or customize tier & register' : 'O elige tu cuenta de reto institucional'}
+                        </span>
+                        <div className="flex-1 h-px bg-white/10" />
+                      </div>
+                    </div>
 
                     {/* Formulario Progresivo de Registro con Campos Ergonómicos y Redondeados */}
                     <form onSubmit={handleRegisterCheckoutSubmit} className="space-y-3.5">

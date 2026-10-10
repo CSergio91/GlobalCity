@@ -48,7 +48,7 @@ export const TerminalToolbar: React.FC<TerminalToolbarProps> = ({
 
   return (
     <>
-      <div className="h-9 sm:h-10 px-2 sm:px-4 border-b border-[#ded5c5] flex items-center justify-start gap-2 sm:gap-3 text-xs shrink-0 bg-white/70 overflow-x-auto no-scrollbar relative z-20">
+      <div className="h-9 sm:h-10 px-2 sm:px-4 border-b border-slate-200 flex items-center justify-start gap-2 sm:gap-3 text-xs shrink-0 bg-white/90 overflow-x-auto no-scrollbar relative z-20">
         {/* SELECTOR DE TIMEFRAMES */}
         <div className="flex items-center gap-1 shrink-0">
           {visibleTimeframes.map((tf) => (
@@ -59,7 +59,7 @@ export const TerminalToolbar: React.FC<TerminalToolbarProps> = ({
               className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg font-mono font-bold text-[10px] sm:text-xs transition-colors cursor-pointer ${
                 timeframe === tf 
                   ? 'bg-slate-950 text-white shadow-xs' 
-                  : 'text-slate-600 hover:bg-slate-200/60 text-slate-900'
+                  : 'text-slate-400 hover:bg-slate-200/60 text-slate-900'
               }`}
             >
               {tf}
@@ -76,7 +76,7 @@ export const TerminalToolbar: React.FC<TerminalToolbarProps> = ({
             className={`p-1 sm:p-1.5 rounded-lg border transition-colors cursor-pointer flex items-center justify-center ${
               isTimeframeModalOpen
                 ? 'bg-amber-100 border-amber-400 text-amber-950 shadow-xs'
-                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-950'
+                : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-100 hover:text-white'
             }`}
             title={isEs ? 'Más temporalidades (1s a Anual, Favoritos ★)' : 'More timeframes (1s to Yearly, Favorites ★)'}
           >
@@ -114,7 +114,7 @@ export const TerminalToolbar: React.FC<TerminalToolbarProps> = ({
                 className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition-colors cursor-pointer ${
                   isActive 
                     ? 'bg-amber-100 text-amber-900 border-amber-300 shadow-xs' 
-                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                    : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-100'
                 }`}
               >
                 {ind}
@@ -132,7 +132,7 @@ export const TerminalToolbar: React.FC<TerminalToolbarProps> = ({
             className={`p-1 sm:p-1.5 rounded-lg border transition-colors cursor-pointer flex items-center justify-center ${
               isIndicatorModalOpen
                 ? 'bg-amber-100 border-amber-400 text-amber-950 shadow-xs'
-                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-950'
+                : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-100 hover:text-white'
             }`}
             title={isEs ? 'Biblioteca completa de indicadores y favoritos ★' : 'Full indicator library and favorites ★'}
           >

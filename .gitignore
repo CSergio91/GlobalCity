@@ -41,3 +41,7 @@ android/app/build/
 android/.gradle/
 ios/App/Pods/
 ios/App/build/
+
+# Database dumps & local backups
+docker/backups/*.sql
+scratch/
