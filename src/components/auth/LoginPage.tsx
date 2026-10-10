@@ -1320,6 +1320,7 @@ export const LoginPage: React.FC = () => {
                                   placeholder="••••••••••••"
                                   maxLength={100}
                                   required
+                                  autoComplete="current-password"
                                   className="w-full h-11 sm:h-12 pl-10 pr-10 py-2.5 rounded-xl sm:rounded-2xl bg-black/25 backdrop-blur-md border border-white/20 text-white placeholder-slate-400 text-xs sm:text-[13px] font-mono focus:outline-none focus:border-amber-400 focus:bg-black/45 focus:ring-2 focus:ring-amber-400/40 transition-all shadow-md"
                                 />
                                 <button
@@ -1974,6 +1975,7 @@ export const LoginPage: React.FC = () => {
                               placeholder={isEn ? 'At least 8 characters' : 'Al menos 8 caracteres'}
                               maxLength={100}
                               required
+                              autoComplete="new-password"
                               disabled={!isBillingValid}
                               className="w-full h-10.5 sm:h-11 pl-3.5 pr-10 rounded-xl sm:rounded-2xl bg-black/25 backdrop-blur-sm border border-white/15 text-white placeholder-slate-400 text-xs sm:text-[13px] font-mono focus:outline-none focus:border-emerald-400 focus:bg-black/45 focus:ring-1 focus:ring-emerald-400/40 shadow-inner transition-colors"
                             />
@@ -2032,6 +2034,7 @@ export const LoginPage: React.FC = () => {
                               placeholder={isEn ? 'Re-enter your password' : 'Vuelve a escribir tu contraseña'}
                               maxLength={100}
                               required
+                              autoComplete="new-password"
                               disabled={!isBillingValid}
                               className={`w-full h-10.5 sm:h-11 pl-3.5 pr-10 rounded-xl sm:rounded-2xl bg-black/25 backdrop-blur-sm border text-white placeholder-slate-400 text-xs sm:text-[13px] font-mono focus:outline-none focus:bg-black/45 shadow-inner transition-colors ${
                                 regConfirmPassword
