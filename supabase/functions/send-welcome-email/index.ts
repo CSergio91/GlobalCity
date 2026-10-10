@@ -5,6 +5,8 @@
 // a través de la API oficial de Resend. Diseño claro (Light Theme) para iPhone.
 // Replicable en Supabase Cloud ('supabase functions deploy') y VPS On-Premise.
 // ============================================================================
+declare const Deno: any;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -182,13 +184,6 @@ Deno.serve(async (req: Request) => {
               </p>
             </td>
           </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
 
         </table>
       </td>
