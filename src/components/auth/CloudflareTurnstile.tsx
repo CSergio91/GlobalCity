@@ -54,62 +54,75 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
 
-  const configuredKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
+  // Guardar callbacks en refs para evitar bucles de renderizado infinito y parpadeo
+  const onSuccessRef = useRef(onSuccess);
+  onSuccessRef.current = onSuccess;
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
+  const onExpireRef = useRef(onExpire);
+  onExpireRef.current = onExpire;
+
+  const configuredKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAAFLVenRf1JsvExUr';
   const isLocalHost = typeof window !== 'undefined' && (
     window.location.hostname === 'localhost' || 
     window.location.hostname === '127.0.0.1' ||
     window.location.hostname.endsWith('.localhost')
   );
-  const [activeSiteKey, setActiveSiteKey] = useState<string>(isLocalHost ? CLOUDFLARE_TEST_INTERACTIVE_KEY : configuredKey);
+  const [activeSiteKey, setActiveSiteKey] = useState<string>(
+    isLocalHost ? CLOUDFLARE_TEST_INTERACTIVE_KEY : (configuredKey || '0x4AAAAAAFLVenRf1JsvExUr')
+  );
 
   const [status, setStatus] = useState<'loading' | 'ready' | 'verified' | 'expired' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Initialize or re-render widget
+  // Initialize or re-render widget (estable sin dependencias inestables)
   const renderWidget = useCallback((keyToUse: string) => {
     if (!containerRef.current || typeof window === 'undefined' || !window.turnstile) {
       return false;
     }
 
+    const effectiveKey = keyToUse || configuredKey || '0x4AAAAAAFLVenRf1JsvExUr';
+    if (!effectiveKey) {
+      setStatus('error');
+      setErrorMessage('Site key no configurada');
+      return false;
+    }
+
     try {
-      // Remove any existing widget before re-rendering
+      // Si ya hay un widget renderizado para esta misma clave, no volver a desmontarlo
       if (widgetIdRef.current) {
-        try {
-          window.turnstile.remove(widgetIdRef.current);
-        } catch (_) {}
-        widgetIdRef.current = null;
+        return true;
       }
 
       containerRef.current.innerHTML = '';
 
       const widgetId = window.turnstile.render(containerRef.current, {
-        sitekey: keyToUse,
+        sitekey: effectiveKey,
         action,
         theme,
         size: 'flexible',
         callback: (token: string) => {
           setStatus('verified');
           setErrorMessage(null);
-          onSuccess(token);
+          onSuccessRef.current?.(token);
         },
         'error-callback': (errCode: any) => {
           console.warn('[Cloudflare Turnstile] Challenge error code:', errCode);
 
-          // Si el dominio local (localhost / 127.0.0.1) no está habilitado en el sitekey de producción de Cloudflare:
           const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
           if (isLocal && keyToUse !== CLOUDFLARE_TEST_INTERACTIVE_KEY) {
-            console.info('[Cloudflare Turnstile] Conmutando a clave interactiva de pruebas de Cloudflare para localhost.');
+            console.info('[Cloudflare Turnstile] Conmutando a clave interactiva de pruebas para localhost.');
             setActiveSiteKey(CLOUDFLARE_TEST_INTERACTIVE_KEY);
             return;
           }
 
           setStatus('error');
           setErrorMessage(typeof errCode === 'string' ? errCode : 'Error de verificación');
-          onError?.(String(errCode));
+          onErrorRef.current?.(String(errCode));
         },
         'expired-callback': () => {
           setStatus('expired');
-          onExpire?.();
+          onExpireRef.current?.();
         },
       });
 
@@ -119,17 +132,16 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
     } catch (err: any) {
       console.warn('[Cloudflare Turnstile] Error al inicializar render:', err);
       setStatus('error');
-      setErrorMessage(err?.message || 'Error al cargar Turnstile');
+      setErrorMessage(err?.message || 'Error al cargar reCAPTCHA');
       return false;
     }
-  }, [action, theme, onSuccess, onError, onExpire]);
+  }, [action, theme]);
 
   // Load and check Turnstile library
   useEffect(() => {
     let checkInterval: any = null;
     let attempts = 0;
 
-    // Inyectar dinámicamente el SDK si no está presente en el documento
     if (typeof window !== 'undefined' && !window.turnstile) {
       const existing = document.querySelector('script[src*="turnstile/v0/api.js"]');
       if (!existing) {
@@ -148,10 +160,9 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
         if (checkInterval) clearInterval(checkInterval);
         renderWidget(activeSiteKey);
       } else if (attempts >= 40) {
-        // Fallback after 4 seconds if script failed to load (e.g. adblocker)
         if (checkInterval) clearInterval(checkInterval);
         setStatus('error');
-        setErrorMessage('Cloudflare Turnstile SDK no disponible (bloqueador o red)');
+        setErrorMessage('reCAPTCHA no disponible (bloqueador o red)');
       }
     };
 
@@ -179,6 +190,10 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
       try {
         window.turnstile.reset(widgetIdRef.current);
       } catch (_) {
+        if (widgetIdRef.current) {
+          try { window.turnstile.remove(widgetIdRef.current); } catch (_) {}
+          widgetIdRef.current = null;
+        }
         renderWidget(activeSiteKey);
       }
     } else {
@@ -188,7 +203,7 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
 
   return (
     <div className={`w-full ${className}`}>
-      {/* Contenedor oficial del iframe interactivo de Cloudflare */}
+      {/* Contenedor oficial del iframe interactivo */}
       <div 
         className={`w-full rounded-xl sm:rounded-2xl border transition-all duration-300 p-2 sm:p-2.5 backdrop-blur-md relative min-h-[64px] flex flex-col justify-center ${
           status === 'verified'
@@ -198,12 +213,12 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
             : 'bg-black/35 border-white/15 hover:border-amber-400/40'
         }`}
       >
-        {/* Encabezado sutil informativo */}
+        {/* Encabezado limpio y minimalista */}
         <div className="flex items-center justify-between pb-1.5 px-1 border-b border-white/10 mb-1.5">
           <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-300">
             <ShieldCheck className={`w-3.5 h-3.5 ${status === 'verified' ? 'text-emerald-400' : 'text-amber-400'}`} />
             <span className="font-semibold tracking-wide">
-              {status === 'verified' ? 'Verificación Completada' : 'Protección Cloudflare Turnstile'}
+              {status === 'verified' ? 'reCAPTCHA Verificado' : 'reCAPTCHA'}
             </span>
           </div>
 
@@ -211,7 +226,7 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
             {status === 'verified' && (
               <span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-400 font-bold">
                 <CheckCircle2 className="w-3 h-3 stroke-[2.5]" />
-                SEGURO
+                OK
               </span>
             )}
             {(status === 'error' || status === 'expired') && (
@@ -224,9 +239,6 @@ export const CloudflareTurnstile: React.FC<CloudflareTurnstileProps> = ({
                 Reintentar
               </button>
             )}
-            <span className="text-[9px] font-mono text-slate-400 uppercase tracking-wider">
-              Anti-Bot AI
-            </span>
           </div>
         </div>
 
