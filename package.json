@@ -52,7 +52,11 @@
     "typescript": "^5.7.3",
     "vite": "^6.2.0"
   },
-  "allowScripts": {
-    "esbuild": true
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@google/genai",
+      "protobufjs"
+    ]
   }
 }
