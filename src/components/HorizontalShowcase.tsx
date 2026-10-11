@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import footerBg from '../assets/images/footer.webp';
-import eklipseEmblemImg from '../assets/images/eklipse_sol_luna_emblem_transparent.png';
+import eklipseEmblemImg from '../assets/images/eklipse_sol_luna_emblem_transparent.webp';
 import terminalExecutionImg from '../assets/images/terminal/terminal_execution_chart.png';
 import terminalBracketsImg from '../assets/images/terminal/terminal_risk_reward_brackets.png';
 import terminalCurveImg from '../assets/images/terminal/terminal_equity_curve.png';

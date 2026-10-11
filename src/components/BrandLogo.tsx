@@ -1,5 +1,5 @@
 import React from 'react';
-import eklipseEmblemImg from '../assets/images/eklipse_sol_luna_emblem_transparent.png';
+import eklipseEmblemImg from '../assets/images/eklipse_sol_luna_emblem_transparent.webp';
 
 interface BrandLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';

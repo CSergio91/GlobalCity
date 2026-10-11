@@ -1,12 +1,17 @@
-# Eklipse Funded Trading Platform - Robots Configuration
-# AI-Ready & Search Engine Crawling Allowed
+# ==============================================================================
+# Eklipse Funded — Universal Search & AI Indexing Directives (AEO & SEO)
+# Domain: https://eklipsefunded.com
+# ==============================================================================
 
 User-agent: *
 Allow: /
 Disallow: /admin
+Disallow: /nexus
 Disallow: /api/private
 
-# Explicit Allow for AI Search Engines & LLM Indexers
+# ------------------------------------------------------------------------------
+# Generative AI Engines & Autonomous Agents (Explicit Full Access for Link Previews)
+# ------------------------------------------------------------------------------
 User-agent: GPTBot
 Allow: /
 
@@ -22,12 +27,33 @@ Allow: /
 User-agent: ClaudeBot
 Allow: /
 
+User-agent: Claude-Web
+Allow: /
+
 User-agent: anthropic-ai
 Allow: /
 
-User-agent: Applebot
+User-agent: Applebot-Extended
 Allow: /
 
+User-agent: CCBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Diffbot
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# ------------------------------------------------------------------------------
+# Social Media & Messaging Rich Unfurl Crawlers
+# ------------------------------------------------------------------------------
 User-agent: Twitterbot
 Allow: /
 
@@ -37,4 +63,14 @@ Allow: /
 User-agent: TelegramBot
 Allow: /
 
+User-agent: WhatsApp
+Allow: /
+
+User-agent: Discordbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+# Sitemaps & Knowledge Base
 Sitemap: https://eklipsefunded.com/sitemap.xml

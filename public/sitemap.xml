@@ -4,7 +4,7 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://eklipsefunded.com/</loc>
-    <lastmod>2026-09-28</lastmod>
+    <lastmod>2026-10-12</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="es" href="https://eklipsefunded.com/?lang=es" />
@@ -12,20 +12,22 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://eklipsefunded.com/" />
     <image:image>
       <image:loc>https://eklipsefunded.com/og-image.jpg</image:loc>
-      <image:title>Eklipse Funded - Next-Generation Prop Firm with Proprietary Terminal</image:title>
-      <image:caption>Cuentas de fondeo instantáneo de $1K a $100K y terminal de trading institucional propia</image:caption>
+      <image:title>Eklipse Funded · Empresa de Fondeo Cripto &amp; Multiactivo</image:title>
+      <image:caption>Cuentas de fondeo inmediato de $1,000 a $100,000 con terminal institucional a 60 FPS y hasta 90% de profit split</image:caption>
     </image:image>
   </url>
   <url>
-    <loc>https://eklipsefunded.com/operaciones</loc>
-    <lastmod>2026-09-28</lastmod>
+    <loc>https://eklipsefunded.com/operations</loc>
+    <lastmod>2026-10-12</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://eklipsefunded.com/operaciones" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://eklipsefunded.com/operations" />
   </url>
   <url>
     <loc>https://eklipsefunded.com/login</loc>
-    <lastmod>2026-09-28</lastmod>
+    <lastmod>2026-10-12</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
   </url>
 </urlset>
