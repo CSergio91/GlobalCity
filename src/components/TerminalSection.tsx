@@ -46,7 +46,7 @@ export const TerminalSection: React.FC<TerminalSectionProps> = ({
         }}
       >
         {/* Slide 1: Terminal de Trading Institucional */}
-        <div className="w-[100vw] max-w-full h-full shrink-0 flex items-center justify-center pt-2 sm:pt-4 pb-2">
+        <div className="w-[100vw] max-w-full h-full shrink-0 flex items-center justify-center pt-16 sm:pt-20 lg:pt-24 pb-2">
           <TerminalShowcaseSlide 
             onNavigateToPlans={onNavigateToPlans}
             onGoToDashboard={() => handleSlideClick(1)}

@@ -23,7 +23,8 @@ import {
 } from 'lucide-react';
 import { motion, useMotionValue, useSpring, useTransform, useScroll } from 'motion/react';
 import { useLanguage } from '../context/LanguageContext';
-import terminalPepeImg from '../assets/images/terminal.webp';
+import terminalPepeWebp from '../assets/images/terminal.webp';
+import terminalPepePng from '../assets/images/terminal.png';
 
 interface TerminalShowcaseSlideProps {
   onNavigateToPlans?: () => void;
@@ -48,15 +49,15 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
   const smoothY = useSpring(mouseY, springConfig);
 
   // Pepe (Movimiento en contraposición al cursor con rotación elástica)
-  const pepeX = useTransform(smoothX, [-1, 1], [-24, 24]);
-  const pepeY = useTransform(smoothY, [-1, 1], [-16, 16]);
+  const pepeX = useTransform(smoothX, [-1, 1], [-20, 20]);
+  const pepeY = useTransform(smoothY, [-1, 1], [-14, 14]);
   const pepeRotate = useTransform(smoothX, [-1, 1], [-1.8, 1.8]);
-  const glowX = useTransform(smoothX, [-1, 1], [-30, 30]);
-  const glowY = useTransform(smoothY, [-1, 1], [-20, 20]);
+  const glowX = useTransform(smoothX, [-1, 1], [-25, 25]);
+  const glowY = useTransform(smoothY, [-1, 1], [-18, 18]);
 
   // Terminal Window (Desplazamiento complementario con inclinación 3D)
-  const terminalX = useTransform(smoothX, [-1, 1], [14, -14]);
-  const terminalY = useTransform(smoothY, [-1, 1], [10, -10]);
+  const terminalX = useTransform(smoothX, [-1, 1], [12, -12]);
+  const terminalY = useTransform(smoothY, [-1, 1], [8, -8]);
   const terminalRotateX = useTransform(smoothY, [-1, 1], [-1.5, 1.5]);
   const terminalRotateY = useTransform(smoothX, [-1, 1], [1.5, -1.5]);
 
@@ -124,7 +125,7 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-col justify-between items-center px-3 sm:px-6 lg:px-10 py-3 sm:py-5 select-none overflow-y-auto no-scrollbar relative">
+    <div className="w-full h-full flex flex-col justify-between items-center px-3 sm:px-6 lg:px-8 py-1 sm:py-2 select-none overflow-y-auto no-scrollbar relative">
       
       {/* Luz ambiental dorada central */}
       <motion.div 
@@ -132,27 +133,27 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
         className="absolute top-1/3 left-1/4 w-[450px] h-[450px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none -z-10" 
       />
 
-      <div className="w-full max-w-7xl mx-auto flex flex-col justify-between h-full space-y-3 sm:space-y-4 my-auto">
+      <div className="w-full max-w-7xl mx-auto flex flex-col justify-between h-full space-y-2 sm:space-y-3 my-auto">
         
         {/* ========================================================================= */}
         {/* 1. TOP HEADER ROW: TITLE & SUBTITLE + MINI MARKET TICKERS                 */}
         {/* ========================================================================= */}
-        <div className="w-full flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 sm:gap-4 shrink-0">
+        <div className="w-full flex flex-col lg:flex-row items-start lg:items-center justify-between gap-2 sm:gap-4 shrink-0">
           
           {/* Left: Badge, Heading, Subtitle */}
-          <div className="flex flex-col space-y-1 sm:space-y-1.5 max-w-xl">
+          <div className="flex flex-col space-y-1 max-w-xl">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 text-[10px] sm:text-xs font-mono font-bold tracking-wider uppercase w-fit shadow-[0_0_12px_rgba(245,158,11,0.2)]">
               <span>{isEn ? 'EKLIPSE TERMINAL' : 'EKLIPSE TERMINAL'}</span>
             </div>
             
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-none text-white">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight leading-none text-white">
               <span>{isEn ? 'Institutional Trading. ' : 'Institutional Trading. '}</span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-500 drop-shadow-[0_0_20px_rgba(245,158,11,0.4)]">
                 {isEn ? 'In your hands.' : 'In your hands.'}
               </span>
             </h1>
 
-            <p className="text-xs sm:text-sm text-slate-400 font-normal">
+            <p className="text-[11px] sm:text-xs text-slate-400 font-normal">
               {isEn 
                 ? 'Analyze, Execute, Manage your risk. All from a single terminal.' 
                 : 'Analiza, Ejecuta, Gestiona tu riesgo. Todo desde un único terminal.'}
@@ -160,19 +161,19 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
           </div>
 
           {/* Right: Mini Market Ticker Cards + Link */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap lg:flex-nowrap">
+          <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap lg:flex-nowrap">
             {tickers.map((t) => (
               <div 
                 key={t.symbol}
-                className="flex items-center gap-2 sm:gap-2.5 px-3 py-1.5 rounded-xl bg-[#090C14]/85 border border-white/10 backdrop-blur-md shadow-lg hover:border-amber-400/30 transition-all cursor-pointer"
+                className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-[#090C14]/85 border border-white/10 backdrop-blur-md shadow-lg hover:border-amber-400/30 transition-all cursor-pointer"
               >
                 {/* Symbol & Price */}
                 <div className="flex flex-col">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${t.isPositive ? 'bg-emerald-400' : 'bg-rose-400'}`} />
-                    <span className="text-[11px] sm:text-xs font-bold text-white font-mono">{t.symbol}</span>
+                  <div className="flex items-center gap-1">
+                    <span className={`w-1.5 h-1.5 rounded-full ${t.isPositive ? 'bg-emerald-400' : 'bg-rose-400'}`} />
+                    <span className="text-[10px] sm:text-[11px] font-bold text-white font-mono">{t.symbol}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono">
+                  <div className="flex items-center gap-1 text-[9.5px] sm:text-[10px] font-mono">
                     <span className="text-slate-200 font-semibold">{t.price}</span>
                     <span className={`font-bold ${t.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
                       {t.change}
@@ -181,7 +182,7 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
                 </div>
 
                 {/* Mini Sparkline SVG */}
-                <div className="w-12 h-6 flex items-center justify-center shrink-0">
+                <div className="w-10 h-5 flex items-center justify-center shrink-0">
                   <svg className="w-full h-full overflow-visible" viewBox="0 0 64 20">
                     <path 
                       d={t.sparkline} 
@@ -201,10 +202,10 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
                 const el = document.getElementById('programs');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="px-2.5 py-1.5 rounded-xl text-[11px] font-mono font-medium text-slate-300 hover:text-amber-300 transition-colors flex items-center gap-1 cursor-pointer"
+              className="px-2 py-1 rounded-xl text-[10px] sm:text-[11px] font-mono font-medium text-slate-300 hover:text-amber-300 transition-colors flex items-center gap-1 cursor-pointer"
             >
               <span>{isEn ? 'View all markets' : 'Ver todos los mercados'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3 h-3" />
             </button>
           </div>
 
@@ -213,7 +214,7 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
         {/* ========================================================================= */}
         {/* 2. MAIN STAGE: PEPE TRADER (LEFT) + INSTITUTIONAL TERMINAL CARD (RIGHT)    */}
         {/* ========================================================================= */}
-        <div className="w-full relative flex flex-col lg:flex-row items-center lg:items-end justify-between gap-4 pt-1 sm:pt-2">
+        <div className="w-full relative flex flex-col lg:flex-row items-center lg:items-end justify-between gap-3 lg:gap-4 my-auto">
           
           {/* ----------------------------------------------------------------------- */}
           {/* PEPE THE TRADER: ELASTIC PARALLAX SPRINGS LAYER (LEFT FOREGROUND)       */}
@@ -222,20 +223,27 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
             style={{ 
               x: pepeX, 
               y: pepeY, 
-              rotate: pepeRotate,
-              filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.9))' 
+              rotateZ: pepeRotate
             }}
-            className="relative lg:absolute lg:left-0 lg:bottom-[-10px] z-20 w-56 sm:w-72 lg:w-[380px] xl:w-[420px] shrink-0 pointer-events-none select-none hidden md:block"
+            className="w-[280px] sm:w-[340px] md:w-[380px] lg:w-[420px] xl:w-[450px] shrink-0 z-20 flex items-end justify-center lg:justify-start pointer-events-none select-none lg:-mr-12 xl:-mr-16"
           >
-            {/* Glowing Aura behind Pepe */}
-            <div className="absolute inset-0 bg-gradient-to-t from-amber-500/25 via-amber-400/10 to-transparent blur-2xl rounded-full scale-90 -z-10" />
-            
-            <img 
-              src={terminalPepeImg} 
-              alt="Pepe The Funded Trader at Eklipse Terminal" 
-              className="w-full h-auto object-contain filter contrast-105 brightness-105 drop-shadow-[0_15px_35px_rgba(245,158,11,0.25)]"
-              loading="eager"
-            />
+            <div className="relative w-full">
+              {/* Glowing Aura behind Pepe */}
+              <div className="absolute inset-0 bg-gradient-to-t from-amber-500/25 via-amber-400/10 to-transparent blur-2xl rounded-full scale-90 -z-10" />
+              
+              <img 
+                src={terminalPepeWebp} 
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src !== terminalPepePng) {
+                    target.src = terminalPepePng;
+                  }
+                }}
+                alt="Pepe The Funded Trader at Eklipse Terminal" 
+                className="w-full h-auto max-h-[38vh] sm:max-h-[44vh] lg:max-h-[50vh] object-contain object-bottom filter contrast-105 brightness-105 drop-shadow-[0_20px_45px_rgba(0,0,0,0.95)]"
+                loading="eager"
+              />
+            </div>
           </motion.div>
 
           {/* ----------------------------------------------------------------------- */}
@@ -249,7 +257,7 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
               rotateY: terminalRotateY,
               perspective: 1200 
             }}
-            className="w-full lg:w-[calc(100%-240px)] xl:w-[calc(100%-280px)] lg:ml-auto z-10 rounded-2xl bg-[#090C14]/90 border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.9)] overflow-hidden backdrop-blur-xl"
+            className="flex-1 min-w-0 w-full z-10 rounded-2xl bg-[#090C14]/90 border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.9)] overflow-hidden backdrop-blur-xl"
           >
             
             {/* TERMINAL TOP BAR */}
