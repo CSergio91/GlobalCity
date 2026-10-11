@@ -98,16 +98,20 @@ services:
       GOTRUE_DISABLE_SIGNUP: ${GOTRUE_DISABLE_SIGNUP:-false}
       # Servidor SMTP Oficial Resend (Dominio eklipsefunded.com Verificado)
       GOTRUE_SMTP_HOST: ${GOTRUE_SMTP_HOST:-smtp.resend.com}
-      GOTRUE_SMTP_PORT: ${GOTRUE_SMTP_PORT:-465}
+      GOTRUE_SMTP_PORT: ${GOTRUE_SMTP_PORT:-587}
       GOTRUE_SMTP_USER: ${GOTRUE_SMTP_USER:-resend}
       GOTRUE_SMTP_PASS: ${RESEND_API_KEY}
       GOTRUE_SMTP_ADMIN_EMAIL: ${RESEND_FROM_EMAIL:-soporte@eklipsefunded.com}
       GOTRUE_SMTP_SENDER_NAME: ${RESEND_SENDER_NAME:-Eklipse Funded}
+      GOTRUE_SMTP_MAX_FREQUENCY: ${GOTRUE_SMTP_MAX_FREQUENCY:-5s}
       # Google OAuth Provider (Parametrizado sin hardcodear)
       GOTRUE_EXTERNAL_GOOGLE_ENABLED: ${GOTRUE_EXTERNAL_GOOGLE_ENABLED:-false}
       GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID: ${GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID:-}
       GOTRUE_EXTERNAL_GOOGLE_SECRET: ${GOTRUE_EXTERNAL_GOOGLE_SECRET:-}
       GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI: ${GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI:-}
+      # Plantillas HTML Institucionales de GoTrue (Recovery & Confirmation)
+      GOTRUE_MAILER_TEMPLATES_RECOVERY: http://eklipse-gateway:54321/templates/recovery.html
+      GOTRUE_MAILER_TEMPLATES_CONFIRMATION: http://eklipse-gateway:54321/templates/confirmation.html
     depends_on:
       eklipse-db:
         condition: service_healthy
@@ -130,6 +134,7 @@ services:
       - "${PORT_SUPABASE:-54321}:54321"
     volumes:
       - ./docker/nginx-gateway.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/auth-templates:/etc/nginx/templates:ro
     depends_on:
       - eklipse-api
       - eklipse-auth
@@ -152,6 +157,8 @@ services:
     restart: unless-stopped
     ports:
       - "${PORT_SERVER:-8088}:8080"
+    volumes:
+      - ./server:/app/server:ro
     environment:
       PORT: 8080
       NODE_ENV: production
@@ -159,6 +166,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-eklipse_admin}:${POSTGRES_PASSWORD:-eklipse_secret_pass_local}@eklipse-db:5432/${POSTGRES_DB:-eklipse_funded}
       SUPABASE_URL: http://eklipse-gateway:54321
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MjUwMDAwMDAwMH0.yCCh-b9rqQG1HpSahN4yzA_XAMpk_ygf_LcjtFJQhUk}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-soporte@eklipsefunded.com}
     depends_on:
       eklipse-redis:
         condition: service_healthy
@@ -171,6 +180,30 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - eklipse_net
+
+  # ============================================================================
+  # 5.5. EKLIPSE EMAIL SERVICE (Microservicio Event-Driven de Entrega de Correos)
+  # ============================================================================
+  eklipse-email:
+    build:
+      context: ./email-service
+      dockerfile: Dockerfile
+    container_name: eklipse_email_service
+    restart: unless-stopped
+    ports:
+      - "${PORT_EMAIL_SERVICE:-3005}:3005"
+    environment:
+      PORT: 3005
+      REDIS_URL: redis://eklipse-redis:6379
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-soporte@eklipsefunded.com}
+      TELEGRAM_BOT_URL: ${TELEGRAM_BOT_URL:-https://t.me/EklipseFunded_bot}
+      DASHBOARD_URL: ${GOTRUE_SITE_URL:-https://eklipsefunded.com/dashboard}
+    depends_on:
+      eklipse-redis:
+        condition: service_healthy
     networks:
       - eklipse_net
 

@@ -16,6 +16,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { RouterProvider, useAppRouter } from './context/RouterContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { LoginPage } from './components/auth/LoginPage';
+import { ResetPasswordPage } from './components/auth/ResetPasswordPage';
 import { TraderDashboardApp } from './modules/dashboard/TraderDashboardApp';
 import { InstitutionalCrmApp } from './modules/crm/InstitutionalCrmApp';
 
@@ -26,8 +27,13 @@ function MainAppContent() {
   const { user, isAuthenticated, logout } = useAuth();
 
   const isCrmRoute = currentPath === '/nexus' || currentPath === '/crm' || subdomain === 'nexus';
-  const isDashboardRoute = currentPath === '/dashboard' || subdomain === 'dashboard';
+  const isDashboardRoute = currentPath === '/dashboard' || subdomain === 'dashboard' || subdomain === 'dashapp';
   const isLoginRoute = currentPath === '/login' || currentPath.startsWith('/login?') || currentPath.startsWith('/login/');
+  const isResetPasswordRoute = 
+    currentPath === '/reset-password' || 
+    currentPath.startsWith('/reset-password?') || 
+    currentPath.startsWith('/reset-password#') ||
+    (typeof window !== 'undefined' && window.location.hash.includes('type=recovery'));
   const isTerminalRoute = 
     currentPath === '/terminal' || 
     currentPath === '/operaciones' || 
@@ -70,7 +76,7 @@ function MainAppContent() {
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     };
 
-    if (isTerminalRoute || isLoginRoute || isDashboardRoute || isCrmRoute) {
+    if (isTerminalRoute || isLoginRoute || isDashboardRoute || isCrmRoute || isResetPasswordRoute) {
       navigate('/');
       setTimeout(doScroll, 100);
     } else {
@@ -125,7 +131,13 @@ function MainAppContent() {
     }
     return (
       <TraderDashboardApp 
-        onBackToLanding={() => navigate('/')} 
+        onBackToLanding={() => {
+          if (subdomain === 'dashapp' || subdomain === 'dashboard') {
+            window.location.href = 'https://eklipsefunded.com';
+          } else {
+            navigate('/');
+          }
+        }} 
         onLogout={() => {
           logout();
           navigate('/dashboard');
@@ -138,6 +150,11 @@ function MainAppContent() {
   // 4. If on /login route, render the full-screen LoginPage
   if (isLoginRoute) {
     return <LoginPage />;
+  }
+
+  // 5. If on /reset-password route, render the ResetPasswordPage
+  if (isResetPasswordRoute) {
+    return <ResetPasswordPage />;
   }
 
   // Otherwise, render the Landing Page with the 11-section master architecture

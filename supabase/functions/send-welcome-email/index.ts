@@ -72,7 +72,7 @@ Deno.serve(async (req: Request) => {
           <tr>
             <td style="padding: 0; background-color: #FFFFFF; text-align: center;">
               <img 
-                src="https://eklipsefunded.com/email-banner.webp" 
+                src="https://assets.eklipsefunded.com/emails/welcome-to-eklipse-funded.webp" 
                 alt="Eklipse Funded" 
                 width="600" 
                 style="width: 100%; max-width: 600px; height: auto; display: block; border-top-left-radius: 20px; border-top-right-radius: 20px;"

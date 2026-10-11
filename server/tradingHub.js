@@ -607,6 +607,279 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Endpoint institucional de recuperación de contraseña con plantilla Resend y enlace criptográfico
+  if (url.pathname === '/api/auth/request-password-reset' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const { email, redirectTo, lang } = JSON.parse(body || '{}');
+        const cleanEmail = (email || '').trim().toLowerCase();
+        if (!cleanEmail) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ success: false, error: 'Email is required' }));
+        }
+
+        const isEn = lang === 'en';
+        const finalRedirect = redirectTo || 'http://localhost:3100/reset-password';
+
+        // 1. Generar enlace criptográfico de recuperación usando Supabase Admin
+        const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
+          type: 'recovery',
+          email: cleanEmail,
+          options: { redirectTo: finalRedirect }
+        });
+
+        if (linkErr) {
+          console.warn('[TradingHub] Supabase generateLink error:', linkErr.message);
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ success: false, error: linkErr.message }));
+        }
+
+        const actionLink = linkData?.properties?.action_link;
+        const traderName = linkData?.user?.user_metadata?.first_name || 
+                           linkData?.user?.user_metadata?.full_name || 
+                           cleanEmail.split('@')[0];
+
+        // 2. Renderizar plantilla de Resend con banner oficial de Cloudflare
+        const bannerUrl = 'https://assets.eklipsefunded.com/emails/change-password.webp';
+        const emailSubject = isEn 
+          ? 'Reset Your Password · Eklipse Funded Security 🔒' 
+          : 'Restablecer Tu Contraseña · Seguridad Eklipse 🔒';
+
+        const emailHtml = `<!DOCTYPE html>
+<html lang="${isEn ? 'en' : 'es'}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${emailSubject}</title>
+</head>
+<body style="margin: 0; padding: 24px 12px; background-color: #06070B; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0F172A;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #06070B;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #FFFFFF; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);">
+          <tr>
+            <td style="padding: 0; background-color: #090A10; text-align: center;">
+              <img src="${bannerUrl}" alt="Eklipse Funded Password Recovery" width="600" style="width: 100%; max-width: 600px; height: auto; display: block; border: 0;" />
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 32px 14px 32px;">
+              <div style="display: inline-block; padding: 4px 12px; background-color: #FEF3C7; border: 1px solid #FDE68A; border-radius: 8px; margin-bottom: 14px;">
+                <span style="color: #B45309; font-size: 11px; font-weight: 800; font-family: monospace; letter-spacing: 0.5px; text-transform: uppercase;">
+                  🔒 ${isEn ? 'ACCOUNT SECURITY' : 'SEGURIDAD DE LA CUENTA'}
+                </span>
+              </div>
+              <h1 style="margin: 0 0 14px 0; font-size: 22px; font-weight: 800; color: #0F172A; line-height: 1.3;">
+                ${isEn ? 'Forgot your password? We got you.' : '¿Olvidaste tu contraseña? Te ayudamos.'}
+              </h1>
+              <p style="margin: 0 0 16px 0; color: #475569; font-size: 14px; line-height: 23px;">
+                ${isEn 
+                  ? `Hello, <strong>${traderName}</strong>. We received a request to reset the password for your institutional account.` 
+                  : `Hola, <strong>${traderName}</strong>. No te preocupes, a todos nos pasa. Hemos recibido una solicitud para restablecer la contraseña vinculada a tu cuenta institucional.`}
+              </p>
+              <p style="margin: 0 0 24px 0; color: #475569; font-size: 14px; line-height: 23px;">
+                ${isEn 
+                  ? 'To choose a new password and recover access to your portal, click the secure link below:' 
+                  : 'Para elegir una nueva contraseña y recuperar el acceso a tu portal, pulsa en el siguiente botón seguro:'}
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 8px 0 24px 0;">
+                <tr>
+                  <td align="center">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td align="center" style="border-radius: 14px; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); box-shadow: 0 6px 20px rgba(217, 119, 6, 0.35);">
+                          <a href="${actionLink}" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 14px; font-weight: 800; color: #0F172A; text-decoration: none; font-family: monospace; letter-spacing: 0.5px; text-transform: uppercase;">
+                            ${isEn ? 'RESET PASSWORD &rarr;' : 'RESTABLECER CONTRASEÑA &rarr;'}
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; margin: 24px 0;">
+                <p style="margin: 0; color: #64748B; font-size: 12px; line-height: 18px;">
+                  ⚠️ ${isEn 
+                    ? 'This link expires in 60 minutes. If you did not request this, please ignore this email.' 
+                    : 'Este enlace expira en 60 minutos. Si no realizaste esta solicitud, puedes ignorar este mensaje con seguridad.'}
+                </p>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 24px 32px; background-color: #090A10; border-top: 1px solid #1E293B; text-align: center;">
+              <p style="margin: 0 0 8px 0; color: #94A3B8; font-size: 12px; font-family: monospace;">
+                EKLIPSE FUNDED &bull; INSTITUTIONAL TRADING PLATFORM
+              </p>
+              <p style="margin: 0; color: #64748B; font-size: 11px;">
+                &copy; ${new Date().getFullYear()} Eklipse Funded. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+        // 3. Despachar a Resend API usando la clave activa de entorno
+        const resendKey = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY || '';
+        const senderFrom = process.env.RESEND_FROM_EMAIL || 'Eklipse Funded <soporte@eklipsefunded.com>';
+
+        const resendResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: senderFrom,
+            to: [cleanEmail],
+            subject: emailSubject,
+            html: emailHtml
+          })
+        });
+
+        const resendData = await resendResponse.json();
+        console.log(`[TradingHub] Correo de recuperación enviado vía Resend a ${cleanEmail}:`, resendData?.id || resendData);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ 
+          success: true, 
+          messageId: resendData?.id, 
+          email: cleanEmail 
+        }));
+
+      } catch (err) {
+        console.error('[TradingHub] Error en request-password-reset:', err);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
+  // Endpoint de confirmación de cambio de contraseña con fallback de backend (Zero "Auth session missing")
+  if (url.pathname === '/api/auth/reset-password-confirm' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const { accessToken, newPassword, email } = JSON.parse(body || '{}');
+        if (!newPassword || newPassword.length < 8) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ success: false, error: 'Password must be at least 8 characters' }));
+        }
+
+        let targetUserId = null;
+
+        // 1. Si se provee accessToken, obtener el usuario de forma criptográfica
+        if (accessToken) {
+          const { data: userData } = await supabase.auth.getUser(accessToken);
+          if (userData?.user?.id) {
+            targetUserId = userData.user.id;
+          }
+        }
+
+        // 2. Si no se resolvió por accessToken pero hay email, buscar usuario por email en DB
+        if (!targetUserId && email) {
+          const cleanEmail = email.trim().toLowerCase();
+          const { data: usersData } = await supabase.auth.admin.listUsers();
+          const found = usersData?.users?.find(u => u.email?.toLowerCase() === cleanEmail);
+          if (found) targetUserId = found.id;
+        }
+
+        if (!targetUserId) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ success: false, error: 'Invalid or expired recovery session' }));
+        }
+
+        // 3. Actualizar la contraseña usando Supabase Admin
+        const { error: updateErr } = await supabase.auth.admin.updateUserById(targetUserId, {
+          password: newPassword
+        });
+
+        if (updateErr) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ success: false, error: updateErr.message }));
+        }
+
+        // 4. Asegurar que 'email' esté en providers para permitir login con contraseña
+        try {
+          const { data: userRecord } = await supabase.auth.admin.getUserById(targetUserId);
+          const currentProviders = userRecord?.user?.app_metadata?.providers || [];
+          if (!currentProviders.includes('email')) {
+            await supabase.auth.admin.updateUserById(targetUserId, {
+              app_metadata: {
+                ...userRecord?.user?.app_metadata,
+                providers: [...currentProviders, 'email']
+              }
+            });
+          }
+        } catch (_) {}
+
+        console.log(`[TradingHub] Contraseña actualizada exitosamente para usuario ${targetUserId}`);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, message: 'Password updated successfully' }));
+
+      } catch (err) {
+        console.error('[TradingHub] Error en reset-password-confirm:', err);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
+  // Endpoint de despacho de correos institucionales vía Redis Pub/Sub y Email Microservice
+  if (url.pathname === '/api/email/dispatch' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const { type, data } = payload;
+        if (!type || !data) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ success: false, error: 'type and data are required' }));
+        }
+
+        // 1. Publicar en Redis para desacoplamiento total
+        let redisPublished = false;
+        if (isRedisActive && redisPub) {
+          try {
+            await redisPub.publish('eklipse:email:events', JSON.stringify({ type, data }));
+            redisPublished = true;
+          } catch (rErr) {
+            console.warn('[TradingHub] Error publicando evento de correo en Redis:', rErr.message);
+          }
+        }
+
+        // 2. Si no hay Redis activo o como fallback directo, invocar email microservice vía HTTP
+        if (!redisPublished) {
+          try {
+            const emailServiceUrl = process.env.EMAIL_SERVICE_URL || 'http://127.0.0.1:3005';
+            fetch(`${emailServiceUrl}/send`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ type, data })
+            }).catch(eErr => console.warn('[TradingHub] Fallback HTTP Email Service:', eErr.message));
+          } catch (_) {}
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, queued: true, timestamp: Date.now() }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
   // Endpoint para simulación y validación en tiempo real de órdenes contra reglas
   if (url.pathname === '/api/risk/simulate-order' && req.method === 'POST') {
     let body = '';

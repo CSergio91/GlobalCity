@@ -1,39 +1,50 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
+export type AppSubdomain = 'dashapp' | 'dashboard' | 'nexus' | null;
+
 interface RouterContextType {
   currentPath: string;
-  subdomain: 'dashboard' | 'nexus' | null;
+  subdomain: AppSubdomain;
   navigate: (to: string) => void;
 }
 
 const RouterContext = createContext<RouterContextType | undefined>(undefined);
 
+function detectSubdomain(): AppSubdomain {
+  if (typeof window === 'undefined') return null;
+  const host = window.location.hostname.toLowerCase();
+  if (host.startsWith('dashapp.')) return 'dashapp';
+  if (host.startsWith('dashboard.')) return 'dashboard';
+  if (host.startsWith('nexus.')) return 'nexus';
+
+  // Soporte de simulación para entorno local/túnel: ?subdomain=dashapp
+  const params = new URLSearchParams(window.location.search);
+  const paramSub = params.get('subdomain');
+  if (paramSub === 'dashapp' || paramSub === 'dashboard' || paramSub === 'nexus') {
+    return paramSub;
+  }
+  return null;
+}
+
 export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [subdomain, setSubdomain] = useState<'dashboard' | 'nexus' | null>(() => {
-    if (typeof window === 'undefined') return null;
-    const host = window.location.hostname.toLowerCase();
-    if (host.startsWith('dashboard.')) return 'dashboard';
-    if (host.startsWith('nexus.')) return 'nexus';
-    return null;
-  });
+  const [subdomain, setSubdomain] = useState<AppSubdomain>(() => detectSubdomain());
 
   const [currentPath, setCurrentPath] = useState<string>(() => {
     if (typeof window === 'undefined') return '/';
     const path = window.location.pathname || '/';
-    // If on a subdomain root, map to the corresponding path
-    const host = window.location.hostname.toLowerCase();
-    if (host.startsWith('dashboard.') && path === '/') return '/dashboard';
-    if (host.startsWith('nexus.') && path === '/') return '/nexus';
+    const sub = detectSubdomain();
+    if ((sub === 'dashapp' || sub === 'dashboard') && path === '/') return '/dashboard';
+    if (sub === 'nexus' && path === '/') return '/nexus';
     return path;
   });
 
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname || '/';
-      const host = window.location.hostname.toLowerCase();
-      if (host.startsWith('dashboard.') && path === '/') {
+      const sub = detectSubdomain();
+      if ((sub === 'dashapp' || sub === 'dashboard') && path === '/') {
         setCurrentPath('/dashboard');
-      } else if (host.startsWith('nexus.') && path === '/') {
+      } else if (sub === 'nexus' && path === '/') {
         setCurrentPath('/nexus');
       } else {
         setCurrentPath(path);
@@ -45,6 +56,18 @@ export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   const navigate = (to: string) => {
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname.toLowerCase();
+      const isProductionMainDomain = host === 'eklipsefunded.com' || host === 'www.eklipsefunded.com';
+
+      // En producción, si estamos en el dominio principal y queremos ir al dashboard/login, saltar al subdominio dashapp
+      if (isProductionMainDomain && (to === '/dashboard' || to === '/login')) {
+        const targetPath = to === '/dashboard' ? '/' : '/login';
+        window.location.href = `https://dashapp.eklipsefunded.com${targetPath}`;
+        return;
+      }
+    }
+
     if (to !== currentPath) {
       window.history.pushState({}, '', to);
       setCurrentPath(to);

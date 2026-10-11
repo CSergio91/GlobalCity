@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Eklipse Funded — Supabase Gateway Configuration (Local Docker Gateway en :54321 o Supabase Cloud)
-const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL || 'http://localhost:54321';
-const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjIwMDAwMDAwMDB9.J4Nc54mpNrnEUUNHnVZfNUyTbnX_ss1OzKsUnJRMvkw';
+// Eklipse Funded — Supabase Gateway Configuration (Local Docker Gateway o Supabase Cloud)
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'http://localhost:54321';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl && 

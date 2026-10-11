@@ -264,7 +264,7 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
 
   // Cargar operaciones reales de la cuenta seleccionada
   useEffect(() => {
-    if (!activeAccount?.id) {
+    if (!activeAccount?.id || activeAccount.id.startsWith('local_')) {
       setRecentTrades([]);
       return;
     }

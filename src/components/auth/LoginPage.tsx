@@ -273,6 +273,12 @@ export const LoginPage: React.FC = () => {
   const [isGoogleConnecting, setIsGoogleConnecting] = useState(false);
   const [googleSuccessUser, setGoogleSuccessUser] = useState<UserProfile | null>(null);
 
+  // Forgot Password Dedicated View State
+  const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [isForgotLoading, setIsForgotLoading] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
+
   // Cloudflare Turnstile Verification State
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaVerified, setCaptchaVerified] = useState(false);
@@ -493,21 +499,22 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleForgotPassword = (e: React.MouseEvent) => {
+  const handleOpenForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault();
     setError(null);
     setResetNotice(null);
-    const cleanEmail = email.trim();
-    if (!cleanEmail) {
-      setError(
-        isEn 
-          ? 'Please enter your email above to receive password recovery instructions' 
-          : 'Por favor escribe tu correo arriba para enviarte las instrucciones de recuperación'
-      );
-      return;
-    }
+    setForgotSuccess(false);
+    setForgotEmail(email.trim());
+    setIsForgotPasswordMode(true);
+  };
+
+  const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setResetNotice(null);
+    const cleanEmail = forgotEmail.trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(cleanEmail)) {
+    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
       setError(
         isEn 
           ? 'Please enter a valid institutional email format' 
@@ -515,11 +522,84 @@ export const LoginPage: React.FC = () => {
       );
       return;
     }
-    setResetNotice(
-      isEn 
-        ? `Password recovery instructions sent to ${cleanEmail}. Check your inbox!` 
-        : `Instrucciones de recuperación enviadas a ${cleanEmail}. ¡Revisa tu bandeja de entrada!`
-    );
+
+    if (detectMaliciousCode(cleanEmail)) {
+      setError(
+        isEn
+          ? 'Security Shield: Malicious characters detected in email.'
+          : 'Alerta de Seguridad: Caracteres maliciosos detectados.'
+      );
+      return;
+    }
+
+    setIsForgotLoading(true);
+    try {
+      const redirectUrl = typeof window !== 'undefined' 
+        ? `${window.location.origin}/reset-password`
+        : 'https://eklipsefunded.com/reset-password';
+        
+      let dispatchedViaResend = false;
+      const backendUrl = (import.meta as any).env?.VITE_WS_GATEWAY_URL?.replace('ws://', 'http://').replace('wss://', 'https://') || 'http://localhost:8088';
+
+      try {
+        const response = await fetch(`${backendUrl}/api/auth/request-password-reset`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: cleanEmail,
+            redirectTo: redirectUrl,
+            lang: isEn ? 'en' : 'es'
+          })
+        });
+
+        if (response.ok) {
+          const resData = await response.json();
+          if (resData.success) {
+            dispatchedViaResend = true;
+          }
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          if (errData?.error) {
+            throw new Error(errData.error);
+          }
+        }
+      } catch (fetchErr: any) {
+        if (fetchErr.message && !fetchErr.message.includes('Failed to fetch')) {
+          throw fetchErr;
+        }
+        console.warn('[LoginPage] Backend offline, fallback to direct Supabase:', fetchErr);
+      }
+
+      // Fallback a GoTrue nativo si el servidor no estaba en línea
+      if (!dispatchedViaResend) {
+        const { error: resetErr } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+          redirectTo: redirectUrl
+        });
+        if (resetErr) throw resetErr;
+      }
+
+      setForgotSuccess(true);
+      setResetNotice(
+        isEn 
+          ? `Password recovery instructions sent to ${cleanEmail}. Check your inbox!` 
+          : `Instrucciones de recuperación enviadas a ${cleanEmail}. ¡Revisa tu bandeja de entrada o spam!`
+      );
+    } catch (err: any) {
+      const rawMsg = (err?.message || '').toLowerCase();
+      if (rawMsg.includes('rate limit') || rawMsg.includes('security purposes') || rawMsg.includes('over_email_send_rate_limit')) {
+        setError(
+          isEn
+            ? 'For security reasons, please wait a few moments before requesting another recovery email.'
+            : 'Por motivos de seguridad, por favor espera unos segundos antes de solicitar otro correo de recuperación.'
+        );
+      } else {
+        setError(
+          err?.message || (isEn ? 'Error sending recovery instructions' : 'Error al enviar instrucciones de recuperación')
+        );
+      }
+    } finally {
+      setIsForgotLoading(false);
+    }
   };
 
   // ==========================================================================
@@ -1218,235 +1298,335 @@ export const LoginPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Título de Sign In y Demo Widget (Sin candadito) */}
-                    <div className="flex items-center justify-between mb-3.5">
-                      <div className="text-xs font-mono font-bold text-white uppercase tracking-wider">
-                        <span>{isEn ? 'Sign In' : 'Iniciar Sesión'}</span>
-                      </div>
-
-                      {/* 1-Click Demo Access Widget */}
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-black/25 backdrop-blur-md border border-amber-400/30 shrink-0 shadow-sm text-[10px] font-mono text-slate-300">
-                        <span className="text-white font-bold">Demo:</span> 123456
-                        <button
-                          type="button"
-                          onClick={handleDemoAccess}
-                          disabled={isLoading}
-                          className="ml-0.5 px-2 py-0.5 rounded-lg text-[9.5px] font-mono font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 active:scale-95 transition-all shadow-md cursor-pointer disabled:opacity-50"
-                        >
-                          {isEn ? '1-Click' : '1-Clic'}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Feedback de Recuperación de Contraseña */}
-                    <AnimatePresence>
-                      {resetNotice && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0, y: -6 }}
-                          animate={{ opacity: 1, height: 'auto', y: 0 }}
-                          exit={{ opacity: 0, height: 0, y: -6 }}
-                          transition={{ duration: 0.3 }}
-                          className="overflow-hidden mb-3"
-                        >
-                          <div className="p-3 rounded-xl border border-emerald-500/40 bg-emerald-950/70 backdrop-blur-md text-emerald-300 text-xs flex items-center gap-2 shadow-lg font-mono text-[10.5px]">
-                            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
-                            <span>{resetNotice}</span>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Security Alert Toast */}
-                    <AnimatePresence>
-                      {error && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0, y: -6 }}
-                          animate={{ opacity: 1, height: 'auto', y: 0 }}
-                          exit={{ opacity: 0, height: 0, y: -6 }}
-                          transition={{ duration: 0.3, ease: 'easeOut' }}
-                          className="overflow-hidden mb-3"
-                        >
-                          <div className="p-3 rounded-xl border border-rose-500/40 bg-rose-950/70 backdrop-blur-md text-rose-300 text-xs flex items-center gap-2 shadow-lg">
-                            <ShieldAlert className="w-4 h-4 shrink-0 text-rose-400 animate-pulse" />
-                            <span className="leading-tight font-mono text-[11px]">{error}</span>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Formulario de Login Progresivo con Campos Ergonómicos y Redondeados */}
-                    <form onSubmit={handleLoginSubmit} className="space-y-3">
-                      
-                      {/* PASO 1: Email Address */}
-                      <div>
-                        <label className="block text-xs font-mono font-medium text-slate-200 mb-1.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                          {isEn ? 'Email Address' : 'Correo Electrónico'}
-                        </label>
-                        <div className="relative">
-                          <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                          <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder={isEn ? 'trader@domain.com' : 'trader@correo.com'}
-                            maxLength={120}
-                            required
-                            className="w-full h-11 sm:h-12 pl-10 pr-10 py-2.5 rounded-xl sm:rounded-2xl bg-black/25 backdrop-blur-md border border-white/20 text-white placeholder-slate-400 text-xs sm:text-[13px] font-mono focus:outline-none focus:border-amber-400 focus:bg-black/45 focus:ring-2 focus:ring-amber-400/40 transition-all shadow-md"
-                          />
-                          {isEmailValid && (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400 absolute right-3.5 top-1/2 -translate-y-1/2 animate-in zoom-in-75 duration-300" />
-                          )}
+                    {/* Sub-vista Dedicada: ¿Olvidaste tu Contraseña? */}
+                    {isForgotPasswordMode ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsForgotPasswordMode(false);
+                              setError(null);
+                              setResetNotice(null);
+                            }}
+                            className="flex items-center gap-1.5 text-xs font-mono text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                            <span>{isEn ? 'Back to Sign In' : 'Volver al Inicio'}</span>
+                          </button>
                         </div>
-                      </div>
 
-                      {/* PASO 2: Contraseña con enlace a "¿Olvidaste tu contraseña?" */}
-                      <AnimatePresence initial={false}>
-                        {isEmailValid && (
-                          <motion.div
-                            key="login-password-step"
-                            initial={{ opacity: 0, height: 0, y: -6 }}
-                            animate={{ opacity: 1, height: 'auto', y: 0 }}
-                            exit={{ opacity: 0, height: 0, y: -6 }}
-                            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                            className="overflow-hidden"
-                          >
-                            <div className="pt-0.5">
-                              <div className="flex items-center justify-between mb-1.5">
-                                <label className="block text-xs font-mono font-medium text-slate-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                                  {isEn ? 'Password' : 'Contraseña'}
-                                </label>
-                                <button
-                                  type="button"
-                                  onClick={handleForgotPassword}
-                                  className="text-[10.5px] font-mono text-amber-400/90 hover:text-amber-300 hover:underline transition-all cursor-pointer"
-                                >
-                                  {isEn ? 'Forgot password?' : '¿Olvidaste tu contraseña?'}
-                                </button>
-                              </div>
-                              <div className="relative">
-                                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                                <input
-                                  type={showPassword ? 'text' : 'password'}
-                                  value={password}
-                                  onChange={(e) => setPassword(e.target.value)}
-                                  placeholder="••••••••••••"
-                                  maxLength={100}
-                                  required
-                                  autoComplete="current-password"
-                                  className="w-full h-11 sm:h-12 pl-10 pr-10 py-2.5 rounded-xl sm:rounded-2xl bg-black/25 backdrop-blur-md border border-white/20 text-white placeholder-slate-400 text-xs sm:text-[13px] font-mono focus:outline-none focus:border-amber-400 focus:bg-black/45 focus:ring-2 focus:ring-amber-400/40 transition-all shadow-md"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => setShowPassword(!showPassword)}
-                                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors cursor-pointer"
-                                >
-                                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                </button>
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                        <div className="space-y-1">
+                          <h2 className="text-sm sm:text-base font-bold text-white font-mono flex items-center gap-2">
+                            <Lock className="w-4 h-4 text-amber-400" />
+                            <span>{isEn ? 'Reset Your Password' : '¿Olvidaste tu contraseña?'}</span>
+                          </h2>
+                          <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                            {isEn
+                              ? "Don't worry, it happens to all of us! Enter your institutional email address and we'll send you a secure link to reset it."
+                              : "¡No te preocupes, a todos nos pasa! Escribe tu correo institucional y te enviaremos un enlace seguro para restablecerla al instante."}
+                          </p>
+                        </div>
 
-                      {/* PASO 3: Cloudflare Turnstile Verification */}
-                      <AnimatePresence initial={false}>
-                        {isEmailValid && isPasswordStarted && (
-                          <motion.div
-                            key="login-captcha-step"
-                            initial={{ opacity: 0, height: 0, y: -6 }}
-                            animate={{ opacity: 1, height: 'auto', y: 0 }}
-                            exit={{ opacity: 0, height: 0, y: -6 }}
-                            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                            className="overflow-hidden"
-                          >
-                            <div className="pt-0.5">
-                              <CloudflareTurnstile
-                                action="login"
-                                theme="dark"
-                                onSuccess={(token) => {
-                                  setCaptchaToken(token);
-                                  setCaptchaVerified(true);
-                                  setError(null);
-                                }}
-                                onExpire={() => {
-                                  setCaptchaToken(null);
-                                  setCaptchaVerified(false);
-                                }}
-                                onError={() => {
-                                  setCaptchaToken(null);
-                                  setCaptchaVerified(false);
-                                }}
+                        {/* Feedback de Recuperación de Contraseña */}
+                        <AnimatePresence>
+                          {resetNotice && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0, y: -6 }}
+                              animate={{ opacity: 1, height: 'auto', y: 0 }}
+                              exit={{ opacity: 0, height: 0, y: -6 }}
+                              transition={{ duration: 0.3 }}
+                              className="overflow-hidden mb-1"
+                            >
+                              <div className="p-3 rounded-xl border border-emerald-500/40 bg-emerald-950/70 backdrop-blur-md text-emerald-300 text-xs flex items-center gap-2 shadow-lg font-mono text-[10.5px]">
+                                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                                <span>{resetNotice}</span>
+                              </div>
+                            </motion.div>
+                          )}
+                          {error && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0, y: -6 }}
+                              animate={{ opacity: 1, height: 'auto', y: 0 }}
+                              exit={{ opacity: 0, height: 0, y: -6 }}
+                              transition={{ duration: 0.3 }}
+                              className="overflow-hidden mb-1"
+                            >
+                              <div className="p-3 rounded-xl border border-rose-500/40 bg-rose-950/70 backdrop-blur-md text-rose-300 text-xs flex items-center gap-2 shadow-lg">
+                                <ShieldAlert className="w-4 h-4 shrink-0 text-rose-400" />
+                                <span className="leading-tight font-mono text-[11px]">{error}</span>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        <form onSubmit={handleForgotPasswordSubmit} className="space-y-3 pt-1">
+                          <div>
+                            <label className="block text-xs font-mono font-medium text-slate-200 mb-1.5">
+                              {isEn ? 'Email Address' : 'Correo Electrónico'}
+                            </label>
+                            <div className="relative">
+                              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                              <input
+                                type="email"
+                                value={forgotEmail}
+                                onChange={(e) => setForgotEmail(e.target.value)}
+                                placeholder={isEn ? 'trader@domain.com' : 'trader@correo.com'}
+                                maxLength={120}
+                                required
+                                className="w-full h-11 sm:h-12 pl-10 pr-4 rounded-xl sm:rounded-2xl bg-black/25 backdrop-blur-md border border-white/20 text-white placeholder-slate-400 text-xs sm:text-[13px] font-mono focus:outline-none focus:border-amber-400 focus:bg-black/45 focus:ring-2 focus:ring-amber-400/40 transition-all shadow-md"
                               />
                             </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                          </div>
 
-                      {/* PASO 4: Botón Entrar al Dashboard */}
-                      <AnimatePresence initial={false}>
-                        {isEmailValid && isPasswordStarted && captchaVerified && (
-                          <motion.div
-                            key="login-submit-step"
-                            initial={{ opacity: 0, height: 0, y: -6 }}
-                            animate={{ opacity: 1, height: 'auto', y: 0 }}
-                            exit={{ opacity: 0, height: 0, y: -6 }}
-                            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                            className="overflow-hidden"
+                          <button
+                            type="submit"
+                            disabled={isForgotLoading || !forgotEmail.trim()}
+                            className="w-full h-11 sm:h-12 px-4 rounded-xl sm:rounded-2xl font-mono font-bold text-xs sm:text-sm tracking-wider uppercase text-slate-950 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:brightness-110 active:scale-[0.99] transition-all shadow-[0_0_20px_rgba(245,158,11,0.45)] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
                           >
-                            <div className="pt-0.5">
-                              <button
-                                type="submit"
-                                disabled={isLoading}
-                                className="w-full h-11 sm:h-12 px-4 rounded-xl sm:rounded-2xl font-mono font-bold text-xs sm:text-sm tracking-wider uppercase text-slate-950 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:brightness-110 active:scale-[0.99] transition-all shadow-[0_0_20px_rgba(245,158,11,0.45)] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                              >
-                                {isLoading ? (
-                                  <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                                ) : (
-                                  <>
-                                    <span>{isEn ? 'Enter Dashboard' : 'Entrar al Dashboard'}</span>
-                                    <ArrowRight className="w-4 h-4" />
-                                  </>
-                                )}
-                              </button>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                      {/* División y Botón de Google */}
-                      <div className="pt-2 border-t border-white/15 flex items-center justify-center">
-                        <button
-                          type="button"
-                          onClick={handleGoogleLogin}
-                          disabled={isLoading}
-                          className={`w-full h-11 sm:h-12 px-4 rounded-xl sm:rounded-2xl border transition-all cursor-pointer font-mono text-xs sm:text-[13px] font-semibold flex items-center justify-center gap-2.5 shadow-md active:scale-[0.99] disabled:opacity-50 ${
-                            isGoogleConnecting
-                              ? 'border-amber-400/70 bg-amber-500/15 text-amber-200 shadow-[0_0_25px_rgba(245,158,11,0.3)] animate-pulse'
-                              : 'border-white/20 bg-black/25 hover:bg-black/45 hover:border-amber-400/40 text-white'
-                          }`}
-                        >
-                          {isGoogleConnecting ? (
-                            <>
-                              <span className="w-3.5 h-3.5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin shrink-0" />
-                              <span className="text-amber-300 font-bold tracking-wide">
-                                {isEn ? 'Connecting in corner...' : 'Conectando en la esquina...'}
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z" />
-                                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.36 24 12 24z" />
-                                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.04 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
-                                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
-                              </svg>
-                              <span>{isEn ? 'Continue with Google' : 'Continuar con Google'}</span>
-                            </>
-                          )}
-                        </button>
+                            {isForgotLoading ? (
+                              <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <>
+                                <span>{isEn ? 'Send Reset Link' : 'Enviar Enlace de Recuperación'}</span>
+                                <ArrowRight className="w-4 h-4" />
+                              </>
+                            )}
+                          </button>
+                        </form>
                       </div>
+                    ) : (
+                      <>
+                        {/* Título de Sign In y Demo Widget (Sin candadito) */}
+                        <div className="flex items-center justify-between mb-3.5">
+                          <div className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+                            <span>{isEn ? 'Sign In' : 'Iniciar Sesión'}</span>
+                          </div>
 
-                    </form>
+                          {/* 1-Click Demo Access Widget */}
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-black/25 backdrop-blur-md border border-amber-400/30 shrink-0 shadow-sm text-[10px] font-mono text-slate-300">
+                            <span className="text-white font-bold">Demo:</span> 123456
+                            <button
+                              type="button"
+                              onClick={handleDemoAccess}
+                              disabled={isLoading}
+                              className="ml-0.5 px-2 py-0.5 rounded-lg text-[9.5px] font-mono font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 active:scale-95 transition-all shadow-md cursor-pointer disabled:opacity-50"
+                            >
+                              {isEn ? '1-Click' : '1-Clic'}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Feedback de Recuperación de Contraseña */}
+                        <AnimatePresence>
+                          {resetNotice && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0, y: -6 }}
+                              animate={{ opacity: 1, height: 'auto', y: 0 }}
+                              exit={{ opacity: 0, height: 0, y: -6 }}
+                              transition={{ duration: 0.3 }}
+                              className="overflow-hidden mb-3"
+                            >
+                              <div className="p-3 rounded-xl border border-emerald-500/40 bg-emerald-950/70 backdrop-blur-md text-emerald-300 text-xs flex items-center gap-2 shadow-lg font-mono text-[10.5px]">
+                                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                                <span>{resetNotice}</span>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        {/* Security Alert Toast */}
+                        <AnimatePresence>
+                          {error && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0, y: -6 }}
+                              animate={{ opacity: 1, height: 'auto', y: 0 }}
+                              exit={{ opacity: 0, height: 0, y: -6 }}
+                              transition={{ duration: 0.3, ease: 'easeOut' }}
+                              className="overflow-hidden mb-3"
+                            >
+                              <div className="p-3 rounded-xl border border-rose-500/40 bg-rose-950/70 backdrop-blur-md text-rose-300 text-xs flex items-center gap-2 shadow-lg">
+                                <ShieldAlert className="w-4 h-4 shrink-0 text-rose-400 animate-pulse" />
+                                <span className="leading-tight font-mono text-[11px]">{error}</span>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        {/* Formulario de Login Progresivo con Campos Ergonómicos y Redondeados */}
+                        <form onSubmit={handleLoginSubmit} className="space-y-3">
+                          
+                          {/* PASO 1: Email Address */}
+                          <div>
+                            <label className="block text-xs font-mono font-medium text-slate-200 mb-1.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                              {isEn ? 'Email Address' : 'Correo Electrónico'}
+                            </label>
+                            <div className="relative">
+                              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                              <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder={isEn ? 'trader@domain.com' : 'trader@correo.com'}
+                                maxLength={120}
+                                required
+                                className="w-full h-11 sm:h-12 pl-10 pr-10 py-2.5 rounded-xl sm:rounded-2xl bg-black/25 backdrop-blur-md border border-white/20 text-white placeholder-slate-400 text-xs sm:text-[13px] font-mono focus:outline-none focus:border-amber-400 focus:bg-black/45 focus:ring-2 focus:ring-amber-400/40 transition-all shadow-md"
+                              />
+                              {isEmailValid && (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-400 absolute right-3.5 top-1/2 -translate-y-1/2 animate-in zoom-in-75 duration-300" />
+                              )}
+                            </div>
+                          </div>
+
+                          {/* PASO 2: Contraseña con enlace a "¿Olvidaste tu contraseña?" */}
+                          <AnimatePresence initial={false}>
+                            {isEmailValid && (
+                              <motion.div
+                                key="login-password-step"
+                                initial={{ opacity: 0, height: 0, y: -6 }}
+                                animate={{ opacity: 1, height: 'auto', y: 0 }}
+                                exit={{ opacity: 0, height: 0, y: -6 }}
+                                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                                className="overflow-hidden"
+                              >
+                                <div className="pt-0.5">
+                                  <div className="flex items-center justify-between mb-1.5">
+                                    <label className="block text-xs font-mono font-medium text-slate-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                                      {isEn ? 'Password' : 'Contraseña'}
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={handleOpenForgotPassword}
+                                      className="text-[10.5px] font-mono text-amber-400/90 hover:text-amber-300 hover:underline transition-all cursor-pointer"
+                                    >
+                                      {isEn ? 'Forgot password?' : '¿Olvidaste tu contraseña?'}
+                                    </button>
+                                  </div>
+                                  <div className="relative">
+                                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                                    <input
+                                      type={showPassword ? 'text' : 'password'}
+                                      value={password}
+                                      onChange={(e) => setPassword(e.target.value)}
+                                      placeholder="••••••••••••"
+                                      maxLength={100}
+                                      required
+                                      autoComplete="current-password"
+                                      className="w-full h-11 sm:h-12 pl-10 pr-10 py-2.5 rounded-xl sm:rounded-2xl bg-black/25 backdrop-blur-md border border-white/20 text-white placeholder-slate-400 text-xs sm:text-[13px] font-mono focus:outline-none focus:border-amber-400 focus:bg-black/45 focus:ring-2 focus:ring-amber-400/40 transition-all shadow-md"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowPassword(!showPassword)}
+                                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                                    >
+                                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          {/* PASO 3: Cloudflare Turnstile Verification */}
+                          <AnimatePresence initial={false}>
+                            {isEmailValid && isPasswordStarted && (
+                              <motion.div
+                                key="login-captcha-step"
+                                initial={{ opacity: 0, height: 0, y: -6 }}
+                                animate={{ opacity: 1, height: 'auto', y: 0 }}
+                                exit={{ opacity: 0, height: 0, y: -6 }}
+                                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                                className="overflow-hidden"
+                              >
+                                <div className="pt-0.5">
+                                  <CloudflareTurnstile
+                                    action="login"
+                                    theme="dark"
+                                    onSuccess={(token) => {
+                                      setCaptchaToken(token);
+                                      setCaptchaVerified(true);
+                                      setError(null);
+                                    }}
+                                    onExpire={() => {
+                                      setCaptchaToken(null);
+                                      setCaptchaVerified(false);
+                                    }}
+                                    onError={() => {
+                                      setCaptchaToken(null);
+                                      setCaptchaVerified(false);
+                                    }}
+                                  />
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          {/* PASO 4: Botón Entrar al Dashboard */}
+                          <AnimatePresence initial={false}>
+                            {isEmailValid && isPasswordStarted && captchaVerified && (
+                              <motion.div
+                                key="login-submit-step"
+                                initial={{ opacity: 0, height: 0, y: -6 }}
+                                animate={{ opacity: 1, height: 'auto', y: 0 }}
+                                exit={{ opacity: 0, height: 0, y: -6 }}
+                                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                                className="overflow-hidden"
+                              >
+                                <div className="pt-0.5">
+                                  <button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="w-full h-11 sm:h-12 px-4 rounded-xl sm:rounded-2xl font-mono font-bold text-xs sm:text-sm tracking-wider uppercase text-slate-950 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:brightness-110 active:scale-[0.99] transition-all shadow-[0_0_20px_rgba(245,158,11,0.45)] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                                  >
+                                    {isLoading ? (
+                                      <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                      <>
+                                        <span>{isEn ? 'Enter Dashboard' : 'Entrar al Dashboard'}</span>
+                                        <ArrowRight className="w-4 h-4" />
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          {/* División y Botón de Google */}
+                          <div className="pt-2 border-t border-white/15 flex items-center justify-center">
+                            <button
+                              type="button"
+                              onClick={handleGoogleLogin}
+                              disabled={isLoading}
+                              className={`w-full h-11 sm:h-12 px-4 rounded-xl sm:rounded-2xl border transition-all cursor-pointer font-mono text-xs sm:text-[13px] font-semibold flex items-center justify-center gap-2.5 shadow-md active:scale-[0.99] disabled:opacity-50 ${
+                                isGoogleConnecting
+                                  ? 'border-amber-400/70 bg-amber-500/15 text-amber-200 shadow-[0_0_25px_rgba(245,158,11,0.3)] animate-pulse'
+                                  : 'border-white/20 bg-black/25 hover:bg-black/45 hover:border-amber-400/40 text-white'
+                              }`}
+                            >
+                              {isGoogleConnecting ? (
+                                <>
+                                  <span className="w-3.5 h-3.5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin shrink-0" />
+                                  <span className="text-amber-300 font-bold tracking-wide">
+                                    {isEn ? 'Connecting in corner...' : 'Conectando en la esquina...'}
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z" />
+                                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.36 24 12 24z" />
+                                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.04 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
+                                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
+                                  </svg>
+                                  <span>{isEn ? 'Continue with Google' : 'Continuar con Google'}</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </form>
+                      </>
+                    )}
 
                     {/* Separador y Botón para Registrarse / Comprar Cuenta */}
                     <div className="mt-4 pt-3.5 border-t border-white/15">
