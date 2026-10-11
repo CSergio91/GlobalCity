@@ -39,7 +39,7 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
   const isEn = language === 'en';
 
   // ============================================================================
-  // 1. MOUSE PARALLAX (Resortes elásticos como en el Hero para efecto 2.5D)
+  // 1. MOUSE & SCROLL PARALLAX (Resortes elásticos 2.5D + salida fluida al scroll)
   // ============================================================================
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -54,6 +54,14 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
   const pepeRotate = useTransform(smoothX, [-1, 1], [-1.8, 1.8]);
   const glowX = useTransform(smoothX, [-1, 1], [-25, 25]);
   const glowY = useTransform(smoothY, [-1, 1], [-18, 18]);
+
+  // Scroll Parallax exit (desplaza a Pepe hacia la esquina inferior izquierda al hacer scroll)
+  const { scrollY } = useScroll();
+  const scrollPepeX = useTransform(scrollY, [2200, 3800], [0, -110]);
+  const scrollPepeY = useTransform(scrollY, [2200, 3800], [0, 90]);
+
+  const pepeCombinedX = useTransform([pepeX, scrollPepeX], ([px, sx]) => Number(px) + Number(sx));
+  const pepeCombinedY = useTransform([pepeY, scrollPepeY], ([py, sy]) => Number(py) + Number(sy));
 
   // Terminal Window (Desplazamiento complementario con inclinación 3D)
   const terminalX = useTransform(smoothX, [-1, 1], [12, -12]);
@@ -133,7 +141,40 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
         className="absolute top-1/3 left-1/4 w-[450px] h-[450px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none -z-10" 
       />
 
-      <div className="w-full max-w-7xl mx-auto flex flex-col justify-between h-full space-y-2 sm:space-y-3 my-auto">
+      {/* ========================================================================= */}
+      {/* PEPE THE TRADER: ANCLADO AL BORDE INFERIOR E IZQUIERDO (GIGANTE & PARALLAX) */}
+      {/* ========================================================================= */}
+      <motion.div 
+        style={{ 
+          x: pepeCombinedX, 
+          y: pepeCombinedY, 
+          rotateZ: pepeRotate 
+        }}
+        className="absolute -left-6 sm:-left-10 md:-left-12 lg:-left-10 xl:-left-6 -bottom-3 sm:-bottom-5 lg:-bottom-6 xl:-bottom-8 z-20 pointer-events-none select-none will-change-transform"
+      >
+        <div className="relative flex items-end justify-start">
+          {/* Halo de luz atmosférica ámbar/dorada cósmica detrás del Battlestation */}
+          <motion.div 
+            style={{ x: glowX, y: glowY }}
+            className="absolute -inset-10 bg-gradient-to-tr from-amber-500/25 via-amber-400/15 to-transparent rounded-full blur-3xl pointer-events-none -z-10"
+          />
+
+          <img 
+            src={terminalPepeWebp} 
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (target.src !== terminalPepePng) {
+                target.src = terminalPepePng;
+              }
+            }}
+            alt="Pepe The Funded Trader at Eklipse Terminal" 
+            className="w-[340px] sm:w-[460px] md:w-[560px] lg:w-[680px] xl:w-[780px] 2xl:w-[880px] max-h-[72vh] sm:max-h-[80vh] lg:max-h-[85vh] object-contain object-left-bottom filter contrast-105 brightness-105 drop-shadow-[0_25px_60px_rgba(0,0,0,0.95)]"
+            loading="eager"
+          />
+        </div>
+      </motion.div>
+
+      <div className="w-full max-w-7xl mx-auto flex flex-col justify-between h-full space-y-2 sm:space-y-3 my-auto z-10">
         
         {/* ========================================================================= */}
         {/* 1. TOP HEADER ROW: TITLE & SUBTITLE + MINI MARKET TICKERS                 */}
@@ -212,43 +253,10 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
         </div>
 
         {/* ========================================================================= */}
-        {/* 2. MAIN STAGE: PEPE TRADER (LEFT) + INSTITUTIONAL TERMINAL CARD (RIGHT)    */}
+        {/* 2. MAIN STAGE: INSTITUTIONAL TERMINAL CARD (CENTER & RIGHT)                */}
         {/* ========================================================================= */}
-        <div className="w-full relative flex flex-col lg:flex-row items-center lg:items-end justify-between gap-3 lg:gap-4 my-auto">
+        <div className="w-full relative flex flex-col items-end my-auto pl-0 lg:pl-48 xl:pl-64">
           
-          {/* ----------------------------------------------------------------------- */}
-          {/* PEPE THE TRADER: ELASTIC PARALLAX SPRINGS LAYER (LEFT FOREGROUND)       */}
-          {/* ----------------------------------------------------------------------- */}
-          <motion.div 
-            style={{ 
-              x: pepeX, 
-              y: pepeY, 
-              rotateZ: pepeRotate
-            }}
-            className="w-[280px] sm:w-[340px] md:w-[380px] lg:w-[420px] xl:w-[450px] shrink-0 z-20 flex items-end justify-center lg:justify-start pointer-events-none select-none lg:-mr-12 xl:-mr-16"
-          >
-            <div className="relative w-full">
-              {/* Glowing Aura behind Pepe */}
-              <div className="absolute inset-0 bg-gradient-to-t from-amber-500/25 via-amber-400/10 to-transparent blur-2xl rounded-full scale-90 -z-10" />
-              
-              <img 
-                src={terminalPepeWebp} 
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  if (target.src !== terminalPepePng) {
-                    target.src = terminalPepePng;
-                  }
-                }}
-                alt="Pepe The Funded Trader at Eklipse Terminal" 
-                className="w-full h-auto max-h-[38vh] sm:max-h-[44vh] lg:max-h-[50vh] object-contain object-bottom filter contrast-105 brightness-105 drop-shadow-[0_20px_45px_rgba(0,0,0,0.95)]"
-                loading="eager"
-              />
-            </div>
-          </motion.div>
-
-          {/* ----------------------------------------------------------------------- */}
-          {/* INSTITUTIONAL TERMINAL WINDOW CARD (CENTER & RIGHT)                     */}
-          {/* ----------------------------------------------------------------------- */}
           <motion.div 
             style={{ 
               x: terminalX, 
@@ -257,7 +265,7 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
               rotateY: terminalRotateY,
               perspective: 1200 
             }}
-            className="flex-1 min-w-0 w-full z-10 rounded-2xl bg-[#090C14]/90 border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.9)] overflow-hidden backdrop-blur-xl"
+            className="w-full lg:w-[94%] xl:w-[90%] z-10 rounded-2xl bg-[#090C14]/90 border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.9)] overflow-hidden backdrop-blur-xl"
           >
             
             {/* TERMINAL TOP BAR */}
