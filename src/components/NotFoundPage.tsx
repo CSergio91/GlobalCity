@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
 import { useAppRouter } from '../context/RouterContext';
+import { BrandLogo } from './BrandLogo';
 import loginBackgroundImg from '../assets/images/Background-Login.webp';
 import pepe404Img from '../assets/images/404error.webp';
-import brandLogoImg from '../assets/images/eklipse_sol_luna_full_transparent.png';
 
 export const NotFoundPage: React.FC = () => {
   const { navigate } = useAppRouter();
@@ -84,12 +84,12 @@ export const NotFoundPage: React.FC = () => {
         className="relative z-10 w-full max-w-3xl pt-8 sm:pt-12 px-6 flex flex-col items-center text-center"
       >
         {/* Logo Oficial */}
-        <img 
-          src={brandLogoImg} 
-          alt="Eklipse Funded" 
-          className="h-9 sm:h-11 w-auto object-contain mb-4 drop-shadow-[0_8px_25px_rgba(0,0,0,0.8)] cursor-pointer"
-          onClick={() => navigate('/')}
-        />
+        <div 
+          onClick={() => navigate('/')} 
+          className="cursor-pointer mb-4 drop-shadow-[0_8px_25px_rgba(0,0,0,0.8)] hover:scale-105 transition-transform"
+        >
+          <BrandLogo size="md" lightMode={true} />
+        </div>
 
         {/* Badge Minimalista */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-red-300 text-[11px] font-bold tracking-wider uppercase mb-3 backdrop-blur-md shadow-[0_4px_15px_rgba(239,68,68,0.15)]">
