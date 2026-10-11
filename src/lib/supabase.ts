@@ -1,24 +1,58 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Clave pública anónima institucional por defecto (evita pantallas blancas en producción/Cloudflare Pages)
-const FALLBACK_PUBLIC_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjIwMDAwMDAwMDB9.J4Nc54mpNrnEUUNHnVZfNUyTbnX_ss1OzKsUnJRMvkw';
-
 // Eklipse Funded — Supabase Gateway Configuration (Local Docker Gateway o Supabase Cloud)
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'http://localhost:54321';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_PUBLIC_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const isSupabaseConfigured = Boolean(
-  import.meta.env.VITE_SUPABASE_URL && 
-  import.meta.env.VITE_SUPABASE_ANON_KEY
+  supabaseUrl && 
+  supabaseAnonKey && 
+  supabaseUrl.trim() !== '' && 
+  supabaseAnonKey.trim() !== ''
 );
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true
-  }
-});
+// Stub seguro sin hardcoding: evita que la web crashee en blanco si faltan variables de entorno en el host
+const createSafeStubClient = (): any => {
+  return new Proxy({}, {
+    get: (_target, prop) => {
+      if (prop === 'auth') {
+        return {
+          getSession: async () => ({ data: { session: null }, error: null }),
+          onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+          signInWithPassword: async () => ({ data: null, error: new Error('Supabase no configurado') }),
+          signUp: async () => ({ data: null, error: new Error('Supabase no configurado') }),
+          signOut: async () => ({ error: null }),
+          getUser: async () => ({ data: { user: null }, error: null })
+        };
+      }
+      if (prop === 'from') {
+        return () => ({
+          select: () => ({
+            eq: () => ({ order: () => ({ limit: async () => ({ data: [], error: null }) }) }),
+            order: () => ({ limit: async () => ({ data: [], error: null }) }),
+            limit: async () => ({ data: [], error: null }),
+            single: async () => ({ data: null, error: null }),
+            then: (resolve: any) => resolve({ data: [], error: null })
+          }),
+          insert: async () => ({ data: null, error: null }),
+          update: async () => ({ data: null, error: null }),
+          delete: async () => ({ data: null, error: null })
+        });
+      }
+      return () => {};
+    }
+  });
+};
+
+export const supabase = isSupabaseConfigured
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    })
+  : createSafeStubClient();
 
 
 export interface PropFirmAccount {
