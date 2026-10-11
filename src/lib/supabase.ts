@@ -1,14 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Clave pública anónima institucional por defecto (evita pantallas blancas en producción/Cloudflare Pages)
+const FALLBACK_PUBLIC_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjIwMDAwMDAwMDB9.J4Nc54mpNrnEUUNHnVZfNUyTbnX_ss1OzKsUnJRMvkw';
+
 // Eklipse Funded — Supabase Gateway Configuration (Local Docker Gateway o Supabase Cloud)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'http://localhost:54321';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_PUBLIC_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(
-  supabaseUrl && 
-  supabaseAnonKey && 
-  supabaseUrl.trim() !== '' && 
-  supabaseAnonKey.trim() !== ''
+  import.meta.env.VITE_SUPABASE_URL && 
+  import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
