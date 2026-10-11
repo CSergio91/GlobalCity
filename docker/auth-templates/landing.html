@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — Stop Loss Ejecutado | Eklipse Funded</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #06070B;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #FFFFFF;
+      perspective: 1200px;
+    }
+
+    /* Contenedor escénico de Parallax */
+    .scene-viewport {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Capa 1: Fondo dinámico con parallax */
+    .layer-background {
+      position: absolute;
+      inset: -5%;
+      width: 110%;
+      height: 110%;
+      background-image: 
+        radial-gradient(circle at 50% 25%, rgba(245, 158, 11, 0.16) 0%, transparent 60%),
+        radial-gradient(circle at 50% 85%, rgba(139, 92, 246, 0.12) 0%, transparent 65%),
+        url('/static/Background-Login.webp');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      will-change: transform;
+      transform: translate3d(0, 0, 0) scale(1.05);
+      z-index: 1;
+    }
+
+    .vignette-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(6, 7, 11, 0.35) 0%, rgba(6, 7, 11, 0.88) 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Capa 2: Textos flotantes directos sobre el fondo (Sin contenedores) */
+    .layer-text {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 900px;
+      padding-top: clamp(28px, 6vh, 60px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      will-change: transform;
+      user-select: none;
+    }
+
+    /* Logo oficial */
+    .brand-logo {
+      height: clamp(34px, 5vh, 46px);
+      width: auto;
+      object-fit: contain;
+      margin-bottom: 18px;
+      filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.8));
+    }
+
+    /* Badge temático minimalista */
+    .badge-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 16px;
+      border-radius: 9999px;
+      background: rgba(239, 68, 68, 0.14);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #FCA5A5;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.15);
+    }
+
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #EF4444;
+      box-shadow: 0 0 8px #EF4444;
+      animation: pulse 1.8s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(0.7); }
+    }
+
+    /* Título sin contenedor */
+    h1.hero-title {
+      font-size: clamp(32px, 5vw, 56px);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: #FFFFFF;
+      text-shadow: 0 4px 30px rgba(0, 0, 0, 0.9), 0 1px 2px rgba(0, 0, 0, 0.8);
+      margin-bottom: 10px;
+    }
+
+    .amber-gradient {
+      background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 25px rgba(245, 158, 11, 0.3));
+    }
+
+    /* Subtítulo directo sin contenedor */
+    p.hero-sub {
+      font-size: clamp(14px, 2vw, 17px);
+      font-weight: 400;
+      color: #CBD5E1;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+      margin-bottom: 22px;
+      max-width: 520px;
+      line-height: 1.5;
+    }
+
+    /* Botón flotante sin caja */
+    .action-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 13px 32px;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      color: #06070B;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 
+        0 10px 30px rgba(245, 158, 11, 0.4),
+        inset 0 1px 1px rgba(255, 255, 255, 0.6);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+    }
+
+    .btn-action:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 15px 40px rgba(245, 158, 11, 0.6);
+      filter: brightness(1.08);
+    }
+
+    .redirect-note {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #94A3B8;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+    }
+
+    .redirect-note span {
+      color: #F59E0B;
+      font-weight: 700;
+    }
+
+    /* Capa 3: Imagen de Pepe 404 durmiendo en el sofá (Carga desde abajo + Parallax) */
+    .layer-pepe {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translate3d(-50%, 0, 0);
+      z-index: 20;
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    .pepe-img {
+      width: 100%;
+      max-width: clamp(380px, 60vw, 780px);
+      height: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 20px 50px rgba(0, 0, 0, 0.95));
+      animation: slideUpPepe 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+      transform: translateY(120px);
+    }
+
+    @keyframes slideUpPepe {
+      0% {
+        opacity: 0;
+        transform: translateY(140px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Micro-ajustes responsive */
+    @media (max-height: 720px) {
+      .layer-text {
+        padding-top: 18px;
+      }
+      h1.hero-title {
+        font-size: 28px;
+      }
+      p.hero-sub {
+        font-size: 13px;
+        margin-bottom: 14px;
+      }
+      .pepe-img {
+        max-width: 480px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .pepe-img {
+        max-width: 340px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="scene-viewport" id="scene">
+    <!-- Capa Fondo -->
+    <div class="layer-background" id="bgLayer"></div>
+    <div class="vignette-overlay"></div>
+
+    <!-- Capa Texto (Sin contenedores, directo sobre el fondo) -->
+    <header class="layer-text" id="textLayer">
+      <img src="/static/eklipse_sol_luna_full_transparent.png" alt="Eklipse Funded" class="brand-logo">
+      
+      <div class="badge-tag">
+        <span class="pulse-dot"></span>
+        <span>Stop Loss • Error 404</span>
+      </div>
+
+      <h1 class="hero-title">
+        ¡Ups! Has tocado un <br>
+        <span class="amber-gradient">Stop Loss Inesperado</span>
+      </h1>
+
+      <p class="hero-sub">
+        Esta página ha sido liquidada o no existe en el mercado.
+      </p>
+
+      <div class="action-group">
+        <a href="https://eklipsefunded.com" class="btn-action">
+          <span>Volver al Mercado Principal</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+        <div class="redirect-note">
+          Volviendo a la plataforma en <span id="countdown">8</span>s
+        </div>
+      </div>
+    </header>
+
+    <!-- Capa Pepe 404 en Sofá (Carga desde abajo con Parallax) -->
+    <div class="layer-pepe" id="pepeLayer">
+      <img src="/static/404error.webp" alt="404 Pepe Stop Loss" class="pepe-img">
+    </div>
+  </div>
+
+  <script>
+    // Parallax Interactivo con Interpolación Suave (Lerp 60/120 FPS)
+    const scene = document.getElementById('scene');
+    const bgLayer = document.getElementById('bgLayer');
+    const textLayer = document.getElementById('textLayer');
+    const pepeLayer = document.getElementById('pepeLayer');
+
+    let mouseX = 0;
+    let mouseY = 0;
+    let currentX = 0;
+    let currentY = 0;
+
+    window.addEventListener('mousemove', (e) => {
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      // Valores normalizados entre -1 y 1
+      mouseX = (e.clientX - centerX) / centerX;
+      mouseY = (e.clientY - centerY) / centerY;
+    });
+
+    // Soporte para giroscopio en móviles
+    window.addEventListener('deviceorientation', (e) => {
+      if (e.gamma !== null && e.beta !== null) {
+        mouseX = Math.min(Math.max(e.gamma / 30, -1), 1);
+        mouseY = Math.min(Math.max((e.beta - 45) / 30, -1), 1);
+      }
+    });
+
+    function animateParallax() {
+      // Suavizado Lerp de inercia
+      currentX += (mouseX - currentX) * 0.06;
+      currentY += (mouseY - currentY) * 0.06;
+
+      // Movimiento de capas con diferentes profundidades
+      // Capa Fondo: Se desplaza en sentido contrario suavemente
+      const bgMoveX = -currentX * 22;
+      const bgMoveY = -currentY * 16;
+      bgLayer.style.transform = `translate3d(${bgMoveX}px, ${bgMoveY}px, 0) scale(1.06)`;
+
+      // Capa Texto: Se mueve ligeramente hacia el cursor
+      const textMoveX = currentX * 12;
+      const textMoveY = currentY * 8;
+      textLayer.style.transform = `translate3d(${textMoveX}px, ${textMoveY}px, 0)`;
+
+      // Capa Pepe: Máxima profundidad y sutil rotación 3D
+      const pepeMoveX = -currentX * 36;
+      const pepeMoveY = -currentY * 18;
+      const pepeRotate = currentX * 1.8;
+      pepeLayer.style.transform = `translate3d(calc(-50% + ${pepeMoveX}px), ${pepeMoveY}px, 0) rotateZ(${pepeRotate}deg)`;
+
+      requestAnimationFrame(animateParallax);
+    }
+    requestAnimationFrame(animateParallax);
+
+    // Cuenta regresiva de redirección fluida
+    const countdownEl = document.getElementById('countdown');
+    let timeLeft = 8;
+    const timer = setInterval(() => {
+      timeLeft--;
+      if (countdownEl) countdownEl.textContent = Math.max(0, timeLeft);
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        window.location.href = "https://eklipsefunded.com";
+      }
+    }, 1000);
+  </script>
+</body>
+</html>

@@ -19,6 +19,7 @@ import { LoginPage } from './components/auth/LoginPage';
 import { ResetPasswordPage } from './components/auth/ResetPasswordPage';
 import { TraderDashboardApp } from './modules/dashboard/TraderDashboardApp';
 import { InstitutionalCrmApp } from './modules/crm/InstitutionalCrmApp';
+import { NotFoundPage } from './components/NotFoundPage';
 
 function MainAppContent() {
   const { currentPath, subdomain, navigate } = useAppRouter();
@@ -155,6 +156,17 @@ function MainAppContent() {
   // 5. If on /reset-password route, render the ResetPasswordPage
   if (isResetPasswordRoute) {
     return <ResetPasswordPage />;
+  }
+
+  // 6. Si la ruta no es Home ni ninguna de las rutas registradas, mostrar la página 404 de Eklipse
+  const isHomeRoute = 
+    currentPath === '/' || 
+    currentPath === '' || 
+    currentPath.startsWith('/?') || 
+    currentPath.startsWith('/#');
+
+  if (!isHomeRoute) {
+    return <NotFoundPage />;
   }
 
   // Otherwise, render the Landing Page with the 11-section master architecture
