@@ -5,7 +5,7 @@ import {
   ShieldCheck, 
   Globe 
 } from 'lucide-react';
-import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
+import { motion, useMotionValue, useSpring, useTransform, useScroll } from 'motion/react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppRouter } from '../context/RouterContext';
 import pepeHeroImg from '../assets/images/pepeHero.webp';
@@ -20,26 +20,35 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
   const { navigate } = useAppRouter();
   const isEn = language === 'en';
 
-  // Coordenadas normalizadas del mouse (-1 a 1) para efecto Parallax
+  // ============================================================================
+  // 1. MOUSE PARALLAX (Resortes físicos elásticos de alta fidelidad)
+  // ============================================================================
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
-  // Suavizado elástico con física de resortes cinemáticos
   const springConfig = { damping: 26, stiffness: 110, mass: 0.5 };
   const smoothX = useSpring(mouseX, springConfig);
   const smoothY = useSpring(mouseY, springConfig);
 
-  // Transformaciones Parallax de capas (profundidad 2.5D)
-  // Pepe (Capa frontal izquierda con inclinación 3D)
-  const pepeX = useTransform(smoothX, [-1, 1], [-22, 22]);
-  const pepeY = useTransform(smoothY, [-1, 1], [-16, 16]);
-  const pepeRotate = useTransform(smoothX, [-1, 1], [-1.8, 1.8]);
-  const glowX = useTransform(smoothX, [-1, 1], [-30, 30]);
+  // Pepe (Movimiento en contraposición al cursor con sutil inclinación 3D)
+  const pepeMouseX = useTransform(smoothX, [-1, 1], [-26, 26]);
+  const pepeMouseY = useTransform(smoothY, [-1, 1], [-18, 18]);
+  const pepeRotate = useTransform(smoothX, [-1, 1], [-1.6, 1.6]);
+  const glowX = useTransform(smoothX, [-1, 1], [-35, 35]);
   const glowY = useTransform(smoothY, [-1, 1], [-25, 25]);
 
-  // Texto (Capa derecha con movimiento en profundidad complementaria)
-  const textX = useTransform(smoothX, [-1, 1], [8, -8]);
-  const textY = useTransform(smoothY, [-1, 1], [6, -6]);
+  // Texto (Movimiento en profundidad complementaria para crear 2.5D)
+  const textMouseX = useTransform(smoothX, [-1, 1], [10, -10]);
+  const textMouseY = useTransform(smoothY, [-1, 1], [8, -8]);
+
+  // ============================================================================
+  // 2. SCROLL PARALLAX (Al hacer scroll se hunde hacia la derecha/abajo)
+  // ============================================================================
+  const { scrollY } = useScroll();
+  const scrollPepeX = useTransform(scrollY, [0, 500], [0, 90]);
+  const scrollPepeY = useTransform(scrollY, [0, 500], [0, 110]);
+  const scrollPepeScale = useTransform(scrollY, [0, 500], [1, 0.94]);
+  const scrollPepeOpacity = useTransform(scrollY, [0, 450], [1, 0.2]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -76,44 +85,19 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
   return (
     <section 
       id="hero"
-      className="relative w-full h-full text-white select-none flex items-center justify-center px-4 sm:px-8 lg:px-12 xl:px-16 py-6 sm:py-12 overflow-hidden pointer-events-auto"
+      className="relative w-full h-full text-white select-none flex items-center justify-start px-4 sm:px-8 lg:px-14 xl:px-20 py-4 sm:py-12 overflow-hidden pointer-events-auto"
     >
-      <div className="w-full max-w-7xl mx-auto relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-10 xl:gap-14 pt-12 sm:pt-4 my-auto">
+      <div className="w-full max-w-7xl mx-auto relative z-10 flex items-center justify-between my-auto">
         
         {/* ========================================================================= */}
-        {/* LADO IZQUIERDO: PEPE HERO CON EFECTO PARALLAX INTERACTIVO                 */}
+        {/* LADO IZQUIERDO: HERO HEADLINE, SUBTITLE Y CTAs                            */}
         {/* ========================================================================= */}
         <motion.div 
-          style={{ x: pepeX, y: pepeY, rotateZ: pepeRotate }}
-          initial={{ opacity: 0, y: 40, scale: 0.94 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full lg:w-[48%] xl:w-[50%] flex items-center justify-center order-2 lg:order-1 relative select-none will-change-transform"
-        >
-          {/* Halo sutil de luz atmosférica violeta/ámbar detrás de Pepe */}
-          <motion.div 
-            style={{ x: glowX, y: glowY }}
-            className="absolute -inset-4 sm:-inset-8 bg-gradient-to-tr from-[#6366F1]/20 via-[#A855F7]/15 to-[#F59E0B]/10 rounded-full blur-3xl pointer-events-none -z-10"
-          />
-
-          {/* Imagen de Pepe Trader en su Setup */}
-          <img 
-            src={pepeHeroImg} 
-            alt="Eklipse Funded Pro Trader Pepe" 
-            className="w-full max-w-[340px] sm:max-w-[460px] md:max-w-[520px] lg:max-w-[560px] xl:max-w-[620px] h-auto object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.92)] transition-transform duration-300 pointer-events-none"
-            loading="eager"
-          />
-        </motion.div>
-
-        {/* ========================================================================= */}
-        {/* LADO DERECHO: HERO HEADLINE, SUBTITLE Y CTAs                              */}
-        {/* ========================================================================= */}
-        <motion.div 
-          style={{ x: textX, y: textY }}
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
+          style={{ x: textMouseX, y: textMouseY }}
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full lg:w-[52%] xl:w-[50%] flex flex-col justify-center items-start text-left space-y-3.5 sm:space-y-5 order-1 lg:order-2 will-change-transform"
+          className="w-full lg:max-w-xl xl:max-w-2xl flex flex-col justify-center items-start text-left space-y-4 sm:space-y-6 pt-12 sm:pt-0 z-20 will-change-transform"
         >
           
           {/* Overline Pre-title */}
@@ -123,7 +107,7 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
 
           {/* Master Visual Headline */}
           <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-[4.75rem] xl:text-[5.25rem] font-black tracking-[-0.03em] leading-[1.06] text-white">
-            <span className="block drop-shadow-[0_4px_30px_rgba(0,0,0,0.85)]">
+            <span className="block drop-shadow-[0_4px_30px_rgba(0,0,0,0.9)]">
               {isEn ? 'Your Trading' : 'Tu Trading'}
             </span>
             <span className="block mt-0.5 sm:mt-1.5 text-transparent bg-clip-text bg-gradient-to-r from-[#818CF8] via-[#C084FC] to-[#A855F7] drop-shadow-[0_0_40px_rgba(168,85,247,0.45)]">
@@ -211,6 +195,44 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
         </motion.div>
 
       </div>
+
+      {/* ========================================================================= */}
+      {/* LADO DERECHO: PEPE HERO ANCLADO AL BORDE DERECHO E INFERIOR               */}
+      {/* (Borde derecho escondido en lateral, borde inferior debajo de pantalla)    */}
+      {/* ========================================================================= */}
+      <motion.div 
+        style={{ 
+          x: scrollPepeX, 
+          y: scrollPepeY, 
+          scale: scrollPepeScale, 
+          opacity: scrollPepeOpacity 
+        }}
+        className="absolute -right-6 sm:-right-8 md:-right-10 lg:-right-6 xl:-right-4 -bottom-4 sm:-bottom-6 lg:-bottom-8 xl:-bottom-10 z-10 pointer-events-none select-none will-change-transform"
+      >
+        {/* Contenedor con Mouse Parallax reactivo */}
+        <motion.div
+          style={{ x: pepeMouseX, y: pepeMouseY, rotateZ: pepeRotate }}
+          initial={{ opacity: 0, x: 60, y: 40 }}
+          animate={{ opacity: 1, x: 0, y: 0 }}
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+          className="relative flex items-end justify-end"
+        >
+          {/* Halo de luz atmosférica cósmica detrás del Battlestation */}
+          <motion.div 
+            style={{ x: glowX, y: glowY }}
+            className="absolute -inset-10 bg-gradient-to-tl from-[#6366F1]/20 via-[#A855F7]/15 to-[#F59E0B]/10 rounded-full blur-3xl pointer-events-none -z-10"
+          />
+
+          {/* Imagen de Pepe Battlestation anclada al lateral e inferior */}
+          <img 
+            src={pepeHeroImg} 
+            alt="Eklipse Funded Pro Trader Pepe Battlestation" 
+            className="w-[320px] sm:w-[440px] md:w-[540px] lg:w-[640px] xl:w-[780px] 2xl:w-[880px] max-h-[82vh] object-contain object-right-bottom drop-shadow-[0_25px_60px_rgba(0,0,0,0.95)]"
+            loading="eager"
+          />
+        </motion.div>
+      </motion.div>
+
     </section>
   );
 };
