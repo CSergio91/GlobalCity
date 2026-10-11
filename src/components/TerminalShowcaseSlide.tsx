@@ -133,7 +133,7 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-col justify-between items-center px-3 sm:px-6 lg:px-8 py-1 sm:py-2 select-none overflow-y-auto no-scrollbar relative">
+    <div className="w-full h-full max-h-screen flex flex-col justify-between items-center px-3 sm:px-6 lg:px-8 py-1 sm:py-2 select-none overflow-hidden relative">
       
       {/* Luz ambiental dorada central */}
       <motion.div 
@@ -142,17 +142,17 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
       />
 
       {/* ========================================================================= */}
-      {/* PEPE THE TRADER: ANCLADO AL BORDE INFERIOR E IZQUIERDO (GIGANTE & PARALLAX) */}
+      {/* PEPE THE TRADER: RECORTADO EN LOS BORDES DE PANTALLA (CERO SCROLL)         */}
       {/* ========================================================================= */}
-      <motion.div 
-        style={{ 
-          x: pepeCombinedX, 
-          y: pepeCombinedY, 
-          rotateZ: pepeRotate 
-        }}
-        className="absolute -left-6 sm:-left-10 md:-left-12 lg:-left-10 xl:-left-6 -bottom-3 sm:-bottom-5 lg:-bottom-6 xl:-bottom-8 z-20 pointer-events-none select-none will-change-transform"
-      >
-        <div className="relative flex items-end justify-start">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-20">
+        <motion.div 
+          style={{ 
+            x: pepeX, 
+            y: pepeY, 
+            rotateZ: pepeRotate 
+          }}
+          className="absolute left-0 bottom-0 pointer-events-none select-none will-change-transform flex items-end justify-start"
+        >
           {/* Halo de luz atmosférica ámbar/dorada cósmica detrás del Battlestation */}
           <motion.div 
             style={{ x: glowX, y: glowY }}
@@ -168,11 +168,11 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
               }
             }}
             alt="Pepe The Funded Trader at Eklipse Terminal" 
-            className="w-[340px] sm:w-[460px] md:w-[560px] lg:w-[680px] xl:w-[780px] 2xl:w-[880px] max-h-[72vh] sm:max-h-[80vh] lg:max-h-[85vh] object-contain object-left-bottom filter contrast-105 brightness-105 drop-shadow-[0_25px_60px_rgba(0,0,0,0.95)]"
+            className="w-[320px] sm:w-[440px] md:w-[540px] lg:w-[640px] xl:w-[740px] 2xl:w-[840px] max-h-[72vh] sm:max-h-[78vh] lg:max-h-[82vh] object-contain object-left-bottom drop-shadow-[0_25px_60px_rgba(0,0,0,0.95)]"
             loading="eager"
           />
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
 
       <div className="w-full max-w-7xl mx-auto flex flex-col justify-between h-full space-y-2 sm:space-y-3 my-auto z-10">
         

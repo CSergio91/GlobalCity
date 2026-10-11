@@ -160,8 +160,7 @@ export const HeroExperienceStage: React.FC<HeroExperienceStageProps> = ({
             vortexRimInner.style.transform = `rotate(${rotationDeg.toFixed(1)}deg)`;
 
             disintegrationCanvas?.updateHorizon(currentR, true);
-          } else if (progress < 0.88) {
-            // STABLE TERMINAL PLATEAU: 100% visible, fully interactable
+          } else {
             terminalStage.style.visibility = 'visible';
             terminalStage.style.clipPath = 'none';
             terminalStage.style.opacity = '1';
@@ -171,22 +170,43 @@ export const HeroExperienceStage: React.FC<HeroExperienceStageProps> = ({
             vortexRim.style.visibility = 'hidden';
             vortexRim.style.opacity = '0';
             disintegrationCanvas?.updateHorizon(0, false);
-          } else {
-            // ACT 3 SCROLL PARALLAX EXIT (0.88 -> 0.98): Smoothly disappears into next section!
-            const t = (progress - 0.88) / (0.98 - 0.88);
-            const clampedT = Math.max(0, Math.min(1, t));
-            const opacity = Math.max(0, 1 - clampedT * 1.05);
-            const shiftY = -clampedT * (isMobile ? 35 : 70);
-            const scale = 1 - clampedT * 0.04;
+          }
 
-            terminalStage.style.opacity = `${opacity.toFixed(3)}`;
-            terminalStage.style.transform = `translate3d(0, ${shiftY.toFixed(1)}px, 0) scale(${scale.toFixed(3)})`;
-            terminalStage.style.pointerEvents = opacity > 0.35 ? 'auto' : 'none';
-            terminalStage.style.visibility = opacity <= 0.01 ? 'hidden' : 'visible';
+          // =====================================================================
+          // ACT 3 HORIZONTAL SHOWCASE TRACK: Terminal (0.70->0.82) -> Dashboard (0.92->1.00)
+          // =====================================================================
+          const horizontalTrack = document.getElementById('horizontal-showcase-track');
+          const btnTerminal = document.getElementById('btn-slide-terminal');
+          const btnDashboard = document.getElementById('btn-slide-dashboard');
 
-            vortexRim.style.visibility = 'hidden';
-            vortexRim.style.opacity = '0';
-            disintegrationCanvas?.updateHorizon(0, false);
+          if (horizontalTrack) {
+            let hProgress = 0;
+            if (progress <= 0.82) {
+              hProgress = 0;
+            } else if (progress < 0.94) {
+              hProgress = (progress - 0.82) / (0.94 - 0.82);
+            } else {
+              hProgress = 1;
+            }
+
+            // High precision cubic easing for horizontal slide transition
+            const easedH = hProgress < 0.5 
+              ? 4 * hProgress * hProgress * hProgress 
+              : 1 - Math.pow(-2 * hProgress + 2, 3) / 2;
+            
+            const shiftPct = (easedH * 50).toFixed(3);
+            horizontalTrack.style.transform = `translate3d(-${shiftPct}%, 0, 0)`;
+
+            // Update UI buttons based on active slide
+            if (btnTerminal && btnDashboard) {
+              if (hProgress < 0.5) {
+                btnTerminal.className = 'px-2.5 sm:px-4 py-1.5 rounded-xl text-[11px] sm:text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 bg-amber-400 text-black shadow-[0_0_15px_rgba(245,158,11,0.4)] shrink-0';
+                btnDashboard.className = 'px-2.5 sm:px-4 py-1.5 rounded-xl text-[11px] sm:text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 text-slate-400 hover:text-white hover:bg-white/5 shrink-0';
+              } else {
+                btnTerminal.className = 'px-2.5 sm:px-4 py-1.5 rounded-xl text-[11px] sm:text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 text-slate-400 hover:text-white hover:bg-white/5 shrink-0';
+                btnDashboard.className = 'px-2.5 sm:px-4 py-1.5 rounded-xl text-[11px] sm:text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 bg-purple-600 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)] shrink-0';
+              }
+            }
           }
 
           // =====================================================================
