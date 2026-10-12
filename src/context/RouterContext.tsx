@@ -56,18 +56,6 @@ export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   const navigate = (to: string) => {
-    if (typeof window !== 'undefined') {
-      const host = window.location.hostname.toLowerCase();
-      const isProductionMainDomain = host === 'eklipsefunded.com' || host === 'www.eklipsefunded.com';
-
-      // En producción, si estamos en el dominio principal y queremos ir al dashboard/login, saltar al subdominio dashapp
-      if (isProductionMainDomain && (to === '/dashboard' || to === '/login')) {
-        const targetPath = to === '/dashboard' ? '/' : '/login';
-        window.location.href = `https://dashapp.eklipsefunded.com${targetPath}`;
-        return;
-      }
-    }
-
     if (to !== currentPath) {
       window.history.pushState({}, '', to);
       setCurrentPath(to);
