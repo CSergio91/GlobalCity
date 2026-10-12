@@ -10,6 +10,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAppRouter } from '../context/RouterContext';
 import pepeHeroImg from '../assets/images/pepeHero.webp';
 import cosmicDebrisImg from '../assets/images/cosmic-debris-overlay.webp';
+import cosmicDebrisMobileImg from '../assets/images/cosmic-debris-overlay-mobile.webp';
 
 interface HeroProps {
   onOpenTerminal?: () => void;
@@ -253,21 +254,21 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
         }}
         className="absolute inset-0 w-full h-full pointer-events-none select-none z-20 overflow-hidden"
       >
-        {/* Parallax conducido por el cursor (con escala 1.10 para evitar bordes en movimiento) */}
+        {/* Parallax conducido por el cursor (con escala adaptativa por dispositivo) */}
         <motion.div
           style={{ 
             x: debrisMouseX, 
             y: debrisMouseY, 
             rotateZ: debrisRotate 
           }}
-          className="w-full h-full flex items-center justify-center scale-110 will-change-transform"
+          className="w-full h-full flex items-center justify-center scale-100 sm:scale-105 md:scale-110 will-change-transform"
         >
           {/* Animación continua de levitación cósmica en reposo (idle floating) */}
           <motion.div
             animate={{
-              x: [0, 14, -10, 0],
-              y: [0, -12, 12, 0],
-              rotate: [0, 0.5, -0.5, 0]
+              x: [0, 12, -10, 0],
+              y: [0, -10, 10, 0],
+              rotate: [0, 0.4, -0.4, 0]
             }}
             transition={{
               duration: 18,
@@ -276,12 +277,17 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
             }}
             className="w-full h-full flex items-center justify-center"
           >
-            <img 
-              src={cosmicDebrisImg} 
-              alt="Cosmic Debris Atmospheric Layer" 
-              className="w-full h-full object-cover object-center pointer-events-none select-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
-              loading="eager"
-            />
+            {/* Adaptación 100% responsiva: Mobile 9:16 portrait vs Desktop 16:9 widescreen */}
+            <picture className="w-full h-full flex items-center justify-center pointer-events-none select-none">
+              <source media="(max-width: 767px)" srcSet={cosmicDebrisMobileImg} />
+              <source media="(min-width: 768px)" srcSet={cosmicDebrisImg} />
+              <img 
+                src={cosmicDebrisImg} 
+                alt="Cosmic Debris Atmospheric Layer" 
+                className="w-full h-full object-cover object-center pointer-events-none select-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
+                loading="eager"
+              />
+            </picture>
           </motion.div>
         </motion.div>
       </motion.div>
