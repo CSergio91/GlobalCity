@@ -9,6 +9,7 @@ import { motion, useMotionValue, useSpring, useTransform, useScroll } from 'moti
 import { useLanguage } from '../context/LanguageContext';
 import { useAppRouter } from '../context/RouterContext';
 import pepeHeroImg from '../assets/images/pepeHero.webp';
+import cosmicDebrisImg from '../assets/images/cosmic-debris-overlay.webp';
 
 interface HeroProps {
   onOpenTerminal?: () => void;
@@ -41,6 +42,11 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
   const textMouseX = useTransform(smoothX, [-1, 1], [10, -10]);
   const textMouseY = useTransform(smoothY, [-1, 1], [8, -8]);
 
+  // Capa Frontal Cósmica de Escombros / Debris (Mayor velocidad focal 2.5D)
+  const debrisMouseX = useTransform(smoothX, [-1, 1], [-48, 48]);
+  const debrisMouseY = useTransform(smoothY, [-1, 1], [-32, 32]);
+  const debrisRotate = useTransform(smoothX, [-1, 1], [-1.8, 1.8]);
+
   // ============================================================================
   // 2. SCROLL PARALLAX (Al hacer scroll se hunde hacia la derecha/abajo)
   // ============================================================================
@@ -49,6 +55,9 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
   const scrollPepeY = useTransform(scrollY, [0, 500], [0, 110]);
   const scrollPepeScale = useTransform(scrollY, [0, 500], [1, 0.94]);
   const scrollPepeOpacity = useTransform(scrollY, [0, 450], [1, 0.2]);
+
+  const scrollDebrisY = useTransform(scrollY, [0, 500], [0, 130]);
+  const scrollDebrisOpacity = useTransform(scrollY, [0, 450], [1, 0.15]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -97,7 +106,7 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full lg:max-w-xl xl:max-w-2xl flex flex-col justify-center items-start text-left space-y-4 sm:space-y-6 pt-12 sm:pt-0 z-20 will-change-transform"
+          className="w-full lg:max-w-xl xl:max-w-2xl flex flex-col justify-center items-start text-left space-y-4 sm:space-y-6 pt-12 sm:pt-0 z-30 will-change-transform"
         >
           
           {/* Overline Pre-title */}
@@ -230,6 +239,50 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
             className="w-[320px] sm:w-[440px] md:w-[540px] lg:w-[640px] xl:w-[780px] 2xl:w-[880px] max-h-[82vh] object-contain object-right-bottom drop-shadow-[0_25px_60px_rgba(0,0,0,0.95)]"
             loading="eager"
           />
+        </motion.div>
+      </motion.div>
+
+      {/* ========================================================================= */}
+      {/* CAPA SUPERIOR: COSMIC DEBRIS OVERLAY (PARALLAX + REPOSO FLOTANTE 2.5D)    */}
+      {/* Capa que cubre a todo lo ancho por encima de Pepe y el fondo en 16:9      */}
+      {/* ========================================================================= */}
+      <motion.div 
+        style={{ 
+          y: scrollDebrisY,
+          opacity: scrollDebrisOpacity 
+        }}
+        className="absolute inset-0 w-full h-full pointer-events-none select-none z-20 overflow-hidden"
+      >
+        {/* Parallax conducido por el cursor (con escala 1.10 para evitar bordes en movimiento) */}
+        <motion.div
+          style={{ 
+            x: debrisMouseX, 
+            y: debrisMouseY, 
+            rotateZ: debrisRotate 
+          }}
+          className="w-full h-full flex items-center justify-center scale-110 will-change-transform"
+        >
+          {/* Animación continua de levitación cósmica en reposo (idle floating) */}
+          <motion.div
+            animate={{
+              x: [0, 14, -10, 0],
+              y: [0, -12, 12, 0],
+              rotate: [0, 0.5, -0.5, 0]
+            }}
+            transition={{
+              duration: 18,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            className="w-full h-full flex items-center justify-center"
+          >
+            <img 
+              src={cosmicDebrisImg} 
+              alt="Cosmic Debris Atmospheric Layer" 
+              className="w-full h-full object-cover object-center pointer-events-none select-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
+              loading="eager"
+            />
+          </motion.div>
         </motion.div>
       </motion.div>
 
