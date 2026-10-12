@@ -1,8 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Eklipse Funded — Supabase Gateway Configuration (Local Docker Gateway o Supabase Cloud)
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Eklipse Funded — Supabase Gateway Configuration (Production Cloud / VPS & Local Fallback)
+const PROD_DEFAULT_URL = 'https://api.eklipsefunded.com';
+const PROD_DEFAULT_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjIwMDAwMDAwMDB9.J4Nc54mpNrnEUUNHnVZfNUyTbnX_ss1OzKsUnJRMvkw';
+
+const envUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+const envKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+
+// Si no se inyectan variables en tiempo de compilación (ej. build en CI/CD o Vercel sin .env),
+// enlazamos de manera predeterminada al backend institucional en https://api.eklipsefunded.com
+export const supabaseUrl = envUrl || PROD_DEFAULT_URL;
+export const supabaseAnonKey = envKey || PROD_DEFAULT_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl && 
