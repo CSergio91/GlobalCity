@@ -38,7 +38,7 @@ import {
   AVAILABLE_ADDONS,
   calculateDynamicPlanPricing
 } from '../../data/challengePlans';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'motion/react';
 import loginBackgroundImg from '../../assets/images/Background-Login.webp';
 import { sendWelcomeEmail } from '../../services/emailService';
 
@@ -205,6 +205,49 @@ export const LoginPage: React.FC = () => {
     }
     return 'login';
   });
+
+  // ============================================================================
+  // FLUID 3D MOUSE PARALLAX ENGINE (Background vs Pepe vs Floating Form Cards)
+  // ============================================================================
+  const mouseRawX = useMotionValue(0);
+  const mouseRawY = useMotionValue(0);
+
+  const springConfig = { damping: 25, stiffness: 90, mass: 0.5 };
+  const smoothMouseX = useSpring(mouseRawX, springConfig);
+  const smoothMouseY = useSpring(mouseRawY, springConfig);
+
+  // Background displacement (moves away in depth)
+  const bgX = useTransform(smoothMouseX, [-1, 1], [-20, 20]);
+  const bgY = useTransform(smoothMouseY, [-1, 1], [-15, 15]);
+
+  // Ambient lights drift
+  const ambientX = useTransform(smoothMouseX, [-1, 1], [30, -30]);
+  const ambientY = useTransform(smoothMouseY, [-1, 1], [22, -22]);
+
+  // Pepe Mascot displacement (intermediate depth layer)
+  const pepeX = useTransform(smoothMouseX, [-1, 1], [-22, 22]);
+  const pepeY = useTransform(smoothMouseY, [-1, 1], [-14, 14]);
+  const pepeRotate = useTransform(smoothMouseX, [-1, 1], [-1.2, 1.2]);
+
+  // Form Cards displacement & 3D tilt (floats towards foreground)
+  const formX = useTransform(smoothMouseX, [-1, 1], [14, -14]);
+  const formY = useTransform(smoothMouseY, [-1, 1], [10, -10]);
+  const formRotateX = useTransform(smoothMouseY, [-1, 1], [-2, 2]);
+  const formRotateY = useTransform(smoothMouseX, [-1, 1], [2, -2]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const { innerWidth, innerHeight } = window;
+      if (!innerWidth || !innerHeight) return;
+      const normX = (e.clientX - innerWidth / 2) / (innerWidth / 2);
+      const normY = (e.clientY - innerHeight / 2) / (innerHeight / 2);
+      mouseRawX.set(Math.max(-1, Math.min(1, normX)));
+      mouseRawY.set(Math.max(-1, Math.min(1, normY)));
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [mouseRawX, mouseRawY]);
 
   // Mounted state for smooth initial entrance & unauthorized access listener
   const [isMounted, setIsMounted] = useState(false);
@@ -1052,15 +1095,22 @@ export const LoginPage: React.FC = () => {
 
   // Helper de renderizado de Pepe Mascot (Desktop only, 100% oculto en móvil, pegado al borde izquierdo)
   const renderPepeMascot = () => (
-    <div className="w-full h-full flex items-end justify-start pointer-events-none select-none pb-0 pl-0">
+    <motion.div 
+      style={{
+        x: pepeX,
+        y: pepeY,
+        rotateZ: pepeRotate
+      }}
+      className="w-full h-full flex items-end justify-start pointer-events-none select-none pb-0 pl-0 will-change-transform relative z-10"
+    >
       <img 
         src={pepeFooterImg} 
         alt="Pepe Mascot Sentinel" 
         loading="eager"
         decoding="async"
-        className="w-[340px] sm:w-[420px] md:w-[480px] lg:w-[540px] xl:w-[620px] 2xl:w-[700px] max-w-[100%] max-h-[85vh] h-auto object-contain object-bottom block -ml-4 sm:-ml-2 lg:ml-0 drop-shadow-[0_25px_60px_rgba(0,0,0,0.95)] select-none pointer-events-none"
+        className="w-[360px] sm:w-[440px] md:w-[500px] lg:w-[560px] xl:w-[640px] 2xl:w-[720px] max-w-[100%] max-h-[85vh] h-auto object-contain object-bottom block -ml-4 sm:-ml-2 lg:ml-0 drop-shadow-[0_25px_60px_rgba(0,0,0,0.95)] select-none pointer-events-none"
       />
-    </div>
+    </motion.div>
   );
 
   return (
@@ -1176,25 +1226,38 @@ export const LoginPage: React.FC = () => {
         </div>
       )}
 
-      {/* Imagen de fondo viva y atmosférica en toda la pantalla */}
-      <div 
-        className="fixed inset-0 w-full h-full bg-cover bg-center sm:bg-[position:center_center] pointer-events-none z-0 scale-[1.01]"
-        style={{ backgroundImage: `url(${loginBackgroundImg})` }}
+      {/* Imagen de fondo viva y atmosférica en toda la pantalla con Parallax suave */}
+      <motion.div 
+        style={{ 
+          backgroundImage: `url(${loginBackgroundImg})`,
+          x: bgX,
+          y: bgY
+        }}
+        className="fixed -inset-8 w-[calc(100%+64px)] h-[calc(100%+64px)] bg-cover bg-center pointer-events-none z-0 scale-[1.04] will-change-transform"
       >
         {/* Velo atmosférico muy sutil para que el fondo se aprecie brillante, nítido y espectacular */}
         <div className="absolute inset-0 bg-black/20 backdrop-blur-[0.5px] pointer-events-none" />
         {/* Viñeta sutil en bordes para enfocar la vista sin oscurecer el centro ni la ciudad */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none" />
-      </div>
+      </motion.div>
 
-      {/* Ambient Living Cosmic Dust Canvas */}
-      <div className="fixed inset-0 w-full h-full pointer-events-none z-[1] opacity-40">
+      {/* Ambient Living Cosmic Dust Canvas con Parallax suave */}
+      <motion.div 
+        style={{ x: ambientX, y: ambientY }}
+        className="fixed inset-0 w-full h-full pointer-events-none z-[1] opacity-40 will-change-transform"
+      >
         <AmbientLivingCosmicCanvas />
-      </div>
+      </motion.div>
 
       {/* Luces atmosféricas de fondo proyectadas a través del cristal */}
-      <div className="fixed top-1/6 right-10 w-96 h-96 bg-purple-600/15 blur-[140px] rounded-full pointer-events-none animate-pulse" />
-      <div className="fixed bottom-1/6 left-10 w-96 h-96 bg-amber-500/10 blur-[140px] rounded-full pointer-events-none" />
+      <motion.div 
+        style={{ x: ambientX, y: ambientY }}
+        className="fixed top-1/6 right-10 w-96 h-96 bg-purple-600/15 blur-[140px] rounded-full pointer-events-none animate-pulse will-change-transform" 
+      />
+      <motion.div 
+        style={{ x: ambientX, y: ambientY }}
+        className="fixed bottom-1/6 left-10 w-96 h-96 bg-amber-500/10 blur-[140px] rounded-full pointer-events-none will-change-transform" 
+      />
 
       {/* ========================================================================= */}
       {/* ARQUITECTURA: PEPE Y LOGIN A LA IZQUIERDA / STAGE DE FORMULARIO A LA DERECHA */}
@@ -1206,64 +1269,76 @@ export const LoginPage: React.FC = () => {
           {/* Pepe Sentinel permanente al fondo */}
           {renderPepeMascot()}
 
-          {/* CUANDO ESTÁ EN MODO REGISTRO: LOGIN APARECE AQUÍ ENCIMA DE PEPE (DESHABILITADO PARA ESCRIBIR, CON BOTÓN PARA PASAR A LA DERECHA) */}
+          {/* CUANDO ESTÁ EN MODO REGISTRO: LOGIN APARECE AQUÍ ENCIMA DE PEPE (MÁS ARRIBA Y MÁS PEQUEÑO PARA QUE DESTAQUE PEPE) */}
           <AnimatePresence>
             {mode === 'register' && (
               <motion.div
                 key="auth-left-disabled-login"
-                initial={{ opacity: 0, x: 80, scale: 0.95 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 80, scale: 0.95 }}
+                initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.95 }}
                 transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 z-20 pointer-events-auto"
+                className="absolute inset-0 w-full h-full flex flex-col items-center justify-start pt-6 sm:pt-8 lg:pt-10 px-4 sm:px-6 z-20 pointer-events-auto"
               >
-                <div className="w-full max-w-[440px] sm:max-w-[460px] p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-black/25 backdrop-blur-xl border border-white/20 shadow-[0_20px_60px_rgba(0,0,0,0.6)] relative">
+                <motion.div 
+                  style={{
+                    x: formX,
+                    y: formY,
+                    rotateX: formRotateX,
+                    rotateY: formRotateY,
+                    perspective: 1000
+                  }}
+                  className="w-full max-w-[310px] sm:max-w-[330px] p-3.5 sm:p-4 rounded-2xl bg-black/35 backdrop-blur-xl border border-white/15 shadow-[0_15px_45px_rgba(0,0,0,0.7)] relative will-change-transform"
+                >
                   
                   {/* Header */}
-                  <div className="mb-4 pb-3 border-b border-white/15">
-                    <div className="flex items-center gap-2.5">
+                  <div className="mb-2.5 pb-2 border-b border-white/15 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
                       <BrandLogo size="sm" lightMode={false} showText={false} />
-                      <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+                      <span className="text-[11px] font-mono font-bold text-white uppercase tracking-wider">
                         {isEn ? 'Trader Access' : 'Acceso Trader'}
                       </span>
                     </div>
+                    <span className="text-[9.5px] font-mono text-amber-400 font-bold px-2 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/20">
+                      {isEn ? 'Registered?' : '¿Ya registrado?'}
+                    </span>
                   </div>
 
-                  {/* Campos de Login (Visuales translúcidos sobre Pepe) */}
-                  <div className="space-y-3 pointer-events-none opacity-60 select-none">
+                  {/* Campos de Login (Visuales translúcidos compactos sobre Pepe) */}
+                  <div className="space-y-2 pointer-events-none opacity-60 select-none">
                     <div>
-                      <label className="block text-xs font-mono text-slate-300 mb-1.5">
+                      <label className="block text-[10px] font-mono text-slate-300 mb-1">
                         {isEn ? 'Email Address' : 'Correo Electrónico'}
                       </label>
-                      <div className="h-11 px-3.5 rounded-xl sm:rounded-2xl bg-black/25 backdrop-blur-sm border border-white/15 text-slate-300 text-xs sm:text-[13px] font-mono flex items-center gap-2.5">
-                        <Mail className="w-4 h-4 text-slate-400" />
-                        <span>{email || (isEn ? 'trader@domain.com' : 'trader@correo.com')}</span>
+                      <div className="h-8.5 sm:h-9 px-3 rounded-xl bg-black/30 backdrop-blur-sm border border-white/15 text-slate-300 text-[11px] font-mono flex items-center gap-2">
+                        <Mail className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="truncate">{email || (isEn ? 'trader@domain.com' : 'trader@correo.com')}</span>
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-mono text-slate-300 mb-1.5">
+                      <label className="block text-[10px] font-mono text-slate-300 mb-1">
                         {isEn ? 'Password' : 'Contraseña'}
                       </label>
-                      <div className="h-11 px-3.5 rounded-xl sm:rounded-2xl bg-black/25 backdrop-blur-sm border border-white/15 text-slate-300 text-xs sm:text-[13px] font-mono flex items-center gap-2.5">
-                        <span className="w-4 h-4 flex items-center justify-center text-slate-400 font-mono text-xs">●</span>
+                      <div className="h-8.5 sm:h-9 px-3 rounded-xl bg-black/30 backdrop-blur-sm border border-white/15 text-slate-300 text-[11px] font-mono flex items-center gap-2">
+                        <span className="w-3.5 h-3.5 flex items-center justify-center text-slate-400 font-mono text-xs">●</span>
                         <span>••••••••••••</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Botón Simple y Limpio: "Iniciar Sesión" (Sin candadito, sin textos innecesarios) */}
-                  <div className="mt-5 pt-4 border-t border-white/15">
+                  {/* Botón Simple y Limpio: "Iniciar Sesión" */}
+                  <div className="mt-3 pt-2.5 border-t border-white/15">
                     <button
                       type="button"
                       onClick={() => triggerModeSwitch('login')}
-                      className="w-full h-11 sm:h-12 px-4 rounded-xl sm:rounded-2xl font-mono font-bold text-xs sm:text-sm tracking-wider uppercase text-slate-950 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:brightness-110 active:scale-[0.99] transition-all shadow-[0_0_20px_rgba(245,158,11,0.45)] flex items-center justify-center gap-2 cursor-pointer pointer-events-auto"
+                      className="w-full h-8.5 sm:h-9 px-3 rounded-xl font-mono font-bold text-[11px] tracking-wider uppercase text-slate-950 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:brightness-110 active:scale-[0.99] transition-all shadow-[0_0_15px_rgba(245,158,11,0.4)] flex items-center justify-center gap-1.5 cursor-pointer pointer-events-auto"
                     >
                       <span>{isEn ? 'Sign In' : 'Iniciar Sesión'}</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -1280,7 +1355,14 @@ export const LoginPage: React.FC = () => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -70 }}
                   transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                  className="w-full max-w-[480px] sm:max-w-[500px] lg:max-w-[520px] my-auto relative z-10"
+                  style={{
+                    x: formX,
+                    y: formY,
+                    rotateX: formRotateX,
+                    rotateY: formRotateY,
+                    perspective: 1200
+                  }}
+                  className="w-full max-w-[480px] sm:max-w-[500px] lg:max-w-[520px] my-auto relative z-10 will-change-transform"
                 >
                   <div className="p-5 sm:p-7 rounded-2xl sm:rounded-3xl bg-black/25 backdrop-blur-xl border border-white/20 shadow-[0_20px_60px_rgba(0,0,0,0.6)]">
                     {/* Header: Logo y Trader Access ARRIBA */}
@@ -1658,7 +1740,14 @@ export const LoginPage: React.FC = () => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 70 }}
                   transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                  className="w-full max-w-[620px] sm:max-w-[660px] lg:max-w-[700px] relative z-10"
+                  style={{
+                    x: formX,
+                    y: formY,
+                    rotateX: formRotateX,
+                    rotateY: formRotateY,
+                    perspective: 1200
+                  }}
+                  className="w-full max-w-[620px] sm:max-w-[660px] lg:max-w-[700px] relative z-10 will-change-transform"
                 >
                   <div className="p-5 sm:p-7 rounded-2xl sm:rounded-3xl bg-black/25 backdrop-blur-xl border border-white/20 shadow-[0_20px_60px_rgba(0,0,0,0.6)]">
                     {/* Header con Switcher a Iniciar Sesión */}
