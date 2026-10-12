@@ -253,19 +253,19 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
         }}
         className="absolute inset-0 w-full h-full pointer-events-none select-none z-20 overflow-hidden"
       >
-        {/* Parallax conducido por el cursor (con escala adaptativa por dispositivo) */}
+        {/* Parallax conducido por el cursor (con escala adaptativa y margen de seguridad por dispositivo) */}
         <motion.div
           style={{ 
             x: debrisMouseX, 
             y: debrisMouseY, 
             rotateZ: debrisRotate 
           }}
-          className="w-full h-full flex items-center justify-center scale-100 sm:scale-105 md:scale-110 will-change-transform"
+          className="w-full h-full flex items-center justify-center scale-105 sm:scale-108 md:scale-110 will-change-transform"
         >
           {/* Animación continua de levitación cósmica en reposo (idle floating) */}
           <motion.div
             animate={{
-              x: [0, 12, -10, 0],
+              x: [0, 10, -8, 0],
               y: [0, -10, 10, 0],
               rotate: [0, 0.4, -0.4, 0]
             }}
@@ -276,20 +276,20 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
             }}
             className="w-full h-full flex items-center justify-center"
           >
-            {/* Capa de Escombros Cósmicos Adaptativa: Mantiene los asteroides visibles en móviles, tablets (760px+) y monitores */}
+            {/* Capa de Escombros Cósmicos Adaptativa: Mantiene los asteroides visibles y sin cortes en móviles, tablets y monitores */}
             <div className="relative w-full h-full overflow-hidden pointer-events-none select-none">
-              {/* Cúmulo de asteroides izquierdo (fijado a la orilla izquierda en cualquier resolución) */}
+              {/* Cúmulo de asteroides izquierdo: estirado y con sangrado negativo a la izquierda para que nunca se vea el corte al oscilar a la derecha */}
               <img 
                 src={cosmicDebrisImg} 
                 alt="Cosmic Debris Left Cluster" 
-                className="absolute inset-y-0 left-0 h-full w-[170vw] sm:w-[140vw] md:w-[125vw] lg:w-full max-w-none object-cover object-left pointer-events-none select-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
+                className="absolute inset-y-0 -left-12 sm:-left-8 md:-left-4 lg:left-0 h-full w-[220vw] sm:w-[170vw] md:w-[135vw] lg:w-full max-w-none object-cover object-left pointer-events-none select-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
                 loading="eager"
               />
-              {/* Cúmulo de asteroides derecho (flotando sobre y junto a Pepe en la parte inferior derecha) */}
+              {/* Cúmulo de asteroides derecho: estirado y con sangrado a la derecha sobre Pepe */}
               <img 
                 src={cosmicDebrisImg} 
                 alt="Cosmic Debris Right Cluster" 
-                className="absolute inset-y-0 right-0 h-full w-[170vw] sm:w-[140vw] md:w-[125vw] lg:w-full max-w-none object-cover object-right pointer-events-none select-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
+                className="absolute inset-y-0 -right-12 sm:-right-8 md:-right-4 lg:right-0 h-full w-[220vw] sm:w-[170vw] md:w-[135vw] lg:w-full max-w-none object-cover object-right pointer-events-none select-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
                 loading="eager"
               />
             </div>
