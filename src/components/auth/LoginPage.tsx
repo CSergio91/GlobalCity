@@ -190,7 +190,7 @@ const useIsDesktop = () => {
 // ============================================================================
 export const LoginPage: React.FC = () => {
   const isDesktop = useIsDesktop();
-  const { loginWithEmail, signUpWithEmail, loginWithGoogle, loginAsDemo } = useAuth();
+  const { loginWithEmail, signUpWithEmail, loginWithGoogle } = useAuth();
   const { navigate } = useAppRouter();
   const { language } = useLanguage();
   const isEn = language === 'en';
@@ -1081,18 +1081,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleDemoAccess = () => {
-    setIsLoading(true);
-    setEmail('demo@eklipsefunded.com');
-    setPassword('demo1234');
-    setCaptchaVerified(true);
-    setCaptchaToken('demo_access_token');
-    setTimeout(() => {
-      loginAsDemo();
-      navigate('/dashboard');
-    }, 400);
-  };
-
   // Helper de renderizado de Pepe Mascot (Desktop only, 100% oculto en móvil, pegado al borde izquierdo)
   const renderPepeMascot = () => (
     <motion.div 
@@ -1479,23 +1467,10 @@ export const LoginPage: React.FC = () => {
                       </div>
                     ) : (
                       <>
-                        {/* Título de Sign In y Demo Widget (Sin candadito) */}
+                        {/* Título de Sign In */}
                         <div className="flex items-center justify-between mb-3.5">
                           <div className="text-xs font-mono font-bold text-white uppercase tracking-wider">
                             <span>{isEn ? 'Sign In' : 'Iniciar Sesión'}</span>
-                          </div>
-
-                          {/* 1-Click Demo Access Widget */}
-                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-black/25 backdrop-blur-md border border-amber-400/30 shrink-0 shadow-sm text-[10px] font-mono text-slate-300">
-                            <span className="text-white font-bold">Demo:</span> 123456
-                            <button
-                              type="button"
-                              onClick={handleDemoAccess}
-                              disabled={isLoading}
-                              className="ml-0.5 px-2 py-0.5 rounded-lg text-[9.5px] font-mono font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 active:scale-95 transition-all shadow-md cursor-pointer disabled:opacity-50"
-                            >
-                              {isEn ? '1-Click' : '1-Clic'}
-                            </button>
                           </div>
                         </div>
 
