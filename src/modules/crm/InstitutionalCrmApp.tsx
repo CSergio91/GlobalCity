@@ -11,6 +11,7 @@ import { DynamicRulesModal } from './components/DynamicRulesModal';
 import { CreateApiKeyModal } from './components/CreateApiKeyModal';
 import { DeploymentGuideView } from './components/DeploymentGuideView';
 import { ChallengesManagementView } from './components/ChallengesManagementView';
+import { CrmAccessDeniedScreen } from './components/CrmAccessDeniedScreen';
 import { CrmLang, crmTranslations } from './types/i18n';
 import { CrmModuleId, CrmStaffRole, CRM_ALLOWED_ROLES } from './types/crm.types';
 import { UserSession } from '../../lib/supabase';
@@ -205,15 +206,13 @@ export const InstitutionalCrmApp: React.FC<InstitutionalCrmAppProps> = ({
     }
   };
 
-  // Rol del staff activo en el CRM (solo admin, soporte y marketing tienen acceso; trader bloqueado)
+  // Rol del staff activo en el CRM (solo admin, soporte y marketing tienen acceso estricto)
+  const userRole = (user?.role || '').toLowerCase();
+  const isAuthorizedStaff = CRM_ALLOWED_ROLES.includes(userRole as any) || userRole === 'admin' || userRole === 'superadmin';
+
   const [currentStaffRole, setCurrentStaffRole] = useState<CrmStaffRole>(() => {
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('zyti_staff_role') as CrmStaffRole;
-      if (cached && CRM_ALLOWED_ROLES.includes(cached)) return cached;
-    }
-    const roleCandidate = user?.role as CrmStaffRole;
-    if (roleCandidate && CRM_ALLOWED_ROLES.includes(roleCandidate)) {
-      return roleCandidate;
+    if (isAuthorizedStaff && CRM_ALLOWED_ROLES.includes(userRole as any)) {
+      return userRole as CrmStaffRole;
     }
     return 'admin';
   });
@@ -223,37 +222,17 @@ export const InstitutionalCrmApp: React.FC<InstitutionalCrmAppProps> = ({
     if (traderId === user?.id || traderId === user?.email) {
       if (CRM_ALLOWED_ROLES.includes(newRole)) {
         setCurrentStaffRole(newRole);
-        localStorage.setItem('zyti_staff_role', newRole);
       }
     }
   };
 
-  // Bloqueo estricto para cuentas de rol 'trader'
-  if (user?.role === 'trader' && !localStorage.getItem('zyti_staff_role')) {
+  // Bloqueo estricto e inquebrantable si el usuario no tiene rol administrativo
+  if (!user || !isAuthorizedStaff) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#FBF9F4] p-6 text-center font-sans">
-        <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 mb-4 shadow-sm">
-          <ShieldAlert className="w-7 h-7" />
-        </div>
-        <h1 className="text-xl font-black text-slate-900 tracking-tight">
-          {isEs ? 'Acceso Restringido al CRM ERP' : 'Restricted ERP CRM Access'}
-        </h1>
-        <p className="text-xs text-slate-500 font-medium max-w-md mt-2 leading-relaxed">
-          {isEs 
-            ? 'Esta sección está reservada exclusivamente para los roles de Administración, Soporte y Marketing. Las cuentas con rol de Trader no tienen acceso al CRM institucional.'
-            : 'This section is strictly reserved for Administration, Support, and Marketing roles. Trader accounts do not have access to the institutional ERP CRM.'
-          }
-        </p>
-        <button
-          onClick={() => {
-            if (onBackToTerminal) onBackToTerminal();
-            else window.location.href = `/${lang}/zytiterminal/BTCUSDT`;
-          }}
-          className="mt-6 px-4 py-2 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
-        >
-          {isEs ? '← Volver a la Terminal de Trading' : '← Back to Trading Terminal'}
-        </button>
-      </div>
+      <CrmAccessDeniedScreen 
+        onBackToDashboard={onBackToTerminal}
+        onLogout={onLogout}
+      />
     );
   }
 

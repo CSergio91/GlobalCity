@@ -23,7 +23,7 @@ export interface UserProfile {
   addressLine1?: string;
   authProvider: 'telegram' | 'demo' | 'email' | 'google';
   telegramId?: number | string;
-  role: 'institutional_trader' | 'quant_developer' | 'guest';
+  role: 'admin' | 'soporte' | 'marketing' | 'trader' | 'institutional_trader' | 'quant_developer' | 'guest' | string;
   createdAt: string;
   twoFactorEnabled: boolean;
 }

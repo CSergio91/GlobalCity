@@ -19,6 +19,8 @@ import { LoginPage } from './components/auth/LoginPage';
 import { ResetPasswordPage } from './components/auth/ResetPasswordPage';
 import { TraderDashboardApp } from './modules/dashboard/TraderDashboardApp';
 import { InstitutionalCrmApp } from './modules/crm/InstitutionalCrmApp';
+import { CrmAccessDeniedScreen } from './modules/crm/components/CrmAccessDeniedScreen';
+import { CRM_ALLOWED_ROLES } from './modules/crm/types/crm.types';
 import { NotFoundPage } from './components/NotFoundPage';
 
 function MainAppContent() {
@@ -115,12 +117,46 @@ function MainAppContent() {
     );
   }
 
-  // 2. If on /nexus route or nexus.* subdomain, render the Institutional CRM Nexus
+  // 2. If on /nexus route or nexus.* / nexuscrm.* subdomain, render the Institutional CRM Nexus
   if (isCrmRoute) {
+    if (!isAuthenticated) {
+      return <LoginPage />;
+    }
+
+    const userRole = (user?.role || '').toLowerCase();
+    const isStaff = CRM_ALLOWED_ROLES.includes(userRole as any) || userRole === 'admin' || userRole === 'superadmin';
+
+    if (!isStaff) {
+      return (
+        <CrmAccessDeniedScreen 
+          onBackToDashboard={() => {
+            if (subdomain === 'nexus' || subdomain === 'nexuscrm') {
+              window.location.href = 'https://dashapp.eklipsefunded.com';
+            } else {
+              navigate('/dashboard');
+            }
+          }}
+          onLogout={() => {
+            logout();
+            navigate('/login');
+          }}
+        />
+      );
+    }
+
     return (
       <InstitutionalCrmApp 
-        onBackToTerminal={() => navigate('/')} 
-        onLogout={() => navigate('/')} 
+        onBackToTerminal={() => {
+          if (subdomain === 'nexus' || subdomain === 'nexuscrm') {
+            window.location.href = 'https://dashapp.eklipsefunded.com';
+          } else {
+            navigate('/dashboard');
+          }
+        }} 
+        onLogout={() => {
+          logout();
+          navigate('/login');
+        }} 
       />
     );
   }

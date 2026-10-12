@@ -36,14 +36,36 @@ interface AuthContextType {
 
 const STORAGE_KEY = 'globalcity_auth_user';
 
-function mapSupabaseUserToProfile(sbUser: any): UserProfile {
+export const fetchUserProfileRole = async (email?: string, userId?: string): Promise<string> => {
+  if (!email && !userId) return 'trader';
+  const cleanEmail = (email || '').trim().toLowerCase();
+  try {
+    let query = supabase.from('profiles').select('role');
+    if (cleanEmail) {
+      query = query.eq('email', cleanEmail);
+    } else if (userId) {
+      query = query.eq('id', userId);
+    }
+    const { data, error } = await query.maybeSingle();
+    if (!error && data?.role) {
+      return data.role.toLowerCase();
+    }
+  } catch (err) {
+    console.warn('[AuthContext] Error consultando rol de perfil:', err);
+  }
+  return 'trader';
+};
+
+function mapSupabaseUserToProfile(sbUser: any, explicitRole?: string): UserProfile {
   const metadata = sbUser.user_metadata || {};
+  const appMeta = sbUser.app_metadata || {};
   const email = sbUser.email || '';
   const fullName = metadata.full_name || metadata.name || email.split('@')[0] || 'Trader';
   const nameParts = fullName.split(' ');
   const firstName = nameParts[0] || 'Trader';
   const lastName = nameParts.slice(1).join(' ') || undefined;
-  const isGoogle = sbUser.app_metadata?.provider === 'google' || metadata.iss?.includes('google');
+  const isGoogle = appMeta.provider === 'google' || metadata.iss?.includes('google');
+  const role = (explicitRole || appMeta.role || metadata.role || 'trader').toLowerCase();
 
   return {
     id: sbUser.id,
@@ -53,7 +75,7 @@ function mapSupabaseUserToProfile(sbUser: any): UserProfile {
     email,
     photoUrl: metadata.avatar_url || metadata.picture,
     authProvider: isGoogle ? 'google' : 'email',
-    role: 'institutional_trader',
+    role,
     createdAt: sbUser.created_at || new Date().toISOString(),
     twoFactorEnabled: true,
   };
@@ -80,11 +102,16 @@ export const setAccountCacheValid = (email?: string) => {
 };
 
 // ============================================================================
-// VERIFICADOR INSTITUCIONAL DE ACCESO: SOLO CLIENTES CON CUENTA COMPRADA
+// VERIFICADOR INSTITUCIONAL DE ACCESO: SOLO CLIENTES CON CUENTA COMPRADA O ADMIN
 // ============================================================================
-export const checkUserHasPurchasedAccount = async (email?: string, userId?: string): Promise<boolean> => {
+export const checkUserHasPurchasedAccount = async (email?: string, userId?: string, role?: string): Promise<boolean> => {
   if (!email) return false;
   const cleanEmail = email.trim().toLowerCase();
+
+  // Si el usuario tiene rol de staff o admin, acceso ilimitado garantizado
+  if (role && ['admin', 'superadmin', 'soporte', 'support', 'marketing', 'compliance'].includes(role.toLowerCase())) {
+    return true;
+  }
 
   // 1. Zero-Egress Check: Devolver desde memoria en 0ms si está en caché vigente
   const cached = accountVerificationCache.get(cleanEmail);
@@ -191,14 +218,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Detectar sesión activa tras recarga o tras redirect de Google OAuth
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        const hasAccount = await checkUserHasPurchasedAccount(session.user.email, session.user.id);
+        const role = await fetchUserProfileRole(session.user.email, session.user.id);
+        const hasAccount = await checkUserHasPurchasedAccount(session.user.email, session.user.id, role);
         if (!hasAccount) {
           console.warn('[AuthContext] Sesión rechazada: el usuario no tiene ninguna cuenta comprada.');
           await handleRejectUnauthorizedUser(session.user, setUser);
           return;
         }
 
-        const mapped = mapSupabaseUserToProfile(session.user);
+        const mapped = mapSupabaseUserToProfile(session.user, role);
         setUser(mapped);
       }
     }).catch((err) => {
@@ -208,14 +236,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Suscripción reactiva a cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED')) {
-        const hasAccount = await checkUserHasPurchasedAccount(session.user.email, session.user.id);
+        const role = await fetchUserProfileRole(session.user.email, session.user.id);
+        const hasAccount = await checkUserHasPurchasedAccount(session.user.email, session.user.id, role);
         if (!hasAccount) {
           console.warn('[AuthContext] Evento auth bloqueado: usuario no tiene cuenta de fondeo.');
           await handleRejectUnauthorizedUser(session.user, setUser);
           return;
         }
 
-        const mapped = mapSupabaseUserToProfile(session.user);
+        const mapped = mapSupabaseUserToProfile(session.user, role);
         setUser(mapped);
       } else if (event === 'SIGNED_OUT') {
         setUser((prev) => (prev?.authProvider === 'telegram' || prev?.authProvider === 'demo') ? prev : null);

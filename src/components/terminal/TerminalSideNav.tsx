@@ -754,26 +754,6 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
               </div>
             </button>
 
-            {/* ENTRADA DIRECTA AL CRM NEXUS (JUSTO DEBAJO DEL USER) */}
-            {(user?.role === 'admin' || user?.role === 'soporte' || user?.role === 'marketing') && (
-              <a
-                href={`/${currentLang}/nexus`}
-                className={`w-full flex items-center gap-2 p-1.5 rounded-xl transition-all cursor-pointer bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200/90 shadow-2xs select-none ${
-                  isClickedExpanded ? 'justify-start' : 'justify-center group-hover:justify-start'
-                }`}
-                title="Panel Nexus ERP"
-              >
-                <div className="w-6 h-6 flex items-center justify-center shrink-0 text-purple-700">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <div className={`flex flex-col text-left leading-tight min-w-0 ${isClickedExpanded ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity duration-200`}>
-                  <span className="text-[11px] font-black text-purple-950 truncate">Nexus ERP</span>
-                  <span className="text-[9px] font-bold text-purple-600 truncate uppercase">
-                    {user?.role || 'Admin'}
-                  </span>
-                </div>
-              </a>
-            )}
 
             {/* BOTÓN CAMBIO DE POSICIÓN IZQUIERDA / DERECHA */}
             <button
@@ -855,19 +835,6 @@ export const TerminalSideNav: React.FC<TerminalSideNavProps> = ({
                 </div>
               </button>
 
-              {/* ENTRADA AL CRM NEXUS (MÓVIL - JUSTO DEBAJO DEL USER) */}
-              {(user?.role === 'admin' || user?.role === 'soporte' || user?.role === 'marketing') && (
-                <a
-                  href={`/${currentLang}/nexus`}
-                  className="w-full mb-3 p-2 rounded-xl flex items-center gap-2.5 text-xs font-black transition-colors cursor-pointer bg-purple-50 text-purple-900 border border-purple-200 shadow-2xs"
-                >
-                  <ShieldCheck className="w-4 h-4 text-purple-700 shrink-0" />
-                  <div className="flex flex-col text-left leading-tight min-w-0">
-                    <span className="text-xs font-black text-purple-950">Nexus ERP Core</span>
-                    <span className="text-[10px] font-bold text-purple-600 uppercase">{user?.role || 'Admin'}</span>
-                  </div>
-                </a>
-              )}
 
               {/* SECCIONES TRADING Y EXCHANGE */}
               <div className="space-y-1">
