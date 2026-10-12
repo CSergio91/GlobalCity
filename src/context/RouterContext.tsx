@@ -15,13 +15,13 @@ function detectSubdomain(): AppSubdomain {
   const host = window.location.hostname.toLowerCase();
   if (host.startsWith('dashapp.')) return 'dashapp';
   if (host.startsWith('dashboard.')) return 'dashboard';
-  if (host.startsWith('nexus.')) return 'nexus';
+  if (host.startsWith('nexus.') || host.startsWith('nexuscrm.')) return 'nexus';
 
   // Soporte de simulación para entorno local/túnel: ?subdomain=dashapp
   const params = new URLSearchParams(window.location.search);
   const paramSub = params.get('subdomain');
-  if (paramSub === 'dashapp' || paramSub === 'dashboard' || paramSub === 'nexus') {
-    return paramSub;
+  if (paramSub === 'dashapp' || paramSub === 'dashboard' || paramSub === 'nexus' || paramSub === 'nexuscrm') {
+    return paramSub === 'nexuscrm' ? 'nexus' : paramSub;
   }
   return null;
 }
@@ -63,6 +63,11 @@ export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (isProductionMainDomain && (to === '/dashboard' || to === '/login')) {
         const targetPath = to === '/dashboard' ? '/' : '/login';
         window.location.href = `https://dashapp.eklipsefunded.com${targetPath}`;
+        return;
+      }
+
+      if (isProductionMainDomain && (to === '/nexus' || to === '/crm')) {
+        window.location.href = `https://nexuscrm.eklipsefunded.com/`;
         return;
       }
     }
