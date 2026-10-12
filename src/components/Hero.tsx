@@ -276,30 +276,20 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
             }}
             className="w-full h-full flex items-center justify-center"
           >
-            {/* Desktop / Pantallas Panorámicas (>= md): Cobertura completa 16:9 */}
-            <div className="hidden md:block w-full h-full">
+            {/* Capa de Escombros Cósmicos Adaptativa: Mantiene los asteroides visibles en móviles, tablets (760px+) y monitores */}
+            <div className="relative w-full h-full overflow-hidden pointer-events-none select-none">
+              {/* Cúmulo de asteroides izquierdo (fijado a la orilla izquierda en cualquier resolución) */}
               <img 
                 src={cosmicDebrisImg} 
-                alt="Cosmic Debris Atmospheric Layer" 
-                className="w-full h-full min-w-full min-h-full object-cover object-center pointer-events-none select-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
+                alt="Cosmic Debris Left Cluster" 
+                className="absolute inset-y-0 left-0 h-full w-[170vw] sm:w-[140vw] md:w-[125vw] lg:w-full max-w-none object-cover object-left pointer-events-none select-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
                 loading="eager"
               />
-            </div>
-
-            {/* Móviles y Pantallas Verticales (< md): Doble encuadre lateral para que los asteroides abracen ambos lados de la pantalla */}
-            <div className="block md:hidden relative w-full h-full overflow-hidden pointer-events-none select-none">
-              {/* Asteroides del cúmulo izquierdo (enmarcan la parte superior y lateral izquierda) */}
+              {/* Cúmulo de asteroides derecho (flotando sobre y junto a Pepe en la parte inferior derecha) */}
               <img 
                 src={cosmicDebrisImg} 
-                alt="Cosmic Debris Left" 
-                className="absolute inset-y-0 left-0 h-full w-[170vw] max-w-none object-cover object-left pointer-events-none select-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
-                loading="eager"
-              />
-              {/* Asteroides del cúmulo derecho (flotan sobre y al lado de Pepe en la parte inferior derecha) */}
-              <img 
-                src={cosmicDebrisImg} 
-                alt="Cosmic Debris Right" 
-                className="absolute inset-y-0 right-0 h-full w-[170vw] max-w-none object-cover object-right pointer-events-none select-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
+                alt="Cosmic Debris Right Cluster" 
+                className="absolute inset-y-0 right-0 h-full w-[170vw] sm:w-[140vw] md:w-[125vw] lg:w-full max-w-none object-cover object-right pointer-events-none select-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
                 loading="eager"
               />
             </div>
