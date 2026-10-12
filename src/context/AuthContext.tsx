@@ -162,6 +162,15 @@ export const checkUserHasPurchasedAccount = async (email?: string, userId?: stri
       }
     } catch (_) {}
 
+    // D. Comprobar si hay compra reciente en curso o completada en sessionStorage
+    try {
+      const recent = sessionStorage.getItem('eklipse_recent_purchase_email');
+      if (recent && recent.toLowerCase() === cleanEmail) {
+        accountVerificationCache.set(cleanEmail, { hasAccount: true, expiresAt: Date.now() + ACCOUNT_CACHE_TTL_MS });
+        return true;
+      }
+    } catch (_) {}
+
     accountVerificationCache.set(cleanEmail, { hasAccount: false, expiresAt: Date.now() + 15000 });
     return false;
   })();
@@ -205,11 +214,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserProfile | null>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : null;
+      if (stored) return JSON.parse(stored);
+      // SSO fallback con cookie de dominio raíz *.eklipsefunded.com
+      if (typeof document !== 'undefined') {
+        const match = document.cookie.match(/eklipse_auth_user=([^;]+)/);
+        if (match && match[1]) {
+          const parsed = JSON.parse(decodeURIComponent(match[1]));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+          return parsed;
+        }
+      }
+      return null;
     } catch {
       return null;
     }
   });
+
+  // Sincronizar cookie de sesión de dominio para compartir estado entre eklipsefunded.com y dashapp.eklipsefunded.com
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      try {
+        const host = window.location.hostname;
+        const cookieDomain = host.includes('eklipsefunded.com') ? '; domain=.eklipsefunded.com' : '';
+        document.cookie = `eklipse_auth_user=${encodeURIComponent(JSON.stringify(user))}${cookieDomain}; path=/; max-age=2592000; SameSite=Lax; Secure`;
+      } catch (_) {}
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+      try {
+        const host = window.location.hostname;
+        const cookieDomain = host.includes('eklipsefunded.com') ? '; domain=.eklipsefunded.com' : '';
+        document.cookie = `eklipse_auth_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC${cookieDomain}; path=/;`;
+      } catch (_) {}
+    }
+  }, [user]);
 
   // 1. Escuchar y sincronizar sesiones activas de Supabase Auth (GoTrue)
   useEffect(() => {

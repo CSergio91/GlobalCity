@@ -16,6 +16,8 @@
  */
 
 import http from 'http';
+import fs from 'fs';
+import path from 'path';
 import { WebSocketServer, WebSocket } from 'ws';
 import Redis from 'ioredis';
 import { createClient } from '@supabase/supabase-js';
@@ -847,27 +849,81 @@ const server = http.createServer((req, res) => {
           return res.end(JSON.stringify({ success: false, error: 'type and data are required' }));
         }
 
-        // 1. Publicar en Redis para desacoplamiento total
-        let redisPublished = false;
+        // 1. Publicar en Redis para telemetría y desacoplamiento
         if (isRedisActive && redisPub) {
           try {
             await redisPub.publish('eklipse:email:events', JSON.stringify({ type, data }));
-            redisPublished = true;
           } catch (rErr) {
             console.warn('[TradingHub] Error publicando evento de correo en Redis:', rErr.message);
           }
         }
 
-        // 2. Si no hay Redis activo o como fallback directo, invocar email microservice vía HTTP
-        if (!redisPublished) {
-          try {
-            const emailServiceUrl = process.env.EMAIL_SERVICE_URL || 'http://127.0.0.1:3005';
-            fetch(`${emailServiceUrl}/send`, {
+        // 2. Despacho directo vía Resend API con plantilla oficial
+        try {
+          const resendKey = process.env.RESEND_API_KEY;
+          if (!resendKey) {
+            console.warn('[TradingHub] RESEND_API_KEY no configurada');
+            return;
+          }
+          const lang = data.lang || 'es';
+          const templateName = type.toUpperCase() === 'WELCOME' ? 'welcome' : 'new-account';
+
+          let templateHtml = '';
+          const candidatePaths = [
+            path.join(process.cwd(), 'email-service', 'src', 'templates', lang, `${templateName}.html`),
+            path.join(process.cwd(), 'email-service', 'dist', 'templates', lang, `${templateName}.html`),
+            path.join(process.cwd(), 'src', 'templates', lang, `${templateName}.html`)
+          ];
+          for (const p of candidatePaths) {
+            if (fs.existsSync(p)) {
+              templateHtml = fs.readFileSync(p, 'utf8');
+              break;
+            }
+          }
+
+          if (templateHtml && data.toEmail) {
+            const mergedData = {
+              telegramBotUrl: 'https://t.me/EklipseFunded_bot',
+              dashboardUrl: data.dashboardUrl || 'https://dashapp.eklipsefunded.com',
+              traderName: data.traderName || 'Trader',
+              ...data
+            };
+
+            let rendered = templateHtml;
+            for (const [key, val] of Object.entries(mergedData)) {
+              const safeVal = val !== undefined && val !== null ? String(val) : '';
+              const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
+              rendered = rendered.replace(regex, safeVal);
+            }
+
+            const subject = lang === 'en'
+              ? (templateName === 'welcome' 
+                  ? 'Welcome to Eklipse Funded! ✨' 
+                  : `New Account Activated! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`)
+              : (templateName === 'welcome' 
+                  ? '¡Bienvenido a Eklipse Funded! ✨' 
+                  : `¡Nueva Cuenta Activada! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`);
+
+            fetch('https://api.resend.com/emails', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ type, data })
-            }).catch(eErr => console.warn('[TradingHub] Fallback HTTP Email Service:', eErr.message));
-          } catch (_) {}
+              headers: {
+                'Authorization': `Bearer ${resendKey}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                from: process.env.RESEND_FROM_EMAIL || 'Eklipse Funded <soporte@eklipsefunded.com>',
+                to: data.toEmail,
+                subject,
+                html: rendered
+              })
+            }).then(r => r.json()).then(resData => {
+              console.log(`[TradingHub] Correo ${templateName} enviado exitosamente a ${data.toEmail} vía Resend [ID: ${resData?.id}]`);
+            }).catch(rErr => {
+              console.warn('[TradingHub] Advertencia enviando correo por Resend:', rErr.message);
+            });
+          }
+        } catch (resendErr) {
+          console.warn('[TradingHub] Error preparando despacho Resend:', resendErr.message);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });

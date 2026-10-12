@@ -73,34 +73,105 @@ export interface SupportReplyPayload {
   lang?: 'es' | 'en';
 }
 
+import { renderEmailHtml } from './emailTemplates';
+
 /**
- * Despacho genérico y asíncrono al gateway institucional
+ * Despacho genérico y asíncrono con tolerancia a fallos:
+ * 1. Intenta enviar al gateway institucional (/api/email/dispatch).
+ * 2. Si el gateway está fuera de línea o en hosting estático, despacha DIRECTAMENTE vía Resend API oficial con el correo soporte@eklipsefunded.com.
  */
 async function dispatchEmailEvent(type: string, data: Record<string, any>): Promise<{ success: boolean; queued?: boolean; error?: string }> {
+  const lang = data.lang || 'es';
+  const traderName = data.traderName || 'Trader';
+  const cleanEmail = (data.toEmail || '').trim();
+
+  if (!cleanEmail) {
+    return { success: false, error: 'toEmail is required' };
+  }
+
+  // 1. Intentar despacho mediante backend / tradingHub
   try {
-    const backendUrl = (import.meta as any).env?.VITE_WS_URL?.replace('ws://', 'http://').replace('wss://', 'https://') || 'http://localhost:8080';
+    const backendUrl = 
+      (import.meta as any).env?.VITE_WS_GATEWAY_URL?.replace('ws://', 'http://').replace('wss://', 'https://') ||
+      (import.meta as any).env?.VITE_WS_URL?.replace('ws://', 'http://').replace('wss://', 'https://') ||
+      'http://localhost:8080';
     const endpoint = `${backendUrl}/api/email/dispatch`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ type, data })
+      body: JSON.stringify({ type, data }),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
 
     if (response.ok) {
       const resData = await response.json();
+      console.info(`[EmailService] Correo despachado por gateway (${type} -> ${cleanEmail})`);
       return { success: true, queued: resData?.queued ?? true };
-    } else {
-      const errData = await response.json().catch(() => ({}));
-      console.warn('[EmailService] Advertencia del gateway:', errData);
-      return { success: false, error: errData?.error || 'Error despachando correo' };
     }
-  } catch (err: any) {
-    // Si el backend no está encendido en desarrollo local, no romper la experiencia del usuario
-    console.info('[EmailService] Evento de correo encolado localmente:', type, data?.toEmail);
-    return { success: true, queued: false };
+  } catch (gwErr: any) {
+    console.info('[EmailService] Gateway no disponible, ejecutando despacho directo vía Resend:', gwErr.message);
+  }
+
+  // 2. Despacho directo de alta prioridad vía Resend API con plantilla oficial
+  try {
+    const resendKey = (import.meta as any).env?.VITE_RESEND_API_KEY;
+    if (!resendKey) {
+      console.warn('[EmailService] VITE_RESEND_API_KEY no encontrada en entorno');
+      return { success: false, error: 'No Resend API Key configured' };
+    }
+    const templateName = type.toUpperCase() === 'WELCOME' ? 'welcome' : 'new-account';
+    
+    const html = renderEmailHtml({
+      templateName,
+      lang: lang as 'es' | 'en',
+      data: {
+        ...data,
+        traderName,
+        dashboardUrl: data.dashboardUrl || 'https://dashapp.eklipsefunded.com',
+      }
+    });
+
+    const subject = lang === 'en'
+      ? (templateName === 'welcome' 
+          ? 'Welcome to Eklipse Funded! ✨' 
+          : `New Account Activated! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`)
+      : (templateName === 'welcome' 
+          ? '¡Bienvenido a Eklipse Funded! ✨' 
+          : `¡Nueva Cuenta Activada! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`);
+
+    const resendRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'Eklipse Funded <soporte@eklipsefunded.com>',
+        to: cleanEmail,
+        subject,
+        html
+      })
+    });
+
+    if (resendRes.ok) {
+      const resData = await resendRes.json();
+      console.info(`[EmailService] Correo entregado exitosamente vía Resend Direct [ID: ${resData?.id}]`);
+      return { success: true, queued: false };
+    } else {
+      const errData = await resendRes.json().catch(() => ({}));
+      console.warn('[EmailService] Advertencia de Resend API:', errData);
+      return { success: false, error: errData?.message || 'Error en entrega de correo' };
+    }
+  } catch (directErr: any) {
+    console.error('[EmailService] Error crítico despachando correo:', directErr);
+    return { success: false, error: directErr?.message };
   }
 }
 

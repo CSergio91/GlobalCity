@@ -809,6 +809,25 @@ export const LoginPage: React.FC = () => {
           ? sessionStorage.getItem('eklipse_pending_google_photo') || undefined
           : undefined;
 
+        // 0. Pre-validar inmediatamente en caché y persistir en localStorage/sessionStorage
+        // para erradicar cualquier rechazo o deslogueo en AuthContext
+        sessionStorage.setItem('eklipse_recent_purchase_email', cleanEmail);
+        setAccountCacheValid(cleanEmail);
+
+        const assignedAccounts = JSON.parse(localStorage.getItem('eklipse_assigned_accounts') || '[]');
+        assignedAccounts.push({
+          planId: selectedPlanId,
+          category: selectedCategory,
+          price: dynamicPricing.totalPrice,
+          basePrice: dynamicPricing.basePrice,
+          addonsCost: dynamicPricing.addonsCost,
+          addons: selectedAddons,
+          accountSize: activePlan.capital,
+          purchasedAt: new Date().toISOString(),
+          email: cleanEmail
+        });
+        localStorage.setItem('eklipse_assigned_accounts', JSON.stringify(assignedAccounts));
+
         // 1. Registrar usuario en GoTrue / Supabase con metadatos completos del cliente
         await signUpWithEmail(cleanEmail, regPassword, {
           firstName: sanitizeCleanString(regFirstName),
@@ -835,6 +854,18 @@ export const LoginPage: React.FC = () => {
             paymentGateway: paymentGateway
           }
         });
+
+        // 1b. Autenticar explícitamente la sesión para garantizar JWT activo en el navegador
+        try {
+          const { data: signInData } = await supabase.auth.signInWithPassword({
+            email: cleanEmail,
+            password: regPassword,
+          });
+          if (signInData?.user) {
+            const mapped = mapSupabaseUserToProfile(signInData.user);
+            setUser(mapped);
+          }
+        } catch (_) {}
 
         // 2. Aprovisionar Cuenta Institucional en public.trading_accounts en PostgreSQL
         const generatedAccountNumber = `EKL-${selectedCategory.toUpperCase()}-${Math.floor(10000 + Math.random() * 90000)}`;
@@ -920,8 +951,28 @@ export const LoginPage: React.FC = () => {
         // 4. Validar caché caliente para acceso instantáneo al Dashboard en 0ms
         setAccountCacheValid(cleanEmail);
 
-        // 5. Despachar Correo Institucional de Bienvenida con Detalles y Reglas
+        // 5. Establecer el usuario autenticado explícitamente en el estado de React
+        const mappedUser: UserProfile = {
+          id: profileUserId || 'trader_' + Date.now(),
+          email: cleanEmail,
+          name: `${sanitizeCleanString(regFirstName)} ${sanitizeCleanString(regLastName)}`.trim() || 'Trader',
+          role: 'trader',
+          authProvider: 'email',
+          avatarUrl: pendingGooglePhoto,
+          createdAt: new Date().toISOString()
+        };
+        setUser(mappedUser);
+        localStorage.setItem('eklipse_user_profile', JSON.stringify(mappedUser));
+        if (createdAccountId) {
+          localStorage.setItem('eklipse_active_account_id', createdAccountId);
+        }
+
+        // 6. Despachar Correo Institucional de Bienvenida con Detalles y Reglas
         try {
+          const dashboardUrl = typeof window !== 'undefined' && window.location.hostname.includes('eklipsefunded.com')
+            ? 'https://dashapp.eklipsefunded.com'
+            : (window.location.origin + '/dashboard');
+
           await sendWelcomeEmail({
             toEmail: cleanEmail,
             traderName: `${sanitizeCleanString(regFirstName)} ${sanitizeCleanString(regLastName)}`.trim() || 'Trader',
@@ -938,32 +989,19 @@ export const LoginPage: React.FC = () => {
             orderNumber: orderNumber,
             totalPriceFormatted: `$${dynamicPricing.totalPrice.toFixed(2)}`,
             paymentGateway: paymentGateway,
-            dashboardUrl: 'https://eklipsefunded.com/dashboard'
+            dashboardUrl,
+            lang: isEn ? 'en' : 'es'
           });
         } catch (emailErr) {
           console.warn('[Checkout] Fallback enviando correo:', emailErr);
         }
 
-        // 6. Caché local en localStorage para redundancia
-        const assignedAccounts = JSON.parse(localStorage.getItem('eklipse_assigned_accounts') || '[]');
-        assignedAccounts.push({
-          planId: selectedPlanId,
-          category: selectedCategory,
-          price: dynamicPricing.totalPrice,
-          basePrice: dynamicPricing.basePrice,
-          addonsCost: dynamicPricing.addonsCost,
-          addons: selectedAddons,
-          accountSize: activePlan.capital,
-          purchasedAt: new Date().toISOString(),
-          email: cleanEmail
-        });
-        localStorage.setItem('eklipse_assigned_accounts', JSON.stringify(assignedAccounts));
         sessionStorage.removeItem('eklipse_pending_google_photo');
 
         setOrderSuccess(true);
         setTimeout(() => {
           navigate('/dashboard');
-        }, 1200);
+        }, 1000);
       } catch (err: any) {
         setError(err?.message || (isEn ? 'Error creating account' : 'Error al registrar la cuenta'));
       } finally {

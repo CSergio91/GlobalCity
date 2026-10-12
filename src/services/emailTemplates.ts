@@ -1,0 +1,521 @@
+/**
+ * EKLIPSE FUNDED — OFFICIAL EMAIL TEMPLATES ENGINE
+ * Renderizador de plantillas HTML institucionales para clientes.
+ * Soporta modo multilingüe (ES / EN) y reemplazo seguro de variables {{key}}.
+ */
+
+export interface RenderTemplateOptions {
+  templateName: 'new-account' | 'welcome' | 'account-breached' | 'account-paused' | 'account-reseted' | 'password-reset';
+  lang?: 'es' | 'en';
+  data: Record<string, any>;
+}
+
+const TEMPLATES_ES: Record<string, string> = {
+  'new-account': `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>¡Nueva Cuenta Activada! · Eklipse Funded</title>
+</head>
+<body style="margin: 0; padding: 24px 12px; background-color: #06070B; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0F172A;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #06070B;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #FFFFFF; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);">
+          
+          <!-- BANNER OFICIAL -->
+          <tr>
+            <td style="padding: 0; background-color: #090A10; text-align: center;">
+              <img 
+                src="https://assets.eklipsefunded.com/emails/new-account-purchased.webp" 
+                alt="Nueva Cuenta Adquirida Eklipse Funded" 
+                width="600" 
+                style="width: 100%; max-width: 600px; height: auto; display: block; border: 0;"
+              />
+            </td>
+          </tr>
+
+          <!-- CONTENIDO -->
+          <tr>
+            <td style="padding: 32px 32px 14px 32px;">
+              <div style="display: inline-block; padding: 4px 12px; background-color: #D1FAE5; border: 1px solid #A7F3D0; border-radius: 8px; margin-bottom: 14px;">
+                <span style="color: #065F46; font-size: 11px; font-weight: 800; font-family: monospace; letter-spacing: 0.5px; text-transform: uppercase;">
+                  🚀 RETO ACTIVADO CON ÉXITO
+                </span>
+              </div>
+
+              <h1 style="margin: 0 0 14px 0; font-size: 22px; font-weight: 800; color: #0F172A; line-height: 1.3;">
+                ¡Felicidades, {{traderName}}!
+              </h1>
+              
+              <p style="margin: 0 0 16px 0; color: #475569; font-size: 14px; line-height: 23px;">
+                Tu orden ha sido confirmada y tu cuenta de trading ya está aprovisionada en nuestros servidores institucionales.
+              </p>
+            </td>
+          </tr>
+
+          <!-- TARJETA: RESUMEN DE LA CUENTA -->
+          <tr>
+            <td style="padding: 0 32px 16px 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #64748B; font-size: 13px;">Número de Cuenta</td>
+                  <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #0F172A; font-size: 14px; font-weight: 700; font-family: monospace;">{{accountNumber}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #64748B; font-size: 13px;">Plan / Reto</td>
+                  <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #0F172A; font-size: 13px; font-weight: 600;">{{planName}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #64748B; font-size: 13px;">Capital Asignado</td>
+                  <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #059669; font-size: 15px; font-weight: 800; font-family: monospace;">{{capitalFormatted}} USD</td>
+                </tr>
+                <tr>
+                  <td style="padding: 13px 18px; color: #64748B; font-size: 13px;">Reparto de Ganancias</td>
+                  <td align="right" style="padding: 13px 18px; color: #D97706; font-size: 13px; font-weight: 800; font-family: monospace;">{{profitSplit}}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- TARJETA: REGLAS CLAVE DE RIESGO -->
+          <tr>
+            <td style="padding: 0 32px 20px 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden;">
+                <tr>
+                  <td colspan="2" style="padding: 12px 18px; background-color: #F1F5F9; border-bottom: 1px solid #E2E8F0;">
+                    <strong style="color: #0F172A; font-size: 12px; font-family: monospace; letter-spacing: 0.5px;">
+                      ⚡ PARÁMETROS DE RIESGO
+                    </strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 11px 18px; border-bottom: 1px solid #F1F5F9; color: #475569; font-size: 13px;">📉 Pérdida Máxima Diaria</td>
+                  <td align="right" style="padding: 11px 18px; border-bottom: 1px solid #F1F5F9; color: #DC2626; font-size: 13px; font-weight: 700; font-family: monospace;">{{maxDailyLoss}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 11px 18px; border-bottom: 1px solid #F1F5F9; color: #475569; font-size: 13px;">🛑 Pérdida Máxima Total</td>
+                  <td align="right" style="padding: 11px 18px; border-bottom: 1px solid #F1F5F9; color: #DC2626; font-size: 13px; font-weight: 700; font-family: monospace;">{{maxTotalLoss}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 11px 18px; color: #475569; font-size: 13px;">🎯 Meta de Ganancias</td>
+                  <td align="right" style="padding: 11px 18px; color: #059669; font-size: 13px; font-weight: 700; font-family: monospace;">{{profitTarget}}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- BOTÓN CTA -->
+          <tr>
+            <td align="center" style="padding: 0 32px 28px 32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="border-radius: 14px; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); box-shadow: 0 6px 20px rgba(217, 119, 6, 0.35);">
+                    <a 
+                      href="{{dashboardUrl}}" 
+                      target="_blank" 
+                      style="display: inline-block; padding: 16px 36px; font-size: 14px; font-weight: 800; color: #0F172A; text-decoration: none; font-family: monospace; letter-spacing: 0.5px; text-transform: uppercase;"
+                    >
+                      COMENZAR A OPERAR &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="padding: 22px 32px; background-color: #F8FAFC; border-top: 1px solid #E2E8F0; text-align: center;">
+              <p style="margin: 0 0 10px 0; color: #475569; font-size: 12.5px; font-weight: 500;">
+                ¿Dudas con tu cuenta o necesitas soporte?
+              </p>
+              <div style="margin-bottom: 12px;">
+                <a 
+                  href="{{telegramBotUrl}}" 
+                  target="_blank" 
+                  style="display: inline-block; padding: 8px 18px; background-color: #0284C7; color: #FFFFFF; font-size: 12px; font-weight: 700; border-radius: 10px; text-decoration: none; font-family: monospace;"
+                >
+                  💬 Soporte en Telegram &rarr;
+                </a>
+              </div>
+              <p style="margin: 0; color: #94A3B8; font-size: 11px;">
+                &copy; 2026 Eklipse Funded · Tu disciplina, nuestro capital.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+
+  'welcome': `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>¡Bienvenido a Eklipse Funded!</title>
+</head>
+<body style="margin: 0; padding: 24px 12px; background-color: #06070B; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0F172A;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #06070B;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #FFFFFF; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);">
+          
+          <!-- BANNER OFICIAL -->
+          <tr>
+            <td style="padding: 0; background-color: #090A10; text-align: center;">
+              <img 
+                src="https://assets.eklipsefunded.com/emails/welcome-to-eklipse-funded.webp" 
+                alt="Bienvenido a Eklipse Funded" 
+                width="600" 
+                style="width: 100%; max-width: 600px; height: auto; display: block; border: 0;"
+              />
+            </td>
+          </tr>
+
+          <!-- CONTENIDO -->
+          <tr>
+            <td style="padding: 32px 32px 20px 32px;">
+              <div style="display: inline-block; padding: 4px 12px; background-color: #FEF3C7; border: 1px solid #FDE68A; border-radius: 8px; margin-bottom: 14px;">
+                <span style="color: #B45309; font-size: 11px; font-weight: 800; font-family: monospace; letter-spacing: 0.5px; text-transform: uppercase;">
+                  ✨ BIENVENIDO A LA COMUNIDAD
+                </span>
+              </div>
+
+              <h1 style="margin: 0 0 14px 0; font-size: 22px; font-weight: 800; color: #0F172A; line-height: 1.3;">
+                ¡Hola, {{traderName}}!
+              </h1>
+              
+              <p style="margin: 0 0 16px 0; color: #475569; font-size: 14px; line-height: 23px;">
+                Te damos una muy cálida bienvenida a <strong>Eklipse Funded</strong>. Tu cuenta de acceso institucional ha sido configurada y ya formas parte del ecosistema de fondeo y tecnología de trading.
+              </p>
+
+              <p style="margin: 0 0 22px 0; color: #475569; font-size: 14px; line-height: 23px;">
+                En tu portal podrás gestionar tus cuentas, revisar tus métricas de consistencia en tiempo real y conectarte directamente a nuestra terminal de ejecución.
+              </p>
+
+              <!-- BOTÓN CTA -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 8px 0 24px 0;">
+                <tr>
+                  <td align="center">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td align="center" style="border-radius: 14px; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); box-shadow: 0 6px 20px rgba(217, 119, 6, 0.35);">
+                          <a 
+                            href="{{dashboardUrl}}" 
+                            target="_blank" 
+                            style="display: inline-block; padding: 16px 36px; font-size: 14px; font-weight: 800; color: #0F172A; text-decoration: none; font-family: monospace; letter-spacing: 0.5px; text-transform: uppercase;"
+                          >
+                            ACCEDER A MI PORTAL &rarr;
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="padding: 22px 32px; background-color: #F8FAFC; border-top: 1px solid #E2E8F0; text-align: center;">
+              <p style="margin: 0 0 10px 0; color: #475569; font-size: 12.5px; font-weight: 500;">
+                ¿Dudas con tu cuenta o necesitas soporte?
+              </p>
+              <div style="margin-bottom: 12px;">
+                <a 
+                  href="{{telegramBotUrl}}" 
+                  target="_blank" 
+                  style="display: inline-block; padding: 8px 18px; background-color: #0284C7; color: #FFFFFF; font-size: 12px; font-weight: 700; border-radius: 10px; text-decoration: none; font-family: monospace;"
+                >
+                  💬 Soporte en Telegram &rarr;
+                </a>
+              </div>
+              <p style="margin: 0; color: #94A3B8; font-size: 11px;">
+                &copy; 2026 Eklipse Funded · Tu disciplina, nuestro capital.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+};
+
+const TEMPLATES_EN: Record<string, string> = {
+  'new-account': `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>New Account Activated! · Eklipse Funded</title>
+</head>
+<body style="margin: 0; padding: 24px 12px; background-color: #06070B; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0F172A;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #06070B;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #FFFFFF; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);">
+          
+          <!-- BANNER -->
+          <tr>
+            <td style="padding: 0; background-color: #090A10; text-align: center;">
+              <img 
+                src="https://assets.eklipsefunded.com/emails/new-account-purchased.webp" 
+                alt="New Account Activated" 
+                width="600" 
+                style="width: 100%; max-width: 600px; height: auto; display: block; border: 0;"
+              />
+            </td>
+          </tr>
+
+          <!-- CONTENT -->
+          <tr>
+            <td style="padding: 32px 32px 14px 32px;">
+              <div style="display: inline-block; padding: 4px 12px; background-color: #D1FAE5; border: 1px solid #A7F3D0; border-radius: 8px; margin-bottom: 14px;">
+                <span style="color: #065F46; font-size: 11px; font-weight: 800; font-family: monospace; letter-spacing: 0.5px; text-transform: uppercase;">
+                  🚀 CHALLENGE ACTIVATED
+                </span>
+              </div>
+
+              <h1 style="margin: 0 0 14px 0; font-size: 22px; font-weight: 800; color: #0F172A; line-height: 1.3;">
+                Congratulations, {{traderName}}!
+              </h1>
+              
+              <p style="margin: 0 0 16px 0; color: #475569; font-size: 14px; line-height: 23px;">
+                Your order has been confirmed and your new trading account is now live and provisioned on our institutional execution servers.
+              </p>
+            </td>
+          </tr>
+
+          <!-- ACCOUNT SUMMARY CARD -->
+          <tr>
+            <td style="padding: 0 32px 16px 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #64748B; font-size: 13px;">Account Number</td>
+                  <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #0F172A; font-size: 14px; font-weight: 700; font-family: monospace;">{{accountNumber}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #64748B; font-size: 13px;">Challenge Plan</td>
+                  <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #0F172A; font-size: 13px; font-weight: 600;">{{planName}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #64748B; font-size: 13px;">Allocated Capital</td>
+                  <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #059669; font-size: 15px; font-weight: 800; font-family: monospace;">{{capitalFormatted}} USD</td>
+                </tr>
+                <tr>
+                  <td style="padding: 13px 18px; color: #64748B; font-size: 13px;">Profit Split</td>
+                  <td align="right" style="padding: 13px 18px; color: #D97706; font-size: 13px; font-weight: 800; font-family: monospace;">{{profitSplit}}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- RISK PARAMETERS CARD -->
+          <tr>
+            <td style="padding: 0 32px 20px 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden;">
+                <tr>
+                  <td colspan="2" style="padding: 12px 18px; background-color: #F1F5F9; border-bottom: 1px solid #E2E8F0;">
+                    <strong style="color: #0F172A; font-size: 12px; font-family: monospace; letter-spacing: 0.5px;">
+                      ⚡ RISK PARAMETERS
+                    </strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 11px 18px; border-bottom: 1px solid #F1F5F9; color: #475569; font-size: 13px;">📉 Max Daily Loss</td>
+                  <td align="right" style="padding: 11px 18px; border-bottom: 1px solid #F1F5F9; color: #DC2626; font-size: 13px; font-weight: 700; font-family: monospace;">{{maxDailyLoss}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 11px 18px; border-bottom: 1px solid #F1F5F9; color: #475569; font-size: 13px;">🛑 Max Total Loss</td>
+                  <td align="right" style="padding: 11px 18px; border-bottom: 1px solid #F1F5F9; color: #DC2626; font-size: 13px; font-weight: 700; font-family: monospace;">{{maxTotalLoss}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 11px 18px; color: #475569; font-size: 13px;">🎯 Profit Target</td>
+                  <td align="right" style="padding: 11px 18px; color: #059669; font-size: 13px; font-weight: 700; font-family: monospace;">{{profitTarget}}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- CTA BUTTON -->
+          <tr>
+            <td align="center" style="padding: 0 32px 28px 32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="border-radius: 14px; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); box-shadow: 0 6px 20px rgba(217, 119, 6, 0.35);">
+                    <a 
+                      href="{{dashboardUrl}}" 
+                      target="_blank" 
+                      style="display: inline-block; padding: 16px 36px; font-size: 14px; font-weight: 800; color: #0F172A; text-decoration: none; font-family: monospace; letter-spacing: 0.5px; text-transform: uppercase;"
+                    >
+                      START TRADING &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="padding: 22px 32px; background-color: #F8FAFC; border-top: 1px solid #E2E8F0; text-align: center;">
+              <p style="margin: 0 0 10px 0; color: #475569; font-size: 12.5px; font-weight: 500;">
+                Questions about your account or need help?
+              </p>
+              <div style="margin-bottom: 12px;">
+                <a 
+                  href="{{telegramBotUrl}}" 
+                  target="_blank" 
+                  style="display: inline-block; padding: 8px 18px; background-color: #0284C7; color: #FFFFFF; font-size: 12px; font-weight: 700; border-radius: 10px; text-decoration: none; font-family: monospace;"
+                >
+                  💬 Telegram Support &rarr;
+                </a>
+              </div>
+              <p style="margin: 0; color: #94A3B8; font-size: 11px;">
+                &copy; 2026 Eklipse Funded · Your discipline, our capital.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+
+  'welcome': `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Welcome to Eklipse Funded!</title>
+</head>
+<body style="margin: 0; padding: 24px 12px; background-color: #06070B; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0F172A;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #06070B;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #FFFFFF; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);">
+          
+          <!-- BANNER -->
+          <tr>
+            <td style="padding: 0; background-color: #090A10; text-align: center;">
+              <img 
+                src="https://assets.eklipsefunded.com/emails/welcome-to-eklipse-funded.webp" 
+                alt="Welcome to Eklipse Funded" 
+                width="600" 
+                style="width: 100%; max-width: 600px; height: auto; display: block; border: 0;"
+              />
+            </td>
+          </tr>
+
+          <!-- CONTENT -->
+          <tr>
+            <td style="padding: 32px 32px 20px 32px;">
+              <div style="display: inline-block; padding: 4px 12px; background-color: #FEF3C7; border: 1px solid #FDE68A; border-radius: 8px; margin-bottom: 14px;">
+                <span style="color: #B45309; font-size: 11px; font-weight: 800; font-family: monospace; letter-spacing: 0.5px; text-transform: uppercase;">
+                  ✨ WELCOME TO THE COMMUNITY
+                </span>
+              </div>
+
+              <h1 style="margin: 0 0 14px 0; font-size: 22px; font-weight: 800; color: #0F172A; line-height: 1.3;">
+                Hello, {{traderName}}!
+              </h1>
+              
+              <p style="margin: 0 0 16px 0; color: #475569; font-size: 14px; line-height: 23px;">
+                We warmly welcome you to <strong>Eklipse Funded</strong>. Your institutional access account is now active, connecting you directly to our proprietary capital and execution tools.
+              </p>
+
+              <!-- CTA BUTTON -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 8px 0 24px 0;">
+                <tr>
+                  <td align="center">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td align="center" style="border-radius: 14px; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); box-shadow: 0 6px 20px rgba(217, 119, 6, 0.35);">
+                          <a 
+                            href="{{dashboardUrl}}" 
+                            target="_blank" 
+                            style="display: inline-block; padding: 16px 36px; font-size: 14px; font-weight: 800; color: #0F172A; text-decoration: none; font-family: monospace; letter-spacing: 0.5px; text-transform: uppercase;"
+                          >
+                            ACCESS MY DASHBOARD &rarr;
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="padding: 22px 32px; background-color: #F8FAFC; border-top: 1px solid #E2E8F0; text-align: center;">
+              <p style="margin: 0 0 10px 0; color: #475569; font-size: 12.5px; font-weight: 500;">
+                Questions about your account or need help?
+              </p>
+              <div style="margin-bottom: 12px;">
+                <a 
+                  href="{{telegramBotUrl}}" 
+                  target="_blank" 
+                  style="display: inline-block; padding: 8px 18px; background-color: #0284C7; color: #FFFFFF; font-size: 12px; font-weight: 700; border-radius: 10px; text-decoration: none; font-family: monospace;"
+                >
+                  💬 Telegram Support &rarr;
+                </a>
+              </div>
+              <p style="margin: 0; color: #94A3B8; font-size: 11px;">
+                &copy; 2026 Eklipse Funded · Your discipline, our capital.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+};
+
+export function renderEmailHtml({ templateName, lang = 'es', data }: RenderTemplateOptions): string {
+  const normalizedLang = lang === 'en' ? 'en' : 'es';
+  const templates = normalizedLang === 'en' ? TEMPLATES_EN : TEMPLATES_ES;
+  const templateHtml = templates[templateName] || TEMPLATES_ES[templateName] || '';
+
+  if (!templateHtml) {
+    return `<h1>¡Hola, ${data.traderName || 'Trader'}!</h1><p>Tu cuenta ha sido activada: ${data.accountNumber || ''}</p>`;
+  }
+
+  const globalDefaults: Record<string, string> = {
+    telegramBotUrl: 'https://t.me/EklipseFunded_bot',
+    dashboardUrl: 'https://dashapp.eklipsefunded.com',
+    resetUrl: 'https://dashapp.eklipsefunded.com/reset-password',
+    supportUrl: 'https://eklipsefunded.com/#faq',
+  };
+
+  const mergedData = { ...globalDefaults, ...data };
+
+  let rendered = templateHtml;
+  for (const [key, val] of Object.entries(mergedData)) {
+    const safeVal = val !== undefined && val !== null ? String(val) : '';
+    const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
+    rendered = rendered.replace(regex, safeVal);
+  }
+
+  return rendered;
+}

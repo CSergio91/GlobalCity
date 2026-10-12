@@ -60,12 +60,6 @@ export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const host = window.location.hostname.toLowerCase();
       const isProductionMainDomain = host === 'eklipsefunded.com' || host === 'www.eklipsefunded.com';
 
-      if (isProductionMainDomain && (to === '/dashboard' || to === '/login')) {
-        const targetPath = to === '/dashboard' ? '/' : '/login';
-        window.location.href = `https://dashapp.eklipsefunded.com${targetPath}`;
-        return;
-      }
-
       if (isProductionMainDomain && (to === '/nexus' || to === '/crm')) {
         window.location.href = `https://nexuscrm.eklipsefunded.com/`;
         return;
