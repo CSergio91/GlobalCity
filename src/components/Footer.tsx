@@ -186,10 +186,14 @@ export const Footer: React.FC = () => {
 
         {/* Centered Pepe Mascot Emerging from the Bottom of the Page */}
         <div className="relative z-20 flex justify-center items-end leading-none">
+          {/* Cosmic Nebula Halo behind animated Pepe */}
+          <div className="absolute -inset-10 bg-gradient-to-t from-purple-600/25 via-amber-500/15 to-transparent blur-3xl rounded-full scale-90 pointer-events-none -z-10" />
+
           <img 
             src={pepeFooterImg} 
-            alt="Eklipse Mascot" 
-            className="w-[240px] sm:w-[380px] md:w-[480px] lg:w-[540px] max-w-[85vw] h-auto object-contain block select-none pointer-events-none drop-shadow-[0_25px_60px_rgba(0,0,0,0.95)]"
+            alt="Eklipse Mascot Pepe" 
+            className="w-[260px] sm:w-[400px] md:w-[500px] lg:w-[580px] max-w-[88vw] h-auto object-contain block select-none pointer-events-none drop-shadow-[0_25px_60px_rgba(0,0,0,0.95)]"
+            loading="lazy"
           />
         </div>
 
