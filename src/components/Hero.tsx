@@ -10,7 +10,6 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAppRouter } from '../context/RouterContext';
 import pepeHeroImg from '../assets/images/pepeHero.webp';
 import cosmicDebrisImg from '../assets/images/cosmic-debris-overlay.webp';
-import cosmicDebrisMobileImg from '../assets/images/cosmic-debris-overlay-mobile.webp';
 
 interface HeroProps {
   onOpenTerminal?: () => void;
@@ -277,17 +276,13 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
             }}
             className="w-full h-full flex items-center justify-center"
           >
-            {/* Adaptación 100% responsiva: Mobile 9:16 portrait vs Desktop 16:9 widescreen */}
-            <picture className="w-full h-full flex items-center justify-center pointer-events-none select-none">
-              <source media="(max-width: 767px)" srcSet={cosmicDebrisMobileImg} />
-              <source media="(min-width: 768px)" srcSet={cosmicDebrisImg} />
-              <img 
-                src={cosmicDebrisImg} 
-                alt="Cosmic Debris Atmospheric Layer" 
-                className="w-full h-full object-cover object-center pointer-events-none select-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
-                loading="eager"
-              />
-            </picture>
+            {/* Capa cósmica a pantalla completa sin cortes ni márgenes truncados */}
+            <img 
+              src={cosmicDebrisImg} 
+              alt="Cosmic Debris Atmospheric Layer" 
+              className="w-full h-full min-w-full min-h-full object-cover object-center pointer-events-none select-none drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)]"
+              loading="eager"
+            />
           </motion.div>
         </motion.div>
       </motion.div>

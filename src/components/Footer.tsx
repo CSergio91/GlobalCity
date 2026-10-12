@@ -172,14 +172,15 @@ export const Footer: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
+      {/* ========================================================================= */}
       {/* GRAND FINALE AT THE BOTTOM OF THE PAGE:                                   */}
       {/* Pepe emerging flush from the bottom floor with giant "EKLIPSE" behind him */}
       {/* ========================================================================= */}
-      <div className="relative w-full flex flex-col items-center justify-end overflow-hidden pt-6 sm:pt-14">
+      <div className="relative w-full flex flex-col items-center justify-end overflow-hidden pt-10 sm:pt-16 mt-4">
         
-        {/* Monumental Background Typography: "EKLIPSE" */}
-        <div className="absolute inset-x-0 bottom-0 flex items-center justify-center pointer-events-none select-none z-10 leading-none">
-          <span className="text-[18vw] sm:text-[21vw] md:text-[22vw] lg:text-[23vw] font-black tracking-[-0.03em] uppercase leading-none select-none text-transparent bg-clip-text bg-gradient-to-b from-white/[0.18] via-white/[0.06] to-transparent font-sans drop-shadow-[0_0_90px_rgba(124,58,237,0.14)]">
+        {/* Monumental Background Typography: "EKLIPSE" (Elevated & High Contrast on Mobile) */}
+        <div className="absolute inset-x-0 bottom-8 sm:bottom-4 md:bottom-0 flex items-center justify-center pointer-events-none select-none z-10 leading-none">
+          <span className="text-[24vw] sm:text-[22vw] md:text-[23vw] lg:text-[24vw] font-black tracking-[-0.04em] uppercase leading-none select-none text-transparent bg-clip-text bg-gradient-to-b from-white/40 via-purple-300/25 to-white/5 font-sans drop-shadow-[0_0_80px_rgba(168,85,247,0.35)] filter">
             EKLIPSE
           </span>
         </div>
@@ -187,12 +188,12 @@ export const Footer: React.FC = () => {
         {/* Centered Pepe Mascot Emerging from the Bottom of the Page */}
         <div className="relative z-20 flex justify-center items-end leading-none">
           {/* Cosmic Nebula Halo behind animated Pepe */}
-          <div className="absolute -inset-10 bg-gradient-to-t from-purple-600/25 via-amber-500/15 to-transparent blur-3xl rounded-full scale-90 pointer-events-none -z-10" />
+          <div className="absolute -inset-10 bg-gradient-to-t from-purple-600/35 via-amber-500/20 to-transparent blur-3xl rounded-full scale-90 pointer-events-none -z-10" />
 
           <img 
             src={pepeFooterImg} 
             alt="Eklipse Mascot Pepe" 
-            className="w-[260px] sm:w-[400px] md:w-[500px] lg:w-[580px] max-w-[88vw] h-auto object-contain block select-none pointer-events-none drop-shadow-[0_25px_60px_rgba(0,0,0,0.95)]"
+            className="w-[190px] sm:w-[340px] md:w-[460px] lg:w-[560px] max-w-[70vw] h-auto object-contain block select-none pointer-events-none drop-shadow-[0_25px_60px_rgba(0,0,0,0.95)]"
             loading="lazy"
           />
         </div>
