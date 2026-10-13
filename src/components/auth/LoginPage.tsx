@@ -190,7 +190,7 @@ const useIsDesktop = () => {
 // ============================================================================
 export const LoginPage: React.FC = () => {
   const isDesktop = useIsDesktop();
-  const { loginWithEmail, signUpWithEmail, loginWithGoogle } = useAuth();
+  const { loginWithEmail, signUpWithEmail, loginWithGoogle, loginAsDemo } = useAuth();
   const { navigate } = useAppRouter();
   const { language } = useLanguage();
   const isEn = language === 'en';
@@ -1716,6 +1716,19 @@ export const LoginPage: React.FC = () => {
                                   <span>{isEn ? 'Continue with Google' : 'Continuar con Google'}</span>
                                 </>
                               )}
+                            </button>
+
+                            {/* Acceso Rápido al Dashboard (Modo Demo) */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                loginAsDemo();
+                                navigate('/dashboard');
+                              }}
+                              className="w-full mt-2 h-10 px-4 rounded-xl border border-amber-400/40 bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 font-mono text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
+                            >
+                              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                              <span>{isEn ? 'Direct Demo Dashboard Access' : 'Acceso Directo al Dashboard (Demo)'}</span>
                             </button>
                           </div>
                         </form>

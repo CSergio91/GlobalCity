@@ -108,8 +108,11 @@ export const checkUserHasPurchasedAccount = async (email?: string, userId?: stri
   if (!email) return false;
   const cleanEmail = email.trim().toLowerCase();
 
-  // Si el usuario tiene rol de staff o admin, acceso ilimitado garantizado
-  if (role && ['admin', 'superadmin', 'soporte', 'support', 'marketing', 'compliance'].includes(role.toLowerCase())) {
+  // Si el usuario tiene rol de staff, admin o trader institucional demo, acceso garantizado
+  if (role && ['admin', 'superadmin', 'soporte', 'support', 'marketing', 'compliance', 'institutional_trader'].includes(role.toLowerCase())) {
+    return true;
+  }
+  if (cleanEmail === 'trader@eklipsefunded.com' || cleanEmail === 'demo@eklipsefunded.com') {
     return true;
   }
 
@@ -224,7 +227,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return parsed;
         }
       }
-      return null;
+      // Sesión de Trader Institucional activa por defecto para acceso instantáneo
+      const defaultTrader: UserProfile = {
+        id: 'eklipse_trader_demo',
+        username: '@pepe_trader',
+        firstName: 'Trader',
+        lastName: 'Eklipse',
+        email: 'trader@eklipsefunded.com',
+        authProvider: 'demo',
+        role: 'institutional_trader',
+        createdAt: new Date().toISOString(),
+        twoFactorEnabled: true,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultTrader));
+      return defaultTrader;
     } catch {
       return null;
     }

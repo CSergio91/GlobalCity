@@ -44,7 +44,7 @@ const createSafeStubClient = (): any => {
   });
 };
 
-export const supabase = isSupabaseConfigured
+const rawSupabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
@@ -53,6 +53,25 @@ export const supabase = isSupabaseConfigured
       }
     })
   : createSafeStubClient();
+
+// Protección Anti-Fuga de Claves & WebSocket Silencer:
+// En desarrollo local (localhost:54321), no hay demonio Realtime escuchando en ese puerto.
+// Interceptamos .channel() para evitar que el navegador intente conectar y vuelque la URL con apikey en consola.
+if (isSupabaseConfigured && supabaseUrl.includes('localhost:54321') && typeof (rawSupabase as any)?.channel === 'function') {
+  (rawSupabase as any).channel = (_name: string) => ({
+    on: () => ({
+      on: () => ({
+        subscribe: () => ({ unsubscribe: () => {} })
+      }),
+      subscribe: () => ({ unsubscribe: () => {} })
+    }),
+    subscribe: () => ({ unsubscribe: () => {} }),
+    unsubscribe: () => {},
+    send: () => {}
+  } as any);
+}
+
+export const supabase = rawSupabase;
 
 
 export interface PropFirmAccount {
