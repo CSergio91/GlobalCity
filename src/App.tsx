@@ -130,7 +130,7 @@ function MainAppContent() {
       return (
         <CrmAccessDeniedScreen 
           onBackToDashboard={() => {
-            if (subdomain === 'nexus' || subdomain === 'nexuscrm') {
+            if (subdomain === 'nexus') {
               window.location.href = 'https://dashapp.eklipsefunded.com';
             } else {
               navigate('/dashboard');
@@ -147,7 +147,7 @@ function MainAppContent() {
     return (
       <InstitutionalCrmApp 
         onBackToTerminal={() => {
-          if (subdomain === 'nexus' || subdomain === 'nexuscrm') {
+          if (subdomain === 'nexus') {
             window.location.href = 'https://dashapp.eklipsefunded.com';
           } else {
             navigate('/dashboard');

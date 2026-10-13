@@ -857,14 +857,10 @@ export const LoginPage: React.FC = () => {
 
         // 1b. Autenticar explícitamente la sesión para garantizar JWT activo en el navegador
         try {
-          const { data: signInData } = await supabase.auth.signInWithPassword({
+          await supabase.auth.signInWithPassword({
             email: cleanEmail,
             password: regPassword,
           });
-          if (signInData?.user) {
-            const mapped = mapSupabaseUserToProfile(signInData.user);
-            setUser(mapped);
-          }
         } catch (_) {}
 
         // 2. Aprovisionar Cuenta Institucional en public.trading_accounts en PostgreSQL
@@ -951,18 +947,21 @@ export const LoginPage: React.FC = () => {
         // 4. Validar caché caliente para acceso instantáneo al Dashboard en 0ms
         setAccountCacheValid(cleanEmail);
 
-        // 5. Establecer el usuario autenticado explícitamente en el estado de React
+        // 5. Establecer el usuario autenticado explícitamente en el almacenamiento
         const mappedUser: UserProfile = {
           id: profileUserId || 'trader_' + Date.now(),
+          username: cleanEmail.split('@')[0],
+          firstName: sanitizeCleanString(regFirstName) || 'Trader',
+          lastName: sanitizeCleanString(regLastName) || '',
           email: cleanEmail,
-          name: `${sanitizeCleanString(regFirstName)} ${sanitizeCleanString(regLastName)}`.trim() || 'Trader',
           role: 'trader',
           authProvider: 'email',
-          avatarUrl: pendingGooglePhoto,
-          createdAt: new Date().toISOString()
+          photoUrl: pendingGooglePhoto,
+          createdAt: new Date().toISOString(),
+          twoFactorEnabled: false
         };
-        setUser(mappedUser);
         localStorage.setItem('eklipse_user_profile', JSON.stringify(mappedUser));
+        localStorage.setItem('globalcity_auth_user', JSON.stringify(mappedUser));
         if (createdAccountId) {
           localStorage.setItem('eklipse_active_account_id', createdAccountId);
         }

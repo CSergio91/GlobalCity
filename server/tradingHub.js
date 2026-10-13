@@ -1395,3 +1395,11 @@ server.listen(PORT, () => {
   console.log(`• Risk Rules Engine       : \x1b[34mhttp://localhost:${PORT}/api/risk/rules\x1b[0m`);
   console.log(`===============================================================\n`);
 });
+
+process.on('uncaughtException', (err) => {
+  console.error('[TradingHub UncaughtException]', err?.message || err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[TradingHub UnhandledRejection]', reason?.message || reason);
+});
