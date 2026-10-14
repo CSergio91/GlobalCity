@@ -20,60 +20,64 @@
  */
 
 export function getApiBaseUrl(): string {
-  // 1. Variable de entorno explícita (Vite)
+  // 1. Detección automática prioritaria en producción Cloudflare Edge (*.eklipsefunded.com)
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname.toLowerCase();
+    if (host.endsWith('eklipsefunded.com')) {
+      return 'https://api.eklipsefunded.com';
+    }
+  }
+
+  // 2. Variable de entorno explícita (Vite)
   const envUrl = (import.meta as any).env?.VITE_API_GATEWAY_URL;
   if (envUrl && typeof envUrl === 'string' && envUrl.trim() !== '') {
     return envUrl.trim().replace(/\/+$/, '');
   }
 
-  // 2. Detección automática en navegador según el hostname activo
+  // 3. Detección en desarrollo local
   if (typeof window !== 'undefined') {
     const host = window.location.hostname.toLowerCase();
-
-    // Producción Cloudflare Edge (landing, dashapp o nexuscrm)
-    if (host.endsWith('eklipsefunded.com')) {
-      return 'https://api.eklipsefunded.com';
-    }
-
-    // Desarrollo Local en misma máquina
+    const port = (import.meta as any).env?.VITE_BACKEND_PORT || '8088';
     if (host === 'localhost' || host === '127.0.0.1') {
-      const port = (import.meta as any).env?.VITE_BACKEND_PORT || '8080';
       return `http://localhost:${port}`;
     }
-
-    // Dispositivos en red local (móviles/tablets)
-    const port = (import.meta as any).env?.VITE_BACKEND_PORT || '8080';
     return `http://${host}:${port}`;
   }
 
-  // 3. Fallback SSR / Node.js
-  return 'http://localhost:8080';
+  // 4. Fallback SSR / Node.js
+  return 'http://localhost:8088';
 }
 
 export function getWsGatewayUrl(): string {
-  // 1. Variable de entorno explícita
-  const envWs = (import.meta as any).env?.VITE_WS_GATEWAY_URL;
-  if (envWs && typeof envWs === 'string' && envWs.trim() !== '') {
-    return envWs.trim();
-  }
-
-  // 2. Detección automática en navegador
+  // 1. Detección automática prioritaria en producción Cloudflare Edge (*.eklipsefunded.com o HTTPS)
   if (typeof window !== 'undefined') {
     const host = window.location.hostname.toLowerCase();
-
     if (host.endsWith('eklipsefunded.com')) {
       return 'wss://api.eklipsefunded.com/ws';
     }
+  }
 
-    const port = (import.meta as any).env?.VITE_BACKEND_PORT || '8080';
+  // 2. Variable de entorno explícita (para pruebas locales o dev)
+  const envWs = (import.meta as any).env?.VITE_WS_GATEWAY_URL;
+  if (envWs && typeof envWs === 'string' && envWs.trim() !== '') {
+    // Si estamos en HTTPS no podemos abrir ws:// inseguro
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:' && envWs.startsWith('ws://')) {
+      return 'wss://api.eklipsefunded.com/ws';
+    }
+    return envWs.trim();
+  }
+
+  // 3. Detección automática en desarrollo local
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname.toLowerCase();
+    const port = (import.meta as any).env?.VITE_BACKEND_PORT || '8088';
     if (host === 'localhost' || host === '127.0.0.1') {
       return `ws://localhost:${port}`;
     }
-
     return `ws://${host}:${port}`;
   }
 
-  return 'ws://localhost:8080';
+  return 'ws://localhost:8088';
 }
 
 /**

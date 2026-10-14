@@ -11,6 +11,7 @@ import { handlePaused } from './handlers/pausedHandler';
 import { handleReseted } from './handlers/resetedHandler';
 import { handlePasswordReset } from './handlers/passwordResetHandler';
 import { handleNeedSupport } from './handlers/needSupportHandler';
+import { handlePassed } from './handlers/passedHandler';
 
 const PORT = process.env.PORT || 3005;
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
@@ -39,6 +40,10 @@ async function routeEmailEvent(type: string, data: any) {
       return await handleReseted(data);
     case 'PASSWORD_RESET':
       return await handlePasswordReset(data);
+    case 'ACCOUNT_PASSED':
+    case 'CHALLENGE_PASSED':
+    case 'PASSED':
+      return await handlePassed(data);
     case 'NEED_SUPPORT':
     case 'SUPPORT_REPLY':
       return await handleNeedSupport(data);

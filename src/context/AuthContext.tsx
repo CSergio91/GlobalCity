@@ -37,10 +37,26 @@ interface AuthContextType {
 }
 
 const STORAGE_KEY = 'globalcity_auth_user';
+const roleCache = new Map<string, string>();
 
 export const fetchUserProfileRole = async (email?: string, userId?: string): Promise<string> => {
   if (!email && !userId) return 'trader';
   const cleanEmail = (email || '').trim().toLowerCase();
+
+  // 1. Zero-Egress In-Memory Cache (0ms)
+  if (cleanEmail && roleCache.has(cleanEmail)) {
+    return roleCache.get(cleanEmail)!;
+  }
+
+  // 2. Zero-Egress SessionStorage Cache (0ms)
+  if (typeof sessionStorage !== 'undefined') {
+    const cached = sessionStorage.getItem(`eklipse_role_${cleanEmail || userId}`);
+    if (cached) {
+      if (cleanEmail) roleCache.set(cleanEmail, cached);
+      return cached;
+    }
+  }
+
   try {
     let query = supabase.from('profiles').select('role');
     if (cleanEmail) {
@@ -50,7 +66,12 @@ export const fetchUserProfileRole = async (email?: string, userId?: string): Pro
     }
     const { data, error } = await query.maybeSingle();
     if (!error && data?.role) {
-      return data.role.toLowerCase();
+      const role = data.role.toLowerCase();
+      if (cleanEmail) roleCache.set(cleanEmail, role);
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem(`eklipse_role_${cleanEmail || userId}`, role);
+      }
+      return role;
     }
   } catch (err) {
     console.warn('[AuthContext] Error consultando rol de perfil:', err);
@@ -270,27 +291,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         const mapped = mapSupabaseUserToProfile(session.user, role);
-        setUser(mapped);
+        setUser(prev => {
+          if (prev && prev.id === mapped.id && prev.email === mapped.email && prev.role === mapped.role) {
+            return prev;
+          }
+          return mapped;
+        });
       }
     }).catch((err) => {
       console.warn('[AuthContext] Error recuperando sesión de Supabase:', err);
     });
 
-    // Suscripción reactiva a cambios de autenticación
+    // Suscripción reactiva a cambios de autenticación (Zero-Egress: ignora TOKEN_REFRESHED)
+    let isHandlingAuth = false;
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED')) {
-        const role = await fetchUserProfileRole(session.user.email, session.user.id);
-        const hasAccount = await checkUserHasPurchasedAccount(session.user.email, session.user.id, role);
-        if (!hasAccount) {
-          console.warn('[AuthContext] Evento auth bloqueado: usuario no tiene cuenta de fondeo.');
-          await handleRejectUnauthorizedUser(session.user, setUser);
-          return;
-        }
+      // En TOKEN_REFRESHED el usuario y rol NO han cambiado: prohibido hacer waterfall queries
+      if (event === 'TOKEN_REFRESHED') {
+        return;
+      }
 
-        const mapped = mapSupabaseUserToProfile(session.user, role);
-        setUser(mapped);
-      } else if (event === 'SIGNED_OUT') {
+      if (event === 'SIGNED_OUT') {
         setUser((prev) => (prev?.authProvider === 'telegram') ? prev : null);
+        return;
+      }
+
+      if (session?.user && (event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
+        if (isHandlingAuth) return;
+        isHandlingAuth = true;
+        try {
+          const role = await fetchUserProfileRole(session.user.email, session.user.id);
+          const hasAccount = await checkUserHasPurchasedAccount(session.user.email, session.user.id, role);
+          if (!hasAccount) {
+            console.warn('[AuthContext] Evento auth bloqueado: usuario no tiene cuenta de fondeo.');
+            await handleRejectUnauthorizedUser(session.user, setUser);
+            return;
+          }
+
+          const mapped = mapSupabaseUserToProfile(session.user, role);
+          setUser(prev => {
+            if (prev && prev.id === mapped.id && prev.email === mapped.email && prev.role === mapped.role) {
+              return prev;
+            }
+            return mapped;
+          });
+        } finally {
+          isHandlingAuth = false;
+        }
       }
     });
 
@@ -298,18 +344,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       subscription?.unsubscribe();
     };
   }, []);
-
-  useEffect(() => {
-    try {
-      if (user) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-      } else {
-        localStorage.removeItem(STORAGE_KEY);
-      }
-    } catch (err) {
-      console.error('Error persisting auth state to localStorage', err);
-    }
-  }, [user]);
 
   const loginWithTelegram = (payload: TelegramUserPayload) => {
     const newUser: UserProfile = {

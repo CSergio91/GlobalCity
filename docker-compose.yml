@@ -246,6 +246,21 @@ services:
     networks:
       - eklipse_net
 
+  # ============================================================================
+  # 8. CLOUDFLARE ZERO TRUST ARGO TUNNEL (Conector Seguro de Producción / VPS)
+  # ============================================================================
+  eklipse-tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: eklipse_cloudflare_tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    network_mode: "service:eklipse-gateway"
+    depends_on:
+      - eklipse-gateway
+      - eklipse-server
+
 volumes:
   eklipse_pg_data:
     driver: local

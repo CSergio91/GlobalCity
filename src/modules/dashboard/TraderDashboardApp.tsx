@@ -253,55 +253,110 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
     setTimeout(() => setContractToastMessage(null), 4500);
   };
 
-  // Cargar cuentas reales del usuario desde PostgreSQL y localStorage
+  // Cargar cuentas reales del usuario desde PostgreSQL y localStorage (Zero-Egress Governance)
+  const isFetchingAccountsRef = useRef(false);
+
   const loadUserAccounts = async (forceRefresh = false) => {
+    // Si ya hay cuentas en memoria y no es recarga forzada, CERO peticiones HTTP redundantes (0ms)
+    if (!forceRefresh && accounts.length > 0) {
+      return;
+    }
+    if (isFetchingAccountsRef.current) return;
+    isFetchingAccountsRef.current = true;
+
     if (forceRefresh || accounts.length === 0) {
       setIsLoadingAccounts(true);
     }
     try {
       const loaded: UserTradingAccount[] = [];
 
-      // 1. Cargar desde Supabase PostgreSQL
+      // 1. Single-Fetch Bootstrap RPC (Zero-Egress: 1 sola llamada para perfil, cuentas y trades)
       if (user?.email || user?.id) {
-        const query = supabase
-          .from('trading_accounts')
-          .select('*');
+        let rpcSuccess = false;
+        try {
+          const { data: bData, error: bErr } = await supabase.rpc('get_trader_bootstrap', {
+            p_user_id: user.id || null,
+            p_email: user.email || null
+          });
 
-        if (user.email && user.id) {
-          query.or(`trader_email.eq.${user.email},user_id.eq.${user.id}`);
-        } else if (user.email) {
-          query.eq('trader_email', user.email);
-        } else if (user.id) {
-          query.eq('user_id', user.id);
+          if (!bErr && bData && Array.isArray(bData.accounts)) {
+            rpcSuccess = true;
+            bData.accounts.forEach((row: any) => {
+              const rules = row.rules_config || {};
+              loaded.push({
+                id: row.id,
+                accountNumber: row.account_number || `EKL-${row.id.slice(0, 6).toUpperCase()}`,
+                category: row.account_number?.toLowerCase().includes('lunar') ? 'lunar' : 'solar',
+                tierName: rules.tierName || `$${Number(row.initial_balance || 25000).toLocaleString()}`,
+                initialBalance: Number(row.initial_balance || 25000),
+                currentBalance: Number(row.current_balance || row.initial_balance || 25000),
+                equity: Number(row.equity || row.initial_balance || 25000),
+                peakEquity: Number(row.peak_equity || row.initial_balance || 25000),
+                dailyStartEquity: Number(row.daily_start_equity || row.initial_balance || 25000),
+                status: row.status || 'ACTIVE',
+                profitSplit: Number(rules.profitSplitPct || rules.effectiveProfitSplit || 80),
+                maxDailyDrawdownPct: Number(rules.maxDailyDrawdownPct || 5),
+                maxTotalDrawdownPct: Number(rules.maxTotalDrawdownPct || 10),
+                profitTargetPct: Number(rules.profitTargetPct || 8),
+                leverage: rules.effectiveLeverage || '1:100',
+                tradingDays: Number(row.trading_days_count || 0),
+                createdAt: row.created_at || new Date().toISOString(),
+                contractSigned: !!(row.contract_signed_at || rules.contractSigned),
+                contractSignedAt: row.contract_signed_at || rules.contractSignedAt,
+                contractSignature: row.contract_signature || rules.contractSignature
+              });
+            });
+
+            if (Array.isArray(bData.trades)) {
+              setRecentTrades(bData.trades);
+            }
+          }
+        } catch (_) {
+          rpcSuccess = false;
         }
 
-        const { data, error } = await query;
-        if (!error && data && data.length > 0) {
-          data.forEach((row: any) => {
-            const rules = row.rules_config || {};
-            loaded.push({
-              id: row.id,
-              accountNumber: row.account_number || `EKL-${row.id.slice(0, 6).toUpperCase()}`,
-              category: row.account_number?.toLowerCase().includes('lunar') ? 'lunar' : 'solar',
-              tierName: rules.tierName || `$${Number(row.initial_balance || 25000).toLocaleString()}`,
-              initialBalance: Number(row.initial_balance || 25000),
-              currentBalance: Number(row.current_balance || row.initial_balance || 25000),
-              equity: Number(row.equity || row.initial_balance || 25000),
-              peakEquity: Number(row.peak_equity || row.initial_balance || 25000),
-              dailyStartEquity: Number(row.daily_start_equity || row.initial_balance || 25000),
-              status: row.status || 'ACTIVE',
-              profitSplit: Number(rules.profitSplitPct || rules.effectiveProfitSplit || 80),
-              maxDailyDrawdownPct: Number(rules.maxDailyDrawdownPct || 5),
-              maxTotalDrawdownPct: Number(rules.maxTotalDrawdownPct || 10),
-              profitTargetPct: Number(rules.profitTargetPct || 8),
-              leverage: rules.effectiveLeverage || '1:100',
-              tradingDays: Number(row.trading_days_count || 0),
-              createdAt: row.created_at || new Date().toISOString(),
-              contractSigned: !!(row.contract_signed_at || rules.contractSigned),
-              contractSignedAt: row.contract_signed_at || rules.contractSignedAt,
-              contractSignature: row.contract_signature || rules.contractSignature
+        // Fallback a consulta directa únicamente si el RPC falló
+        if (!rpcSuccess) {
+          const query = supabase
+            .from('trading_accounts')
+            .select('*');
+
+          if (user.email && user.id) {
+            query.or(`trader_email.eq.${user.email},user_id.eq.${user.id}`);
+          } else if (user.email) {
+            query.eq('trader_email', user.email);
+          } else if (user.id) {
+            query.eq('user_id', user.id);
+          }
+
+          const { data, error } = await query;
+          if (!error && data && data.length > 0) {
+            data.forEach((row: any) => {
+              const rules = row.rules_config || {};
+              loaded.push({
+                id: row.id,
+                accountNumber: row.account_number || `EKL-${row.id.slice(0, 6).toUpperCase()}`,
+                category: row.account_number?.toLowerCase().includes('lunar') ? 'lunar' : 'solar',
+                tierName: rules.tierName || `$${Number(row.initial_balance || 25000).toLocaleString()}`,
+                initialBalance: Number(row.initial_balance || 25000),
+                currentBalance: Number(row.current_balance || row.initial_balance || 25000),
+                equity: Number(row.equity || row.initial_balance || 25000),
+                peakEquity: Number(row.peak_equity || row.initial_balance || 25000),
+                dailyStartEquity: Number(row.daily_start_equity || row.initial_balance || 25000),
+                status: row.status || 'ACTIVE',
+                profitSplit: Number(rules.profitSplitPct || rules.effectiveProfitSplit || 80),
+                maxDailyDrawdownPct: Number(rules.maxDailyDrawdownPct || 5),
+                maxTotalDrawdownPct: Number(rules.maxTotalDrawdownPct || 10),
+                profitTargetPct: Number(rules.profitTargetPct || 8),
+                leverage: rules.effectiveLeverage || '1:100',
+                tradingDays: Number(row.trading_days_count || 0),
+                createdAt: row.created_at || new Date().toISOString(),
+                contractSigned: !!(row.contract_signed_at || rules.contractSigned),
+                contractSignedAt: row.contract_signed_at || rules.contractSignedAt,
+                contractSignature: row.contract_signature || rules.contractSignature
+              });
             });
-          });
+          }
         }
       }
 
@@ -338,7 +393,15 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
       } catch (_) {}
 
       if (loaded.length > 0) {
-        setAccounts(loaded);
+        setAccounts(prev => {
+          if (
+            prev.length === loaded.length &&
+            prev.every((a, idx) => a.id === loaded[idx]?.id && a.currentBalance === loaded[idx]?.currentBalance && a.equity === loaded[idx]?.equity && a.status === loaded[idx]?.status)
+          ) {
+            return prev;
+          }
+          return loaded;
+        });
         if (!selectedAccountId || !loaded.some(a => a.id === selectedAccountId)) {
           setSelectedAccountId(loaded[0].id);
         }
@@ -356,13 +419,16 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
     } catch (err) {
       console.warn('[TraderDashboard] Error cargando cuentas:', err);
     } finally {
+      isFetchingAccountsRef.current = false;
       setIsLoadingAccounts(false);
     }
   };
 
   useEffect(() => {
-    loadUserAccounts(false);
-  }, [user]);
+    if (user?.id || user?.email) {
+      loadUserAccounts(false);
+    }
+  }, [user?.id, user?.email]);
 
   // Cuenta actualmente seleccionada para ver su Dashboard independiente
   const activeAccount = useMemo(() => {
@@ -477,22 +543,25 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
           } catch (_) {}
         };
 
+        let reconnectAttempts = 0;
         ws.onclose = () => {
           if (isCancelled) return;
           setWsConnected(false);
           setWsLatency(null);
           clearInterval(pingIntervalRef.current);
           clearTimeout(reconnectTimeoutRef.current);
-          reconnectTimeoutRef.current = setTimeout(connectWs, 3000);
+          const delay = Math.min(30000, 3000 * Math.pow(1.5, Math.min(reconnectAttempts, 6)));
+          reconnectAttempts++;
+          reconnectTimeoutRef.current = setTimeout(connectWs, delay);
         };
 
         ws.onerror = () => {
-          ws.close();
+          try { ws.close(); } catch (_) {}
         };
       } catch (err) {
         setWsConnected(false);
         clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = setTimeout(connectWs, 3000);
+        reconnectTimeoutRef.current = setTimeout(connectWs, 5000);
       }
     };
 
@@ -531,19 +600,26 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
     navigate(`/login?mode=checkout&plan=${planId}${addonsParam}&category=${planCategory}`);
   };
 
-  // Cargar operaciones reales de la cuenta seleccionada
+  // Cargar operaciones reales de la cuenta seleccionada (Zero-Egress Governance)
   useEffect(() => {
     if (!activeAccount?.id || activeAccount.id.startsWith('local_')) {
       setRecentTrades([]);
       return;
     }
+
+    // Si ya tenemos trades en memoria vinculados a esta cuenta (ej. provenientes de get_trader_bootstrap),
+    // omitimos la petición de red redundante (0ms)
+    if (recentTrades.length > 0 && recentTrades.some((t: any) => t.account_id === activeAccount.id)) {
+      return;
+    }
+
     const fetchTrades = async () => {
       try {
         const { data, error } = await supabase
           .from('account_trades')
           .select('*')
           .eq('account_id', activeAccount.id)
-          .order('created_at', { ascending: false })
+          .order('opened_at', { ascending: false })
           .limit(5);
 
         if (!error && data) {

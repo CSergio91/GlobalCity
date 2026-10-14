@@ -995,8 +995,82 @@ const server = http.createServer((req, res) => {
             console.warn('[TradingHub] RESEND_API_KEY no configurada');
             return;
           }
-          const lang = data.lang || 'es';
-          const templateName = type.toUpperCase() === 'WELCOME' ? 'welcome' : 'new-account';
+          const lang = (data.lang || 'es').toLowerCase();
+          const upperType = type.toUpperCase();
+
+          let templateName = 'new-account';
+          let subject = '';
+
+          switch (upperType) {
+            case 'WELCOME':
+              templateName = 'welcome';
+              subject = lang === 'en' ? 'Welcome to Eklipse Funded! ✨' : '¡Bienvenido a Eklipse Funded! ✨';
+              break;
+
+            case 'NEW_ACCOUNT':
+            case 'NEW_ACCOUNT_PURCHASED':
+            case 'WELCOME_CHALLENGE':
+              templateName = 'new-account';
+              subject = lang === 'en'
+                ? `New Account Activated! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`
+                : `¡Nueva Cuenta Activada! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`;
+              break;
+
+            case 'ACCOUNT_RESETED':
+            case 'RESET':
+              templateName = 'account-reseted';
+              subject = lang === 'en'
+                ? `Account #${data.accountNumber || 'EKL'} Successfully Reset! 🔄`
+                : `¡Tu Cuenta #${data.accountNumber || 'EKL'} Ha Sido Reseteada! 🔄`;
+              break;
+
+            case 'ACCOUNT_BREACHED':
+            case 'BREACH':
+              templateName = 'account-breached';
+              subject = lang === 'en'
+                ? `Risk Desk Notice: Account #${data.accountNumber || 'EKL'} Limit Reached 🛑`
+                : `Aviso de Gestión de Riesgo: Cuenta #${data.accountNumber || 'EKL'} Límite Alcanzado 🛑`;
+              break;
+
+            case 'ACCOUNT_PAUSED':
+            case 'PAUSE':
+              templateName = 'account-paused';
+              subject = lang === 'en'
+                ? `Operational Notice: Account #${data.accountNumber || 'EKL'} Temporarily Paused ⏸️`
+                : `Aviso Operativo: Cuenta #${data.accountNumber || 'EKL'} Temporalmente Pausada ⏸️`;
+              break;
+
+            case 'ACCOUNT_PASSED':
+            case 'CHALLENGE_PASSED':
+            case 'PASSED':
+              templateName = 'account-passed';
+              subject = lang === 'en'
+                ? `Target Reached! Challenge Passed #${data.accountNumber || 'EKL'} 🏆`
+                : `¡Meta Alcanzada! Reto Superado #${data.accountNumber || 'EKL'} 🏆`;
+              break;
+
+            case 'PASSWORD_RESET':
+              templateName = 'password-reset';
+              subject = lang === 'en'
+                ? 'Security Alert: Password Reset Request 🔐'
+                : 'Alerta de Seguridad: Solicitud de Restablecimiento de Contraseña 🔐';
+              break;
+
+            case 'NEED_SUPPORT':
+            case 'SUPPORT_REPLY':
+              templateName = 'need-support';
+              subject = lang === 'en'
+                ? `Institutional Support: Ticket #${data.ticketId || 'EKL'} Received 💬`
+                : `Soporte Institucional: Caso #${data.ticketId || 'EKL'} Recibido 💬`;
+              break;
+
+            default:
+              templateName = 'new-account';
+              subject = lang === 'en'
+                ? `Eklipse Funded Notification #${data.accountNumber || 'EKL'}`
+                : `Notificación Eklipse Funded #${data.accountNumber || 'EKL'}`;
+              break;
+          }
 
           let templateHtml = '';
           const candidatePaths = [
@@ -1016,6 +1090,7 @@ const server = http.createServer((req, res) => {
               telegramBotUrl: 'https://t.me/EklipseFunded_bot',
               dashboardUrl: data.dashboardUrl || 'https://dashapp.eklipsefunded.com',
               traderName: data.traderName || 'Trader',
+              nextStage: data.nextStage || (lang === 'en' ? 'Phase 2 / Funded Account' : 'Fase 2 / Cuenta Fondeada'),
               ...data
             };
 
@@ -1025,14 +1100,6 @@ const server = http.createServer((req, res) => {
               const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
               rendered = rendered.replace(regex, safeVal);
             }
-
-            const subject = lang === 'en'
-              ? (templateName === 'welcome' 
-                  ? 'Welcome to Eklipse Funded! ✨' 
-                  : `New Account Activated! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`)
-              : (templateName === 'welcome' 
-                  ? '¡Bienvenido a Eklipse Funded! ✨' 
-                  : `¡Nueva Cuenta Activada! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`);
 
             fetch('https://api.resend.com/emails', {
               method: 'POST',
