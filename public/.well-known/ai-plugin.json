@@ -1,0 +1,16 @@
+{
+  "schema_version": "v1",
+  "name_for_model": "eklipse_funded",
+  "name_for_human": "Eklipse Funded",
+  "description_for_model": "Institutional crypto and multi-asset proprietary trading firm. Provides funded accounts from $1,000 to $100,000 with Instant Funding (no evaluation) and 2-Step Challenges, up to 90% profit split, proprietary 60 FPS GPU terminal, transparent risk rules (8% max drawdown, 2%-5% daily loss, 40% consistency rule), and sub-10ms DMA execution.",
+  "description_for_human": "Trade up to $100,000 in institutional capital with Eklipse Funded. Instant funding and 2-step evaluations with 90% profit split.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "none"
+  },
+  "logo_url": "https://eklipsefunded.com/apple-touch-icon.png",
+  "contact_email": "soporte@eklipsefunded.com",
+  "legal_info_url": "https://eklipsefunded.com/#rules"
+}

@@ -60,10 +60,17 @@
     <meta name="twitter:image" content="https://eklipsefunded.com/og-image.jpg" />
     <meta name="twitter:image:alt" content="Eklipse Funded Official Platform Preview" />
 
-    <!-- Preconnect Typography -->
+    <!-- Preconnect Typography (Non-render-blocking async swap) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" media="print" onload="this.media='all'">
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap">
+    </noscript>
+
+    <!-- Preload Critical LCP Hero Image -->
+    <link rel="preload" as="image" href="/hero.webp" fetchpriority="high">
 
     <!-- ============================================================================== -->
     <!-- JSON-LD STRUCTURED DATA SCHEMA.ORG (Google Rich Snippets, ChatGPT, Perplexity) -->

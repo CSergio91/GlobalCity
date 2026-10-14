@@ -127,10 +127,11 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
             {/* Primary Pill Button */}
             <button
               onClick={handleGetFunded}
+              aria-label={isEn ? "Get Funded Account - Institutional Instant Funding" : "Obtener Cuenta de Fondeo Inmediato Institucional"}
               className="px-6 sm:px-9 py-2.5 sm:py-3.5 rounded-full text-xs sm:text-base font-semibold text-white bg-gradient-to-r from-[#6366F1] via-[#7C3AED] to-[#9333EA] hover:brightness-110 shadow-[0_0_25px_rgba(124,58,237,0.45)] hover:shadow-[0_0_35px_rgba(124,58,237,0.65)] transition-all duration-200 flex items-center gap-2 cursor-pointer hover:scale-[1.03] active:scale-95 group"
             >
               <span>{isEn ? 'Get Funded' : 'Obtener Fondeo'}</span>
-              <ArrowRight className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-white group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-white group-hover:translate-x-1 transition-transform" aria-hidden="true" />
             </button>
           </div>
 
