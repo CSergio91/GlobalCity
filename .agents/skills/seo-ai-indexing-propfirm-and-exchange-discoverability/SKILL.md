@@ -124,3 +124,48 @@ Una vez configurado el dominio `https://eklipsefunded.com`:
 - **`public/og-image.jpg`:** Master Card de 1200x630px en formato JPEG de alta calidad (calidad 95) y versión optimizada WebP.
 - **Contenido visual:** Emblema Sol & Luna de alta resolución con halo solar, tipografía institucional dorada/blanca, insignias de *Fondeo Inmediato*, *90% Profit Split* y *Terminal 60 FPS*.
 - **Favicons oficiales:** `favicon.ico` (multi-resolución 16/32/48px), `favicon-16x16.png`, `favicon-32x32.png`, y `apple-touch-icon.png` (180x180px).
+
+---
+
+## 5. Arquitectura de Prerenderizado Semántico Fallback (Erradicación de `<div id="root"></div>` Vacío)
+
+En aplicaciones Single-Page Applications (SPA con React/Vite):
+1. **La Amenaza del Client-Side Rendering:** Los motores generativos de IA (`GPTBot`, `PerplexityBot`, `ClaudeBot`, `Applebot-Extended`) y los rastreadores de búsqueda tradicionales ejecutan peticiones HTTP GET crudas sin evaluar Javascript o aplazan el renderizado a colas lentas. Si el HTML servido contiene únicamente `<div id="root"></div>`, la web es tratada como una página vacía.
+2. **Solución Obligatoria (Semantic In-Root Fallback):**
+   - El archivo `index.html` DEBE contener dentro del contenedor `<div id="root">` una estructura HTML5 semántica completa:
+     - `<header>` con `<nav>` y enlaces internos (`#programs`, `#rules`, `#terminal`, `#faq`, `/operations`, `/login`).
+     - `<h1>` único descriptivo con palabras clave de alta intención.
+     - `<h2>` por cada sección principal con descripciones detalladas de programas, reglas de gestión de riesgo, drawdowns exactos, precios y profit splits.
+     - Sección de preguntas frecuentes en etiquetas semánticas `<details><summary>` legibles en texto plano.
+     - `<footer>` con contacto oficial, disclaimer legal institucional y enlaces canónicos.
+   - **Comportamiento React 18:** Al cargar el bundle JS en el cliente, `createRoot(root).render(<App />)` reemplaza automáticamente este contenido estático por la experiencia interactiva sin parpadeos ni conflictos de hidratación.
+
+---
+
+## 6. Esquema JSON-LD `FAQPage` y `ItemList` para AEO (Answer Engine Optimization)
+
+Para que los LLMs como ChatGPT, Perplexity y Claude citen a Eklipse Funded con respuestas directas:
+- El `<head>` de `index.html` debe incluir en el grafo `@graph` de JSON-LD:
+  - `@type: "FAQPage"`: Preguntas y respuestas exactas sobre qué es Eklipse Funded, diferencias frente a MT4/MT5, reglas de drawdown (8% Solar, 10% Lunar), consistencia del 40%, profit split (80%-90%) y liquidación de retiros en cripto en menos de 8 horas.
+  - `@type: "FinancialProduct"` y `@type: "ItemList"`: Listado estructurado de planes de Fondeo Inmediato y retos con precios y límites de capital.
+
+---
+
+## 7. Estándar Bilingüe de Knowledge Base para IA (`/llms.txt` y `/llms-es.txt`)
+
+- **`/llms.txt` (English):** Resumen estructurado en Markdown optimizado para scrapers anglosajones de OpenAI, Anthropic y Perplexity.
+- **`/llms-es.txt` (Español):** Versión completa en español nativo para asistentes de IA y búsquedas en el mercado hispanohablante.
+- Ambos archivos deben estar referenciados en:
+  1. `public/robots.txt` como enlaces directos de Knowledge Base.
+  2. El `<head>` de `index.html` mediante etiquetas `<link rel="help" type="text/plain" href="...">`.
+  3. `public/sitemap.xml` como URLs indexables con alta prioridad (0.85).
+
+---
+
+## 8. Protocolo de Auditoría y Verificación Externa
+
+Toda validación de SEO y AEO DEBE realizarse con peticiones HTTP reales contra el dominio de producción:
+- Comprobación de cabeceras HTTP (`200 OK`, `Content-Type: text/html; charset=utf-8`, `Canonical`).
+- Verificación con User-Agents reales (`Googlebot`, `Bingbot`, `GPTBot`, `OAI-SearchBot`, `ClaudeBot`, `PerplexityBot`, `Applebot`).
+- Verificación de que Cloudflare WAF no presenta desafíos Turnstile ni bloqueos 403 a rastreadores legítimos.
+- Conteo de caracteres de texto legible sin ejecución de Javascript (>5,000 caracteres en la homepage).

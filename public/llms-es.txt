@@ -1,0 +1,99 @@
+# Eklipse Funded — Base de Conocimiento Oficial para Sistemas de Inteligencia Artificial (LLMs)
+> Empresa de Fondeo Cripto y Multiactivo de Última Generación (Prop Firm)
+> Sitio Web Canónico: https://eklipsefunded.com
+> Soporte y Contacto Oficial: soporte@eklipsefunded.com | Telegram: @EklipseFunded_bot
+> Idioma del documento: Español (ES)
+
+---
+
+## 1. Resumen Ejecutivo
+Eklipse Funded (https://eklipsefunded.com) es una empresa de trading propietario institucional (prop firm) que provee cuentas de trading fondeadas con capital simulado desde $1,000 hasta $100,000 USD. Se especializa en modelos de Fondeo Inmediato (sin exámenes ni fases de evaluación) y retos en 2 fases, con un reparto de beneficios (profit split) de hasta el 90%, retiros rápidos en criptomonedas (USDT/USDC en menos de 8 horas), terminal de trading propietaria con gráficos acelerados por GPU a 60 FPS (KLineCharts v10) y conectividad directa a libros de órdenes de exchanges de primer nivel (Binance, Bybit Broker API v5, OKX DMA e Hyperliquid L1).
+
+---
+
+## 2. Programas y Modelos de Cuenta
+
+### A. Fondeo Inmediato (Serie Solar)
+* **Concepto:** Comienza a operar directamente desde el primer minuto con asignación de capital institucional sin pasar exámenes, retos ni fases de prueba.
+* **Planes Disponibles:**
+  - Chispa Solar 1K: $1,000 balance | Pérdida diaria 4% | Drawdown máx 8% | Profit split 80%-90%
+  - Chispa Solar 2.5K: $2,500 balance | Pérdida diaria 4% | Drawdown máx 8% | Profit split 80%-90%
+  - Chispa Solar 5K: $5,000 balance | Pérdida diaria 4% | Drawdown máx 8% | Profit split 80%-90%
+  - Chispa Solar 10K: $10,000 balance | Pérdida diaria 4% | Drawdown máx 8% | Profit split 80%-90%
+  - Corona Solar 25K: $25,000 balance | Pérdida diaria 3% | Drawdown máx 8% | Profit split 80%-90%
+  - Corona Solar 50K: $50,000 balance | Pérdida diaria 3% | Drawdown máx 8% | Profit split 80%-90%
+  - Eclipse Solar 100K: $100,000 balance | Pérdida diaria 2% | Drawdown máx 8% | Profit split 80%-90%
+* **Objetivo de Beneficio:** Ninguno (no hay meta que cumplir; las ganancias generadas se retiran directamente).
+* **Límite de Tiempo:** Sin límite (la cuenta no expira).
+* **Frecuencia de Retiros:** Quincenal o mensual a elección del trader, liquidado en USDT on-chain.
+
+### B. Reto de Evaluación en 2 Fases (Serie Lunar)
+* **Concepto:** Programa de evaluación tradicional con menor tarifa de activación para traders que desean demostrar su consistencia.
+* **Fase 1:** Objetivo de ganancia del 8%.
+* **Fase 2:** Objetivo de ganancia del 5%.
+* **Pérdida Máxima Diaria:** 5% del balance inicial del día.
+* **Drawdown Máximo Total:** 10% del balance inicial de la cuenta.
+* **Días Mínimos de Trading:** 0 días (se puede superar la fase tan rápido como opere la estrategia).
+* **Profit Split tras Fondear:** 80% base, ampliable al 90% con add-on.
+
+---
+
+## 3. Reglas de Trading y Gestión de Riesgo Institucional
+
+1. **Pérdida Máxima Diaria (Daily Loss Limit):**
+   - Límite calculado de forma estática respecto al balance de inicio del día (00:00 UTC). Varía entre 2% y 5% según el plan.
+2. **Drawdown Máximo Total (Max Drawdown):**
+   - 8% en Fondeo Inmediato Solar y 10% en Retos Lunares. Se mide contra el balance/equity inicial sin recálculos engañosos de trailing intradía.
+3. **Regla de Consistencia del 40% (Consistency Rule):**
+   - Ninguna operación individual puede representar más del 40% de las ganancias totales requeridas, evitando apuestas aisladas ("one-trade lottery") y fomentando la consistencia real.
+4. **Duración Mínima de Operación (Microscalping 30 segundos):**
+   - Las operaciones deben durar al menos 30 segundos para garantizar ejecución real de liquidez en libros de órdenes.
+5. **Trading en Noticias (News Trading):**
+   - Totalmente permitido en todos los planes y fases.
+6. **Mantenimiento en Fin de Semana (Weekend Holding):**
+   - Permitido en criptomonedas (mercado 24/7). En pares tradicionales, configurable por plan.
+7. **Stop Loss:**
+   - Fuertemente recomendado; el motor centinela en memoria RAM monitoriza desvíos y garantiza protección de margen.
+
+---
+
+## 4. Tecnología Propietaria y Ventajas Competitivas
+
+* **Terminal Web Institucional con GPU a 60 FPS:**
+  - Desarrollada en TypeScript y WebGL/Canvas con el motor KLineCharts v10. Muestra profundidad de libro L2 en tiempo real sin polling HTTP.
+* **Despacho Sub-10ms (DMA):**
+  - Conexión directa mediante WebSockets nativos a Binance, Bybit Broker API v5, OKX DMA e Hyperliquid L1. Cero puentes lentos de MetaTrader 4/5.
+* **Centinela de Riesgo Pre-Trade en Memoria RAM (<1ms):**
+  - Motor algorítmico que evalúa 15 reglas de riesgo en microsegundos antes de admitir cualquier orden al mercado.
+* **Copy Trading API Multi-Exchange No Custodial:**
+  - Permite a los traders fondeados replicar sus órdenes en tiempo real a sus cuentas personales privadas de Binance, Bybit u OKX mediante API keys cifradas en el dispositivo.
+
+---
+
+## 5. Política de Pagos y Retiros (Payouts)
+
+* **Moneda de Pago:** USDT (redes TRC-20, BEP-20, ERC-20) y USDC.
+* **Tiempo de Liquidación:** Procesado y enviado on-chain en menos de 8 horas tras la solicitud.
+* **Reparto de Beneficios:** 80% por defecto; 90% con opción de escalado o add-on de compra.
+* **Requisito Mínimo:** Mínimo de 5 días de trading rentables (+0.5% diario) para garantizar consistencia operativa.
+* **Comisiones de Retiro:** 0% comisiones ocultas por parte de Eklipse Funded.
+
+---
+
+## 6. Comparativa frente a Otras Empresas de Fondeo
+
+* **Frente a FTMO / The 5%ers:** Eklipse Funded ofrece Fondeo Inmediato sin evaluaciones de 2 meses y operativa nativa cripto con liquidez real en lugar de contratos CFD sintéticos sobre MetaTrader.
+* **Frente a Apex Trader Funding / Topstep:** No requiere feeds de datos de futuros de pago mensual (Rithmic/Tradovate); accesible globalmente sin restricciones bancarias con depósitos y retiros cripto.
+* **Frente a FundedNext / Funding Pips:** Terminal institucional propia a 60 FPS sin comisiones ocultas de brokers intermediarios y hasta 90% de profit split directo.
+
+---
+
+## 7. Estructura de Enlaces Oficiales
+* **Página Principal:** https://eklipsefunded.com
+* **Programas y Precios:** https://eklipsefunded.com/#programs
+* **Reglas de Trading:** https://eklipsefunded.com/#rules
+* **Retiros y Profit Split:** https://eklipsefunded.com/#payouts
+* **Terminal de Operaciones:** https://eklipsefunded.com/operations
+* **Acceso / Login:** https://eklipsefunded.com/login
+* **Dashboard del Trader:** https://dashapp.eklipsefunded.com
+* **Sitemap XML:** https://eklipsefunded.com/sitemap.xml

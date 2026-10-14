@@ -72,5 +72,10 @@ Allow: /
 User-agent: LinkedInBot
 Allow: /
 
-# Sitemaps & Knowledge Base
+# Sitemaps & Knowledge Base for AI Systems
 Sitemap: https://eklipsefunded.com/sitemap.xml
+
+# AI LLM Direct Knowledge Files
+# English: https://eklipsefunded.com/llms.txt
+# Español: https://eklipsefunded.com/llms-es.txt
+
