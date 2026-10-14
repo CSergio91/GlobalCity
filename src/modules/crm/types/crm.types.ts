@@ -7,13 +7,12 @@
 export type CrmModuleId = 
   | 'hub' 
   | 'risk_engine' 
-  | 'apis' 
   | 'challenges' 
-  | 'plans' 
-  | 'exchanges' 
-  | 'prop_firms' 
+  | 'payouts' 
+  | 'company_identity' 
+  | 'apis' 
   | 'support' 
-  | 'marketing'
+  | 'marketing' 
   | 'deployment';
 
 export type ApiKeyType = 'prop_firm' | 'ai_agent' | 'webhook';
@@ -24,7 +23,7 @@ export type ApiScope =
   | 'trade:order_cancel' 
   | 'accounts:provision' 
   | 'accounts:freeze' 
-  | 'metrics:read'
+  | 'metrics:read' 
   | 'webhooks:write';
 
 export interface ApiCredentialEntity {
@@ -46,11 +45,16 @@ export interface ApiCredentialEntity {
 export type ChallengeModelType = 'INSTANT_FUNDING' | 'ONE_PHASE' | 'TWO_PHASE';
 export type MinDailyProfitType = 'PERCENT' | 'AMOUNT';
 
+export interface PayoutTierStep {
+  tier: number;
+  split: number; // e.g. 35, 50, 80, 90
+}
+
 export interface RiskRuleConfigEntity {
   id: string;
   firm_id?: string | null;
   name: string;
-  category?: 'solar' | 'lunar';
+  category?: 'solar' | 'lunar' | string;
   one_time_price_usdt?: number;
   monthly_price_usdt?: number;
   astronomical_name_en?: string;
@@ -88,11 +92,51 @@ export interface RiskRuleConfigEntity {
 
   // Restricciones de Tiempo & Gobierno
   weekend_holding_allowed: boolean;
+  min_trade_duration_enabled?: boolean;
   min_trade_duration_seconds?: number;
   news_trading_allowed?: boolean;
   inactivity_days_limit?: number;
   profit_split_percent?: number;
+  payout_scale?: PayoutTierStep[];
 
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PayoutRequestEntity {
+  id: string;
+  account_id: string;
+  user_id?: string | null;
+  trader_email: string;
+  amount: number;
+  profit_split_percent: number;
+  net_payout_amount: number;
+  firm_retained_amount: number;
+  payout_method: string;
+  crypto_network?: string;
+  destination_address: string;
+  status: 'PENDING' | 'APPROVED' | 'PAID' | 'REJECTED';
+  payout_number?: number;
+  consistency_checked?: boolean;
+  best_day_profit?: number;
+  best_day_ratio?: number;
+  tx_hash?: string | null;
+  reviewed_by?: string | null;
+  rejection_reason?: string | null;
+  notes?: string | null;
+  requested_at: string;
+  processed_at?: string | null;
+}
+
+export interface CompanyIdentityEntity {
+  id: string;
+  name: string;
+  legal_name?: string;
+  slogan?: string;
+  account_prefix?: string;
+  webhook_url?: string | null;
+  webhook_secret?: string;
+  is_active: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -105,6 +149,8 @@ export interface CrmKpiStats {
   activeApiKeys: number;
   aiAgentsConnected: number;
   liveFloatingPnL: number;
+  pendingPayoutsCount?: number;
+  pendingPayoutsAmount?: number;
   riskStatus: 'HEALTHY' | 'WARNING' | 'ALERT';
 }
 
@@ -117,24 +163,23 @@ export const ROLE_CARD_PERMISSIONS: Record<CrmStaffRole, CrmModuleId[]> = {
   admin: [
     'deployment',
     'risk_engine',
-    'apis',
     'challenges',
-    'plans',
-    'exchanges',
-    'prop_firms',
+    'payouts',
+    'company_identity',
+    'apis',
     'support',
     'marketing'
   ],
   soporte: [
     'support',
+    'payouts',
     'risk_engine',
     'challenges'
   ],
   marketing: [
     'marketing',
-    'exchanges',
-    'prop_firms',
-    'plans'
+    'challenges',
+    'company_identity'
   ]
 };
 

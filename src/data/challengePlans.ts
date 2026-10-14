@@ -6,7 +6,7 @@
 import { supabase } from '../lib/supabase';
 import { apiFetch } from '../config/apiGateway';
 
-export type PlanCategory = 'solar' | 'lunar';
+export type PlanCategory = 'solar' | 'lunar' | string;
 export type PaymentMode = 'one-time' | 'monthly';
 
 export interface PlanAddonConfig {
@@ -596,7 +596,7 @@ async function fetchFreshChallengePlans(): Promise<ChallengePlan[]> {
         const capital = Number(rule.default_account_balance || 100000);
         const name = rule.name || `Challenge $${capital.toLocaleString()}`;
         const isLunar = rule.category === 'lunar' || name.toLowerCase().includes('lunar') || (rule.model_type === 'INSTANT_FUNDING');
-        const planCategory: PlanCategory = isLunar ? 'lunar' : 'solar';
+        const planCategory: PlanCategory = rule.category || (isLunar ? 'lunar' : 'solar');
         
         // Precios ingresados manualmente desde Nexus CRM
         const oneTime = Number(rule.one_time_price_usdt) > 0 ? Number(rule.one_time_price_usdt) : (

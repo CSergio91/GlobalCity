@@ -55,6 +55,7 @@ import { TraderEconomicCalendarView } from './components/TraderEconomicCalendarV
 import { TraderAffiliatesView } from './components/TraderAffiliatesView';
 import { TraderCertificatesView } from './components/TraderCertificatesView';
 import { TraderJournalView } from './components/TraderJournalView';
+import { TraderPayoutsView } from './components/TraderPayoutsView';
 import { AppSidebar, DashboardNavTab } from './components/AppSidebar';
 import { TopBar } from './components/TopBar';
 import { AccountCard } from './components/AccountCard';
@@ -2111,6 +2112,27 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
                 accounts={accounts}
                 selectedAccountId={selectedAccountId}
                 userDisplayName={userDisplayName}
+              />
+            </motion.div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* PÁGINA: PAYOUTS (RETIROS DE GANANCIAS & ESCALA ESCALONADA 35/50/80/90)    */}
+          {/* ========================================================================= */}
+          {activeTab === 'payouts' && (
+            <motion.div
+              key="payouts"
+              initial={{ opacity: 0, y: 14, filter: 'blur(4px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -10, filter: 'blur(4px)' }}
+              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <TraderPayoutsView
+                accounts={accounts}
+                selectedAccountId={selectedAccountId}
+                isEn={isEn}
+                userEmail={user?.email}
+                userId={user?.id}
               />
             </motion.div>
           )}

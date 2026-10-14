@@ -15,7 +15,8 @@ import {
   LogOut,
   Gift,
   Sparkles,
-  ShieldAlert
+  ShieldAlert,
+  DollarSign
 } from 'lucide-react';
 import { BrandLogo } from '../../../components/BrandLogo';
 import { PEPE_AVATARS, getPepeAvatarUrl } from '../../../data/pepeAvatars';
@@ -24,6 +25,7 @@ export type DashboardNavTab =
   | 'accounts'
   | 'dashboard'
   | 'journal'
+  | 'payouts'
   | 'stats'
   | 'challenges'
   | 'programs'
@@ -109,6 +111,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       icon: BookOpen,
       badge: 'PRO',
       badgeType: 'blue'
+    },
+    {
+      id: 'payouts',
+      labelEn: 'Payouts',
+      labelEs: 'Retiros & Payouts',
+      icon: DollarSign,
+      badge: 'PROFIT',
+      badgeType: 'emerald'
     },
     {
       id: 'challenges',

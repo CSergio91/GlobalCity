@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { 
   RiskRuleConfigEntity, 
   ChallengeModelType, 
-  MinDailyProfitType 
+  MinDailyProfitType,
+  PayoutTierStep
 } from '../types/crm.types';
 import { CrmLang } from '../types/i18n';
+import { crmService } from '../api/crmService';
 import { 
   Trophy, 
   Search, 
@@ -33,6 +35,8 @@ import {
   Zap,
   Check,
   ChevronRight,
+  ChevronLeft,
+  Edit2,
   Flame,
   Info,
   Server,
@@ -89,6 +93,92 @@ export interface RuleTestResult {
   meta?: any;
 }
 
+export interface ChallengeSizeTier {
+  id?: string;
+  balance: number;
+  oneTimePriceUsdt: number;
+  monthlyPriceUsdt: number;
+  isPopular?: boolean;
+}
+
+export interface ChallengeModelGroup {
+  modelKey: string;
+  baseName: string;
+  category: string;
+  modelType: ChallengeModelType;
+  primaryRule: RiskRuleConfigEntity;
+  rules: RiskRuleConfigEntity[];
+  tiers: ChallengeSizeTier[];
+  minPrice: number;
+  maxPrice: number;
+  isDefaultDemo: boolean;
+  totalSizes: number;
+}
+
+export interface CustomCategoryDef {
+  id: string;
+  name: string;
+  colorKey: string;
+}
+
+export const CATEGORY_COLOR_PRESETS = [
+  { id: 'amber', name: 'Ámbar / Oro Solar', hex: '#F59E0B', bgBadge: 'bg-amber-100', textBadge: 'text-amber-900', borderBadge: 'border-amber-300', dot: 'bg-amber-500' },
+  { id: 'purple', name: 'Púrpura / Lunar', hex: '#8B5CF6', bgBadge: 'bg-purple-100', textBadge: 'text-purple-900', borderBadge: 'border-purple-300', dot: 'bg-purple-500' },
+  { id: 'blue', name: 'Azul / Institucional', hex: '#2563EB', bgBadge: 'bg-blue-100', textBadge: 'text-blue-900', borderBadge: 'border-blue-300', dot: 'bg-blue-500' },
+  { id: 'emerald', name: 'Esmeralda / DMA Alpha', hex: '#10B981', bgBadge: 'bg-emerald-100', textBadge: 'text-emerald-900', borderBadge: 'border-emerald-300', dot: 'bg-emerald-500' },
+  { id: 'cyan', name: 'Cyan / High-Freq', hex: '#06B6D4', bgBadge: 'bg-cyan-100', textBadge: 'text-cyan-900', borderBadge: 'border-cyan-300', dot: 'bg-cyan-500' },
+  { id: 'rose', name: 'Rosa / Titanium VIP', hex: '#F43F5E', bgBadge: 'bg-rose-100', textBadge: 'text-rose-900', borderBadge: 'border-rose-300', dot: 'bg-rose-500' },
+  { id: 'slate', name: 'Pizarra / Enterprise', hex: '#475569', bgBadge: 'bg-slate-200', textBadge: 'text-slate-900', borderBadge: 'border-slate-400', dot: 'bg-slate-600' }
+];
+
+export const STANDARD_ACCOUNT_SIZES = [1000, 2500, 5000, 10000, 25000, 50000, 100000, 200000];
+
+export const getDefaultPricesForBalance = (balance: number) => {
+  if (balance <= 1000) return { oneTime: 19, monthly: 12 };
+  if (balance <= 2500) return { oneTime: 32, monthly: 19 };
+  if (balance <= 5000) return { oneTime: 49, monthly: 29 };
+  if (balance <= 10000) return { oneTime: 89, monthly: 49 };
+  if (balance <= 25000) return { oneTime: 149, monthly: 79 };
+  if (balance <= 50000) return { oneTime: 249, monthly: 129 };
+  if (balance <= 100000) return { oneTime: 449, monthly: 219 };
+  if (balance <= 200000) return { oneTime: 849, monthly: 399 };
+  return { oneTime: Math.round(balance * 0.005), monthly: Math.round(balance * 0.0025) };
+};
+
+export const formatAccountSizeTag = (balance: number): string => {
+  if (balance >= 1000000) return `${(balance / 1000000).toFixed(balance % 1000000 === 0 ? 0 : 1)}M`;
+  if (balance >= 1000) return `${(balance / 1000).toFixed(balance % 1000 === 0 ? 0 : 1)}K`;
+  return `${balance}`;
+};
+
+export const extractBaseName = (fullName: string): string => {
+  if (!fullName) return '';
+  let str = fullName.trim();
+  str = str.replace(/\s*-\s*(fase|phase)\s*\d+/gi, '').trim();
+  str = str.replace(/\s*(\$?\d+[\.,\d]*[kKmM]?|\(\$?[^)]+\))\s*$/g, '').trim();
+  return str || fullName.trim();
+};
+
+export const getModelKey = (rule: { name?: string; category?: string; model_type?: string }): string => {
+  const rawName = rule.name || 'Challenge';
+  const bName = extractBaseName(rawName).trim().toLowerCase();
+  const cat = (rule.category || (rawName.toLowerCase().includes('lunar') ? 'lunar' : 'solar')).trim().toLowerCase();
+  const mType = rule.model_type || 'ONE_PHASE';
+  return `${bName}__${cat}__${mType}`;
+};
+
+export const getDynamicChallengeName = (baseName: string, balance: number): string => {
+  const cleaned = extractBaseName(baseName);
+  const tag = formatAccountSizeTag(balance);
+  return cleaned ? `${cleaned} ${tag}` : `Challenge ${tag}`;
+};
+
+export const getCategoryBadgeStyles = (colorKey?: string) => {
+  const match = CATEGORY_COLOR_PRESETS.find(p => p.id === colorKey);
+  if (match) return match;
+  return CATEGORY_COLOR_PRESETS[0];
+};
+
 export const PROFIT_SPLIT_PRESETS = [
   { trader: 50, firm: 50, label: '50/50', tier: 'Inicio' },
   { trader: 60, firm: 40, label: '60/40', tier: 'Micro' },
@@ -116,27 +206,116 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
   const [selectedFilterModel, setSelectedFilterModel] = useState<'ALL' | ChallengeModelType>('ALL');
   const [activeTab, setActiveTab] = useState<'rules' | 'simulator'>('rules');
 
-  // 2. Regla Seleccionada para Edición
-  const [selectedRule, setSelectedRule] = useState<RiskRuleConfigEntity | null>(null);
+  // Categorías personalizadas guardadas en Base de Datos PostgreSQL / Supabase
+  const [customCategories, setCustomCategories] = useState<CustomCategoryDef[]>([
+    { id: 'solar', name: '☀️ Solar (DMA Futures)', colorKey: 'amber' },
+    { id: 'lunar', name: '🌙 Lunar (Meme Titans)', colorKey: 'purple' }
+  ]);
 
-  // Inicializar o sincronizar la regla seleccionada
+  // Cargar categorías reales desde PostgreSQL
   useEffect(() => {
-    if (activeRuleId && rules.length > 0) {
-      const match = rules.find(r => r.id === activeRuleId);
-      if (match) {
-        setSelectedRule(match);
-        return;
+    crmService.getChallengeCategories().then(cats => {
+      if (cats && cats.length > 0) {
+        setCustomCategories(cats.map(c => ({ id: c.id, name: c.name, colorKey: c.color_key })));
       }
+    });
+  }, []);
+
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColorKey, setNewCategoryColorKey] = useState('blue');
+  const [editingCategory, setEditingCategory] = useState<CustomCategoryDef | null>(null);
+
+  const handleSaveNewCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    const slug = newCategoryName.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const existing = customCategories.find(c => c.id === slug);
+    if (existing) {
+      setCategory(slug);
+      setIsAddingCategory(false);
+      return;
     }
-    if (!selectedRule && rules.length > 0) {
-      const defaultDemo = rules.find(r => r.is_default_demo) || rules[0];
-      setSelectedRule(defaultDemo);
+    const newCat: CustomCategoryDef = {
+      id: slug,
+      name: newCategoryName.trim(),
+      colorKey: newCategoryColorKey
+    };
+    await crmService.saveChallengeCategory({
+      id: slug,
+      name: newCategoryName.trim(),
+      color_key: newCategoryColorKey
+    });
+    setCustomCategories(prev => [...prev, newCat]);
+    setCategory(slug);
+    setNewCategoryName('');
+    setIsAddingCategory(false);
+  };
+
+  const handleUpdateExistingCategory = async () => {
+    if (!editingCategory || !editingCategory.name.trim()) return;
+    await crmService.saveChallengeCategory({
+      id: editingCategory.id,
+      name: editingCategory.name.trim(),
+      color_key: editingCategory.colorKey
+    });
+    setCustomCategories(prev => prev.map(c => c.id === editingCategory.id ? editingCategory : c));
+    setEditingCategory(null);
+  };
+
+  const handleDeleteCategory = async (catId: string) => {
+    if (catId === 'solar' || catId === 'lunar') {
+      alert(isEs ? 'Las categorías Solar y Lunar son base del sistema y no pueden borrarse.' : 'Base Solar and Lunar categories cannot be deleted.');
+      return;
     }
-  }, [rules, activeRuleId]);
+    const confirmMsg = isEs ? '¿Eliminar esta categoría?' : 'Delete this category?';
+    if (!window.confirm(confirmMsg)) return;
+
+    await crmService.deleteChallengeCategory(catId);
+    setCustomCategories(prev => prev.filter(c => c.id !== catId));
+    if (category === catId) setCategory('solar');
+    setEditingCategory(null);
+  };
+
+  // Referencia para scroll horizontal suave de las pestañas de tamaño
+  const sizeTabsScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollSizeTabs = (direction: 'left' | 'right') => {
+    if (sizeTabsScrollRef.current) {
+      sizeTabsScrollRef.current.scrollBy({
+        left: direction === 'left' ? -220 : 220,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Estado del Checkbox de Duración Mínima (Anti-Scalp)
+  const [minTradeDurationEnabled, setMinTradeDurationEnabled] = useState(true);
+
+  // Escala Escalonada de Payouts (Independiente por Modelo)
+  const [payoutScale, setPayoutScale] = useState<PayoutTierStep[]>([
+    { tier: 1, split: 35 },
+    { tier: 2, split: 50 },
+    { tier: 3, split: 80 },
+    { tier: 4, split: 90 }
+  ]);
+
+  // 2. Regla y Modelo Seleccionado para Edición Unificada
+  const [selectedRule, setSelectedRule] = useState<RiskRuleConfigEntity | null>(null);
+  const [selectedModelKey, setSelectedModelKey] = useState<string>('');
+  const [deletedTierIds, setDeletedTierIds] = useState<string[]>([]);
 
   // 3. Campos del Formulario de la Regla en Edición
+  const [baseName, setBaseName] = useState('Solar Eclipse');
   const [name, setName] = useState('');
-  const [category, setCategory] = useState<'solar' | 'lunar'>('solar');
+  const [category, setCategory] = useState<string>('solar');
+  const [sizeTiers, setSizeTiers] = useState<ChallengeSizeTier[]>([
+    { balance: 50000, oneTimePriceUsdt: 249, monthlyPriceUsdt: 129, isPopular: true }
+  ]);
+  const [activeSizeTierIndex, setActiveSizeTierIndex] = useState(0);
+  const [enableMonthlySubscription, setEnableMonthlySubscription] = useState(false);
+  const [showAddSizeModal, setShowAddSizeModal] = useState(false);
+  const [manualSizeInput, setManualSizeInput] = useState(15000);
+
   const [oneTimePriceUsdt, setOneTimePriceUsdt] = useState<number>(149);
   const [monthlyPriceUsdt, setMonthlyPriceUsdt] = useState<number>(79);
   const [isPopular, setIsPopular] = useState<boolean>(false);
@@ -167,6 +346,375 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccessNotice, setSaveSuccessNotice] = useState(false);
 
+  // Agrupar todas las reglas por Modelo de Challenge (Unificación de tamaños por modelo)
+  const groupedChallengeModels = useMemo<ChallengeModelGroup[]>(() => {
+    if (!rules || rules.length === 0) {
+      const solarTiers: ChallengeSizeTier[] = [
+        { balance: 5000, oneTimePriceUsdt: 49, monthlyPriceUsdt: 29, isPopular: false },
+        { balance: 10000, oneTimePriceUsdt: 89, monthlyPriceUsdt: 49, isPopular: false },
+        { balance: 25000, oneTimePriceUsdt: 149, monthlyPriceUsdt: 79, isPopular: false },
+        { balance: 50000, oneTimePriceUsdt: 249, monthlyPriceUsdt: 129, isPopular: true },
+        { balance: 100000, oneTimePriceUsdt: 449, monthlyPriceUsdt: 219, isPopular: false }
+      ];
+      const lunarTiers: ChallengeSizeTier[] = [
+        { balance: 5000, oneTimePriceUsdt: 59, monthlyPriceUsdt: 35, isPopular: false },
+        { balance: 10000, oneTimePriceUsdt: 99, monthlyPriceUsdt: 59, isPopular: false },
+        { balance: 25000, oneTimePriceUsdt: 169, monthlyPriceUsdt: 89, isPopular: true },
+        { balance: 50000, oneTimePriceUsdt: 279, monthlyPriceUsdt: 149, isPopular: false },
+        { balance: 100000, oneTimePriceUsdt: 489, monthlyPriceUsdt: 249, isPopular: false }
+      ];
+
+      const solarDemoRule: RiskRuleConfigEntity = {
+        id: 'demo-solar-group',
+        name: 'Solar Eclipse',
+        category: 'solar',
+        model_type: 'INSTANT_FUNDING',
+        default_account_balance: 50000,
+        is_default_demo: true,
+        drawdown_type: 'EOD',
+        max_daily_loss_percent: 5.0,
+        max_total_drawdown_percent: 10.0,
+        profit_target_percent: 0,
+        profit_target_phase2_percent: 0,
+        min_trading_days: 0,
+        max_leverage: 50,
+        mandatory_stop_loss: false,
+        consistency_rule_percent: 40.0,
+        weekend_holding_allowed: true,
+        news_trading_allowed: true,
+        min_trade_duration_seconds: 10,
+        min_trade_duration_enabled: true,
+        profit_split_percent: 80,
+        inactivity_days_limit: 30,
+        one_time_price_usdt: 249,
+        monthly_price_usdt: 129,
+        is_popular: true,
+        is_active: true,
+        payout_scale: [
+          { tier: 1, split: 35 },
+          { tier: 2, split: 50 },
+          { tier: 3, split: 80 },
+          { tier: 4, split: 90 }
+        ]
+      };
+
+      const lunarDemoRule: RiskRuleConfigEntity = {
+        id: 'demo-lunar-group',
+        name: 'Lunar Eclipse',
+        category: 'lunar',
+        model_type: 'ONE_PHASE',
+        default_account_balance: 25000,
+        is_default_demo: false,
+        drawdown_type: 'EOD',
+        max_daily_loss_percent: 4.0,
+        max_total_drawdown_percent: 8.0,
+        profit_target_percent: 10.0,
+        profit_target_phase2_percent: 0,
+        min_trading_days: 5,
+        max_leverage: 100,
+        mandatory_stop_loss: true,
+        consistency_rule_percent: 40.0,
+        weekend_holding_allowed: false,
+        news_trading_allowed: true,
+        min_trade_duration_seconds: 15,
+        min_trade_duration_enabled: true,
+        profit_split_percent: 80,
+        inactivity_days_limit: 30,
+        one_time_price_usdt: 169,
+        monthly_price_usdt: 89,
+        is_popular: true,
+        is_active: true,
+        payout_scale: [
+          { tier: 1, split: 35 },
+          { tier: 2, split: 50 },
+          { tier: 3, split: 80 },
+          { tier: 4, split: 90 }
+        ]
+      };
+
+      return [
+        {
+          modelKey: 'solar eclipse__solar__instant_funding',
+          baseName: 'Solar Eclipse',
+          category: 'solar',
+          modelType: 'INSTANT_FUNDING',
+          primaryRule: solarDemoRule,
+          rules: [solarDemoRule],
+          tiers: solarTiers,
+          minPrice: 49,
+          maxPrice: 449,
+          isDefaultDemo: true,
+          totalSizes: solarTiers.length
+        },
+        {
+          modelKey: 'lunar eclipse__lunar__one_phase',
+          baseName: 'Lunar Eclipse',
+          category: 'lunar',
+          modelType: 'ONE_PHASE',
+          primaryRule: lunarDemoRule,
+          rules: [lunarDemoRule],
+          tiers: lunarTiers,
+          minPrice: 59,
+          maxPrice: 489,
+          isDefaultDemo: false,
+          totalSizes: lunarTiers.length
+        }
+      ];
+    }
+
+    const groupsMap = new Map<string, ChallengeModelGroup>();
+
+    for (const rule of rules) {
+      const key = getModelKey(rule);
+      const rawName = rule.name || 'Challenge';
+      const bName = extractBaseName(rawName);
+      const cat = (rule.category || (rawName.toLowerCase().includes('lunar') ? 'lunar' : 'solar')).trim().toLowerCase();
+      const mType = rule.model_type || 'ONE_PHASE';
+
+      const bal = Number(rule.default_account_balance || 100000);
+      const oneTime = Number(rule.one_time_price_usdt !== undefined ? rule.one_time_price_usdt : getDefaultPricesForBalance(bal).oneTime);
+      const monthly = Number(rule.monthly_price_usdt !== undefined ? rule.monthly_price_usdt : getDefaultPricesForBalance(bal).monthly);
+
+      const tier: ChallengeSizeTier = {
+        id: rule.id,
+        balance: bal,
+        oneTimePriceUsdt: oneTime,
+        monthlyPriceUsdt: monthly,
+        isPopular: !!rule.is_popular
+      };
+
+      if (!groupsMap.has(key)) {
+        groupsMap.set(key, {
+          modelKey: key,
+          baseName: bName,
+          category: cat,
+          modelType: mType,
+          primaryRule: rule,
+          rules: [rule],
+          tiers: [tier],
+          minPrice: oneTime,
+          maxPrice: oneTime,
+          isDefaultDemo: !!rule.is_default_demo,
+          totalSizes: 1
+        });
+      } else {
+        const group = groupsMap.get(key)!;
+        group.rules.push(rule);
+        if (!group.tiers.some(t => t.balance === bal)) {
+          group.tiers.push(tier);
+        }
+        if (rule.is_default_demo) group.isDefaultDemo = true;
+        if (rule.is_default_demo || (!group.primaryRule.is_default_demo && (bal === 50000 || bal === 100000))) {
+          group.primaryRule = rule;
+        }
+        group.minPrice = Math.min(group.minPrice, oneTime);
+        group.maxPrice = Math.max(group.maxPrice, oneTime);
+        group.totalSizes = group.tiers.length;
+      }
+    }
+
+    for (const group of groupsMap.values()) {
+      group.tiers.sort((a, b) => a.balance - b.balance);
+      group.totalSizes = group.tiers.length;
+    }
+
+    return Array.from(groupsMap.values());
+  }, [rules]);
+
+  // Filtrado de Modelos con el Buscador
+  const filteredModelGroups = useMemo(() => {
+    return groupedChallengeModels.filter(group => {
+      const matchSearch = searchQuery === '' || 
+        group.baseName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        group.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        group.tiers.some(t => String(t.balance).includes(searchQuery));
+
+      const matchModel = selectedFilterModel === 'ALL' || 
+        group.modelType === selectedFilterModel;
+
+      return matchSearch && matchModel;
+    });
+  }, [groupedChallengeModels, searchQuery, selectedFilterModel]);
+
+  // Selección unificada de un Modelo de Challenge completo
+  const handleSelectModelGroup = useCallback((group: ChallengeModelGroup) => {
+    setSelectedModelKey(group.modelKey);
+    setSelectedRule(group.primaryRule);
+    if (onSelectRule) onSelectRule(group.primaryRule.id);
+
+    setBaseName(group.baseName);
+    setCategory(group.category);
+    setModelType(group.modelType);
+
+    const sortedTiers = [...group.tiers].sort((a, b) => a.balance - b.balance);
+    setSizeTiers(sortedTiers);
+
+    const popularIdx = sortedTiers.findIndex(t => t.isPopular);
+    const activeIdx = popularIdx >= 0 ? popularIdx : Math.min(sortedTiers.length - 1, 0);
+    setActiveSizeTierIndex(activeIdx);
+
+    const activeTier = sortedTiers[activeIdx] || sortedTiers[0];
+    if (activeTier) {
+      setDefaultAccountBalance(activeTier.balance);
+      setOneTimePriceUsdt(activeTier.oneTimePriceUsdt);
+      setMonthlyPriceUsdt(activeTier.monthlyPriceUsdt);
+      setIsPopular(!!activeTier.isPopular);
+      setEnableMonthlySubscription(Number(activeTier.monthlyPriceUsdt) > 0);
+      setName(getDynamicChallengeName(group.baseName, activeTier.balance));
+    }
+
+    const r = group.primaryRule;
+    setIsDefaultDemo(!!group.isDefaultDemo);
+    setDrawdownType(r.drawdown_type || 'EOD');
+    setMaxDailyLossPercent(Number(r.max_daily_loss_percent || 5.0));
+    setMaxTotalDrawdownPercent(Number(r.max_total_drawdown_percent || 10.0));
+    setProfitTargetPercent(Number(r.profit_target_percent || 10.0));
+    setProfitTargetPhase2Percent(Number(r.profit_target_phase2_percent || 5.0));
+    setMinTradingDays(Number(r.min_trading_days || 5));
+    setMinDailyProfitType(r.min_daily_profit_type || 'PERCENT');
+    setMinDailyProfitValue(Number(r.min_daily_profit_value ?? 0.5));
+    setMaxLeverage(Number(r.max_leverage || 50));
+    setMandatoryStopLoss(!!r.mandatory_stop_loss);
+    setMaxPositionsPerSymbolEnabled(!!r.max_positions_per_symbol_enabled);
+    setMaxPositionsPerSymbol(Number(r.max_positions_per_symbol || 2));
+    setMaxTotalOpenPositionsEnabled(!!r.max_total_open_positions_enabled);
+    setMaxTotalOpenPositions(Number(r.max_total_open_positions || 5));
+    setAntiHedgingEnabled(!!r.anti_hedging_enabled);
+    setConsistencyRulePercent(Number(r.consistency_rule_percent || 40.0));
+    setWeekendHoldingAllowed(r.weekend_holding_allowed !== false);
+    setNewsTradingAllowed(r.news_trading_allowed !== false);
+    setMinTradeDurationSeconds(Number(r.min_trade_duration_seconds || 10));
+    setMinTradeDurationEnabled(r.min_trade_duration_enabled !== false);
+    if (r.payout_scale && Array.isArray(r.payout_scale) && r.payout_scale.length > 0) {
+      setPayoutScale(r.payout_scale);
+    } else {
+      setPayoutScale([
+        { tier: 1, split: 35 },
+        { tier: 2, split: 50 },
+        { tier: 3, split: 80 },
+        { tier: 4, split: 90 }
+      ]);
+    }
+    setProfitSplitPercent(Number(r.profit_split_percent || 80));
+    setInactivityDaysLimit(Number(r.inactivity_days_limit || 30));
+    setDeletedTierIds([]);
+  }, [onSelectRule]);
+
+  // Inicializar o sincronizar el modelo de challenge seleccionado
+  useEffect(() => {
+    if (groupedChallengeModels.length === 0) return;
+
+    if (!selectedModelKey) {
+      if (activeRuleId) {
+        const found = groupedChallengeModels.find(g => g.rules.some(r => r.id === activeRuleId));
+        if (found) {
+          handleSelectModelGroup(found);
+          return;
+        }
+      }
+      const demo = groupedChallengeModels.find(g => g.isDefaultDemo) || groupedChallengeModels[0];
+      handleSelectModelGroup(demo);
+    } else {
+      const existing = groupedChallengeModels.find(g => g.modelKey === selectedModelKey);
+      if (existing) {
+        setSelectedRule(existing.primaryRule);
+      }
+    }
+  }, [groupedChallengeModels, activeRuleId, selectedModelKey, handleSelectModelGroup]);
+
+  // Modelo de Challenge activo actualmente
+  const activeGroup = useMemo(() => {
+    return groupedChallengeModels.find(g => g.modelKey === selectedModelKey) ||
+      groupedChallengeModels.find(g => 
+        g.baseName.toLowerCase() === baseName.toLowerCase() &&
+        g.category === category &&
+        g.modelType === modelType
+      ) || groupedChallengeModels[0];
+  }, [groupedChallengeModels, selectedModelKey, baseName, category, modelType]);
+
+  // Manejo de Tiers de Tamaño de Cuenta
+  const handleSelectSizeTab = (idx: number) => {
+    if (idx < 0 || idx >= sizeTiers.length) return;
+    setActiveSizeTierIndex(idx);
+    const tier = sizeTiers[idx];
+    setDefaultAccountBalance(tier.balance);
+    setOneTimePriceUsdt(tier.oneTimePriceUsdt);
+    setMonthlyPriceUsdt(tier.monthlyPriceUsdt);
+    setIsPopular(!!tier.isPopular);
+    setName(getDynamicChallengeName(baseName, tier.balance));
+  };
+
+  const handleUpdateActiveTierPrice = (field: 'oneTimePriceUsdt' | 'monthlyPriceUsdt' | 'isPopular' | 'balance', val: any) => {
+    if (field === 'oneTimePriceUsdt') setOneTimePriceUsdt(Number(val));
+    if (field === 'monthlyPriceUsdt') setMonthlyPriceUsdt(Number(val));
+    if (field === 'isPopular') setIsPopular(Boolean(val));
+    if (field === 'balance') {
+      setDefaultAccountBalance(Number(val));
+      setName(getDynamicChallengeName(baseName, Number(val)));
+    }
+
+    setSizeTiers(prev => {
+      const copy = [...prev];
+      if (copy[activeSizeTierIndex]) {
+        copy[activeSizeTierIndex] = {
+          ...copy[activeSizeTierIndex],
+          [field]: val
+        };
+      }
+      return copy;
+    });
+  };
+
+  const handleAddStandardSize = (balance: number) => {
+    if (sizeTiers.some(t => t.balance === balance)) {
+      const idx = sizeTiers.findIndex(t => t.balance === balance);
+      handleSelectSizeTab(idx);
+      return;
+    }
+    const def = getDefaultPricesForBalance(balance);
+    const newTier: ChallengeSizeTier = {
+      balance,
+      oneTimePriceUsdt: def.oneTime,
+      monthlyPriceUsdt: def.monthly,
+      isPopular: false
+    };
+    const updated = [...sizeTiers, newTier].sort((a, b) => a.balance - b.balance);
+    setSizeTiers(updated);
+    const newIdx = updated.findIndex(t => t.balance === balance);
+    setActiveSizeTierIndex(newIdx);
+    setDefaultAccountBalance(balance);
+    setOneTimePriceUsdt(def.oneTime);
+    setMonthlyPriceUsdt(def.monthly);
+    setIsPopular(false);
+    setName(getDynamicChallengeName(baseName, balance));
+  };
+
+  const handleAddCustomSize = (amount: number) => {
+    if (!amount || amount <= 0 || isNaN(amount)) return;
+    handleAddStandardSize(amount);
+    setShowAddSizeModal(false);
+  };
+
+  const handleRemoveSizeTier = (idx: number) => {
+    if (sizeTiers.length <= 1) return;
+    const removedTier = sizeTiers[idx];
+    if (removedTier && removedTier.id) {
+      setDeletedTierIds(prev => [...prev, removedTier.id!]);
+    }
+    const updated = sizeTiers.filter((_, i) => i !== idx);
+    setSizeTiers(updated);
+    const nextIdx = Math.max(0, Math.min(activeSizeTierIndex, updated.length - 1));
+    setActiveSizeTierIndex(nextIdx);
+    const nextTier = updated[nextIdx];
+    if (nextTier) {
+      setDefaultAccountBalance(nextTier.balance);
+      setOneTimePriceUsdt(nextTier.oneTimePriceUsdt);
+      setMonthlyPriceUsdt(nextTier.monthlyPriceUsdt);
+      setIsPopular(!!nextTier.isPopular);
+      setName(getDynamicChallengeName(baseName, nextTier.balance));
+    }
+  };
+
   // Ajustadores dinámicos del Profit Split
   const handleUpdateProfitSplit = (val: number) => {
     if (isNaN(val)) return;
@@ -177,41 +725,6 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
   const handleStepProfitSplit = (delta: number) => {
     setProfitSplitPercent(prev => Math.min(100, Math.max(1, Math.round(prev + delta))));
   };
-
-  // Cargar valores al seleccionar otra regla
-  useEffect(() => {
-    if (selectedRule) {
-      setName(selectedRule.name);
-      setCategory(selectedRule.category || (selectedRule.name.toLowerCase().includes('lunar') ? 'lunar' : 'solar'));
-      setOneTimePriceUsdt(Number(selectedRule.one_time_price_usdt !== undefined ? selectedRule.one_time_price_usdt : 149));
-      setMonthlyPriceUsdt(Number(selectedRule.monthly_price_usdt !== undefined ? selectedRule.monthly_price_usdt : 79));
-      setIsPopular(!!selectedRule.is_popular);
-      setModelType(selectedRule.model_type || 'ONE_PHASE');
-      setDefaultAccountBalance(Number(selectedRule.default_account_balance || 100000));
-      setIsDefaultDemo(!!selectedRule.is_default_demo);
-      setDrawdownType(selectedRule.drawdown_type || 'EOD');
-      setMaxDailyLossPercent(Number(selectedRule.max_daily_loss_percent || 5.0));
-      setMaxTotalDrawdownPercent(Number(selectedRule.max_total_drawdown_percent || 10.0));
-      setProfitTargetPercent(Number(selectedRule.profit_target_percent || 10.0));
-      setProfitTargetPhase2Percent(Number(selectedRule.profit_target_phase2_percent || 5.0));
-      setMinTradingDays(Number(selectedRule.min_trading_days || 5));
-      setMinDailyProfitType(selectedRule.min_daily_profit_type || 'PERCENT');
-      setMinDailyProfitValue(Number(selectedRule.min_daily_profit_value ?? 0.5));
-      setMaxLeverage(Number(selectedRule.max_leverage || 50));
-      setMandatoryStopLoss(!!selectedRule.mandatory_stop_loss);
-      setMaxPositionsPerSymbolEnabled(!!selectedRule.max_positions_per_symbol_enabled);
-      setMaxPositionsPerSymbol(Number(selectedRule.max_positions_per_symbol || 2));
-      setMaxTotalOpenPositionsEnabled(!!selectedRule.max_total_open_positions_enabled);
-      setMaxTotalOpenPositions(Number(selectedRule.max_total_open_positions || 5));
-      setAntiHedgingEnabled(!!selectedRule.anti_hedging_enabled);
-      setConsistencyRulePercent(Number(selectedRule.consistency_rule_percent || 40.0));
-      setWeekendHoldingAllowed(selectedRule.weekend_holding_allowed !== false);
-      setNewsTradingAllowed(selectedRule.news_trading_allowed !== false);
-      setMinTradeDurationSeconds(Number(selectedRule.min_trade_duration_seconds || 10));
-      setProfitSplitPercent(Number(selectedRule.profit_split_percent || 80));
-      setInactivityDaysLimit(Number(selectedRule.inactivity_days_limit || 30));
-    }
-  }, [selectedRule]);
 
   // 4. PRECIOS EN TIEMPO REAL DEL SIMULADOR (Conectado a Binance WebSocket)
   const [livePrices, setLivePrices] = useState<Record<string, number>>({
@@ -993,123 +1506,144 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
     setTestingRuleType(null);
   };
 
-  // 8. GUARDAR REGLA EN SUPABASE & MOTOR DE RIESGO
-  const handleSaveCurrentRule = async () => {
+  // 8. GUARDAR MODELO DE CHALLENGE UNIFICADO (TODOS SUS TAMAÑOS EN UNA SOLA ACCIÓN)
+  const handleSaveAllTiers = async () => {
     setIsSaving(true);
     try {
-      const payload: Partial<RiskRuleConfigEntity> = {
-        id: selectedRule?.id || undefined,
-        name,
-        category,
-        one_time_price_usdt: Number(oneTimePriceUsdt) || 0,
-        monthly_price_usdt: Number(monthlyPriceUsdt) || 0,
-        is_popular: isPopular,
-        model_type: modelType,
-        default_account_balance: Number(defaultAccountBalance) || 100000,
-        is_default_demo: isDefaultDemo,
-        drawdown_type: drawdownType,
-        max_daily_loss_percent: maxDailyLossPercent,
-        max_total_drawdown_percent: maxTotalDrawdownPercent,
-        profit_target_percent: modelType === 'INSTANT_FUNDING' ? 0 : profitTargetPercent,
-        profit_target_phase2_percent: modelType === 'TWO_PHASE' ? profitTargetPhase2Percent : 0,
-        min_trading_days: minTradingDays,
-        min_daily_profit_type: minDailyProfitType,
-        min_daily_profit_value: minDailyProfitValue,
-        max_leverage: maxLeverage,
-        mandatory_stop_loss: mandatoryStopLoss,
-        max_positions_per_symbol_enabled: maxPositionsPerSymbolEnabled,
-        max_positions_per_symbol: maxPositionsPerSymbol,
-        max_total_open_positions_enabled: maxTotalOpenPositionsEnabled,
-        max_total_open_positions: maxTotalOpenPositions,
-        anti_hedging_enabled: antiHedgingEnabled,
-        consistency_rule_percent: consistencyRulePercent,
-        weekend_holding_allowed: weekendHoldingAllowed,
-        news_trading_allowed: newsTradingAllowed,
-        min_trade_duration_seconds: minTradeDurationSeconds,
-        profit_split_percent: profitSplitPercent,
-        inactivity_days_limit: inactivityDaysLimit,
-        is_active: true
-      };
+      // 1. Eliminar de la base de datos los tiers que el usuario haya borrado explícitamente con [x]
+      if (onDeleteRule && deletedTierIds.length > 0) {
+        for (const delId of deletedTierIds) {
+          try {
+            await onDeleteRule(delId);
+          } catch (e) {
+            console.warn('[CRM] Error deleting removed tier:', delId, e);
+          }
+        }
+        setDeletedTierIds([]);
+      }
 
-      await onSaveRule(payload);
+      // 2. Guardar todos los tiers con las reglas unificadas del modelo
+      const savedTiersList: ChallengeSizeTier[] = [];
+      for (let i = 0; i < sizeTiers.length; i++) {
+        const tier = sizeTiers[i];
+        const dynamicName = getDynamicChallengeName(baseName, tier.balance);
+        const payload: Partial<RiskRuleConfigEntity> = {
+          id: tier.id || undefined,
+          name: dynamicName,
+          category,
+          one_time_price_usdt: Number(tier.oneTimePriceUsdt) || 0,
+          monthly_price_usdt: enableMonthlySubscription ? (Number(tier.monthlyPriceUsdt) || 0) : 0,
+          is_popular: !!tier.isPopular,
+          model_type: modelType,
+          default_account_balance: tier.balance,
+          is_default_demo: isDefaultDemo && activeSizeTierIndex === i,
+          drawdown_type: drawdownType,
+          max_daily_loss_percent: maxDailyLossPercent,
+          max_total_drawdown_percent: maxTotalDrawdownPercent,
+          profit_target_percent: modelType === 'INSTANT_FUNDING' ? 0 : profitTargetPercent,
+          profit_target_phase2_percent: modelType === 'TWO_PHASE' ? profitTargetPhase2Percent : 0,
+          min_trading_days: minTradingDays,
+          min_daily_profit_type: minDailyProfitType,
+          min_daily_profit_value: minDailyProfitValue,
+          max_leverage: maxLeverage,
+          mandatory_stop_loss: mandatoryStopLoss,
+          max_positions_per_symbol_enabled: maxPositionsPerSymbolEnabled,
+          max_positions_per_symbol: maxPositionsPerSymbol,
+          max_total_open_positions_enabled: maxTotalOpenPositionsEnabled,
+          max_total_open_positions: maxTotalOpenPositions,
+          anti_hedging_enabled: antiHedgingEnabled,
+          consistency_rule_percent: consistencyRulePercent,
+          weekend_holding_allowed: weekendHoldingAllowed,
+          news_trading_allowed: newsTradingAllowed,
+          min_trade_duration_enabled: minTradeDurationEnabled,
+          min_trade_duration_seconds: minTradeDurationSeconds,
+          profit_split_percent: profitSplitPercent,
+          payout_scale: payoutScale,
+          inactivity_days_limit: inactivityDaysLimit,
+          is_active: true
+        };
+        await onSaveRule(payload);
+        savedTiersList.push({
+          ...tier,
+          id: tier.id || payload.id
+        });
+      }
+
+      const targetKey = getModelKey({ name: baseName, category, model_type: modelType });
+      setSelectedModelKey(targetKey);
+      setSizeTiers(savedTiersList);
+
       setSaveSuccessNotice(true);
       setTimeout(() => setSaveSuccessNotice(false), 3000);
+    } catch (err) {
+      console.error('Error saving challenge model:', err);
+      alert(isEs ? 'Error al guardar el modelo de challenge.' : 'Error saving challenge model.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Crear Nuevo Preset Limpio
+  // Crear Nuevo Preset Limpio (Multi-tamaño estándar)
   const handleCreateNewPreset = () => {
-    const newRule: RiskRuleConfigEntity = {
-      id: '',
-      name: isEs ? 'Nuevo Reto Solar 50K' : 'New Solar 50K Challenge',
-      category: 'solar',
-      one_time_price_usdt: 149,
-      monthly_price_usdt: 79,
-      is_popular: false,
-      model_type: 'ONE_PHASE',
-      default_account_balance: 50000,
-      is_default_demo: false,
-      is_active: true,
-      drawdown_type: 'EOD',
-      max_daily_loss_percent: 5.0,
-      max_total_drawdown_percent: 10.0,
-      profit_target_percent: 10.0,
-      profit_target_phase2_percent: 5.0,
-      min_trading_days: 5,
-      min_daily_profit_type: 'PERCENT',
-      min_daily_profit_value: 0.5,
-      max_leverage: 50,
-      mandatory_stop_loss: false,
-      max_positions_per_symbol_enabled: false,
-      max_positions_per_symbol: 2,
-      max_total_open_positions_enabled: false,
-      max_total_open_positions: 5,
-      anti_hedging_enabled: false,
-      consistency_rule_percent: 40.0,
-      weekend_holding_allowed: true,
-      news_trading_allowed: true,
-      min_trade_duration_seconds: 10
-    };
-    setSelectedRule(newRule);
-    setName(newRule.name);
+    const defaultTiers: ChallengeSizeTier[] = [
+      { balance: 5000, oneTimePriceUsdt: 49, monthlyPriceUsdt: 29, isPopular: false },
+      { balance: 10000, oneTimePriceUsdt: 89, monthlyPriceUsdt: 49, isPopular: false },
+      { balance: 25000, oneTimePriceUsdt: 149, monthlyPriceUsdt: 79, isPopular: false },
+      { balance: 50000, oneTimePriceUsdt: 249, monthlyPriceUsdt: 129, isPopular: true },
+      { balance: 100000, oneTimePriceUsdt: 449, monthlyPriceUsdt: 219, isPopular: false }
+    ];
+    const initialBase = isEs ? 'Nuevo Challenge' : 'New Challenge';
+    const newKey = `${initialBase.toLowerCase()}__solar__one_phase`;
+    setSelectedModelKey(newKey);
+    setBaseName(initialBase);
     setCategory('solar');
-    setOneTimePriceUsdt(149);
-    setMonthlyPriceUsdt(79);
-    setIsPopular(false);
+    setModelType('ONE_PHASE');
+    setSizeTiers(defaultTiers);
+    setActiveSizeTierIndex(3);
     setDefaultAccountBalance(50000);
+    setOneTimePriceUsdt(249);
+    setMonthlyPriceUsdt(129);
+    setIsPopular(true);
+    setEnableMonthlySubscription(false);
+    setName(getDynamicChallengeName(initialBase, 50000));
+    setSelectedRule(null);
+    setDeletedTierIds([]);
     setActiveTab('rules');
   };
 
   // Duplicar Preset
   const handleDuplicatePreset = () => {
-    if (!selectedRule) return;
-    const duplicated: RiskRuleConfigEntity = {
-      ...selectedRule,
-      id: '',
-      name: `${selectedRule.name} (Copia)`,
-      is_default_demo: false
-    };
-    setSelectedRule(duplicated);
+    const copyBase = `${baseName} (Copia)`;
+    const newKey = `${copyBase.toLowerCase()}__${category}__${modelType}`;
+    setSelectedModelKey(newKey);
+    setBaseName(copyBase);
+    const duplicatedTiers = sizeTiers.map(t => ({
+      ...t,
+      id: undefined
+    }));
+    setSizeTiers(duplicatedTiers);
+    setIsDefaultDemo(false);
+    setSelectedRule(null);
+    setDeletedTierIds([]);
+    setName(getDynamicChallengeName(copyBase, defaultAccountBalance));
   };
 
-  // Eliminar Challenge / Plan
+  // Eliminar modelo de challenge completo (con todos sus tamaños de cuenta)
   const [isDeleting, setIsDeleting] = useState(false);
-  const handleDeleteRuleItem = async (ruleToDelete: RiskRuleConfigEntity, e?: React.MouseEvent) => {
+  const handleDeleteModelGroup = async (group: ChallengeModelGroup, e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation();
     }
-    if (!onDeleteRule || !ruleToDelete.id) return;
+    if (!onDeleteRule) return;
 
-    if (ruleToDelete.is_default_demo) {
+    if (group.isDefaultDemo) {
       alert(isEs ? 'No puedes eliminar la plantilla Demo por defecto de la plataforma.' : 'You cannot delete the platform default demo template.');
       return;
     }
 
     const confirmMsg = isEs 
-      ? `¿Estás seguro de eliminar el plan "${ruleToDelete.name}"? Se borrará permanentemente de la base de datos.`
-      : `Are you sure you want to delete the plan "${ruleToDelete.name}"? It will be permanently removed from the database.`;
+      ? `¿Estás seguro de eliminar el modelo "${group.baseName}" y sus ${group.totalSizes} tamaños de cuenta? Se borrará permanentemente de la base de datos.`
+      : `Are you sure you want to delete model "${group.baseName}" and all its ${group.totalSizes} account sizes? This action is permanent.`;
 
     if (!window.confirm(confirmMsg)) {
       return;
@@ -1117,37 +1651,23 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
 
     setIsDeleting(true);
     try {
-      await onDeleteRule(ruleToDelete.id);
-      if (selectedRule?.id === ruleToDelete.id) {
-        const remaining = rules.filter(r => r.id !== ruleToDelete.id);
-        if (remaining.length > 0) {
-          setSelectedRule(remaining[0]);
-          if (onSelectRule) onSelectRule(remaining[0].id);
-        } else {
-          handleCreateNewPreset();
-        }
+      for (const r of group.rules) {
+        if (r.id) await onDeleteRule(r.id);
+      }
+
+      const remainingGroups = groupedChallengeModels.filter(g => g.modelKey !== group.modelKey);
+      if (remainingGroups.length > 0) {
+        handleSelectModelGroup(remainingGroups[0]);
+      } else {
+        handleCreateNewPreset();
       }
     } catch (err) {
-      console.error('Error deleting rule:', err);
-      alert(isEs ? 'Error al eliminar el plan.' : 'Error deleting plan.');
+      console.error('Error deleting challenge model:', err);
+      alert(isEs ? 'Error al eliminar el modelo de challenge.' : 'Error deleting challenge model.');
     } finally {
       setIsDeleting(false);
     }
   };
-
-  // Filtrado de Reglas con el Buscador
-  const filteredRules = useMemo(() => {
-    return rules.filter(r => {
-      const matchSearch = searchQuery === '' || 
-        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        String(r.default_account_balance).includes(searchQuery);
-
-      const matchModel = selectedFilterModel === 'ALL' || 
-        (r.model_type || 'ONE_PHASE') === selectedFilterModel;
-
-      return matchSearch && matchModel;
-    });
-  }, [rules, searchQuery, selectedFilterModel]);
 
   return (
     <div className="space-y-6">
@@ -1227,28 +1747,33 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
       {/* 2. Disposición a Dos Columnas: Lista de Planes a la Izquierda y Panel Principal a la Derecha */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* Columna Izquierda: Listado de Presets / Challenges */}
+        {/* Columna Izquierda: Listado de Modelos de Challenge (1 card por modelo con todos sus tamaños) */}
         <div className="lg:col-span-4 space-y-3">
           <div className="flex items-center justify-between px-1">
             <span className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-              {isEs ? `Planes Disponibles (${filteredRules.length})` : `Available Plans (${filteredRules.length})`}
+              {isEs ? `Modelos de Challenge (${filteredModelGroups.length})` : `Challenge Models (${filteredModelGroups.length})`}
             </span>
           </div>
 
           <div className="space-y-2.5 max-h-[780px] overflow-y-auto pr-1">
-            {filteredRules.map(rule => {
-              const isSelected = selectedRule?.id === rule.id;
-              const isDemo = !!rule.is_default_demo;
-              const bal = Number(rule.default_account_balance || 100000);
-              const mType = rule.model_type || 'ONE_PHASE';
+            {filteredModelGroups.map(group => {
+              const isSelected = selectedModelKey === group.modelKey || (
+                selectedRule && (
+                  extractBaseName(selectedRule.name).toLowerCase() === group.baseName.toLowerCase() &&
+                  (selectedRule.category || 'solar') === group.category &&
+                  (selectedRule.model_type || 'ONE_PHASE') === group.modelType
+                )
+              );
+              const mType = group.modelType;
+              const catDef = customCategories.find(c => c.id === group.category);
+              const colorDef = catDef ? getCategoryBadgeStyles(catDef.colorKey) : (
+                group.category === 'lunar' ? getCategoryBadgeStyles('purple') : getCategoryBadgeStyles('amber')
+              );
 
               return (
                 <div
-                  key={rule.id}
-                  onClick={() => {
-                    setSelectedRule(rule);
-                    if (onSelectRule) onSelectRule(rule.id);
-                  }}
+                  key={group.modelKey}
+                  onClick={() => handleSelectModelGroup(group)}
                   className={`p-4 rounded-2xl border transition-all cursor-pointer text-left relative ${
                     isSelected
                       ? 'bg-amber-50/70 border-amber-400 ring-2 ring-amber-400/40 shadow-sm'
@@ -1257,30 +1782,28 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div>
-                      <h4 className="font-extrabold text-sm text-[#0F172A] leading-tight">
-                        {rule.name}
-                      </h4>
-                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                        <span className="text-base font-black font-mono text-slate-900">
-                          ${bal.toLocaleString()}
-                        </span>
-                        <span className={`text-[9.5px] font-black px-1.5 py-0.5 rounded-md ${
-                          rule.category === 'lunar'
-                            ? 'bg-purple-100 text-purple-900 border border-purple-200'
-                            : 'bg-amber-100 text-amber-900 border border-amber-200'
-                        }`}>
-                          {rule.category === 'lunar' ? '🌙 Lunar' : '☀️ Solar'}
-                        </span>
-                        {rule.one_time_price_usdt !== undefined && Number(rule.one_time_price_usdt) > 0 && (
-                          <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200">
-                            ${rule.one_time_price_usdt} USDT
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h4 className="font-extrabold text-sm text-[#0F172A] leading-tight">
+                          {group.baseName}
+                        </h4>
+                        {group.isDefaultDemo && (
+                          <span className="flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-full bg-amber-200/80 text-amber-950 border border-amber-300">
+                            <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-700" />
+                            <span>Demo</span>
                           </span>
                         )}
-                        {rule.is_popular && (
-                          <span className="text-[9px] font-black bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded-md">
-                            Popular
-                          </span>
-                        )}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                        <span className={`text-[9.5px] font-black px-1.5 py-0.5 rounded-md border ${colorDef.bgBadge} ${colorDef.textBadge} ${colorDef.borderBadge}`}>
+                          {catDef ? catDef.name : (group.category === 'lunar' ? '🌙 Lunar' : '☀️ Solar')}
+                        </span>
+
+                        <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200">
+                          {group.minPrice === group.maxPrice 
+                            ? `$${group.minPrice} USDT` 
+                            : `$${group.minPrice} - $${group.maxPrice} USDT`}
+                        </span>
                       </div>
                     </div>
 
@@ -1293,47 +1816,59 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                               ? 'bg-blue-100 text-blue-900 border-blue-200'
                               : 'bg-emerald-100 text-emerald-900 border-emerald-200'
                         }`}>
-                          {mType === 'INSTANT_FUNDING' ? 'Fondeo Directo' : mType === 'TWO_PHASE' ? '2 Fases' : '1 Fase'}
+                          {mType === 'INSTANT_FUNDING' ? (isEs ? 'Fondeo Directo' : 'Instant') : mType === 'TWO_PHASE' ? (isEs ? '2 Fases' : '2 Phases') : (isEs ? '1 Fase' : '1 Phase')}
                         </span>
-                        {!rule.is_default_demo && onDeleteRule && (
+                        {!group.isDefaultDemo && onDeleteRule && (
                           <button
                             type="button"
-                            onClick={(e) => handleDeleteRuleItem(rule, e)}
+                            onClick={(e) => handleDeleteModelGroup(group, e)}
                             className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
-                            title={isEs ? 'Eliminar este plan' : 'Delete this plan'}
+                            title={isEs ? 'Eliminar este modelo y todos sus tamaños' : 'Delete this model and all its sizes'}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
                       </div>
-                      {isDemo && (
-                        <span className="flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-full bg-amber-200/80 text-amber-950 border border-amber-300">
-                          <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-700" />
-                          <span>Demo</span>
-                        </span>
-                      )}
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-1 pt-2.5 border-t border-slate-200/80 text-[11px] font-medium">
+                  {/* Resumen de Tamaños Disponibles en este Modelo */}
+                  <div className="py-2 border-t border-slate-100 flex items-center justify-between gap-1 text-[11px]">
+                    <span className="text-slate-500 font-bold text-[10px] uppercase">
+                      {isEs ? `${group.totalSizes} Tamaños:` : `${group.totalSizes} Sizes:`}
+                    </span>
+                    <div className="flex items-center gap-1 flex-wrap justify-end">
+                      {group.tiers.map(t => (
+                        <span 
+                          key={t.balance}
+                          className="px-1.5 py-0.5 text-[9.5px] font-mono font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md border border-slate-200"
+                        >
+                          ${formatAccountSizeTag(t.balance)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Reglas Clave del Modelo */}
+                  <div className="grid grid-cols-4 gap-1 pt-2 border-t border-slate-100 text-[11px] font-medium">
                     <div>
                       <span className="text-slate-400 text-[9px] uppercase font-bold block">Target</span>
                       <span className="font-bold text-emerald-700">
-                        {mType === 'INSTANT_FUNDING' ? 'N/A' : `+${rule.profit_target_percent || 10}%`}
+                        {mType === 'INSTANT_FUNDING' ? 'N/A' : `+${group.primaryRule.profit_target_percent || 10}%`}
                       </span>
                     </div>
                     <div>
                       <span className="text-slate-400 text-[9px] uppercase font-bold block">Max DD Día</span>
-                      <span className="font-bold text-rose-700">-{rule.max_daily_loss_percent}%</span>
+                      <span className="font-bold text-rose-700">-{group.primaryRule.max_daily_loss_percent}%</span>
                     </div>
                     <div>
                       <span className="text-slate-400 text-[9px] uppercase font-bold block">Max DD Total</span>
-                      <span className="font-bold text-rose-700">-{rule.max_total_drawdown_percent}%</span>
+                      <span className="font-bold text-rose-700">-{group.primaryRule.max_total_drawdown_percent}%</span>
                     </div>
                     <div>
                       <span className="text-slate-400 text-[9px] uppercase font-bold block">Split</span>
                       <span className="font-bold text-slate-800 font-mono">
-                        {rule.profit_split_percent || 80}%
+                        {group.primaryRule.profit_split_percent || 80}%
                       </span>
                     </div>
                   </div>
@@ -1341,11 +1876,11 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
               );
             })}
 
-            {filteredRules.length === 0 && (
+            {filteredModelGroups.length === 0 && (
               <div className="p-8 text-center rounded-2xl bg-white border border-slate-200">
                 <Search className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                 <p className="text-xs text-slate-500 font-bold">
-                  {isEs ? 'No se encontraron reglas con ese filtro.' : 'No rules found with this filter.'}
+                  {isEs ? 'No se encontraron modelos de challenge con ese filtro.' : 'No challenge models found with this filter.'}
                 </p>
               </div>
             )}
@@ -1402,25 +1937,32 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
               {/* Encabezado del Formulario */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
                 <div>
-                  <h3 className="text-base font-black text-[#0F172A]">
-                    {selectedRule?.id ? `Editando: ${name}` : 'Creando Nuevo Challenge'}
-                  </h3>
-                  <p className="text-xs text-slate-500 font-medium">
-                    {isEs ? 'Define parámetros de riesgo, objetivos de pase y límites pre-trade.' : 'Define risk parameters, profit targets, and pre-trade limits.'}
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-[#0F172A]">
+                      {selectedRule?.id ? `${isEs ? 'Editando:' : 'Editing:'} ${baseName}` : (isEs ? 'Creando Nuevo Challenge' : 'New Challenge')}
+                    </h3>
+                    <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                      {sizeTiers.length} {sizeTiers.length === 1 ? (isEs ? 'tamaño' : 'size') : (isEs ? 'tamaños' : 'sizes')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    {isEs 
+                      ? 'Configura parámetros de riesgo, objetivos y precios individuales para cada tamaño de cuenta.' 
+                      : 'Configure risk parameters, targets, and individual pricing per account size.'}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {selectedRule?.id && !selectedRule.is_default_demo && onDeleteRule && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {activeGroup && !activeGroup.isDefaultDemo && onDeleteRule && (
                     <button
-                      onClick={(e) => handleDeleteRuleItem(selectedRule, e)}
+                      onClick={(e) => handleDeleteModelGroup(activeGroup, e)}
                       disabled={isDeleting}
                       type="button"
                       className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
-                      title={isEs ? 'Eliminar este plan' : 'Delete this plan'}
+                      title={isEs ? 'Eliminar este modelo de challenge completo' : 'Delete this complete challenge model'}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                      <span>{isDeleting ? (isEs ? 'Eliminando...' : 'Deleting...') : (isEs ? 'Eliminar' : 'Delete')}</span>
+                      <span>{isDeleting ? (isEs ? 'Eliminando...' : 'Deleting...') : (isEs ? 'Eliminar Modelo' : 'Delete Model')}</span>
                     </button>
                   )}
 
@@ -1428,34 +1970,201 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                     onClick={handleDuplicatePreset}
                     type="button"
                     className="p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-colors cursor-pointer"
-                    title={isEs ? 'Duplicar este plan' : 'Duplicate plan'}
+                    title={isEs ? 'Duplicar este modelo' : 'Duplicate model'}
                   >
                     <Copy className="w-4 h-4" />
                   </button>
 
                   <button
-                    onClick={handleSaveCurrentRule}
+                    onClick={handleSaveAllTiers}
                     disabled={isSaving}
                     type="button"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-black transition-all hover:scale-[1.02] active:scale-95 shadow-sm cursor-pointer disabled:opacity-50"
                   >
-                    <Save className="w-3.5 h-3.5 text-[#EAB308]" />
-                    <span>{isSaving ? (isEs ? 'Guardando...' : 'Saving...') : (isEs ? 'Guardar Cambios' : 'Save Changes')}</span>
+                    <Save className="w-4 h-4 text-[#EAB308] stroke-[2.5]" />
+                    <span>{isSaving ? (isEs ? 'Guardando Modelo...' : 'Saving Model...') : (isEs ? `Guardar Modelo de Challenge (${sizeTiers.length} Tamaños)` : `Save Challenge Model (${sizeTiers.length} Sizes)`)}</span>
                   </button>
                 </div>
               </div>
 
-              {/* SECCIÓN 1: IDENTIDAD Y MODELO DE EVALUACIÓN */}
+              {/* ================================================================= */}
+              {/* PESTAÑAS SUPERIORES POR TAMAÑO DE CUENTA (MULTI-SIZE ENGINE)       */}
+              {/* ================================================================= */}
+              <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200 space-y-2.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-slate-700" />
+                    <span className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
+                      {isEs ? 'Pestañas por Tamaño de Challenge' : 'Challenge Size Tabs'}
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium">
+                      ({isEs ? 'Haz clic en una pestaña para editar sus precios' : 'Click a tab to edit its pricing'})
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowAddSizeModal(!showAddSizeModal)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-xs font-bold text-slate-800 transition-all shadow-2xs cursor-pointer self-start sm:self-auto"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-amber-600 stroke-[3]" />
+                    <span>{isEs ? 'Añadir / Gestionar Tamaños' : 'Add / Manage Sizes'}</span>
+                  </button>
+                </div>
+
+                {/* Lista Horizontal de Pestañas de Tamaños con Flechas de Desplazamiento */}
+                <div className="relative flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => scrollSizeTabs('left')}
+                    className="p-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 shadow-2xs shrink-0 cursor-pointer transition-colors"
+                    title={isEs ? 'Desplazar a la izquierda' : 'Scroll left'}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  <div 
+                    ref={sizeTabsScrollRef}
+                    className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 custom-scrollbar scroll-smooth flex-1"
+                  >
+                    {sizeTiers.map((tier, idx) => {
+                      const isActive = activeSizeTierIndex === idx;
+                      return (
+                        <div
+                          key={`${tier.balance}-${idx}`}
+                          onClick={() => handleSelectSizeTab(idx)}
+                          className={`group flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                            isActive
+                              ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-xs ring-2 ring-slate-900/20'
+                              : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                          }`}
+                        >
+                          <span className="font-mono font-black">${tier.balance.toLocaleString()}</span>
+                          <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                            isActive ? 'bg-slate-800 text-emerald-400' : 'bg-slate-100 text-emerald-700'
+                          }`}>
+                            ${tier.oneTimePriceUsdt} USDT
+                          </span>
+                          {enableMonthlySubscription && Number(tier.monthlyPriceUsdt) > 0 && (
+                            <span className={`text-[9px] font-mono ${isActive ? 'text-slate-400' : 'text-slate-500'}`}>
+                              +${tier.monthlyPriceUsdt}/m
+                            </span>
+                          )}
+                          {tier.isPopular && (
+                            <span className="text-[10px] text-amber-400 font-bold" title="Popular">★</span>
+                          )}
+                          {sizeTiers.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveSizeTier(idx);
+                              }}
+                              className="ml-1 text-slate-400 hover:text-rose-500 hover:bg-rose-100/50 p-0.5 rounded transition-colors"
+                              title={isEs ? 'Quitar este tamaño del modelo' : 'Remove size from model'}
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => scrollSizeTabs('right')}
+                    className="p-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 shadow-2xs shrink-0 cursor-pointer transition-colors"
+                    title={isEs ? 'Desplazar a la derecha' : 'Scroll right'}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Popover / Panel para Añadir Tamaños */}
+                {showAddSizeModal && (
+                  <div className="p-3.5 rounded-xl bg-white border border-slate-300 shadow-md space-y-3 animate-in fade-in duration-150">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                      <span className="text-xs font-bold text-slate-800">
+                        {isEs ? 'Añadir Tamaños al Challenge' : 'Add Sizes to Challenge'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddSizeModal(false)}
+                        className="text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    {/* Tamaños Estándar (1-Click Toggle) */}
+                    <div>
+                      <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1.5">
+                        {isEs ? 'Tamaños Estándar (1 Clic para marcar):' : 'Standard Sizes (1-Click to toggle):'}
+                      </span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {STANDARD_ACCOUNT_SIZES.map(sz => {
+                          const isAdded = sizeTiers.some(t => t.balance === sz);
+                          return (
+                            <button
+                              key={sz}
+                              type="button"
+                              onClick={() => handleAddStandardSize(sz)}
+                              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                                isAdded
+                                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-black'
+                                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-900'
+                              }`}
+                            >
+                              <span>${sz.toLocaleString()}</span>
+                              {isAdded ? (
+                                <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
+                              ) : (
+                                <Plus className="w-3 h-3 text-slate-400" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Añadir Tamaño Personalizado Manual */}
+                    <div className="pt-2 border-t border-slate-200 flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">$</span>
+                        <input
+                          type="number"
+                          step="1000"
+                          value={manualSizeInput}
+                          onChange={(e) => setManualSizeInput(Number(e.target.value))}
+                          placeholder={isEs ? 'Monto manual, ej: 15000' : 'Manual amount, e.g. 15000'}
+                          className="w-full pl-7 pr-3 py-1.5 text-xs font-mono font-bold bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-hidden focus:border-amber-500"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAddCustomSize(manualSizeInput)}
+                        className="px-3 py-1.5 rounded-lg bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-bold transition-all cursor-pointer shrink-0"
+                      >
+                        {isEs ? '+ Añadir Personalizado' : '+ Add Custom'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* SECCIÓN 1: IDENTIDAD, CATEGORÍA & MODELO DE EVALUACIÓN */}
               <div className="space-y-4">
                 <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">
-                  1. Modelo de Negocio & Capital
+                  1. Modelo de Negocio & Categoría
                 </span>
 
+                {/* Modelos de Evaluación */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
-                    { id: 'INSTANT_FUNDING', title: 'Fondeo Inmediato', sub: 'Sin Profit Target. El trader opera directo.' },
-                    { id: 'ONE_PHASE', title: 'Evaluación 1 Fase', sub: 'Un solo objetivo de profit antes de fondear.' },
-                    { id: 'TWO_PHASE', title: 'Evaluación 2 Fases', sub: 'Fase 1 (10%) y Fase 2 (5%) con verificación.' }
+                    { id: 'INSTANT_FUNDING', title: isEs ? 'Fondeo Inmediato' : 'Instant Funding', sub: isEs ? 'Sin Profit Target. El trader opera directo.' : 'Zero target. Trader operates directly.' },
+                    { id: 'ONE_PHASE', title: isEs ? 'Evaluación 1 Fase' : '1-Phase Evaluation', sub: isEs ? 'Un solo objetivo de profit antes de fondear.' : 'Single profit target before funding.' },
+                    { id: 'TWO_PHASE', title: isEs ? 'Evaluación 2 Fases' : '2-Phase Evaluation', sub: isEs ? 'Fase 1 (10%) y Fase 2 (5%) con verificación.' : 'Phase 1 (10%) and Phase 2 (5%) verification.' }
                   ].map(m => (
                     <div
                       key={m.id}
@@ -1463,7 +2172,7 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                       className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
                         modelType === m.id
                           ? 'bg-amber-50/80 border-amber-400 ring-2 ring-amber-400/30'
-                          : 'bg-[#fbf9f5] border-slate-200 hover:border-slate-300'
+                          : 'bg-white border-slate-200 hover:border-slate-300'
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -1475,122 +2184,329 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                   ))}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Nombre Base y Selector de Categorías */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Nombre Base del Challenge */}
                   <div>
-                    <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                      {isEs ? 'Nombre del Challenge' : 'Challenge Name'}
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      {isEs ? 'Nombre Base del Challenge' : 'Challenge Base Name'}
                     </label>
                     <input
                       type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder={isEs ? 'Ej: Solar Eclipse 50K' : 'e.g. Solar Eclipse 50K'}
-                      className="w-full px-3 py-2 text-xs bg-[#fbf9f5] border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-hidden focus:border-amber-500"
+                      value={baseName}
+                      onChange={(e) => {
+                        setBaseName(e.target.value);
+                        setName(getDynamicChallengeName(e.target.value, defaultAccountBalance));
+                      }}
+                      placeholder={isEs ? 'Ej: Solar Eclipse, Instant DMA, Pro Titan' : 'e.g. Solar Eclipse, Instant DMA, Pro Titan'}
+                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-hidden focus:border-amber-500"
                     />
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                      {isEs ? 'Estilo / Categoría del Reto' : 'Challenge Category / Style'}
-                    </label>
-                    <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-[#fbf9f5] border border-slate-300">
-                      <button
-                        type="button"
-                        onClick={() => setCategory('solar')}
-                        className={`py-1 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                          category === 'solar'
-                            ? 'bg-amber-400 text-slate-950 shadow-xs'
-                            : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <span>☀️ Solar (DMA)</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCategory('lunar')}
-                        className={`py-1 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                          category === 'lunar'
-                            ? 'bg-purple-600 text-white shadow-xs'
-                            : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <span>🌙 Lunar (Meme)</span>
-                      </button>
+                    <div className="flex items-center gap-1.5 mt-1 text-[10px] text-slate-500">
+                      <span>{isEs ? 'Nombre en terminal:' : 'Name in terminal:'}</span>
+                      <strong className="text-slate-900 font-mono">
+                        {getDynamicChallengeName(baseName, defaultAccountBalance)}
+                      </strong>
                     </div>
                   </div>
 
+                  {/* Selector y Creador de Categorías & Estilos */}
                   <div>
-                    <label className="text-[11px] font-bold text-slate-600 block mb-1 flex items-center justify-between">
-                      <span>{isEs ? 'Tamaño de Cuenta ($ USD) [Manual]' : 'Account Balance ($ USD) [Manual]'}</span>
-                      <span className="text-[10px] text-amber-600 font-mono font-bold">
-                        ${Number(defaultAccountBalance || 0).toLocaleString()}
-                      </span>
-                    </label>
-                    <input
-                      type="number"
-                      step="1000"
-                      value={defaultAccountBalance}
-                      onChange={(e) => setDefaultAccountBalance(Number(e.target.value))}
-                      placeholder="Ej: 50000"
-                      className="w-full px-3 py-2 text-xs font-mono font-bold bg-[#fbf9f5] border border-slate-300 rounded-xl text-slate-900 focus:outline-hidden focus:border-amber-500"
-                    />
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[11px] font-bold text-slate-700">
+                        {isEs ? 'Estilo / Categoría del Reto' : 'Challenge Category / Style'}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingCategory(!isAddingCategory)}
+                        className="text-[10px] font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>{isEs ? 'Nueva Categoría' : 'New Category'}</span>
+                      </button>
+                    </div>
+
+                    {/* Lista de Categorías con Botón de Edición Individual */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {customCategories.map(cat => {
+                        const isSelected = category === cat.id;
+                        const style = getCategoryBadgeStyles(cat.colorKey);
+                        return (
+                          <div key={cat.id} className="relative inline-flex items-center">
+                            <button
+                              type="button"
+                              onClick={() => setCategory(cat.id)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                                isSelected
+                                  ? `${style.bgBadge} ${style.textBadge} ${style.borderBadge} ring-2 ring-slate-900/20 shadow-2xs`
+                                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                              }`}
+                            >
+                              <span className={`w-2 h-2 rounded-full ${style.dot}`} />
+                              <span>{cat.name}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingCategory({ ...cat });
+                              }}
+                              className="ml-0.5 p-1 text-slate-400 hover:text-slate-800 hover:bg-slate-200 rounded-md transition-colors cursor-pointer"
+                              title={isEs ? `Editar categoría "${cat.name}"` : `Edit category "${cat.name}"`}
+                            >
+                              <Edit2 className="w-2.5 h-2.5" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Popover / Formulario para Editar Categoría Existente */}
+                    {editingCategory && (
+                      <div className="mt-2.5 p-3 rounded-xl bg-amber-50/70 border border-amber-300 space-y-2.5 text-xs animate-in fade-in">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-black text-amber-950 flex items-center gap-1.5">
+                            <Edit2 className="w-3 h-3 text-amber-700" />
+                            <span>{isEs ? `Editar Categoría: ${editingCategory.name}` : `Edit Category: ${editingCategory.name}`}</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setEditingCategory(null)}
+                            className="text-slate-400 hover:text-slate-700 font-bold cursor-pointer"
+                          >
+                            ✕
+                          </button>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-600 block mb-1">
+                            {isEs ? 'Nombre de la Categoría' : 'Category Name'}
+                          </label>
+                          <input
+                            type="text"
+                            value={editingCategory.name}
+                            onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                            className="w-full px-2.5 py-1 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 font-bold focus:outline-hidden focus:border-amber-500"
+                          />
+                        </div>
+
+                        <div>
+                          <span className="text-[10px] text-slate-600 font-bold block mb-1">
+                            {isEs ? 'Paleta de Color Distintiva:' : 'Distinct Color Palette:'}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            {CATEGORY_COLOR_PRESETS.map(preset => (
+                              <button
+                                key={preset.id}
+                                type="button"
+                                onClick={() => setEditingCategory({ ...editingCategory, colorKey: preset.id })}
+                                title={preset.name}
+                                className={`w-5 h-5 rounded-full border transition-all cursor-pointer ${
+                                  editingCategory.colorKey === preset.id
+                                    ? 'ring-2 ring-slate-900 scale-110 border-white'
+                                    : 'border-slate-300 hover:scale-105'
+                                }`}
+                                style={{ backgroundColor: preset.hex }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1">
+                          {editingCategory.id !== 'solar' && editingCategory.id !== 'lunar' ? (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCategory(editingCategory.id)}
+                              className="text-[10px] font-bold text-rose-600 hover:text-rose-800 underline cursor-pointer"
+                            >
+                              {isEs ? 'Eliminar Categoría' : 'Delete Category'}
+                            </button>
+                          ) : <div />}
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setEditingCategory(null)}
+                              className="px-2.5 py-1 text-[11px] font-bold text-slate-600 hover:bg-slate-200/60 rounded-lg cursor-pointer"
+                            >
+                              {isEs ? 'Cancelar' : 'Cancel'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleUpdateExistingCategory}
+                              className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-black rounded-lg cursor-pointer shadow-xs"
+                            >
+                              {isEs ? 'Guardar en BD' : 'Save to DB'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Mini-Formulario para Crear Nueva Categoría */}
+                    {isAddingCategory && (
+                      <div className="mt-2 p-2.5 rounded-xl bg-slate-50 border border-slate-300 space-y-2 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-slate-800">
+                            {isEs ? 'Crear Nueva Categoría' : 'Create New Category'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setIsAddingCategory(false)}
+                            className="text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          placeholder={isEs ? 'Nombre, ej: Titanio VIP, Alpha DMA' : 'Name, e.g. Titanium VIP, Alpha DMA'}
+                          className="w-full px-2.5 py-1 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-hidden focus:border-amber-500 font-bold"
+                        />
+                        <div>
+                          <span className="text-[10px] text-slate-500 block mb-1">
+                            {isEs ? 'Seleccionar Color Distintivo:' : 'Select Distinct Color:'}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            {CATEGORY_COLOR_PRESETS.map(preset => (
+                              <button
+                                key={preset.id}
+                                type="button"
+                                onClick={() => setNewCategoryColorKey(preset.id)}
+                                title={preset.name}
+                                className={`w-5 h-5 rounded-full cursor-pointer transition-transform ${
+                                  newCategoryColorKey === preset.id ? 'scale-125 ring-2 ring-slate-900 ring-offset-1' : 'hover:scale-110'
+                                }`}
+                                style={{ backgroundColor: preset.hex }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleSaveNewCategory}
+                          className="w-full py-1.5 rounded-lg bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-bold transition-all cursor-pointer"
+                        >
+                          {isEs ? 'Guardar y Aplicar Categoría' : 'Save & Apply Category'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                      {isEs ? 'Precio Pago Único ($ USDT)' : 'One-Time Price ($ USDT)'}
-                    </label>
-                    <div className="relative">
+                {/* Parámetros Específicos del Tamaño Activo */}
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                        {isEs ? 'Configuración de Precios del Tamaño Activo:' : 'Pricing for Active Size:'}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-md bg-[#0F172A] text-white font-mono text-xs font-black">
+                        ${defaultAccountBalance.toLocaleString()} USD
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-slate-500 font-mono">
+                      Tier #{activeSizeTierIndex + 1} de {sizeTiers.length}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Balance / Capital */}
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                        {isEs ? 'Capital de la Cuenta ($ USD)' : 'Account Capital ($ USD)'}
+                      </label>
                       <input
                         type="number"
-                        step="1"
-                        value={oneTimePriceUsdt}
-                        onChange={(e) => setOneTimePriceUsdt(Number(e.target.value))}
-                        placeholder="Ej: 149"
-                        className="w-full px-3 py-2 text-xs font-mono font-bold bg-[#fbf9f5] border border-slate-300 rounded-xl text-emerald-700 focus:outline-hidden focus:border-emerald-500"
+                        step="1000"
+                        value={defaultAccountBalance}
+                        onChange={(e) => handleUpdateActiveTierPrice('balance', Number(e.target.value))}
+                        className="w-full px-3 py-2 text-xs font-mono font-bold bg-white border border-slate-300 rounded-xl text-slate-900 focus:outline-hidden focus:border-amber-500"
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">USDT</span>
+                    </div>
+
+                    {/* Precio Pago Único */}
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                        {isEs ? 'Precio Pago Único ($ USDT)' : 'One-Time Fee ($ USDT)'}
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="1"
+                          value={oneTimePriceUsdt}
+                          onChange={(e) => handleUpdateActiveTierPrice('oneTimePriceUsdt', Number(e.target.value))}
+                          placeholder="149"
+                          className="w-full px-3 py-2 text-xs font-mono font-bold bg-white border border-slate-300 rounded-xl text-emerald-700 focus:outline-hidden focus:border-emerald-500"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">USDT</span>
+                      </div>
+                    </div>
+
+                    {/* Precio Suscripción Mensual (Condicionado al Checkbox) */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[11px] font-bold text-slate-600">
+                          {isEs ? 'Precio Mensual Recurrente' : 'Monthly Recurring Fee'}
+                        </label>
+                        <label className="text-[10px] font-bold text-slate-500 flex items-center gap-1 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={enableMonthlySubscription}
+                            onChange={(e) => {
+                              setEnableMonthlySubscription(e.target.checked);
+                              if (!e.target.checked) {
+                                handleUpdateActiveTierPrice('monthlyPriceUsdt', 0);
+                              }
+                            }}
+                            className="w-3.5 h-3.5 text-amber-600 rounded-xs"
+                          />
+                          <span>{isEs ? 'Activar Recurrencia' : 'Enable Recurrence'}</span>
+                        </label>
+                      </div>
+
+                      {enableMonthlySubscription ? (
+                        <div className="relative">
+                          <input
+                            type="number"
+                            step="1"
+                            value={monthlyPriceUsdt}
+                            onChange={(e) => handleUpdateActiveTierPrice('monthlyPriceUsdt', Number(e.target.value))}
+                            placeholder="79"
+                            className="w-full px-3 py-2 text-xs font-mono font-bold bg-white border border-slate-300 rounded-xl text-emerald-700 focus:outline-hidden focus:border-emerald-500"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">USDT/mes</span>
+                        </div>
+                      ) : (
+                        <div className="px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
+                          <Lock className="w-3.5 h-3.5" />
+                          <span>{isEs ? 'Solo pago único (Sin suscripción)' : 'One-time only (No subscription)'}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                      {isEs ? 'Precio Suscripción Mensual ($ USDT)' : 'Monthly Price ($ USDT)'}
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        step="1"
-                        value={monthlyPriceUsdt}
-                        onChange={(e) => setMonthlyPriceUsdt(Number(e.target.value))}
-                        placeholder="Ej: 79"
-                        className="w-full px-3 py-2 text-xs font-mono font-bold bg-[#fbf9f5] border border-slate-300 rounded-xl text-emerald-700 focus:outline-hidden focus:border-emerald-500"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">USDT/mes</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row items-center gap-3 p-2 rounded-xl bg-slate-50 border border-slate-200 mt-auto">
-                    <label className="text-[11px] font-bold text-slate-700 cursor-pointer flex items-center gap-1.5 flex-1">
+                  {/* Badges de Estado del Tamaño */}
+                  <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-slate-200">
+                    <label className="text-xs font-bold text-slate-700 cursor-pointer flex items-center gap-2">
                       <input
                         type="checkbox"
                         checked={isPopular}
-                        onChange={(e) => setIsPopular(e.target.checked)}
-                        className="rounded-sm text-amber-600 focus:ring-amber-500 w-3.5 h-3.5"
+                        onChange={(e) => handleUpdateActiveTierPrice('isPopular', e.target.checked)}
+                        className="rounded-xs text-amber-600 focus:ring-amber-500 w-4 h-4"
                       />
-                      <span>{isEs ? 'Badge "Popular"' : '"Popular" Badge'}</span>
+                      <span>{isEs ? 'Destacar como "Popular" (Badge Estrella)' : 'Highlight as "Popular"'}</span>
                     </label>
 
-                    <label className="text-[11px] font-bold text-slate-700 cursor-pointer flex items-center gap-1.5 flex-1">
+                    <label className="text-xs font-bold text-slate-700 cursor-pointer flex items-center gap-2">
                       <input
                         type="checkbox"
                         checked={isDefaultDemo}
                         onChange={(e) => setIsDefaultDemo(e.target.checked)}
-                        className="rounded-sm text-amber-600 focus:ring-amber-500 w-3.5 h-3.5"
+                        className="rounded-xs text-amber-600 focus:ring-amber-500 w-4 h-4"
                       />
-                      <span>{isEs ? 'Plantilla Demo' : 'Default Demo'}</span>
+                      <span>{isEs ? 'Plantilla Demo por Defecto de la Plataforma' : 'Platform Default Demo Template'}</span>
                     </label>
                   </div>
                 </div>
@@ -1887,21 +2803,32 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                     </div>
                   </div>
 
-                  {/* Restricción de Microscalping */}
-                  <div className="p-3.5 rounded-xl bg-[#fbf9f5] border border-slate-200">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-slate-800">Duración Mínima (Anti-Scalp)</span>
-                      <span className="text-[10px] font-bold text-slate-500">Segundos</span>
+                  {/* Restricción de Microscalping con Checkbox Habilitar / Deshabilitar */}
+                  <div className="p-3.5 rounded-xl bg-[#fbf9f5] border border-slate-200 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={minTradeDurationEnabled}
+                          onChange={(e) => setMinTradeDurationEnabled(e.target.checked)}
+                          className="w-4 h-4 text-amber-600 rounded-sm cursor-pointer accent-amber-600"
+                        />
+                        <span className="text-xs font-bold text-slate-800">Duración Mínima (Anti-Scalp)</span>
+                      </label>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${minTradeDurationEnabled ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-slate-200 text-slate-600'}`}>
+                        {minTradeDurationEnabled ? (isEs ? 'Habilitado' : 'Enabled') : (isEs ? 'Deshabilitado' : 'Disabled')}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className={`flex items-center gap-2 transition-opacity ${minTradeDurationEnabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
                       <input
                         type="number"
+                        disabled={!minTradeDurationEnabled}
                         value={minTradeDurationSeconds}
                         onChange={(e) => setMinTradeDurationSeconds(Number(e.target.value))}
                         className="w-20 px-2 py-1 text-xs font-mono font-bold bg-white border border-slate-300 rounded-md"
                       />
                       <span className="text-[10px] text-slate-500 leading-tight">
-                        Operaciones cerradas en &lt;{minTradeDurationSeconds}s no califican.
+                        {isEs ? `Operaciones cerradas en <${minTradeDurationSeconds}s no califican.` : `Trades closed in <${minTradeDurationSeconds}s do not qualify.`}
                       </span>
                     </div>
                   </div>
@@ -2122,19 +3049,118 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                     </div>
                   </div>
                 </div>
+
+                {/* Escalera Progresiva de Payouts por Retiro (Tiered Schedule) */}
+                <div className="p-4 rounded-xl bg-white border border-[#ded7c8] shadow-xs space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 font-bold text-xs">
+                        <TrendingUp className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <h5 className="text-xs font-black text-slate-900">
+                          {isEs ? 'Escalera Progresiva de Payouts por Retiro' : 'Tiered Payout Schedule per Withdrawal'}
+                        </h5>
+                        <p className="text-[10px] text-slate-500">
+                          {isEs 
+                            ? 'Configura el reparto exacto según el número de retiro consecutivo del trader (1º, 2º, 3º, etc.). Aplica exclusivamente a este modelo de challenge en base de datos.'
+                            : 'Configure exact profit split based on sequential withdrawal order (1st, 2nd, 3rd, etc.). Stored in database exclusively for this model.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPayoutScale(prev => {
+                          const nextTierNum = prev.length > 0 ? Math.max(...prev.map(p => p.tier)) + 1 : 1;
+                          const lastSplit = prev.length > 0 ? prev[prev.length - 1].split : 80;
+                          return [...prev, { tier: nextTierNum, split: Math.min(100, lastSplit) }];
+                        });
+                      }}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors cursor-pointer self-start sm:self-auto"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>{isEs ? 'Añadir Retiro' : 'Add Withdrawal Tier'}</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+                    {payoutScale.map((item, idx) => {
+                      const isLast = idx === payoutScale.length - 1;
+                      return (
+                        <div 
+                          key={item.tier}
+                          className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200 transition-all flex flex-col justify-between gap-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-black text-slate-700">
+                              {isEs 
+                                ? (isLast && idx >= 3 ? `${item.tier}º Retiro en adelante` : `${item.tier}º Payout`) 
+                                : (isLast && idx >= 3 ? `${item.tier}th Payout onward` : `Payout #${item.tier}`)}
+                            </span>
+                            {payoutScale.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => setPayoutScale(prev => prev.filter((_, i) => i !== idx))}
+                                className="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer p-0.5"
+                                title={isEs ? 'Eliminar escalón' : 'Remove tier'}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center px-2 py-1 bg-white rounded-lg border border-slate-300 flex-1">
+                              <input
+                                type="number"
+                                min={1}
+                                max={100}
+                                value={item.split}
+                                onChange={(e) => {
+                                  const val = Math.min(100, Math.max(1, Number(e.target.value)));
+                                  setPayoutScale(prev => prev.map((p, i) => i === idx ? { ...p, split: val } : p));
+                                }}
+                                className="w-full text-center text-xs font-mono font-black text-slate-900 bg-transparent focus:outline-hidden"
+                              />
+                              <span className="text-xs font-bold text-slate-500">%</span>
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-500 font-mono">
+                              / {100 - item.split}%
+                            </span>
+                          </div>
+
+                          <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden flex">
+                            <div className="h-full bg-emerald-500 transition-all" style={{ width: `${item.split}%` }} />
+                            <div className="h-full bg-slate-800 transition-all" style={{ width: `${100 - item.split}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
               {/* Botón Inferior de Guardado */}
-              <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
-                <button
-                  onClick={handleSaveCurrentRule}
-                  disabled={isSaving}
-                  type="button"
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#EAB308] hover:bg-[#CA8A04] text-[#020617] text-xs font-black transition-all hover:scale-[1.02] active:scale-95 shadow-sm cursor-pointer disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4 stroke-[2.5]" />
-                  <span>{isSaving ? (isEs ? 'Guardando en BD...' : 'Saving to DB...') : (isEs ? 'Guardar y Publicar Regla' : 'Save & Publish Rule')}</span>
-                </button>
+              <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="text-xs text-slate-500 font-medium">
+                  {isEs 
+                    ? `Configuración activa para ${sizeTiers.length} ${sizeTiers.length === 1 ? 'tamaño' : 'tamaños'} de cuenta.` 
+                    : `Active configuration for ${sizeTiers.length} account ${sizeTiers.length === 1 ? 'size' : 'sizes'}.`}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleSaveAllTiers}
+                    disabled={isSaving}
+                    type="button"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-black transition-all hover:scale-[1.02] active:scale-95 shadow-sm cursor-pointer disabled:opacity-50"
+                  >
+                    <Save className="w-4 h-4 text-[#EAB308] stroke-[2.5]" />
+                    <span>{isSaving ? (isEs ? 'Guardando Modelo...' : 'Saving Model...') : (isEs ? `Guardar Modelo de Challenge (${sizeTiers.length} Tamaños)` : `Save Challenge Model (${sizeTiers.length} Sizes)`)}</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}

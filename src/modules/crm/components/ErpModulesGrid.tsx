@@ -27,23 +27,23 @@ export const ErpModulesGrid: React.FC<ErpModulesGridProps> = ({
     brandSub: string;
     description: string;
   }[] = [
-    // 0. ZYTI Engine (Infraestructura Visual & Telemetría) - EXCLUSIVO ADMIN (Dark Obsidian)
+    // 0. Eklipse Engine (Infraestructura Visual & Telemetría) - EXCLUSIVO ADMIN (Dark Obsidian)
     {
       id: 'deployment',
       headerType: 'obsidian',
-      tag: 'CORE ARCHITECTURE',
-      brandName: 'ZYTI ENGINE',
+      tag: isEs ? 'ARQUITECTURA CENTRAL' : 'CORE ARCHITECTURE',
+      brandName: 'EKLIPSE ENGINE',
       brandSub: isEs ? 'Telemetría & Servidores' : 'Live Telemetry & Infra',
       description: isEs 
-        ? 'Arquitectura visual del ecosistema ZYTI en gráficos en vivo, tacómetros radiales de servidores y configuración Docker.' 
-        : 'Live visual architecture of the ZYTI ecosystem, radial server gauges and Docker deployment.'
+        ? 'Arquitectura visual del ecosistema Eklipse en gráficos en vivo, tacómetros radiales de servidores y configuración Docker.' 
+        : 'Live visual architecture of the Eklipse ecosystem, radial server gauges and Docker deployment.'
     },
 
-    // 1. Motor de Riesgo (Risk Sentinel) - ROJO SÓLIDO (solicitado: debe ser roja)
+    // 1. Motor de Riesgo (Risk Sentinel) - ROJO SÓLIDO
     {
       id: 'risk_engine',
       headerType: 'solid_red',
-      tag: 'ZYTI SENTINEL',
+      tag: isEs ? 'CENTINELA DE RIESGO' : 'EKLIPSE SENTINEL',
       brandName: isEs ? 'MOTOR DE RIESGO' : 'RISK SENTINEL',
       brandSub: isEs ? 'Supervisión 0ms en RAM' : '0ms Pre-Trade Guard',
       description: isEs 
@@ -51,85 +51,73 @@ export const ErpModulesGrid: React.FC<ErpModulesGridProps> = ({
         : 'In-RAM supervision of demo & funded accounts, real-time drawdown sentinel and hard liquidation.'
     },
 
-    // 2. APIs (Developers) - MANTECADO / GRIS CÁLIDO (solicitado: gris o mantecado)
-    {
-      id: 'apis',
-      headerType: 'mantecado',
-      tag: 'ZYTI DEVELOPER',
-      brandName: isEs ? 'APIs DESARROLLADOR' : 'DEVELOPER APIS',
-      brandSub: isEs ? 'Pasarela REST & WebSockets' : 'REST & WebSockets Gateway',
-      description: isEs 
-        ? 'Aprovisionamiento B2B para Empresas de Fondeo y credenciales de trading para Agentes de IA.' 
-        : 'B2B provisioning for Prop Firms and institutional access keys for autonomous AI Agents.'
-    },
-
-    // 3. Retos de Evaluación (Challenges) - Azul Sólido Eléctrico (estilo Business Insider)
+    // 2. Retos de Evaluación & Modelos (Challenges) - Azul Sólido Eléctrico
     {
       id: 'challenges',
       headerType: 'solid_blue',
-      tag: 'EVALUATION LAB',
-      brandName: isEs ? 'RETOS EVALUACIÓN' : 'CHALLENGES',
-      brandSub: 'Tiers 10K · 50K · 100K',
+      tag: isEs ? 'LABORATORIO DE RETOS' : 'CHALLENGE MODELS',
+      brandName: isEs ? 'MODELOS Y RETOS' : 'CHALLENGE MODELS',
+      brandSub: isEs ? 'Reglas · Tamaños · Escalado' : 'Rules · Multi-Size · Tiers',
       description: isEs 
-        ? 'Gestión de retos de evaluación, fases 1 y 2, objetivos de beneficio y reglas de escalamiento.' 
-        : 'Evaluation challenge tiers, Phase 1 & 2 profit targets, consistency rules and scaling plans.'
+        ? 'Gestión modular de retos (Solar/Lunar), pestañas de tamaños, precios y motor de simulación 24/7.' 
+        : 'Modular challenge management (Solar/Lunar), account size tabs, pricing and 24/7 rule sandbox.'
     },
 
-    // 4. Planes SaaS - Blanco Minimalista
+    // 3. Finanzas & Payouts - VERDE SÓLIDO
     {
-      id: 'plans',
+      id: 'payouts',
+      headerType: 'solid_green',
+      tag: isEs ? 'FINANZAS Y TESORERÍA' : 'FINANCE & TREASURY',
+      brandName: isEs ? 'FINANZAS & PAYOUTS' : 'FINANCE & PAYOUTS',
+      brandSub: isEs ? 'Retiros · Tiers 35/50/80/90 · TX' : 'Withdrawals · Split Tiers · TX',
+      description: isEs 
+        ? 'Aprobación de retiros de traders, cálculo automático de retención según payout #1 (35%), #2 (50%), #3 (80%) y pago USDT.' 
+        : 'Trader withdrawal approval, automated payout scale deduction (35%, 50%, 80%, 90%), and blockchain tx hash.'
+    },
+
+    // 4. Identidad de Empresa & Nomenclatura - MANTECADO
+    {
+      id: 'company_identity',
+      headerType: 'mantecado',
+      tag: isEs ? 'IDENTIDAD INSTITUCIONAL' : 'PROP FIRM IDENTITY',
+      brandName: isEs ? 'IDENTIDAD EMPRESA' : 'COMPANY IDENTITY',
+      brandSub: isEs ? 'Prefijo EKL- · Marca · Webhooks' : 'EKL- Prefix · Brand · Hooks',
+      description: isEs 
+        ? 'Identidad institucional de Eklipse Funded, nomenclatura de cuentas (ej: EKL-100K-...), branding y webhooks.' 
+        : 'Institutional identity of Eklipse Funded, account nomenclatures (e.g. EKL-100K-...), branding and webhooks.'
+    },
+
+    // 5. APIs (Developers) - MANTECADO / GRIS CÁLIDO
+    {
+      id: 'apis',
       headerType: 'white',
-      tag: 'ZYTI TIERS',
-      brandName: isEs ? 'PLANES PLATAFORMA' : 'PLATFORM PLANS',
-      brandSub: isEs ? 'Suscripciones SaaS & MRR' : 'SaaS & Memberships',
+      tag: isEs ? 'PASARELA DE APIS' : 'DEVELOPER GATEWAY',
+      brandName: isEs ? 'APIs & AGENTES IA' : 'APIS & AI AGENTS',
+      brandSub: isEs ? 'Pasarela REST & WebSockets' : 'REST & WebSockets Gateway',
       description: isEs 
-        ? 'Control de precios de la plataforma ZYTI: Plan Gratuito, Pro (29 €/m) e Institucional (79 €/m).' 
-        : 'Platform subscription tiers: Free, Pro (29 €/mo) and Institutional (79 €/mo) access.'
+        ? 'Aprovisionamiento B2B para socios institucionales y credenciales de trading de ultra-baja latencia.' 
+        : 'B2B provisioning for institutional partners and ultra-low latency trading credentials.'
     },
 
-    // 5. Exchanges - Indigo Profundo
-    {
-      id: 'exchanges',
-      headerType: 'solid_indigo',
-      tag: 'VENUE NETWORK',
-      brandName: '16 EXCHANGES',
-      brandSub: 'Binance · Bybit · OKX · 13+',
-      description: isEs 
-        ? 'Administra los enlaces de afiliado, rebates de comisiones y estado de los 16 exchanges.' 
-        : 'Manage affiliate links, commission rebates and connectivity status for all 16 supported venues.'
-    },
-
-    // 6. Prop Firms - Blanco Minimalista
-    {
-      id: 'prop_firms',
-      headerType: 'white',
-      tag: 'PROP PARTNERS',
-      brandName: isEs ? 'EMPRESAS FONDEO' : 'PROP FIRMS',
-      brandSub: isEs ? 'Directorio Auditado & Cupones' : 'Audited Directory & Splits',
-      description: isEs 
-        ? 'Directorio de empresas de fondeo aliadas, cupones de descuento y reparto de beneficios.' 
-        : 'Audited directory of allied Prop Firms, partner discount codes and profit share splits.'
-    },
-
-    // 7. Soporte - Blanco Minimalista
+    // 6. Soporte - Blanco Minimalista
     {
       id: 'support',
       headerType: 'white',
-      tag: 'ZYTI CONCIERGE',
+      tag: isEs ? 'MESA DE SOPORTE' : 'SUPPORT DESK',
       brandName: isEs ? 'MESA DE SOPORTE' : 'SUPPORT DESK',
-      brandSub: isEs ? 'Mesa de Ayuda & Agentes' : 'Trader Helpdesk & Staff',
+      brandSub: isEs ? 'Mesa de Ayuda & Clientes' : 'Trader Helpdesk & Staff',
       description: isEs 
-        ? 'Mesa de ayuda institucional y asignación de usuarios del equipo de soporte técnico.' 
-        : 'Institutional customer helpdesk and assignment of support staff members.'
+        ? 'Mesa de ayuda institucional y auditoría técnica de consultas de traders.' 
+        : 'Institutional customer helpdesk and technical audit of trader tickets.'
     },
 
-    // 8. Crecimiento & SEO - VERDE SÓLIDO (solicitado: SEO y Crecimiento Verde, como HackerNoon)
+    // 7. Crecimiento & SEO - Índigo Profundo
     {
       id: 'marketing',
-      headerType: 'solid_green',
-      tag: 'GROWTH & SEO',
+      headerType: 'solid_indigo',
+      tag: isEs ? 'CRECIMIENTO Y SEO' : 'GROWTH & SEO',
       brandName: isEs ? 'CRECIMIENTO & SEO' : 'GROWTH & SEO',
-      brandSub: isEs ? 'Páginas Canónicas para IA' : 'Canonical AI Search',
+      brandSub: isEs ? 'Indexación IA & Canónicas' : 'Canonical AI Search',
       description: isEs 
         ? 'Control de campañas de captación de traders, tráfico orgánico y páginas canónicas para motores IA.' 
         : 'Trader acquisition campaigns, organic search metrics and canonical landing pages for AI engines.'
@@ -137,7 +125,7 @@ export const ErpModulesGrid: React.FC<ErpModulesGridProps> = ({
   ];
 
   return (
-    <div className="w-full space-y-3 mb-6">
+    <div className="w-full space-y-3 mb-6 notranslate" translate="no">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-black text-[#0F172A] tracking-tight font-sans">

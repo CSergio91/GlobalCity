@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS public.prop_firms (
   api_key_hash VARCHAR(255) NOT NULL UNIQUE,
   webhook_url TEXT,
   webhook_secret VARCHAR(100) NOT NULL,
+  account_prefix VARCHAR(20) DEFAULT 'EKL-',
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -485,4 +486,24 @@ CREATE INDEX IF NOT EXISTS idx_payout_requests_email ON public.payout_requests(t
 GRANT ALL PRIVILEGES ON TABLE public.payout_requests TO anon, authenticated, service_role;
 GRANT ALL PRIVILEGES ON TABLE public._migrations TO anon, authenticated, service_role;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+
+-- 3. TABLA: CATEGORÍAS Y ESTILOS DE CHALLENGE
+CREATE TABLE IF NOT EXISTS public.challenge_categories (
+  id VARCHAR(50) PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  color_key VARCHAR(30) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO public.challenge_categories (id, name, color_key) VALUES
+  ('solar', '☀️ Solar (DMA Futures)', 'amber'),
+  ('lunar', '🌙 Lunar (Meme Titans)', 'purple')
+ON CONFLICT (id) DO NOTHING;
+
+GRANT ALL PRIVILEGES ON TABLE public.challenge_categories TO anon, authenticated, service_role;
+
+ALTER TABLE public.risk_rule_configs ADD COLUMN IF NOT EXISTS payout_scale JSONB;
+ALTER TABLE public.risk_rule_configs ADD COLUMN IF NOT EXISTS min_trade_duration_enabled BOOLEAN DEFAULT true;
+ALTER TABLE public.payout_requests ADD COLUMN IF NOT EXISTS payout_number INT DEFAULT 1;
 
