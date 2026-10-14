@@ -43,6 +43,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import { useAppRouter } from '../../context/RouterContext';
+import { getWsGatewayUrl } from '../../config/apiGateway';
 import { useLanguage } from '../../context/LanguageContext';
 import { BrandLogo } from '../../components/BrandLogo';
 import { supabase } from '../../lib/supabase';
@@ -97,12 +98,10 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
   onLogout,
   onGoToTerminal
 }) => {
-  const { user, logout } = useAuth();
+  const { user, isStaff, logout } = useAuth();
   const { navigate } = useAppRouter();
   const { language, setLanguage } = useLanguage();
   const isEn = language === 'en';
-  const userRole = (user?.role || '').toLowerCase();
-  const isStaff = userRole === 'admin' || userRole === 'superadmin' || userRole === 'soporte' || userRole === 'support';
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   // Control de colapso/despliegue (por defecto siempre replegada: 72px)
@@ -130,69 +129,7 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
     }
   }, []);
 
-  // Cuentas de demostración iniciales con fidelidad 1:1 a la captura de pantalla de referencia
-  const DEMO_SCREENSHOT_ACCOUNTS = useMemo<UserTradingAccount[]>(() => [
-    {
-      id: 'demo_solar_16079',
-      accountNumber: 'EKL-SOLAR-16079',
-      category: 'solar',
-      tierName: '$50,000 Solar',
-      initialBalance: 50000,
-      currentBalance: 50110.38,
-      equity: 50110.38,
-      peakEquity: 50110.38,
-      dailyStartEquity: 50000,
-      status: 'ACTIVE',
-      profitSplit: 80,
-      maxDailyDrawdownPct: 5,
-      maxTotalDrawdownPct: 10,
-      profitTargetPct: 8,
-      leverage: '1:100',
-      tradingDays: 3,
-      createdAt: new Date().toISOString(),
-      contractSigned: false
-    },
-    {
-      id: 'demo_solar_12643',
-      accountNumber: 'EKL-SOLAR-12643',
-      category: 'solar',
-      tierName: '$25,000 Solar',
-      initialBalance: 25000,
-      currentBalance: 25000.00,
-      equity: 25000.00,
-      peakEquity: 25000.00,
-      dailyStartEquity: 25000,
-      status: 'ACTIVE',
-      profitSplit: 80,
-      maxDailyDrawdownPct: 5,
-      maxTotalDrawdownPct: 10,
-      profitTargetPct: 8,
-      leverage: '1:100',
-      tradingDays: 1,
-      createdAt: new Date().toISOString(),
-      contractSigned: false
-    },
-    {
-      id: 'demo_solar_18081',
-      accountNumber: 'EKL-SOLAR-18081',
-      category: 'solar',
-      tierName: '$100,000 Solar',
-      initialBalance: 100000,
-      currentBalance: 100000.00,
-      equity: 100000.00,
-      peakEquity: 100000.00,
-      dailyStartEquity: 100000,
-      status: 'ACTIVE',
-      profitSplit: 80,
-      maxDailyDrawdownPct: 5,
-      maxTotalDrawdownPct: 10,
-      profitTargetPct: 8,
-      leverage: '1:100',
-      tradingDays: 0,
-      createdAt: new Date().toISOString(),
-      contractSigned: false
-    }
-  ], []);
+
 
   // Pestañas de navegación independientes interconectadas (Gobernadas por AppSidebar)
   const [activeTab, setActiveTab] = useState<DashboardNavTab>('accounts');
@@ -209,78 +146,17 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
   const [chartViewMode, setChartViewMode] = useState<'evolution' | 'drawdown'>('evolution');
   const accountsCacheKey = `eklipse_accounts_cache_${user?.email || user?.id || 'anon'}`;
 
-  // Zero-Egress Governance: Cargar instantáneamente de localStorage / sessionStorage o inicializar con demo
+  // Zero-Egress Governance: Cargar instantáneamente de localStorage / sessionStorage o inicializar vacío
   const [accounts, setAccounts] = useState<UserTradingAccount[]>(() => {
     try {
       const cached = localStorage.getItem(`eklipse_accounts_cache_${user?.email || user?.id || 'anon'}`)
         || sessionStorage.getItem(`eklipse_accounts_cache_${user?.email || user?.id || 'anon'}`);
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed?.data) && parsed.data.length > 0) return parsed.data;
+        if (Array.isArray(parsed?.data)) return parsed.data;
       }
     } catch (_) {}
-    return [
-      {
-        id: 'demo_solar_16079',
-        accountNumber: 'EKL-SOLAR-16079',
-        category: 'solar',
-        tierName: '$50,000 Solar',
-        initialBalance: 50000,
-        currentBalance: 50110.38,
-        equity: 50110.38,
-        peakEquity: 50110.38,
-        dailyStartEquity: 50000,
-        status: 'ACTIVE',
-        profitSplit: 80,
-        maxDailyDrawdownPct: 5,
-        maxTotalDrawdownPct: 10,
-        profitTargetPct: 8,
-        leverage: '1:100',
-        tradingDays: 3,
-        createdAt: new Date().toISOString(),
-        contractSigned: false
-      },
-      {
-        id: 'demo_solar_12643',
-        accountNumber: 'EKL-SOLAR-12643',
-        category: 'solar',
-        tierName: '$25,000 Solar',
-        initialBalance: 25000,
-        currentBalance: 25000.00,
-        equity: 25000.00,
-        peakEquity: 25000.00,
-        dailyStartEquity: 25000,
-        status: 'ACTIVE',
-        profitSplit: 80,
-        maxDailyDrawdownPct: 5,
-        maxTotalDrawdownPct: 10,
-        profitTargetPct: 8,
-        leverage: '1:100',
-        tradingDays: 1,
-        createdAt: new Date().toISOString(),
-        contractSigned: false
-      },
-      {
-        id: 'demo_solar_18081',
-        accountNumber: 'EKL-SOLAR-18081',
-        category: 'solar',
-        tierName: '$100,000 Solar',
-        initialBalance: 100000,
-        currentBalance: 100000.00,
-        equity: 100000.00,
-        peakEquity: 100000.00,
-        dailyStartEquity: 100000,
-        status: 'ACTIVE',
-        profitSplit: 80,
-        maxDailyDrawdownPct: 5,
-        maxTotalDrawdownPct: 10,
-        profitTargetPct: 8,
-        leverage: '1:100',
-        tradingDays: 0,
-        createdAt: new Date().toISOString(),
-        contractSigned: false
-      }
-    ];
+    return [];
   });
 
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(() => {
@@ -303,7 +179,7 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
         if (Array.isArray(parsed?.data) && parsed.data.length > 0) return parsed.data[0].id;
       }
     } catch (_) {}
-    return 'demo_solar_16079';
+    return null;
   });
 
   const [showNotificationToast, setShowNotificationToast] = useState(false);
@@ -321,12 +197,9 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
     );
   }, [accounts, searchQuery]);
 
-  // Total Capital calculado o formateado acorde a la referencia visual
+  // Total Capital calculado dinámicamente según las cuentas reales del trader
   const totalCapital = useMemo(() => {
-    if (accounts.length === 0) return 200000;
-    const sum = accounts.reduce((acc, a) => acc + (a.initialBalance || 0), 0);
-    if (sum === 175000) return 200000;
-    return sum;
+    return accounts.reduce((acc, a) => acc + (a.initialBalance || 0), 0);
   }, [accounts]);
 
   // Telemetría en tiempo real por WebSockets (0 polling HTTP)
@@ -466,14 +339,12 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
 
       if (loaded.length > 0) {
         setAccounts(loaded);
-        if (!selectedAccountId) {
+        if (!selectedAccountId || !loaded.some(a => a.id === selectedAccountId)) {
           setSelectedAccountId(loaded[0].id);
         }
       } else {
-        setAccounts(DEMO_SCREENSHOT_ACCOUNTS);
-        if (!selectedAccountId) {
-          setSelectedAccountId(DEMO_SCREENSHOT_ACCOUNTS[0].id);
-        }
+        setAccounts([]);
+        setSelectedAccountId(null);
       }
 
       // Zero-Egress Governance: Persistir en localStorage y sessionStorage (0ms en próximos montajes)
@@ -499,13 +370,9 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
     return accounts.find(a => a.id === selectedAccountId) || accounts[0] || null;
   }, [selectedAccountId, accounts]);
 
-  // Helper de URL WebSocket inteligente (soporta localhost o VPS wss)
+  // Helper de URL WebSocket inteligente (dev: localhost:8080, prod: wss://api.eklipsefunded.com/ws)
   const getWsUrl = useCallback(() => {
-    if (typeof window === 'undefined') return 'ws://localhost:8080';
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (isLocalhost) return 'ws://localhost:8080';
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${window.location.host}/ws-gateway`;
+    return getWsGatewayUrl();
   }, []);
 
   // Suscripción WebSocket continua y reactiva al Gateway de Trading (0 egress, live stream continuo)

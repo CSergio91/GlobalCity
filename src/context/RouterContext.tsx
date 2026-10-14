@@ -34,6 +34,7 @@ export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const path = window.location.pathname || '/';
     const sub = detectSubdomain();
     if ((sub === 'dashapp' || sub === 'dashboard') && path === '/') return '/dashboard';
+    if (path === '/dashapp' || path.startsWith('/dashapp/')) return '/dashboard';
     if (sub === 'nexus' && path === '/') return '/nexus';
     return path;
   });
@@ -43,6 +44,8 @@ export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const path = window.location.pathname || '/';
       const sub = detectSubdomain();
       if ((sub === 'dashapp' || sub === 'dashboard') && path === '/') {
+        setCurrentPath('/dashboard');
+      } else if (path === '/dashapp' || path.startsWith('/dashapp/')) {
         setCurrentPath('/dashboard');
       } else if (sub === 'nexus' && path === '/') {
         setCurrentPath('/nexus');
@@ -58,11 +61,28 @@ export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const navigate = (to: string) => {
     if (typeof window !== 'undefined') {
       const host = window.location.hostname.toLowerCase();
-      const isProductionMainDomain = host === 'eklipsefunded.com' || host === 'www.eklipsefunded.com';
+      const isProduction = host.endsWith('eklipsefunded.com');
 
-      if (isProductionMainDomain && (to === '/nexus' || to === '/crm')) {
-        window.location.href = `https://nexuscrm.eklipsefunded.com/`;
-        return;
+      if (isProduction) {
+        // Redirigir a nexuscrm.eklipsefunded.com si se navega a /nexus desde landing o dashapp
+        const isCrmTarget = to === '/nexus' || to === '/crm' || to === '/nexuscrm' || to.startsWith('/nexus') || to.startsWith('/crm') || to.startsWith('/nexuscrm');
+        if (isCrmTarget && !host.startsWith('nexuscrm.') && !host.startsWith('nexus.')) {
+          window.location.href = 'https://nexuscrm.eklipsefunded.com/';
+          return;
+        }
+
+        // Redirigir a dashapp.eklipsefunded.com si se navega a /dashboard desde landing o nexuscrm
+        const isDashboardTarget = to === '/dashboard' || to === '/dashapp' || to.startsWith('/dashboard') || to.startsWith('/dashapp');
+        if (isDashboardTarget && !host.startsWith('dashapp.') && !host.startsWith('dashboard.')) {
+          window.location.href = 'https://dashapp.eklipsefunded.com/';
+          return;
+        }
+
+        // Redirigir a la landing principal si se navega a / desde un subdominio
+        if (to === '/' && (host.startsWith('nexuscrm.') || host.startsWith('nexus.') || host.startsWith('dashapp.') || host.startsWith('dashboard.'))) {
+          window.location.href = 'https://eklipsefunded.com/';
+          return;
+        }
       }
     }
 

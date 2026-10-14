@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { apiFetch, getWsGatewayUrl } from '../../../config/apiGateway';
 
 export interface ZytiEngineTelemetry {
   wsStatus: 'ON' | 'OFF';
@@ -60,15 +61,9 @@ export function useZytiEngineTelemetry() {
   const wsRef = useRef<WebSocket | null>(null);
   const pingTimeRef = useRef<number>(0);
 
-  // Determinar URL de WebSocket local o túnel
+  // Determinar URL de WebSocket institucional (dev: localhost:8080, prod: wss://api.eklipsefunded.com/ws)
   const getWsUrl = useCallback(() => {
-    if (typeof window === 'undefined') return 'ws://localhost:8080';
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (isLocalhost) {
-      return 'ws://localhost:8080';
-    }
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${window.location.host}/ws-gateway`;
+    return getWsGatewayUrl();
   }, []);
 
   // 0. Sondeo continuo y robusto vía /health cada 3.5 segundos
@@ -76,10 +71,8 @@ export function useZytiEngineTelemetry() {
     let active = true;
     const fetchHealth = async () => {
       try {
-        const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-        const url = isLocalhost ? 'http://localhost:8080/health' : '/gateway-health';
         const start = performance.now();
-        const res = await fetch(url);
+        const res = await apiFetch('/health', undefined, 3000);
         const rtt = Math.max(1, Math.round(performance.now() - start));
         if (res.ok && active) {
           const data = await res.json();

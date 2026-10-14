@@ -13,6 +13,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { apiFetch } from '../../config/apiGateway';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAppRouter } from '../../context/RouterContext';
 
@@ -186,11 +187,8 @@ export const ResetPasswordPage: React.FC = () => {
 
       // 2. Fallback blindado de backend: Invocar /api/auth/reset-password-confirm
       if (!updateSucceeded) {
-        const backendUrl = (import.meta as any).env?.VITE_WS_GATEWAY_URL?.replace('ws://', 'http://').replace('wss://', 'https://') || 'http://localhost:8088';
-        
-        const response = await fetch(`${backendUrl}/api/auth/reset-password-confirm`, {
+        const response = await apiFetch('/api/auth/reset-password-confirm', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             accessToken: accessToken,
             newPassword: password,

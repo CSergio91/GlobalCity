@@ -15,6 +15,8 @@ import { CrmAccessDeniedScreen } from './components/CrmAccessDeniedScreen';
 import { CrmLang, crmTranslations } from './types/i18n';
 import { CrmModuleId, CrmStaffRole, CRM_ALLOWED_ROLES } from './types/crm.types';
 import { UserSession } from '../../lib/supabase';
+import { useAuth } from '../../context/AuthContext';
+import { isStaffRole } from '../../lib/roles';
 import { 
   Globe, 
   ChevronDown, 
@@ -36,18 +38,21 @@ import {
 } from 'lucide-react';
 
 interface InstitutionalCrmAppProps {
-  user?: UserSession | null;
+  user?: UserSession | any;
   initialLang?: CrmLang;
   onBackToTerminal?: () => void;
   onLogout?: () => void;
 }
 
 export const InstitutionalCrmApp: React.FC<InstitutionalCrmAppProps> = ({
-  user,
+  user: propUser,
   initialLang = 'es',
   onBackToTerminal,
   onLogout
 }) => {
+  const { user: authUser, logout: authLogout } = useAuth();
+  const user = propUser || authUser;
+  const handleLogout = onLogout || authLogout;
   const [lang, setLang] = useState<CrmLang>(() => {
     if (typeof window !== 'undefined') {
       const pathname = window.location.pathname.toLowerCase();
@@ -206,9 +211,9 @@ export const InstitutionalCrmApp: React.FC<InstitutionalCrmAppProps> = ({
     }
   };
 
-  // Rol del staff activo en el CRM (solo admin, soporte y marketing tienen acceso estricto)
-  const userRole = (user?.role || '').toLowerCase();
-  const isAuthorizedStaff = CRM_ALLOWED_ROLES.includes(userRole as any) || userRole === 'admin' || userRole === 'superadmin';
+  // Rol del staff activo en el CRM (admin, soporte y marketing tienen acceso estricto)
+  const userRole = (user?.role || '').trim().toLowerCase();
+  const isAuthorizedStaff = isStaffRole(userRole);
 
   const [currentStaffRole, setCurrentStaffRole] = useState<CrmStaffRole>(() => {
     if (isAuthorizedStaff && CRM_ALLOWED_ROLES.includes(userRole as any)) {
@@ -231,7 +236,7 @@ export const InstitutionalCrmApp: React.FC<InstitutionalCrmAppProps> = ({
     return (
       <CrmAccessDeniedScreen 
         onBackToDashboard={onBackToTerminal}
-        onLogout={onLogout}
+        onLogout={handleLogout}
       />
     );
   }

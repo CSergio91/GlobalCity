@@ -5,6 +5,8 @@
  * Ninguna clave privada (RESEND_API_KEY) se expone jamás en el frontend del cliente.
  */
 
+import { apiFetch } from '../config/apiGateway';
+
 export interface WelcomeEmailPayload {
   toEmail: string;
   traderName: string;
@@ -89,26 +91,12 @@ async function dispatchEmailEvent(type: string, data: Record<string, any>): Prom
     return { success: false, error: 'toEmail is required' };
   }
 
-  // 1. Intentar despacho mediante backend / tradingHub
+  // 1. Intentar despacho mediante backend institucional (api.eklipsefunded.com en prod, localhost:8080 en dev)
   try {
-    const backendUrl = 
-      (import.meta as any).env?.VITE_WS_GATEWAY_URL?.replace('ws://', 'http://').replace('wss://', 'https://') ||
-      (import.meta as any).env?.VITE_WS_URL?.replace('ws://', 'http://').replace('wss://', 'https://') ||
-      'http://localhost:8080';
-    const endpoint = `${backendUrl}/api/email/dispatch`;
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-    const response = await fetch(endpoint, {
+    const response = await apiFetch('/api/email/dispatch', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ type, data }),
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
+      body: JSON.stringify({ type, data })
+    }, 4000);
 
     if (response.ok) {
       const resData = await response.json();

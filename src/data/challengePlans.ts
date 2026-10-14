@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '../lib/supabase';
+import { apiFetch } from '../config/apiGateway';
 
 export type PlanCategory = 'solar' | 'lunar';
 export type PaymentMode = 'one-time' | 'monthly';
@@ -541,10 +542,49 @@ export function calculateDynamicPlanPricing(
 }
 
 /**
- * Fetch dynamic plans from Nexus CRM / Supabase risk_rule_configs or fallback to static contracts
+ * Fetch dynamic plans from Nexus CRM / Redis Hot-Cache / Supabase risk_rule_configs.
+ * Utilizes Local-First SWR (0ms instant render) + Redis Hot-Cache to prevent PostgreSQL saturation.
  */
-export async function getLiveChallengePlans(category: PlanCategory = 'solar'): Promise<ChallengePlan[]> {
+export async function getAllLiveChallengePlans(): Promise<ChallengePlan[]> {
+  // 1. Local-First Cache (0ms Instant Paint)
   try {
+    const cached = localStorage.getItem('eklipse_cached_challenge_plans');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Disparar revalidación en segundo plano sin bloquear
+        revalidatePlansInBackground();
+        return parsed;
+      }
+    }
+  } catch (_) {}
+
+  // 2. Fetch fresco desde Redis o DB
+  return await fetchFreshChallengePlans();
+}
+
+export async function getLiveChallengePlans(category: PlanCategory = 'solar'): Promise<ChallengePlan[]> {
+  const allPlans = await getAllLiveChallengePlans();
+  const filtered = allPlans.filter(p => p.category === category);
+  if (filtered.length > 0) return filtered;
+  return allPlans.length > 0 ? allPlans : (category === 'solar' ? SOLAR_CHALLENGE_PLANS : LUNAR_CHALLENGE_PLANS);
+}
+
+async function fetchFreshChallengePlans(): Promise<ChallengePlan[]> {
+  try {
+    // 1. Intentar endpoint acelerado con Redis Clúster / Hot-Cache (<1ms)
+    try {
+      const res = await apiFetch('/api/challenges/plans', {}, 3500);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.plans && Array.isArray(json.plans) && json.plans.length > 0) {
+          localStorage.setItem('eklipse_cached_challenge_plans', JSON.stringify(json.plans));
+          return json.plans;
+        }
+      }
+    } catch (_) {}
+
+    // 2. Fallback a Supabase Directo
     const { data, error } = await supabase
       .from('risk_rule_configs')
       .select('*')
@@ -555,39 +595,44 @@ export async function getLiveChallengePlans(category: PlanCategory = 'solar'): P
       const dynamicPlans: ChallengePlan[] = data.map((rule: any) => {
         const capital = Number(rule.default_account_balance || 100000);
         const name = rule.name || `Challenge $${capital.toLocaleString()}`;
-        const isLunar = name.toLowerCase().includes('lunar') || (rule.model_type === 'INSTANT_FUNDING');
+        const isLunar = rule.category === 'lunar' || name.toLowerCase().includes('lunar') || (rule.model_type === 'INSTANT_FUNDING');
         const planCategory: PlanCategory = isLunar ? 'lunar' : 'solar';
         
-        // Fair prop firm pricing based on capital
-        const basePrice = capital <= 1000 ? 19 :
-                          capital <= 5000 ? 49 :
-                          capital <= 10000 ? 89 :
-                          capital <= 25000 ? 149 :
-                          capital <= 50000 ? 249 :
-                          capital <= 100000 ? 449 :
-                          capital <= 200000 ? 849 : 1499;
+        // Precios ingresados manualmente desde Nexus CRM
+        const oneTime = Number(rule.one_time_price_usdt) > 0 ? Number(rule.one_time_price_usdt) : (
+          capital <= 1000 ? 19 :
+          capital <= 5000 ? 49 :
+          capital <= 10000 ? 89 :
+          capital <= 25000 ? 149 :
+          capital <= 50000 ? 249 :
+          capital <= 100000 ? 449 :
+          capital <= 200000 ? 849 : 1499
+        );
+        const monthly = Number(rule.monthly_price_usdt) > 0 ? Number(rule.monthly_price_usdt) : Math.round(oneTime * 0.35);
 
-        const sizeLabel = capital >= 1000000 ? `${capital / 1000000}M` : `${capital / 1000}K`;
+        const sizeLabel = capital >= 1000000 
+          ? `${(capital / 1000000).toFixed(capital % 1000000 === 0 ? 0 : 1)}M` 
+          : `${(capital / 1000).toFixed(capital % 1000 === 0 ? 0 : 1)}K`;
 
         return {
           id: rule.id,
           category: planCategory,
           astronomicalName: {
-            en: name,
-            es: name
+            en: rule.astronomical_name_en || name,
+            es: rule.astronomical_name_es || name
           },
           sizeLabel,
           capital,
           capitalFormatted: `$${capital.toLocaleString()}`,
-          oneTimePriceUSDT: basePrice,
-          monthlyPriceUSDT: Math.round(basePrice * 0.35),
+          oneTimePriceUSDT: oneTime,
+          monthlyPriceUSDT: monthly,
           baseProfitSplit: Number(rule.profit_split_percent || 80),
           baseMaxDrawdownPct: Number(rule.max_total_drawdown_percent || 10),
           baseDailyLossPct: Number(rule.max_daily_loss_percent || 5),
           baseLeverage: `1:${rule.max_leverage || 100}`,
           boostedLeverage: `1:${Math.round((rule.max_leverage || 100) * 1.5)}`,
           payoutSpeed: '14 Días',
-          popular: capital === 100000 || capital === 50000,
+          popular: !!rule.is_popular,
           marketSpecialty: {
             en: isLunar ? 'Meme Titans & High Volatility DMA' : 'Crypto DMA & Institutional Liquidity',
             es: isLunar ? 'Titanes Meme y Volatilidad Extrema DMA' : 'Crypto DMA y Liquidez Institucional'
@@ -615,16 +660,20 @@ export async function getLiveChallengePlans(category: PlanCategory = 'solar'): P
         };
       });
 
-      const filtered = dynamicPlans.filter(p => p.category === category);
-      if (filtered.length > 0) {
-        return filtered;
-      }
+      localStorage.setItem('eklipse_cached_challenge_plans', JSON.stringify(dynamicPlans));
       return dynamicPlans;
     }
   } catch (err) {
-    console.warn('[ChallengePlans] Error loading from Supabase:', err);
+    console.warn('[ChallengePlans] Error loading from backend/Supabase:', err);
   }
 
-  // Fallback to static presets
-  return category === 'solar' ? SOLAR_CHALLENGE_PLANS : LUNAR_CHALLENGE_PLANS;
+  // Fallback to static presets only if nothing is in DB
+  const defaultList = [...SOLAR_CHALLENGE_PLANS, ...LUNAR_CHALLENGE_PLANS];
+  return defaultList;
+}
+
+function revalidatePlansInBackground() {
+  setTimeout(() => {
+    fetchFreshChallengePlans().catch(() => {});
+  }, 1000);
 }

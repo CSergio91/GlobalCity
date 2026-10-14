@@ -45,6 +45,7 @@ import {
   ShieldX
 } from 'lucide-react';
 import { zytiTradingClient } from '../../../core/trading/gateway/TradingWebSocketClient';
+import { apiFetch } from '../../../config/apiGateway';
 
 interface ChallengesManagementViewProps {
   rules: RiskRuleConfigEntity[];
@@ -135,6 +136,10 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
 
   // 3. Campos del Formulario de la Regla en Edición
   const [name, setName] = useState('');
+  const [category, setCategory] = useState<'solar' | 'lunar'>('solar');
+  const [oneTimePriceUsdt, setOneTimePriceUsdt] = useState<number>(149);
+  const [monthlyPriceUsdt, setMonthlyPriceUsdt] = useState<number>(79);
+  const [isPopular, setIsPopular] = useState<boolean>(false);
   const [modelType, setModelType] = useState<ChallengeModelType>('ONE_PHASE');
   const [defaultAccountBalance, setDefaultAccountBalance] = useState(100000);
   const [isDefaultDemo, setIsDefaultDemo] = useState(false);
@@ -177,6 +182,10 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
   useEffect(() => {
     if (selectedRule) {
       setName(selectedRule.name);
+      setCategory(selectedRule.category || (selectedRule.name.toLowerCase().includes('lunar') ? 'lunar' : 'solar'));
+      setOneTimePriceUsdt(Number(selectedRule.one_time_price_usdt !== undefined ? selectedRule.one_time_price_usdt : 149));
+      setMonthlyPriceUsdt(Number(selectedRule.monthly_price_usdt !== undefined ? selectedRule.monthly_price_usdt : 79));
+      setIsPopular(!!selectedRule.is_popular);
       setModelType(selectedRule.model_type || 'ONE_PHASE');
       setDefaultAccountBalance(Number(selectedRule.default_account_balance || 100000));
       setIsDefaultDemo(!!selectedRule.is_default_demo);
@@ -913,44 +922,24 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
     let serverRes: any = null;
     let latency = 0;
 
-    // 1. Intentar llamar al Servidor HTTP /api/risk/test-rule
+    // 1. Llamar al Gateway HTTP /api/risk/test-rule (Producción: api.eklipsefunded.com / Dev: localhost:8080)
     try {
-      const res = await fetch('/api/risk/test-rule', {
+      const res = await apiFetch('/api/risk/test-rule', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ruleType,
           ruleConfig,
           accountState,
           testPayload: customPayload
         })
-      });
+      }, 4000);
       if (res.ok) {
         const data = await res.json();
         serverRes = data.result;
         latency = data.serverLatencyMs ?? parseFloat((performance.now() - startTime).toFixed(2));
         setServerConnectionStatus('ONLINE_DAEMON');
       }
-    } catch (_) {
-      try {
-        const res = await fetch('http://localhost:8080/api/risk/test-rule', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ruleType,
-            ruleConfig,
-            accountState,
-            testPayload: customPayload
-          })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          serverRes = data.result;
-          latency = data.serverLatencyMs ?? parseFloat((performance.now() - startTime).toFixed(2));
-          setServerConnectionStatus('ONLINE_DAEMON');
-        }
-      } catch (_) {}
-    }
+    } catch (_) {}
 
     // 2. Si no hubo respuesta HTTP, usar evaluación en cliente
     if (!serverRes) {
@@ -1009,10 +998,14 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
     setIsSaving(true);
     try {
       const payload: Partial<RiskRuleConfigEntity> = {
-        id: selectedRule?.id,
+        id: selectedRule?.id || undefined,
         name,
+        category,
+        one_time_price_usdt: Number(oneTimePriceUsdt) || 0,
+        monthly_price_usdt: Number(monthlyPriceUsdt) || 0,
+        is_popular: isPopular,
         model_type: modelType,
-        default_account_balance: defaultAccountBalance,
+        default_account_balance: Number(defaultAccountBalance) || 100000,
         is_default_demo: isDefaultDemo,
         drawdown_type: drawdownType,
         max_daily_loss_percent: maxDailyLossPercent,
@@ -1050,9 +1043,13 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
   const handleCreateNewPreset = () => {
     const newRule: RiskRuleConfigEntity = {
       id: '',
-      name: isEs ? 'Nuevo Challenge 100K (1 Fase)' : 'New 100K Challenge (1 Phase)',
+      name: isEs ? 'Nuevo Reto Solar 50K' : 'New Solar 50K Challenge',
+      category: 'solar',
+      one_time_price_usdt: 149,
+      monthly_price_usdt: 79,
+      is_popular: false,
       model_type: 'ONE_PHASE',
-      default_account_balance: 100000,
+      default_account_balance: 50000,
       is_default_demo: false,
       is_active: true,
       drawdown_type: 'EOD',
@@ -1076,6 +1073,12 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
       min_trade_duration_seconds: 10
     };
     setSelectedRule(newRule);
+    setName(newRule.name);
+    setCategory('solar');
+    setOneTimePriceUsdt(149);
+    setMonthlyPriceUsdt(79);
+    setIsPopular(false);
+    setDefaultAccountBalance(50000);
     setActiveTab('rules');
   };
 
@@ -1257,8 +1260,27 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                       <h4 className="font-extrabold text-sm text-[#0F172A] leading-tight">
                         {rule.name}
                       </h4>
-                      <div className="text-base font-black font-mono text-slate-900 mt-0.5">
-                        ${bal.toLocaleString()}
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                        <span className="text-base font-black font-mono text-slate-900">
+                          ${bal.toLocaleString()}
+                        </span>
+                        <span className={`text-[9.5px] font-black px-1.5 py-0.5 rounded-md ${
+                          rule.category === 'lunar'
+                            ? 'bg-purple-100 text-purple-900 border border-purple-200'
+                            : 'bg-amber-100 text-amber-900 border border-amber-200'
+                        }`}>
+                          {rule.category === 'lunar' ? '🌙 Lunar' : '☀️ Solar'}
+                        </span>
+                        {rule.one_time_price_usdt !== undefined && Number(rule.one_time_price_usdt) > 0 && (
+                          <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200">
+                            ${rule.one_time_price_usdt} USDT
+                          </span>
+                        )}
+                        {rule.is_popular && (
+                          <span className="text-[9px] font-black bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded-md">
+                            Popular
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -1462,31 +1484,113 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
+                      placeholder={isEs ? 'Ej: Solar Eclipse 50K' : 'e.g. Solar Eclipse 50K'}
                       className="w-full px-3 py-2 text-xs bg-[#fbf9f5] border border-slate-300 rounded-xl font-bold text-slate-900 focus:outline-hidden focus:border-amber-500"
                     />
                   </div>
 
                   <div>
                     <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                      {isEs ? 'Balance por Defecto ($ USD)' : 'Default Balance ($ USD)'}
+                      {isEs ? 'Estilo / Categoría del Reto' : 'Challenge Category / Style'}
+                    </label>
+                    <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-[#fbf9f5] border border-slate-300">
+                      <button
+                        type="button"
+                        onClick={() => setCategory('solar')}
+                        className={`py-1 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                          category === 'solar'
+                            ? 'bg-amber-400 text-slate-950 shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <span>☀️ Solar (DMA)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCategory('lunar')}
+                        className={`py-1 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                          category === 'lunar'
+                            ? 'bg-purple-600 text-white shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <span>🌙 Lunar (Meme)</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-600 block mb-1 flex items-center justify-between">
+                      <span>{isEs ? 'Tamaño de Cuenta ($ USD) [Manual]' : 'Account Balance ($ USD) [Manual]'}</span>
+                      <span className="text-[10px] text-amber-600 font-mono font-bold">
+                        ${Number(defaultAccountBalance || 0).toLocaleString()}
+                      </span>
                     </label>
                     <input
                       type="number"
+                      step="1000"
                       value={defaultAccountBalance}
                       onChange={(e) => setDefaultAccountBalance(Number(e.target.value))}
+                      placeholder="Ej: 50000"
                       className="w-full px-3 py-2 text-xs font-mono font-bold bg-[#fbf9f5] border border-slate-300 rounded-xl text-slate-900 focus:outline-hidden focus:border-amber-500"
                     />
                   </div>
+                </div>
 
-                  <div className="flex items-center justify-between sm:justify-center p-2 rounded-xl bg-slate-50 border border-slate-200 mt-auto">
-                    <label className="text-[11px] font-bold text-slate-700 cursor-pointer flex items-center gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                      {isEs ? 'Precio Pago Único ($ USDT)' : 'One-Time Price ($ USDT)'}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="1"
+                        value={oneTimePriceUsdt}
+                        onChange={(e) => setOneTimePriceUsdt(Number(e.target.value))}
+                        placeholder="Ej: 149"
+                        className="w-full px-3 py-2 text-xs font-mono font-bold bg-[#fbf9f5] border border-slate-300 rounded-xl text-emerald-700 focus:outline-hidden focus:border-emerald-500"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">USDT</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                      {isEs ? 'Precio Suscripción Mensual ($ USDT)' : 'Monthly Price ($ USDT)'}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="1"
+                        value={monthlyPriceUsdt}
+                        onChange={(e) => setMonthlyPriceUsdt(Number(e.target.value))}
+                        placeholder="Ej: 79"
+                        className="w-full px-3 py-2 text-xs font-mono font-bold bg-[#fbf9f5] border border-slate-300 rounded-xl text-emerald-700 focus:outline-hidden focus:border-emerald-500"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">USDT/mes</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center gap-3 p-2 rounded-xl bg-slate-50 border border-slate-200 mt-auto">
+                    <label className="text-[11px] font-bold text-slate-700 cursor-pointer flex items-center gap-1.5 flex-1">
+                      <input
+                        type="checkbox"
+                        checked={isPopular}
+                        onChange={(e) => setIsPopular(e.target.checked)}
+                        className="rounded-sm text-amber-600 focus:ring-amber-500 w-3.5 h-3.5"
+                      />
+                      <span>{isEs ? 'Badge "Popular"' : '"Popular" Badge'}</span>
+                    </label>
+
+                    <label className="text-[11px] font-bold text-slate-700 cursor-pointer flex items-center gap-1.5 flex-1">
                       <input
                         type="checkbox"
                         checked={isDefaultDemo}
                         onChange={(e) => setIsDefaultDemo(e.target.checked)}
-                        className="rounded-sm text-amber-600 focus:ring-amber-500 w-4 h-4"
+                        className="rounded-sm text-amber-600 focus:ring-amber-500 w-3.5 h-3.5"
                       />
-                      <span>{isEs ? 'Plantilla Demo por Defecto' : 'Default Demo Template'}</span>
+                      <span>{isEs ? 'Plantilla Demo' : 'Default Demo'}</span>
                     </label>
                   </div>
                 </div>

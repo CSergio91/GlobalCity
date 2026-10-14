@@ -2,10 +2,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, TelegramUserPayload } from '../types/auth';
 import { authService } from '../services/authService';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { isStaffRole, isAdminRole } from '../lib/roles';
 
 interface AuthContextType {
   user: UserProfile | null;
   isAuthenticated: boolean;
+  isStaff: boolean;
+  isAdmin: boolean;
   loginWithEmail: (email: string, password: string) => Promise<boolean>;
   signUpWithEmail: (
     email: string,
@@ -30,7 +33,6 @@ interface AuthContextType {
   loginWithTelegram: (payload: TelegramUserPayload) => void;
   loginWithCustomTelegram: (username: string, telegramId?: string) => void;
   syncWithTelegram: () => Promise<UserProfile | null>;
-  loginAsDemo: () => void;
   logout: () => void;
 }
 
@@ -108,11 +110,8 @@ export const checkUserHasPurchasedAccount = async (email?: string, userId?: stri
   if (!email) return false;
   const cleanEmail = email.trim().toLowerCase();
 
-  // Si el usuario tiene rol de staff, admin o trader institucional demo, acceso garantizado
-  if (role && ['admin', 'superadmin', 'soporte', 'support', 'marketing', 'compliance', 'institutional_trader'].includes(role.toLowerCase())) {
-    return true;
-  }
-  if (cleanEmail === 'trader@eklipsefunded.com' || cleanEmail === 'demo@eklipsefunded.com') {
+  // Si el usuario tiene rol de staff o administración, acceso garantizado
+  if (isStaffRole(role)) {
     return true;
   }
 
@@ -216,6 +215,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(() => {
     try {
+      if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('eklipse_logged_out') === 'true') {
+        return null;
+      }
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) return JSON.parse(stored);
       // SSO fallback con cookie de dominio raíz *.eklipsefunded.com
@@ -227,20 +229,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return parsed;
         }
       }
-      // Sesión de Trader Institucional activa por defecto para acceso instantáneo
-      const defaultTrader: UserProfile = {
-        id: 'eklipse_trader_demo',
-        username: '@pepe_trader',
-        firstName: 'Trader',
-        lastName: 'Eklipse',
-        email: 'trader@eklipsefunded.com',
-        authProvider: 'demo',
-        role: 'institutional_trader',
-        createdAt: new Date().toISOString(),
-        twoFactorEnabled: true,
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultTrader));
-      return defaultTrader;
+      return null;
     } catch {
       return null;
     }
@@ -301,7 +290,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const mapped = mapSupabaseUserToProfile(session.user, role);
         setUser(mapped);
       } else if (event === 'SIGNED_OUT') {
-        setUser((prev) => (prev?.authProvider === 'telegram' || prev?.authProvider === 'demo') ? prev : null);
+        setUser((prev) => (prev?.authProvider === 'telegram') ? prev : null);
       }
     });
 
@@ -331,7 +320,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       photoUrl: payload.photo_url,
       authProvider: 'telegram',
       telegramId: payload.id,
-      role: 'institutional_trader',
+      role: 'trader',
       createdAt: new Date().toISOString(),
       twoFactorEnabled: true,
     };
@@ -347,7 +336,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       firstName: cleanHandle.replace('@', ''),
       authProvider: 'telegram',
       telegramId: cleanId,
-      role: 'institutional_trader',
+      role: 'trader',
       createdAt: new Date().toISOString(),
       twoFactorEnabled: true,
     };
@@ -396,6 +385,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('No se encontró ninguna cuenta de fondeo vinculada a este correo. Por favor adquiere un reto de evaluación institucional.');
     }
 
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('eklipse_logged_out');
+    }
     const mapped = mapSupabaseUserToProfile(signInData.user, role);
     setUser(mapped);
     return true;
@@ -504,6 +496,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn('[AuthContext] Error sincronizando perfil en public.profiles:', upsertErr);
     }
 
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('eklipse_logged_out');
+    }
+
     if (signUpData?.user) {
       const mapped = mapSupabaseUserToProfile(signUpData.user);
       setUser(mapped);
@@ -515,7 +511,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithGoogle = async (): Promise<boolean> => {
     if (isSupabaseConfigured) {
       try {
-        const redirectOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3100';
+        const redirectOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://eklipsefunded.com';
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
@@ -568,6 +564,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (done) return;
               done = true;
               cleanup();
+
+              if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.removeItem('eklipse_logged_out');
+              }
 
               if (sbUser) {
                 const mapped = mapSupabaseUserToProfile(sbUser);
@@ -699,26 +699,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return false;
   };
 
-  const loginAsDemo = () => {
-    const demoUser: UserProfile = {
-      id: '123456',
-      username: '@trader_pro_demo',
-      firstName: 'Trader Pro',
-      lastName: '',
-      email: 'demo@eklipsefunded.com',
-      authProvider: 'demo',
-      telegramId: '123456',
-      role: 'institutional_trader',
-      createdAt: new Date().toISOString(),
-      twoFactorEnabled: true,
-    };
-    setUser(demoUser);
-  };
-
   const syncWithTelegram = async (): Promise<UserProfile | null> => {
     try {
       const detected = await authService.getLatestTelegramAuthUser();
       if (detected) {
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.removeItem('eklipse_logged_out');
+        }
         const newUser: UserProfile = {
           id: `tg_${detected.id}`,
           username: detected.username ? `@${detected.username.replace('@', '')}` : `@tg_${detected.id}`,
@@ -727,7 +714,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           photoUrl: detected.photo_url,
           authProvider: 'telegram',
           telegramId: detected.id,
-          role: 'institutional_trader',
+          role: 'trader',
           createdAt: new Date().toISOString(),
           twoFactorEnabled: true,
         };
@@ -742,6 +729,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('eklipse_logged_out', 'true');
+    }
     if (isSupabaseConfigured) {
       try {
         await supabase.auth.signOut();
@@ -750,18 +740,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
+  const isStaff = isStaffRole(user?.role);
+  const isAdmin = isAdminRole(user?.role);
+
   return (
     <AuthContext.Provider
       value={{
         user,
         isAuthenticated: !!user,
+        isStaff,
+        isAdmin,
         loginWithEmail,
         signUpWithEmail,
         loginWithGoogle,
         loginWithTelegram,
         loginWithCustomTelegram,
         syncWithTelegram,
-        loginAsDemo,
         logout,
       }}
     >

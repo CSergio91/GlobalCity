@@ -20,24 +20,31 @@ import { ResetPasswordPage } from './components/auth/ResetPasswordPage';
 import { TraderDashboardApp } from './modules/dashboard/TraderDashboardApp';
 import { InstitutionalCrmApp } from './modules/crm/InstitutionalCrmApp';
 import { CrmAccessDeniedScreen } from './modules/crm/components/CrmAccessDeniedScreen';
-import { CRM_ALLOWED_ROLES } from './modules/crm/types/crm.types';
 import { NotFoundPage } from './components/NotFoundPage';
 
 function MainAppContent() {
   const { currentPath, subdomain, navigate } = useAppRouter();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isStaff, logout } = useAuth();
 
+  const normalizedPath = currentPath.replace(/^\/(es|en)/, '');
   const isCrmRoute = 
-    currentPath === '/nexus' || 
-    currentPath === '/crm' || 
-    currentPath === '/nexuscrm' || 
-    currentPath.startsWith('/nexus') || 
-    currentPath.startsWith('/crm') || 
-    currentPath.startsWith('/nexuscrm') || 
+    normalizedPath === '/nexus' || 
+    normalizedPath === '/crm' || 
+    normalizedPath === '/nexuscrm' || 
+    normalizedPath.startsWith('/nexus') || 
+    normalizedPath.startsWith('/crm') || 
+    normalizedPath.startsWith('/nexuscrm') || 
     subdomain === 'nexus';
-  const isDashboardRoute = currentPath === '/dashboard' || subdomain === 'dashboard' || subdomain === 'dashapp';
+  const isDashboardRoute = 
+    normalizedPath === '/dashboard' || 
+    normalizedPath === '/dashapp' || 
+    normalizedPath.startsWith('/dashboard') || 
+    normalizedPath.startsWith('/dashapp') || 
+    normalizedPath.startsWith('/trader') ||
+    subdomain === 'dashboard' || 
+    subdomain === 'dashapp';
   const isLoginRoute = currentPath === '/login' || currentPath.startsWith('/login?') || currentPath.startsWith('/login/');
   const isResetPasswordRoute = 
     currentPath === '/reset-password' || 
@@ -101,8 +108,8 @@ function MainAppContent() {
       email: (user as any).email || `${user.username || 'trader'}@eklipsefunded.com`,
       name: user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.username,
       avatarUrl: user.photoUrl,
-      isDemo: user.authProvider === 'demo',
-      provider: (user.authProvider as any) || 'demo',
+      isDemo: false,
+      provider: (user.authProvider as any) || 'email',
       role: 'trader',
       isVerified: true
     } : null;
@@ -130,9 +137,6 @@ function MainAppContent() {
       return <LoginPage />;
     }
 
-    const userRole = (user?.role || '').toLowerCase();
-    const isStaff = CRM_ALLOWED_ROLES.includes(userRole as any) || userRole === 'admin' || userRole === 'superadmin';
-
     if (!isStaff) {
       return (
         <CrmAccessDeniedScreen 
@@ -153,6 +157,7 @@ function MainAppContent() {
 
     return (
       <InstitutionalCrmApp 
+        user={user as any}
         onBackToTerminal={() => {
           if (subdomain === 'nexus') {
             window.location.href = 'https://dashapp.eklipsefunded.com';

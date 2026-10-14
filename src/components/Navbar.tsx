@@ -27,7 +27,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
   const [activeSection, setActiveSection] = useState<string>("hero");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { language, setLanguage } = useLanguage();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const { navigate } = useAppRouter();
 
   // Detect active connection / authentication in localStorage
@@ -130,26 +130,51 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
             <CandlestickLanguageSelector compactMobile />
           </div>
 
-          {/* Minimal Login Text Button (Hidden on small mobile, accessible in drawer) */}
-          <button
-            onClick={handleLoginClick}
-            className="hidden sm:block text-sm font-medium text-slate-300 hover:text-white transition-colors px-3 py-1.5 cursor-pointer"
-          >
-            {hasConnection || isAuthenticated ? "Dashboard" : "Login"}
-          </button>
+          {/* Action Buttons: Authenticated vs Guest */}
+          {isAuthenticated ? (
+            <>
+              {/* Minimal Logout Text Button */}
+              <button
+                onClick={() => logout()}
+                className="hidden sm:block text-xs font-mono text-slate-400 hover:text-rose-400 transition-colors px-2.5 py-1.5 cursor-pointer"
+                title={language === 'en' ? "Logout" : "Cerrar sesión"}
+              >
+                {language === 'en' ? "Logout" : "Salir"}
+              </button>
 
-          {/* Pill "Get Funded" Button */}
-          <button
-            onClick={() => {
-              try {
-                sessionStorage.setItem('eklipse_auth_mode', 'register');
-              } catch {}
-              navigate('/login?mode=register');
-            }}
-            className="px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-full text-[11px] sm:text-sm font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] hover:brightness-110 shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all active:scale-95 cursor-pointer hover:scale-105 whitespace-nowrap"
-          >
-            {language === 'en' ? 'Get Funded' : 'Obtener Fondeo'}
-          </button>
+              {/* Pill "My Portal" / "Mi Dashboard" Button */}
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="px-3.5 sm:px-6 py-1.5 sm:py-2.5 rounded-full text-[11px] sm:text-sm font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] hover:brightness-110 shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all active:scale-95 cursor-pointer hover:scale-105 whitespace-nowrap flex items-center gap-1.5"
+              >
+                <span>{language === 'en' ? 'My Portal' : 'Mi Dashboard'}</span>
+                <ArrowRight className="w-3.5 h-3.5 text-white/90" />
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Minimal Login Text Button */}
+              <button
+                onClick={() => navigate('/login')}
+                className="hidden sm:block text-sm font-medium text-slate-300 hover:text-white transition-colors px-3 py-1.5 cursor-pointer"
+              >
+                Login
+              </button>
+
+              {/* Pill "Get Funded" Button */}
+              <button
+                onClick={() => {
+                  try {
+                    sessionStorage.setItem('eklipse_auth_mode', 'register');
+                  } catch {}
+                  navigate('/login?mode=register');
+                }}
+                className="px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-full text-[11px] sm:text-sm font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] hover:brightness-110 shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all active:scale-95 cursor-pointer hover:scale-105 whitespace-nowrap"
+              >
+                {language === 'en' ? 'Get Funded' : 'Obtener Fondeo'}
+              </button>
+            </>
+          )}
 
           {/* Hamburger Toggle Button (Mobile phones < 768px) */}
           <button
@@ -210,11 +235,29 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
           {/* Mobile Footer CTAs */}
           <div className="pt-2 border-t border-white/10 flex flex-col gap-2">
             <button
-              onClick={handleLoginClick}
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                if (isAuthenticated) {
+                  navigate('/dashboard');
+                } else {
+                  navigate('/login');
+                }
+              }}
               className="w-full py-2.5 px-4 text-xs font-semibold tracking-wider text-white bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] hover:brightness-110 rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95"
             >
-              <span>{hasConnection ? 'Dashboard' : 'Login'}</span>
+              <span>{isAuthenticated ? (language === 'en' ? 'My Portal' : 'Mi Dashboard') : 'Login'}</span>
             </button>
+            {isAuthenticated && (
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  logout();
+                }}
+                className="w-full py-2 text-xs font-mono text-slate-400 hover:text-rose-400 text-center cursor-pointer transition-colors"
+              >
+                {language === 'en' ? 'Logout' : 'Cerrar sesión'}
+              </button>
+            )}
           </div>
         </div>
       )}

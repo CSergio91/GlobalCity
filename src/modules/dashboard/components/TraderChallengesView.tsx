@@ -24,7 +24,8 @@ import {
   SOLAR_CHALLENGE_PLANS, 
   LUNAR_CHALLENGE_PLANS,
   AVAILABLE_ADDONS,
-  calculateDynamicPlanPricing 
+  calculateDynamicPlanPricing,
+  getLiveChallengePlans
 } from '../../../data/challengePlans';
 
 interface TraderChallengesViewProps {
@@ -41,9 +42,29 @@ export const TraderChallengesView: React.FC<TraderChallengesViewProps> = ({
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('one-time');
   const [selectedPlanId, setSelectedPlanId] = useState<string>('solar-50k');
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
+  const [plans, setPlans] = useState<ChallengePlan[]>(() => {
+    try {
+      const cached = localStorage.getItem('eklipse_cached_challenge_plans');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const catPlans = parsed.filter(p => p.category === 'solar');
+          if (catPlans.length > 0) return catPlans;
+        }
+      }
+    } catch (_) {}
+    return SOLAR_CHALLENGE_PLANS;
+  });
 
-  const plans = useMemo(() => {
-    return category === 'solar' ? SOLAR_CHALLENGE_PLANS : LUNAR_CHALLENGE_PLANS;
+  React.useEffect(() => {
+    getLiveChallengePlans(category).then((live) => {
+      if (live && live.length > 0) {
+        setPlans(live);
+        if (!live.some(p => p.id === selectedPlanId)) {
+          setSelectedPlanId(live[0].id);
+        }
+      }
+    });
   }, [category]);
 
   const activePlan = useMemo(() => {
@@ -62,7 +83,12 @@ export const TraderChallengesView: React.FC<TraderChallengesViewProps> = ({
 
   const handleCategoryChange = (newCat: PlanCategory) => {
     setCategory(newCat);
-    setSelectedPlanId(newCat === 'solar' ? 'solar-50k' : 'lunar-50k');
+    getLiveChallengePlans(newCat).then((live) => {
+      if (live && live.length > 0) {
+        setPlans(live);
+        setSelectedPlanId(live[0].id);
+      }
+    });
   };
 
   const handleProceedToCheckout = () => {

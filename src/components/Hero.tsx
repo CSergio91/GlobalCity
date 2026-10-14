@@ -81,15 +81,6 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
     }
   };
 
-  const handleViewPlans = () => {
-    if (onNavigateToPlans) {
-      onNavigateToPlans();
-    } else {
-      const el = document.getElementById('programs');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-      else navigate('/login');
-    }
-  };
 
   return (
     <section 
@@ -131,8 +122,8 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
               : 'Eklipse Funded te da capital real, reglas claras y las mejores condiciones para operar sin límites.'}
           </p>
 
-          {/* Action Buttons */}
-          <div className="pt-1 sm:pt-2 flex flex-wrap items-center gap-3 sm:gap-5">
+          {/* Action Button */}
+          <div className="pt-1 sm:pt-2 flex items-center">
             {/* Primary Pill Button */}
             <button
               onClick={handleGetFunded}
@@ -140,14 +131,6 @@ export const Hero: React.FC<HeroProps> = ({ onNavigateToPlans }) => {
             >
               <span>{isEn ? 'Get Funded' : 'Obtener Fondeo'}</span>
               <ArrowRight className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-white group-hover:translate-x-1 transition-transform" />
-            </button>
-
-            {/* Secondary Glass Pill Button */}
-            <button
-              onClick={handleViewPlans}
-              className="px-5 sm:px-8 py-2.5 sm:py-3.5 rounded-full text-xs sm:text-base font-medium text-white/95 bg-white/[0.04] hover:bg-white/[0.09] border border-white/20 hover:border-white/40 backdrop-blur-md shadow-lg transition-all duration-200 cursor-pointer hover:scale-[1.03] active:scale-95"
-            >
-              <span>{isEn ? 'View Plans' : 'Ver Planes'}</span>
             </button>
           </div>
 

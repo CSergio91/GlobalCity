@@ -50,6 +50,13 @@ export interface RiskRuleConfigEntity {
   id: string;
   firm_id?: string | null;
   name: string;
+  category?: 'solar' | 'lunar';
+  one_time_price_usdt?: number;
+  monthly_price_usdt?: number;
+  astronomical_name_en?: string;
+  astronomical_name_es?: string;
+  is_popular?: boolean;
+  display_order?: number;
   model_type?: ChallengeModelType;
   default_account_balance?: number;
   is_default_demo?: boolean;

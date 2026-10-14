@@ -1,5 +1,6 @@
 import { UserProfile, TelegramUserPayload } from '../types/auth';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { apiFetch } from '../config/apiGateway';
 
 export interface AuthResult {
   success: boolean;
@@ -62,9 +63,9 @@ export const authService = {
       };
     }
 
-    // 2. Consultar al endpoint backend seguro de Vite / Control Plane si está activo
+    // 2. Consultar al endpoint backend seguro institucional
     try {
-      const res = await fetch('/api/auth/telegram-latest');
+      const res = await apiFetch('/api/auth/telegram-latest');
       if (res.ok) {
         const json = await res.json();
         if (json.authenticated && json.user) {
@@ -85,7 +86,7 @@ export const authService = {
     if (!authNonce) return null;
 
     try {
-      const res = await fetch(`/api/auth/telegram-status?nonce=${encodeURIComponent(authNonce)}`);
+      const res = await apiFetch(`/api/auth/telegram-status?nonce=${encodeURIComponent(authNonce)}`);
       const contentType = res.headers.get('content-type') || '';
       if (res.ok && contentType.includes('application/json')) {
         const json = await res.json();
@@ -122,7 +123,7 @@ export const authService = {
         photoUrl: payload.photo_url,
         authProvider: 'telegram',
         telegramId: payload.id,
-        role: 'institutional_trader',
+        role: 'trader',
         createdAt: new Date().toISOString(),
         twoFactorEnabled: true,
       };
@@ -197,7 +198,7 @@ export const authService = {
             email: cleanEmail,
             photoUrl: userMeta.avatar_url || undefined,
             authProvider: 'email',
-            role: 'institutional_trader',
+            role: 'trader',
             createdAt: data.user.created_at || new Date().toISOString(),
             twoFactorEnabled: false
           };
@@ -223,7 +224,7 @@ export const authService = {
       username,
       firstName: cleanEmail.split('@')[0],
       authProvider: 'email',
-      role: 'institutional_trader',
+      role: 'trader',
       createdAt: new Date().toISOString(),
       twoFactorEnabled: false
     };
@@ -300,7 +301,7 @@ export const authService = {
             lastName: nameParts.slice(1).join(' ') || undefined,
             email: cleanEmail,
             authProvider: 'email',
-            role: 'institutional_trader',
+            role: 'trader',
             createdAt: data.user.created_at || new Date().toISOString(),
             twoFactorEnabled: false
           };
@@ -325,7 +326,7 @@ export const authService = {
       username,
       firstName: cleanEmail.split('@')[0],
       authProvider: 'email',
-      role: 'institutional_trader',
+      role: 'trader',
       createdAt: new Date().toISOString(),
       twoFactorEnabled: false
     };
@@ -352,7 +353,7 @@ export const authService = {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3100'
+          redirectTo: typeof window !== 'undefined' ? window.location.origin : 'https://eklipsefunded.com'
         }
       });
 
@@ -369,31 +370,5 @@ export const authService = {
     } catch (err: any) {
       return { success: false, message: err?.message || 'Error iniciando Google OAuth' };
     }
-  },
-
-  /**
-   * Acceso Demo Inmediato
-   */
-  loginAsDemo(): AuthResult {
-    const demoUser: UserProfile = {
-      id: 'demo_quant_01',
-      username: '@quant_demo_trader',
-      firstName: 'Quant',
-      lastName: 'Trader',
-      authProvider: 'demo',
-      telegramId: '884920194',
-      role: 'institutional_trader',
-      createdAt: new Date().toISOString(),
-      twoFactorEnabled: true,
-    };
-
-    this.saveSession(demoUser);
-
-    return {
-      success: true,
-      type: 'TAKE_PROFIT',
-      message: 'Take Profit: Sesión de demostración cargada con éxito.',
-      user: demoUser
-    };
   }
 };

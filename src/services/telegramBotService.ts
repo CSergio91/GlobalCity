@@ -140,7 +140,7 @@ export const telegramBotService = {
             { text: '🩸 En Contra (Bear)', callback_data: `vote_bear_${Date.now()}` }
           ],
           [
-            { text: '📊 Ver en Terminal Web', url: 'http://localhost:3001/' }
+            { text: '📊 Ver en Terminal Web', url: typeof window !== 'undefined' ? window.location.origin : 'https://eklipsefunded.com' }
           ]
         ]
       };

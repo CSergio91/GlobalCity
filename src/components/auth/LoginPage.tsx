@@ -23,20 +23,23 @@ import {
   Award,
   Clock
 } from 'lucide-react';
-import { useAuth, checkUserHasPurchasedAccount, setAccountCacheValid } from '../../context/AuthContext';
+import { useAuth, checkUserHasPurchasedAccount, setAccountCacheValid, fetchUserProfileRole } from '../../context/AuthContext';
 import { useAppRouter } from '../../context/RouterContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { BrandLogo } from '../BrandLogo';
 import { CloudflareTurnstile } from './CloudflareTurnstile';
 import { UserProfile } from '../../types/auth';
 import { supabase } from '../../lib/supabase';
+import { apiFetch } from '../../config/apiGateway';
 import pepeFooterImg from '../../assets/images/pepe_footer.webp';
 import { 
   PlanCategory, 
   SOLAR_CHALLENGE_PLANS, 
   LUNAR_CHALLENGE_PLANS,
   AVAILABLE_ADDONS,
-  calculateDynamicPlanPricing
+  calculateDynamicPlanPricing,
+  getLiveChallengePlans,
+  ChallengePlan
 } from '../../data/challengePlans';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'motion/react';
 import loginBackgroundImg from '../../assets/images/Background-Login.webp';
@@ -69,9 +72,6 @@ const detectMaliciousCode = (val: string): boolean => {
 const sanitizeCleanString = (val: string): string => {
   return val.replace(/[<>{}\\"';`]/g, '').trim();
 };
-
-// All 7 accounts available in Eklipse Funded (from $1K to $100K)
-const ALL_TIER_KEYS = ['1k', '2.5k', '5k', '10k', '25k', '50k', '100k'];
 
 const COUNTRIES_LIST = [
   'United States (US)',
@@ -190,7 +190,7 @@ const useIsDesktop = () => {
 // ============================================================================
 export const LoginPage: React.FC = () => {
   const isDesktop = useIsDesktop();
-  const { loginWithEmail, signUpWithEmail, loginWithGoogle, loginAsDemo } = useAuth();
+  const { user, isAuthenticated, loginWithEmail, signUpWithEmail, loginWithGoogle } = useAuth();
   const { navigate } = useAppRouter();
   const { language } = useLanguage();
   const isEn = language === 'en';
@@ -205,6 +205,13 @@ export const LoginPage: React.FC = () => {
     }
     return 'login';
   });
+
+  // Si el usuario ya está autenticado y no está en modo de compra/registro, redirigir al dashboard
+  useEffect(() => {
+    if (isAuthenticated && mode !== 'register') {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, mode, navigate]);
 
   // ============================================================================
   // FLUID 3D MOUSE PARALLAX ENGINE (Background vs Pepe vs Floating Form Cards)
@@ -345,17 +352,35 @@ export const LoginPage: React.FC = () => {
       const urlPlan = params.get('plan');
       const target = urlPlan || sessionStorage.getItem('eklipse_target_plan');
       if (target) {
-        if (SOLAR_CHALLENGE_PLANS.some((p) => p.id === target) || LUNAR_CHALLENGE_PLANS.some((p) => p.id === target)) {
-          return target;
-        }
-        const match = ALL_TIER_KEYS.find((k) => target.toLowerCase().includes(k));
-        if (match) {
-          return target.includes('lunar') ? `lunar-${match}` : `solar-${match}`;
-        }
+        return target;
       }
     }
-    return 'solar-25k';
+    return 'solar-50k';
   });
+
+  // Dynamic challenge plans state with Local-First SWR Caching
+  const [plansList, setPlansList] = useState<ChallengePlan[]>(() => {
+    try {
+      const cached = localStorage.getItem('eklipse_cached_challenge_plans');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (_) {}
+    return [...SOLAR_CHALLENGE_PLANS, ...LUNAR_CHALLENGE_PLANS];
+  });
+
+  useEffect(() => {
+    getLiveChallengePlans(selectedCategory).then((live) => {
+      if (live && live.length > 0) {
+        setPlansList(live);
+        if (!selectedPlanId || !live.some(p => p.id === selectedPlanId)) {
+          const match = live.find(p => p.category === selectedCategory) || live[0];
+          if (match) setSelectedPlanId(match.id);
+        }
+      }
+    });
+  }, [selectedCategory]);
 
   // Custom Addons State: Preloaded from URL or sessionStorage (if clicked from Landing page)
   const [selectedAddons, setSelectedAddons] = useState<string[]>(() => {
@@ -437,16 +462,17 @@ export const LoginPage: React.FC = () => {
   const [agreeNoMultiProfile, setAgreeNoMultiProfile] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
 
-  // Challenge plans available for current category: ALL 7 ACCOUNTS from 1K to 100K
+  // Challenge plans available for current category: Dynamically derived from DB & Redis
   const currentPlansList = useMemo(() => {
-    const rawList = selectedCategory === 'solar' ? SOLAR_CHALLENGE_PLANS : LUNAR_CHALLENGE_PLANS;
-    return rawList
-      .filter((p) => ALL_TIER_KEYS.some((tier) => p.id.endsWith(`-${tier}`)))
-      .sort((a, b) => a.capital - b.capital);
-  }, [selectedCategory]);
+    const filtered = plansList.filter((p) => p.category === selectedCategory);
+    const result = filtered.length > 0 
+      ? filtered 
+      : (selectedCategory === 'solar' ? SOLAR_CHALLENGE_PLANS : LUNAR_CHALLENGE_PLANS);
+    return [...result].sort((a, b) => a.capital - b.capital);
+  }, [plansList, selectedCategory]);
 
   const activePlan = useMemo(() => {
-    return currentPlansList.find((p) => p.id === selectedPlanId) || currentPlansList[4] || currentPlansList[0];
+    return currentPlansList.find((p) => p.id === selectedPlanId) || currentPlansList[0] || SOLAR_CHALLENGE_PLANS[0];
   }, [currentPlansList, selectedPlanId]);
 
   // Dynamic pricing & rules modifiers with add-ons
@@ -457,8 +483,10 @@ export const LoginPage: React.FC = () => {
   // Handle switching category while preserving selected size tier
   const handleCategorySwitch = (cat: PlanCategory) => {
     setSelectedCategory(cat);
-    const sizeSuffix = selectedPlanId.split('-')[1] || '25k';
-    setSelectedPlanId(`${cat}-${sizeSuffix}`);
+    const categoryPlans = plansList.filter((p) => p.category === cat);
+    if (categoryPlans.length > 0) {
+      setSelectedPlanId(categoryPlans[0].id);
+    }
   };
 
   // Step progression validation states for Login
@@ -582,12 +610,10 @@ export const LoginPage: React.FC = () => {
         : 'https://eklipsefunded.com/reset-password';
         
       let dispatchedViaResend = false;
-      const backendUrl = (import.meta as any).env?.VITE_WS_GATEWAY_URL?.replace('ws://', 'http://').replace('wss://', 'https://') || 'http://localhost:8088';
 
       try {
-        const response = await fetch(`${backendUrl}/api/auth/request-password-reset`, {
+        const response = await apiFetch('/api/auth/request-password-reset', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email: cleanEmail,
             redirectTo: redirectUrl,
@@ -1031,6 +1057,7 @@ export const LoginPage: React.FC = () => {
             const email = session.user.email || '';
             const fullName = meta.full_name || meta.name || email.split('@')[0] || 'Trader';
             const nameParts = fullName.split(' ');
+            const resolvedRole = await fetchUserProfileRole(email, session.user.id);
             authenticatedUser = {
               id: session.user.id,
               username: `@${email.split('@')[0] || 'trader'}`,
@@ -1039,7 +1066,7 @@ export const LoginPage: React.FC = () => {
               email: email,
               photoUrl: meta.avatar_url || meta.picture,
               authProvider: 'google',
-              role: 'institutional_trader',
+              role: resolvedRole || 'trader',
               createdAt: session.user.created_at || new Date().toISOString(),
               twoFactorEnabled: true,
             };
@@ -1718,18 +1745,6 @@ export const LoginPage: React.FC = () => {
                               )}
                             </button>
 
-                            {/* Acceso Rápido al Dashboard (Modo Demo) */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                loginAsDemo();
-                                navigate('/dashboard');
-                              }}
-                              className="w-full mt-2 h-10 px-4 rounded-xl border border-amber-400/40 bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 font-mono text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
-                            >
-                              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                              <span>{isEn ? 'Direct Demo Dashboard Access' : 'Acceso Directo al Dashboard (Demo)'}</span>
-                            </button>
                           </div>
                         </form>
                       </>

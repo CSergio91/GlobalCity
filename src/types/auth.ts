@@ -21,9 +21,9 @@ export interface UserProfile {
   city?: string;
   state?: string;
   addressLine1?: string;
-  authProvider: 'telegram' | 'demo' | 'email' | 'google';
+  authProvider: 'telegram' | 'email' | 'google';
   telegramId?: number | string;
-  role: 'admin' | 'soporte' | 'marketing' | 'trader' | 'institutional_trader' | 'quant_developer' | 'guest' | string;
+  role: 'admin' | 'soporte' | 'marketing' | 'trader' | string;
   createdAt: string;
   twoFactorEnabled: boolean;
 }

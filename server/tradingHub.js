@@ -437,6 +437,136 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // --------------------------------------------------------------------------
+  // REDIS HOT-CACHE ENDPOINT: Planes de Reto Dinámicos Creados desde Nexus CRM
+  // Erradica saturación de PostgreSQL en la Landing y Login (<1ms tiempo de respuesta)
+  // --------------------------------------------------------------------------
+  if (url.pathname === '/api/challenges/plans') {
+    (async () => {
+      try {
+        const CACHE_KEY = 'eklipse:cache:challenge_plans';
+
+        // 1. Verificar si existe en Redis Clúster
+        if (isRedisActive && redisPub) {
+          try {
+            const cached = await redisPub.get(CACHE_KEY);
+            if (cached) {
+              res.writeHead(200, { 'Content-Type': 'application/json', 'X-Cache-Status': 'HIT_REDIS' });
+              res.end(cached);
+              return;
+            }
+          } catch (_) {}
+        } else {
+          // Fallback a hot-cache en RAM local (60 segundos)
+          const inMem = localHotState.get('challenge_plans_cache');
+          if (inMem && Date.now() - inMem.timestamp < 60000) {
+            res.writeHead(200, { 'Content-Type': 'application/json', 'X-Cache-Status': 'HIT_MEMORY' });
+            res.end(JSON.stringify({ success: true, source: 'hot_memory', plans: inMem.data }));
+            return;
+          }
+        }
+
+        // 2. Consulta a PostgreSQL / Supabase
+        const { data, error } = await supabase
+          .from('risk_rule_configs')
+          .select('*')
+          .eq('is_active', true)
+          .order('default_account_balance', { ascending: true });
+
+        if (error || !data) {
+          throw new Error(error?.message || 'Failed to fetch risk_rule_configs');
+        }
+
+        const formattedPlans = data.map((rule) => {
+          const capital = Number(rule.default_account_balance || 100000);
+          const name = rule.name || `Challenge $${capital.toLocaleString()}`;
+          const isLunar = rule.category === 'lunar' || name.toLowerCase().includes('lunar') || rule.model_type === 'INSTANT_FUNDING';
+          const planCategory = isLunar ? 'lunar' : 'solar';
+          const oneTime = Number(rule.one_time_price_usdt) > 0 ? Number(rule.one_time_price_usdt) : 149;
+          const monthly = Number(rule.monthly_price_usdt) > 0 ? Number(rule.monthly_price_usdt) : Math.round(oneTime * 0.35);
+
+          const sizeLabel = capital >= 1000000 
+            ? `${(capital / 1000000).toFixed(capital % 1000000 === 0 ? 0 : 1)}M` 
+            : `${(capital / 1000).toFixed(capital % 1000 === 0 ? 0 : 1)}K`;
+
+          return {
+            id: rule.id,
+            category: planCategory,
+            name: name,
+            astronomicalName: {
+              en: rule.astronomical_name_en || name,
+              es: rule.astronomical_name_es || name
+            },
+            sizeLabel,
+            capital,
+            capitalFormatted: `$${capital.toLocaleString()}`,
+            oneTimePriceUSDT: oneTime,
+            monthlyPriceUSDT: monthly,
+            baseProfitSplit: Number(rule.profit_split_percent || 80),
+            baseMaxDrawdownPct: Number(rule.max_total_drawdown_percent || 10),
+            baseDailyLossPct: Number(rule.max_daily_loss_percent || 5),
+            baseLeverage: `1:${rule.max_leverage || 100}`,
+            boostedLeverage: `1:${Math.round((rule.max_leverage || 100) * 1.5)}`,
+            payoutSpeed: '14 Días',
+            popular: !!rule.is_popular,
+            modelType: rule.model_type || 'ONE_PHASE',
+            drawdownType: rule.drawdown_type || 'EOD',
+            profitTargetPct: Number(rule.profit_target_percent || 10),
+            profitTargetPhase2Pct: rule.profit_target_phase2_percent ? Number(rule.profit_target_phase2_percent) : null,
+            minTradingDays: Number(rule.min_trading_days || 5),
+            mandatoryStopLoss: !!rule.mandatory_stop_loss,
+            weekendHoldingAllowed: !!rule.weekend_holding_allowed,
+            newsTradingAllowed: !!rule.news_trading_allowed,
+            consistencyRulePercent: Number(rule.consistency_rule_percent || 40),
+            rawRule: rule
+          };
+        });
+
+        const responsePayload = JSON.stringify({
+          success: true,
+          source: 'postgresql_db',
+          plans: formattedPlans,
+          cachedAt: new Date().toISOString()
+        });
+
+        // 3. Escribir en Redis con TTL de 600 segundos (10 minutos)
+        if (isRedisActive && redisPub) {
+          try {
+            await redisPub.set(CACHE_KEY, responsePayload, 'EX', 600);
+          } catch (_) {}
+        } else {
+          localHotState.set('challenge_plans_cache', { timestamp: Date.now(), data: formattedPlans });
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json', 'X-Cache-Status': 'MISS' });
+        res.end(responsePayload);
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    })();
+    return;
+  }
+
+  // Endpoint para invalidar la caché de Redis cuando se guarda/elimina un reto en Nexus CRM
+  if (url.pathname === '/api/challenges/invalidate' && req.method === 'POST') {
+    (async () => {
+      try {
+        const CACHE_KEY = 'eklipse:cache:challenge_plans';
+        if (isRedisActive && redisPub) {
+          await redisPub.del(CACHE_KEY);
+        }
+        localHotState.delete('challenge_plans_cache');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'Redis & memory challenge plans cache invalidated' }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    })();
+    return;
+  }
+
   // Endpoint para resetear cuenta desde CRM y sincronizar DB Supabase + Terminal
   if (url.pathname === '/api/crm/account/reset' && req.method === 'POST') {
     let body = '';

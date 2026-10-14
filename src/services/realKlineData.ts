@@ -1,4 +1,5 @@
 import { KLineData } from 'klinecharts';
+import { apiFetch } from '../config/apiGateway';
 
 // Determinar si el símbolo es un par cripto válido en Binance Spot
 const isSupportedBinanceCrypto = (sym: string): boolean => {
@@ -17,16 +18,12 @@ export async function fetchRealHistoricalKlines(
   const cleanSymbol = symbol.replace(/[\/\-\s]/g, '').toUpperCase();
   const endParam = endTime ? `&endTime=${endTime}` : '';
 
-  // 1. Invocar el Realtime Market Data Gateway interno de Global City (Arquitectura Canónica)
+  // 1. Invocar el Realtime Market Data Gateway interno (api.eklipsefunded.com en prod, localhost:8080 en dev)
   // El frontend NUNCA se conecta directamente a Binance ni expone endpoints externos.
-  const gatewayUrl = `/api/market/klines?symbol=${cleanSymbol}&interval=${interval}&limit=${limit}${endParam}`;
+  const endpoint = `/api/market/klines?symbol=${cleanSymbol}&interval=${interval}&limit=${limit}${endParam}`;
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
-
-    const res = await fetch(gatewayUrl, { signal: controller.signal });
-    clearTimeout(timeoutId);
+    const res = await apiFetch(endpoint, {}, 3500);
 
     if (res.ok) {
       const data = await res.json();

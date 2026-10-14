@@ -8,6 +8,8 @@
  * Preparado para publicación como paquete npm (@zyti/trading-sdk).
  */
 
+import { getWsGatewayUrl } from '../../../config/apiGateway';
+
 export interface TradingEvent {
   id?: string;
   type: 
@@ -69,22 +71,8 @@ export class TradingWebSocketClient {
   private isExplicitlyClosed = false;
 
   constructor(customUrl?: string) {
-    // Configuración dinámica de URL de la pasarela
-    if (customUrl) {
-      this.gatewayUrl = customUrl;
-    } else if (typeof window !== 'undefined' && (window as any).VITE_WS_GATEWAY_URL) {
-      this.gatewayUrl = (window as any).VITE_WS_GATEWAY_URL;
-    } else if (typeof window !== 'undefined' && (import.meta as any)?.env?.VITE_WS_GATEWAY_URL) {
-      this.gatewayUrl = (import.meta as any).env.VITE_WS_GATEWAY_URL;
-    } else {
-      if (typeof window !== 'undefined') {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        // Auto-enrutamiento: si se accede por túnel o red local, usa el proxy /ws-gateway del mismo servidor
-        this.gatewayUrl = `${protocol}//${window.location.host}/ws-gateway`;
-      } else {
-        this.gatewayUrl = 'ws://localhost:8080';
-      }
-    }
+    // Configuración centralizada de pasarela WebSocket institucional (dev: localhost:8080, prod: wss://api.eklipsefunded.com/ws)
+    this.gatewayUrl = customUrl || getWsGatewayUrl();
   }
 
   /**

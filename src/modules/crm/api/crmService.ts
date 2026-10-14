@@ -7,6 +7,7 @@
 */
 
 import { supabase } from '../../../lib/supabase';
+import { apiFetch } from '../../../config/apiGateway';
 import { zytiTradingClient } from '../../../core/trading/gateway/TradingWebSocketClient';
 import { 
   ApiCredentialEntity, 
@@ -177,20 +178,27 @@ export const crmService = {
 
       // 2. Si el trader actualizado es el usuario logueado en la sesión actual, actualizarlo
       try {
-        const sessionStr = localStorage.getItem('zyti_user_session');
-        if (sessionStr) {
-          const session = JSON.parse(sessionStr);
-          if (session.id === traderId || session.email === traderId) {
-            session.role = newRole;
-            localStorage.setItem('zyti_user_session', JSON.stringify(session));
-            localStorage.setItem('zyti_user_role', newRole);
+        const sessionKeys = ['globalcity_auth_user', 'eklipse_user_profile', 'zyti_user_session'];
+        for (const key of sessionKeys) {
+          const sessionStr = localStorage.getItem(key);
+          if (sessionStr) {
+            const session = JSON.parse(sessionStr);
+            if (session.id === traderId || session.email === traderId) {
+              session.role = newRole;
+              localStorage.setItem(key, JSON.stringify(session));
+            }
           }
         }
+        localStorage.setItem('zyti_user_role', newRole);
       } catch {}
 
-      // 3. Persistir en Supabase profiles si es un UUID válido
-      if (traderId && traderId.length > 10) {
-        await supabase.from('profiles').update({ role: newRole }).eq('id', traderId);
+      // 3. Persistir en Supabase profiles
+      if (traderId) {
+        if (traderId.includes('@')) {
+          await supabase.from('profiles').update({ role: newRole }).eq('email', traderId.trim().toLowerCase());
+        } else {
+          await supabase.from('profiles').update({ role: newRole }).eq('id', traderId);
+        }
       }
     } catch (e) {
       console.warn('[CRM Service] Error actualizando rol:', e);
@@ -271,9 +279,8 @@ export const crmService = {
 
       // 4. Notificar al servidor Node / API Gateway
       try {
-        await fetch('http://localhost:8080/api/crm/account/reset', {
+        await apiFetch('/api/crm/account/reset', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ accountId, initialBalance })
         });
       } catch (_) {}
@@ -688,7 +695,7 @@ export const crmService = {
       // 8. Auditoría Forense de IPs REALES & Detección de Red WiFi / Datos Móviles (Zero Demo Data)
       let ipSessions: IpSessionAuditItem[] = [];
       try {
-        const auditRes = await fetch(`/api/crm/account/audit?accountId=${accountId}`);
+        const auditRes = await apiFetch(`/api/crm/account/audit?accountId=${accountId}`);
         if (auditRes.ok) {
           const auditJson = await auditRes.json();
           if (auditJson.ips && Array.isArray(auditJson.ips) && auditJson.ips.length > 0) {
@@ -819,6 +826,13 @@ export const crmService = {
     const ruleToSave: RiskRuleConfigEntity = {
       id: rule.id || crypto.randomUUID(),
       name: rule.name || 'Regla Personalizada',
+      category: rule.category || 'solar',
+      one_time_price_usdt: rule.one_time_price_usdt !== undefined ? Number(rule.one_time_price_usdt) : 0,
+      monthly_price_usdt: rule.monthly_price_usdt !== undefined ? Number(rule.monthly_price_usdt) : 0,
+      astronomical_name_en: rule.astronomical_name_en || rule.name || 'Custom Plan',
+      astronomical_name_es: rule.astronomical_name_es || rule.name || 'Plan Personalizado',
+      is_popular: !!rule.is_popular,
+      display_order: rule.display_order ?? 0,
       model_type: rule.model_type || 'ONE_PHASE',
       profit_target_percent: rule.profit_target_percent ?? 10.0,
       profit_target_phase2_percent: rule.profit_target_phase2_percent ?? null,
@@ -843,7 +857,7 @@ export const crmService = {
       min_daily_profit_value: rule.min_daily_profit_value ?? 0.5,
       profit_split_percent: rule.profit_split_percent ?? 80.0,
       inactivity_days_limit: rule.inactivity_days_limit ?? 30,
-      default_account_balance: rule.default_account_balance ?? 100000.00,
+      default_account_balance: rule.default_account_balance !== undefined ? Number(rule.default_account_balance) : 100000.00,
       is_default_demo: !!rule.is_default_demo,
       is_active: rule.is_active ?? true,
       updated_at: new Date().toISOString()
@@ -867,6 +881,11 @@ export const crmService = {
           console.warn('[CRM Service] Error updating risk_rule_configs:', updErr);
         }
       }
+
+      // Invalidar caché Redis del backend para que la Landing y Login reciban los cambios en caliente
+      try {
+        apiFetch('/api/challenges/invalidate', { method: 'POST' }).catch(() => {});
+      } catch (_) {}
     } catch (e) {
       console.warn('[CRM Service] Supabase risk_rule_configs write failed, updating local state:', e);
     }
@@ -886,6 +905,9 @@ export const crmService = {
   async deleteRiskRule(id: string): Promise<void> {
     try {
       await supabase.from('risk_rule_configs').delete().eq('id', id);
+      try {
+        apiFetch('/api/challenges/invalidate', { method: 'POST' }).catch(() => {});
+      } catch (_) {}
     } catch (e) {
       console.warn('[CRM Service] Error deleting risk_rule_configs:', e);
     }
@@ -1065,7 +1087,7 @@ export const crmService = {
    */
   async getLiveMonitoredPositions(): Promise<MonitoredPosition[]> {
     try {
-      const res = await fetch('http://localhost:8080/api/crm/positions');
+      const res = await apiFetch('/api/crm/positions');
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.positions) && data.positions.length > 0) {
