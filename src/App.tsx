@@ -29,7 +29,14 @@ function MainAppContent() {
   const { language, setLanguage, t } = useLanguage();
   const { user, isAuthenticated, logout } = useAuth();
 
-  const isCrmRoute = currentPath === '/nexus' || currentPath === '/crm' || subdomain === 'nexus';
+  const isCrmRoute = 
+    currentPath === '/nexus' || 
+    currentPath === '/crm' || 
+    currentPath === '/nexuscrm' || 
+    currentPath.startsWith('/nexus') || 
+    currentPath.startsWith('/crm') || 
+    currentPath.startsWith('/nexuscrm') || 
+    subdomain === 'nexus';
   const isDashboardRoute = currentPath === '/dashboard' || subdomain === 'dashboard' || subdomain === 'dashapp';
   const isLoginRoute = currentPath === '/login' || currentPath.startsWith('/login?') || currentPath.startsWith('/login/');
   const isResetPasswordRoute = 

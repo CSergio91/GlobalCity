@@ -4,7 +4,8 @@ import {
   Menu, 
   TrendingUp,
   Sparkles,
-  Check
+  Check,
+  ShieldAlert
 } from 'lucide-react';
 
 interface TopBarProps {
@@ -12,13 +13,17 @@ interface TopBarProps {
   language: string;
   onToggleLanguage: () => void;
   isEn?: boolean;
+  isStaff?: boolean;
+  onGoToCrm?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
   onOpenMobileSidebar,
   language,
   onToggleLanguage,
-  isEn = false
+  isEn = false,
+  isStaff = false,
+  onGoToCrm
 }) => {
   const [showNotificationsToast, setShowNotificationsToast] = useState(false);
 
@@ -56,6 +61,18 @@ export const TopBar: React.FC<TopBarProps> = ({
             +2.43%
           </span>
         </div>
+
+        {/* Staff Nexus CRM Shortcut */}
+        {isStaff && onGoToCrm && (
+          <button
+            onClick={onGoToCrm}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/35 text-xs font-mono font-bold transition-all cursor-pointer shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+            title={isEn ? 'Open Nexus CRM ERP' : 'Abrir Nexus CRM'}
+          >
+            <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+            <span className="tracking-wider">NEXUS CRM</span>
+          </button>
+        )}
 
         {/* Notifications Bell */}
         <div className="relative">

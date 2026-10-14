@@ -3,6 +3,8 @@
  * Architected for real-time synchronization with Nexus CRM, Redis Hot-Cache & Supabase.
  */
 
+import { supabase } from '../lib/supabase';
+
 export type PlanCategory = 'solar' | 'lunar';
 export type PaymentMode = 'one-time' | 'monthly';
 
@@ -539,21 +541,90 @@ export function calculateDynamicPlanPricing(
 }
 
 /**
- * Fetch dynamic plans from Nexus / Redis cache or fallback to static contracts
+ * Fetch dynamic plans from Nexus CRM / Supabase risk_rule_configs or fallback to static contracts
  */
 export async function getLiveChallengePlans(category: PlanCategory = 'solar'): Promise<ChallengePlan[]> {
   try {
-    const cacheKey = `eklipse_plans_${category}`;
-    const cached = localStorage.getItem(cacheKey);
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+    const { data, error } = await supabase
+      .from('risk_rule_configs')
+      .select('*')
+      .eq('is_active', true)
+      .order('default_account_balance', { ascending: true });
+
+    if (!error && data && data.length > 0) {
+      const dynamicPlans: ChallengePlan[] = data.map((rule: any) => {
+        const capital = Number(rule.default_account_balance || 100000);
+        const name = rule.name || `Challenge $${capital.toLocaleString()}`;
+        const isLunar = name.toLowerCase().includes('lunar') || (rule.model_type === 'INSTANT_FUNDING');
+        const planCategory: PlanCategory = isLunar ? 'lunar' : 'solar';
+        
+        // Fair prop firm pricing based on capital
+        const basePrice = capital <= 1000 ? 19 :
+                          capital <= 5000 ? 49 :
+                          capital <= 10000 ? 89 :
+                          capital <= 25000 ? 149 :
+                          capital <= 50000 ? 249 :
+                          capital <= 100000 ? 449 :
+                          capital <= 200000 ? 849 : 1499;
+
+        const sizeLabel = capital >= 1000000 ? `${capital / 1000000}M` : `${capital / 1000}K`;
+
+        return {
+          id: rule.id,
+          category: planCategory,
+          astronomicalName: {
+            en: name,
+            es: name
+          },
+          sizeLabel,
+          capital,
+          capitalFormatted: `$${capital.toLocaleString()}`,
+          oneTimePriceUSDT: basePrice,
+          monthlyPriceUSDT: Math.round(basePrice * 0.35),
+          baseProfitSplit: Number(rule.profit_split_percent || 80),
+          baseMaxDrawdownPct: Number(rule.max_total_drawdown_percent || 10),
+          baseDailyLossPct: Number(rule.max_daily_loss_percent || 5),
+          baseLeverage: `1:${rule.max_leverage || 100}`,
+          boostedLeverage: `1:${Math.round((rule.max_leverage || 100) * 1.5)}`,
+          payoutSpeed: '14 Días',
+          popular: capital === 100000 || capital === 50000,
+          marketSpecialty: {
+            en: isLunar ? 'Meme Titans & High Volatility DMA' : 'Crypto DMA & Institutional Liquidity',
+            es: isLunar ? 'Titanes Meme y Volatilidad Extrema DMA' : 'Crypto DMA y Liquidez Institucional'
+          },
+          features: {
+            en: [
+              `Profit Target: ${rule.profit_target_percent || 8}%`,
+              `Max Total Drawdown: ${rule.max_total_drawdown_percent || 10}% (${rule.drawdown_type || 'EOD'})`,
+              `Daily Loss Limit: ${rule.max_daily_loss_percent || 5}%`,
+              `Profit Split: ${rule.profit_split_percent || 80}%`,
+              `Min. Trading Days: ${rule.min_trading_days || 5} days`,
+              rule.mandatory_stop_loss ? 'Mandatory Stop Loss' : 'Stop Loss Optional',
+              rule.weekend_holding_allowed ? 'Weekend Holding Allowed' : 'Close before Weekend'
+            ],
+            es: [
+              `Objetivo de Beneficio: ${rule.profit_target_percent || 8}%`,
+              `Drawdown Máximo: ${rule.max_total_drawdown_percent}% (${rule.drawdown_type || 'EOD'})`,
+              `Pérdida Diaria Máxima: ${rule.max_daily_loss_percent}%`,
+              `Reparto de Ganancias: ${rule.profit_split_percent}%`,
+              `Días Mínimos de Trading: ${rule.min_trading_days || 5} días`,
+              rule.mandatory_stop_loss ? 'Stop Loss Obligatorio' : 'Stop Loss Opcional',
+              rule.weekend_holding_allowed ? 'Operativa Fin de Semana Permitida' : 'Cierre Previo a Fin de Semana'
+            ]
+          }
+        };
+      });
+
+      const filtered = dynamicPlans.filter(p => p.category === category);
+      if (filtered.length > 0) {
+        return filtered;
       }
+      return dynamicPlans;
     }
-  } catch {
-    // LocalStorage fallback
+  } catch (err) {
+    console.warn('[ChallengePlans] Error loading from Supabase:', err);
   }
 
+  // Fallback to static presets
   return category === 'solar' ? SOLAR_CHALLENGE_PLANS : LUNAR_CHALLENGE_PLANS;
 }

@@ -101,16 +101,12 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
   const { navigate } = useAppRouter();
   const { language, setLanguage } = useLanguage();
   const isEn = language === 'en';
+  const userRole = (user?.role || '').toLowerCase();
+  const isStaff = userRole === 'admin' || userRole === 'superadmin' || userRole === 'soporte' || userRole === 'support';
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // Control de colapso/despliegue de la barra lateral de escritorio para el trader
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
-    try {
-      return localStorage.getItem('eklipse_sidebar_collapsed') === 'true';
-    } catch (_) {
-      return false;
-    }
-  });
+  // Control de colapso/despliegue (por defecto siempre replegada: 72px)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
 
   const toggleSidebarCollapse = () => {
     setIsSidebarCollapsed(prev => {
@@ -973,14 +969,14 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
         selectedAvatarId={selectedAvatarId}
         onOpenAvatarModal={() => setIsAvatarModalOpen(true)}
         userDisplayName={userDisplayName}
+        isStaff={isStaff}
+        onGoToCrm={() => navigate('/nexus')}
       />
 
       {/* ========================================================================= */}
-      {/* 2. MAIN VIEW CONTAINER (DESKTOP OFFSET + TOPBAR + PORTAL CANVAS)         */}
+      {/* 2. MAIN VIEW CONTAINER (OFFSET FIJO A 72PX: EL HOVER NUNCA DESPLAZA EL CONTENIDO) */}
       {/* ========================================================================= */}
-      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out relative z-10 ${
-        isSidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-[250px]'
-      }`}>
+      <div className="flex-1 flex flex-col min-h-screen relative z-10 lg:pl-[60px]">
         
         {/* COMPACT TOP BAR (BTC TICKER, NOTIFICATIONS, I18N — ZERO SEARCH BAR CLUTTER) */}
         <TopBar
@@ -988,6 +984,8 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
           language={language}
           onToggleLanguage={() => setLanguage(language === 'en' ? 'es' : 'en')}
           isEn={isEn}
+          isStaff={isStaff}
+          onGoToCrm={() => navigate('/nexus')}
         />
 
         {/* ========================================================================= */}

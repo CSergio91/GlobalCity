@@ -389,13 +389,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('No se pudo establecer la sesión con el servidor.');
     }
 
-    const hasAccount = await checkUserHasPurchasedAccount(cleanEmail, signInData.user.id);
+    const role = await fetchUserProfileRole(cleanEmail, signInData.user.id);
+    const hasAccount = await checkUserHasPurchasedAccount(cleanEmail, signInData.user.id, role);
     if (!hasAccount) {
       await handleRejectUnauthorizedUser(signInData.user, setUser);
       throw new Error('No se encontró ninguna cuenta de fondeo vinculada a este correo. Por favor adquiere un reto de evaluación institucional.');
     }
 
-    const mapped = mapSupabaseUserToProfile(signInData.user);
+    const mapped = mapSupabaseUserToProfile(signInData.user, role);
     setUser(mapped);
     return true;
   };

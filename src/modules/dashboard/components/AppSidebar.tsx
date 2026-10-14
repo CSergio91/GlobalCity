@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Home,
   LayoutDashboard,
@@ -10,15 +10,12 @@ import {
   Info,
   Award,
   Headphones,
-  ChevronRight,
-  ChevronLeft,
   X,
   TrendingUp,
   LogOut,
-  ArrowRight,
   Gift,
   Sparkles,
-  ShieldCheck
+  ShieldAlert
 } from 'lucide-react';
 import { BrandLogo } from '../../../components/BrandLogo';
 import { PEPE_AVATARS, getPepeAvatarUrl } from '../../../data/pepeAvatars';
@@ -37,7 +34,8 @@ export type DashboardNavTab =
   | 'affiliates'
   | 'certificates'
   | 'help'
-  | 'support';
+  | 'support'
+  | 'nexus';
 
 interface NavItemDef {
   id: DashboardNavTab;
@@ -52,8 +50,8 @@ interface NavItemDef {
 interface AppSidebarProps {
   activeTab: DashboardNavTab;
   onTabChange: (tab: DashboardNavTab) => void;
-  isCollapsed: boolean;
-  onToggleCollapse: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
   isOpenMobile: boolean;
   onCloseMobile: () => void;
   totalCapital: number;
@@ -64,25 +62,31 @@ interface AppSidebarProps {
   selectedAvatarId?: string;
   onOpenAvatarModal?: () => void;
   userDisplayName?: string;
+  isStaff?: boolean;
+  onGoToCrm?: () => void;
 }
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({
   activeTab,
   onTabChange,
-  isCollapsed,
-  onToggleCollapse,
   isOpenMobile,
   onCloseMobile,
-  totalCapital,
   accountsCount,
   isEn,
   onLogout,
   onGoToLanding,
   selectedAvatarId = 'pepe_golden_bull',
   onOpenAvatarModal,
-  userDisplayName = 'Trader Pepe'
+  userDisplayName = 'Trader Pepe',
+  isStaff = false,
+  onGoToCrm
 }) => {
-  // Lista unificada y limpia con fidelidad 1:1 a la captura de pantalla (Cero etiquetas ruidosas de grupo)
+  // Estado de Hover: por defecto REPLEGADA y ESTRECHA (60px). Se despliega a 220px al hover
+  // SIN desplazar el contenido principal gracias a su posicionamiento flotante sobre la margen.
+  const [isHovered, setIsHovered] = useState(false);
+  const isExpanded = isOpenMobile || isHovered;
+
+  // Lista limpia y vertical (Cero etiquetas de grupo ruidosas)
   const navItems: NavItemDef[] = [
     {
       id: 'accounts',
@@ -120,14 +124,26 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       labelEs: 'Add-ons',
       icon: Zap,
       badge: 'BOOST',
-      badgeType: 'amber'
+      badgeType: 'emerald'
+    },
+    {
+      id: 'markets',
+      labelEn: 'Trading Station',
+      labelEs: 'Estación Trading',
+      icon: TrendingUp
     },
     {
       id: 'calendar',
-      labelEn: 'Calendar',
-      labelEs: 'Calendario',
+      labelEn: 'Economic Calendar',
+      labelEs: 'Calendario Económico',
       icon: Calendar,
       hasRedDot: true
+    },
+    {
+      id: 'billing',
+      labelEn: 'Billing & Invoices',
+      labelEs: 'Facturación',
+      icon: Info
     },
     {
       id: 'affiliates',
@@ -135,13 +151,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       labelEs: 'Afiliados',
       icon: Users,
       badge: '10-20%',
-      badgeType: 'emerald'
-    },
-    {
-      id: 'billing',
-      labelEn: 'Billing',
-      labelEs: 'Facturación',
-      icon: Info
+      badgeType: 'yellow'
     },
     {
       id: 'certificates',
@@ -157,6 +167,17 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     }
   ];
 
+  if (isStaff && onGoToCrm) {
+    navItems.push({
+      id: 'nexus',
+      labelEn: 'Nexus CRM ERP',
+      labelEs: 'Nexus CRM ERP',
+      icon: ShieldAlert,
+      badge: 'ADMIN',
+      badgeType: 'amber'
+    });
+  }
+
   const activeAvatar = PEPE_AVATARS.find(a => a.id === selectedAvatarId) || PEPE_AVATARS[0];
 
   return (
@@ -169,42 +190,33 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         />
       )}
 
-      {/* Main Sidebar Container con Opacidad y Glassmorphism Editorial */}
+      {/* Main Sidebar: Estrecha (60px en reposo, 220px al hover) sin scrollbar visible */}
       <aside 
-        className={`fixed inset-y-0 left-0 z-50 bg-[#07090E]/85 backdrop-blur-2xl border-r border-white/10 flex flex-col justify-between transition-all duration-300 ease-in-out lg:translate-x-0 select-none shadow-[0_10px_40px_rgba(0,0,0,0.7)] ${
-          isOpenMobile ? 'translate-x-0' : '-translate-x-full'
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={`fixed inset-y-0 left-0 z-50 bg-[#07090E]/95 backdrop-blur-2xl border-r border-white/10 flex flex-col justify-between transition-all duration-300 ease-in-out lg:translate-x-0 select-none overflow-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+          isOpenMobile ? 'translate-x-0 w-[220px]' : '-translate-x-full lg:translate-x-0'
         } ${
-          isCollapsed ? 'w-[72px]' : 'w-[250px]'
+          isExpanded 
+            ? 'w-[220px] shadow-[0_20px_50px_rgba(0,0,0,0.95)] border-r-amber-400/25' 
+            : 'w-[60px] shadow-[0_10px_30px_rgba(0,0,0,0.7)]'
         }`}
       >
-        {/* Top Section: BrandLogo & Collapse / Expand Controls */}
-        <div>
-          <div className={`h-16 flex items-center border-b border-white/[0.08] transition-all duration-300 ${
-            isCollapsed ? 'justify-center px-2' : 'justify-between px-4'
+        {/* Top Section: Logo & Mobile Close */}
+        <div className="shrink-0">
+          <div className={`h-14 flex items-center border-b border-white/[0.08] transition-all duration-300 ${
+            !isExpanded ? 'justify-center px-1' : 'justify-between px-3.5'
           }`}>
             <div 
               onClick={onGoToLanding}
               className="cursor-pointer overflow-hidden transition-all duration-300 flex items-center gap-2"
             >
               <BrandLogo 
-                size={isCollapsed ? "sm" : "md"} 
+                size={!isExpanded ? "sm" : "md"} 
                 lightMode={false} 
-                showText={!isCollapsed} 
+                showText={isExpanded} 
               />
             </div>
-
-            {/* Desktop Collapse / Expand Toggle Button (Replegar / Desplegar) */}
-            <button
-              onClick={onToggleCollapse}
-              className="hidden lg:flex items-center justify-center w-7 h-7 rounded-xl bg-white/[0.04] hover:bg-white/10 border border-white/10 text-slate-400 hover:text-amber-300 transition-all cursor-pointer shadow-sm"
-              title={isCollapsed ? (isEn ? 'Expand sidebar' : 'Desplegar barra') : (isEn ? 'Collapse sidebar' : 'Replegar barra')}
-            >
-              {isCollapsed ? (
-                <ChevronRight className="w-4 h-4 text-amber-400" />
-              ) : (
-                <ChevronLeft className="w-4 h-4 text-slate-400 hover:text-amber-400" />
-              )}
-            </button>
 
             {/* Mobile Close Button */}
             <button 
@@ -215,8 +227,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             </button>
           </div>
 
-          {/* Navigation Items (Single Clean Vertical Flow, matching screenshot) */}
-          <nav className="p-2.5 space-y-1.5 font-medium overflow-y-auto max-h-[calc(100vh-300px)] scrollbar-none transition-all duration-300">
+          {/* Navigation Items (Sin barras de scroll, espacio optimizado) */}
+          <nav className="p-1.5 space-y-1 font-medium overflow-y-auto overflow-x-hidden max-h-[calc(100vh-210px)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden transition-all duration-300">
             {navItems.map((item) => {
               const isActive = activeTab === item.id;
               const IconComponent = item.icon;
@@ -230,185 +242,135 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 badgeClasses = 'bg-amber-400/20 text-amber-300 border border-amber-400/35 font-bold';
               } else if (item.badgeType === 'emerald') {
                 badgeClasses = 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/35 font-bold';
-              } else if (item.badgeType === 'yellow') {
-                badgeClasses = 'bg-amber-400 text-slate-950 font-black';
               }
 
               return (
                 <button
                   key={item.id}
                   onClick={() => {
-                    onTabChange(item.id);
+                    if (item.id === 'nexus' && onGoToCrm) {
+                      onGoToCrm();
+                    } else {
+                      onTabChange(item.id);
+                    }
                     onCloseMobile();
                   }}
-                  className={`group relative w-full flex items-center transition-all duration-200 cursor-pointer rounded-2xl ${
-                    isCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5'
+                  className={`group relative w-full flex items-center transition-all duration-200 cursor-pointer rounded-xl ${
+                    !isExpanded ? 'justify-center p-2' : 'gap-2.5 px-2.5 py-2'
                   } ${
                     isActive
-                      ? 'bg-black/50 border border-amber-400/80 text-white shadow-[0_0_20px_rgba(245,158,11,0.25)] font-semibold'
-                      : 'hover:bg-white/[0.04] border border-transparent text-slate-400 hover:text-white'
+                      ? 'bg-black/60 border border-amber-400/80 text-white shadow-[0_0_15px_rgba(245,158,11,0.2)] font-semibold'
+                      : 'hover:bg-white/[0.05] border border-transparent text-slate-400 hover:text-white'
                   }`}
                 >
                   {/* Icon */}
                   <div className={`shrink-0 transition-transform ${
-                    isActive ? 'text-amber-400 scale-110' : 'text-slate-400 group-hover:text-white group-hover:scale-105'
+                    isActive ? 'text-amber-400 scale-105' : 'text-slate-400 group-hover:text-white'
                   }`}>
                     <IconComponent className="w-4 h-4" />
                   </div>
 
-                  {/* Label & Optional Badges (Expanded) */}
-                  {!isCollapsed && (
-                    <div className="flex-1 flex items-center justify-between text-left min-w-0">
-                      <span className={`text-xs truncate tracking-wide ${isActive ? 'text-white font-bold' : 'text-slate-300 group-hover:text-white'}`}>
+                  {/* Label & Optional Badges (Shown when expanded on hover) */}
+                  {isExpanded && (
+                    <div className="flex-1 flex items-center justify-between text-left min-w-0 transition-opacity duration-200">
+                      <span className={`text-[11.5px] truncate tracking-wide ${isActive ? 'text-white font-bold' : 'text-slate-300 group-hover:text-white'}`}>
                         {label}
                       </span>
 
                       {/* Pill Badge */}
                       {item.badge && (
-                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full shadow-sm ${badgeClasses}`}>
+                        <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-full shadow-sm shrink-0 ${badgeClasses}`}>
                           {item.badge}
                         </span>
                       )}
 
                       {/* Red Dot (Calendario) */}
                       {item.hasRedDot && (
-                        <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.9)] ml-auto" />
+                        <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.9)] ml-auto shrink-0" />
                       )}
                     </div>
                   )}
 
-                  {/* Floating Tooltip when Collapsed */}
-                  {isCollapsed && (
-                    <div className="absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-[#0E1322]/98 border border-white/15 backdrop-blur-2xl text-white font-mono text-xs font-bold shadow-2xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-50 flex items-center gap-2">
-                      <span>{label}</span>
-                      {item.badge && (
-                        <span className={`text-[9px] px-1.5 rounded-full ${badgeClasses}`}>
-                          {item.badge}
-                        </span>
-                      )}
-                      {item.hasRedDot && (
-                        <span className="w-2 h-2 rounded-full bg-rose-500" />
-                      )}
-                    </div>
-                  )}
                 </button>
               );
             })}
           </nav>
         </div>
 
-        {/* Bottom Area: Pepe Avatar Pod Prominente + Cuentas Fondeadas + Plan */}
-        <div className="p-3 border-t border-white/[0.08] bg-[#06080E]/90 space-y-2.5">
+        {/* Bottom Area: Pepe Avatar (Sin contenedor) + Regalo Cuentas (Sin contenedor) + Logout */}
+        <div className="p-2 border-t border-white/[0.08] bg-[#06080E]/95 space-y-2 shrink-0">
           
           {/* ========================================================================= */}
-          {/* PEPE AVATAR POD DESTACADO (ENCIMA DEL CAPITAL TOTAL, CON TRIGGER A MODAL) */}
+          {/* 1. PEPE AVATAR: SIN CONTENEDOR (Directo, Medallón circular + Info al hover) */}
           {/* ========================================================================= */}
           {onOpenAvatarModal && (
             <div
               onClick={onOpenAvatarModal}
-              className={`rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden group ${
-                isCollapsed 
-                  ? 'p-1.5 flex justify-center bg-white/[0.03] border-white/10 hover:border-amber-400/50' 
-                  : 'p-2.5 bg-gradient-to-r from-amber-500/[0.09] via-purple-600/[0.06] to-black/60 border-amber-400/30 hover:border-amber-400/70 shadow-[0_4px_20px_rgba(245,158,11,0.15)]'
+              className={`flex items-center cursor-pointer group transition-all duration-200 ${
+                !isExpanded ? 'justify-center p-1' : 'gap-2 px-1 py-1'
               }`}
               title={isEn ? 'Change Avatar' : 'Cambiar Avatar de Pepe'}
             >
-              <div className="flex items-center gap-2.5 min-w-0">
-                {/* Glowing Pepe Circular Medallion */}
-                <div className="relative w-10 h-10 rounded-full shrink-0 p-0.5 bg-gradient-to-tr from-amber-400 via-amber-500 to-purple-500 shadow-[0_0_15px_rgba(245,158,11,0.35)] group-hover:scale-105 transition-transform">
-                  <div className="w-full h-full rounded-full overflow-hidden bg-slate-950 flex items-center justify-center">
-                    <img 
-                      src={getPepeAvatarUrl(activeAvatar)} 
-                      alt={activeAvatar.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  {/* Online Dot */}
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-950 shadow-sm" />
+              {/* Circular Medallion */}
+              <div className="relative w-8 h-8 rounded-full shrink-0 p-0.5 bg-gradient-to-tr from-amber-400 via-amber-500 to-purple-500 shadow-[0_0_12px_rgba(245,158,11,0.3)] group-hover:scale-105 transition-transform">
+                <div className="w-full h-full rounded-full overflow-hidden bg-slate-950 flex items-center justify-center">
+                  <img 
+                    src={getPepeAvatarUrl(activeAvatar)} 
+                    alt={activeAvatar.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-
-                {/* Avatar Info (Expanded) */}
-                {!isCollapsed && (
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs font-bold text-white truncate group-hover:text-amber-300 transition-colors">
-                        {userDisplayName}
-                      </div>
-                      <Sparkles className="w-3 h-3 text-amber-400 shrink-0 opacity-70 group-hover:opacity-100" />
-                    </div>
-                    <div className="text-[10px] text-amber-300/80 font-mono truncate flex items-center gap-1">
-                      <span>{activeAvatar.name}</span>
-                    </div>
-                    <div className="text-[9px] text-slate-400 font-mono flex items-center gap-1 mt-0.5">
-                      <span className="text-amber-400 hover:underline">{isEn ? 'Change Avatar →' : 'Cambiar Avatar →'}</span>
-                    </div>
-                  </div>
-                )}
+                <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-400 border border-slate-950 shadow-sm" />
               </div>
+
+              {/* Avatar Info (Sin caja contenedora, texto directo y limpio) */}
+              {isExpanded && (
+                <div className="flex-1 min-w-0 transition-opacity duration-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11.5px] font-bold text-white truncate group-hover:text-amber-300 transition-colors">
+                      {userDisplayName}
+                    </span>
+                    <Sparkles className="w-3 h-3 text-amber-400 shrink-0 opacity-70 group-hover:opacity-100" />
+                  </div>
+                  <div className="text-[9.5px] text-amber-300/80 font-mono truncate">
+                    {activeAvatar.name}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {/* CARD 1: Cuentas Fondeadas - Hasta $200k capital (matching screenshot) */}
-          {!isCollapsed ? (
-            <button
-              onClick={() => onTabChange('challenges')}
-              className="w-full p-2.5 rounded-2xl border border-white/10 bg-black/40 hover:bg-black/60 hover:border-amber-400/40 flex items-center justify-between gap-2 transition-all cursor-pointer text-left shadow-sm group"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-amber-300 shrink-0">
-                  <Gift className="w-4 h-4 text-amber-400" />
+          {/* ========================================================================= */}
+          {/* 2. ICONO DE REGALO: SIN CONTENEDOR (Link directo con icono Gift y texto)    */}
+          {/* ========================================================================= */}
+          <button
+            onClick={() => onTabChange('challenges')}
+            className={`w-full flex items-center transition-all duration-200 cursor-pointer group text-slate-400 hover:text-amber-300 ${
+              !isExpanded ? 'justify-center p-1.5' : 'gap-2 px-1.5 py-1 text-left'
+            }`}
+            title={isEn ? 'Funded Accounts (Up to $200k)' : 'Cuentas Fondeadas (Hasta $200k)'}
+          >
+            <Gift className="w-4 h-4 text-amber-400 shrink-0 group-hover:scale-110 transition-transform" />
+            
+            {isExpanded && (
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] font-medium text-slate-300 group-hover:text-amber-300 truncate transition-colors">
+                  {isEn ? 'Funded Accounts' : 'Cuentas Fondeadas'}
                 </div>
-                <div className="min-w-0">
-                  <div className="text-[11px] font-bold text-white truncate group-hover:text-amber-300 transition-colors">
-                    {isEn ? 'Funded Accounts' : 'Cuentas Fondeadas'}
-                  </div>
-                  <div className="text-[9.5px] text-slate-400 font-mono truncate">
-                    {isEn ? 'Up to $200k capital' : 'Hasta $200k capital'}
-                  </div>
+                <div className="text-[9px] text-slate-500 font-mono truncate">
+                  {isEn ? 'Up to $200k' : 'Hasta $200k'}
                 </div>
               </div>
-              <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
-          ) : (
-            <button
-              onClick={() => onTabChange('challenges')}
-              className="w-full flex items-center justify-center p-2 rounded-xl bg-white/[0.04] hover:bg-white/10 text-amber-400 border border-white/10 transition-all cursor-pointer"
-              title={isEn ? 'Funded Accounts (Up to $200k)' : 'Cuentas Fondeadas (Hasta $200k)'}
-            >
-              <Gift className="w-4 h-4 text-amber-400" />
-            </button>
-          )}
+            )}
+          </button>
 
-          {/* CARD 2: Plan Actual Solar 2/3 (matching screenshot) */}
-          {!isCollapsed ? (
-            <div className="p-2.5 rounded-2xl border border-white/8 bg-black/30 space-y-1.5">
-              <div className="flex items-center justify-between font-mono text-[10px]">
-                <span className="text-slate-400">{isEn ? 'Current Plan' : 'Plan Actual'}</span>
-                <span className="text-amber-400 font-bold">2/3</span>
-              </div>
-              <div className="flex items-center justify-between font-mono">
-                <span className="text-xs font-bold text-white">Solar</span>
-                <span className="text-[10px] text-slate-400">${totalCapital.toLocaleString()}</span>
-              </div>
-              <div className="w-full h-1.5 rounded-full bg-slate-900 border border-white/5 overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full w-2/3 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-              </div>
-            </div>
-          ) : (
-            <div className="p-1 rounded-xl bg-black/30 border border-white/5 text-center">
-              <span className="text-[9px] font-mono font-bold text-amber-400">2/3</span>
-            </div>
-          )}
-
-          {/* Footer Controls: Logout & Collapse */}
-          <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 pt-1 px-1">
-            <button
-              onClick={onToggleCollapse}
-              className="hidden lg:flex items-center gap-1 text-slate-400 hover:text-amber-300 transition-colors cursor-pointer"
-            >
-              {isCollapsed ? <ChevronRight className="w-3 h-3 text-amber-400" /> : <ChevronLeft className="w-3 h-3" />}
-              {!isCollapsed && <span>{isEn ? 'Collapse' : 'Plegar'}</span>}
-            </button>
+          {/* ========================================================================= */}
+          {/* 3. LOGOUT & VERSIÓN                                                       */}
+          {/* ========================================================================= */}
+          <div className="flex items-center justify-between text-[9.5px] font-mono text-slate-500 pt-1 px-1 border-t border-white/[0.05]">
+            <span className="text-[9px] text-slate-600">
+              {isExpanded ? 'v2.4' : ''}
+            </span>
 
             <button
               onClick={onLogout}
@@ -416,7 +378,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               title={isEn ? 'Logout' : 'Cerrar Sesión'}
             >
               <LogOut className="w-3 h-3" />
-              {!isCollapsed && <span>{isEn ? 'Exit' : 'Salir'}</span>}
+              {isExpanded && <span>{isEn ? 'Exit' : 'Salir'}</span>}
             </button>
           </div>
 
