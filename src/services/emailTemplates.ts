@@ -5,7 +5,7 @@
  */
 
 export interface RenderTemplateOptions {
-  templateName: 'new-account' | 'welcome' | 'account-breached' | 'account-paused' | 'account-reseted' | 'password-reset';
+  templateName: 'new-account' | 'welcome' | 'account-breached' | 'account-paused' | 'account-reseted' | 'password-reset' | 'payout-requested' | 'payout-approved' | 'payout-rejected';
   lang?: 'es' | 'en';
   data: Record<string, any>;
 }

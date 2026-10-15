@@ -22,6 +22,11 @@
 
 import { supabase } from '../../lib/supabase';
 import { PayoutRequestEntity, PayoutTierStep } from '../../modules/crm/types/crm.types';
+import { 
+  sendPayoutRequestedEmail, 
+  sendPayoutApprovedEmail, 
+  sendPayoutRejectedEmail 
+} from '../../services/emailService';
 
 export interface PayoutAccountContext {
   id: string;
@@ -398,6 +403,22 @@ export class PayoutEngine {
       localStorage.setItem('eklipse_payout_requests', JSON.stringify([payoutPayload, ...list]));
     } catch (_) {}
 
+    // 5. Despacho asíncrono de notificación de solicitud por correo
+    try {
+      if (account.traderEmail) {
+        sendPayoutRequestedEmail({
+          toEmail: account.traderEmail,
+          traderName: account.traderEmail.split('@')[0],
+          accountNumber: account.accountNumber,
+          requestedAmount: payoutPayload.amount.toFixed(2),
+          profitSplitPct: payoutPayload.profit_split_percent,
+          netAmount: payoutPayload.net_payout_amount.toFixed(2),
+          cryptoNetwork: payoutPayload.crypto_network,
+          walletAddress: payoutPayload.destination_address,
+        }).catch(e => console.warn('[PayoutEngine] Error despachando email de solicitud:', e.message));
+      }
+    } catch (_) {}
+
     return {
       success: true,
       payout: payoutPayload,
@@ -465,6 +486,30 @@ export class PayoutEngine {
         }
       } catch (_) {}
 
+      // 3. Despacho asíncrono de correo de confirmación de liquidación
+      try {
+        const { data: payoutItem } = await supabase
+          .from('payout_requests')
+          .select('*')
+          .eq('id', payoutId)
+          .single();
+
+        const destEmail = payoutItem?.trader_email;
+        if (destEmail) {
+          sendPayoutApprovedEmail({
+            toEmail: destEmail,
+            traderName: destEmail.split('@')[0],
+            accountNumber: accountId.slice(0, 8),
+            netAmount: (payoutItem.net_payout_amount || Number(amount)).toFixed(2),
+            payoutTier: payoutItem.payout_number || 1,
+            profitSplitPct: payoutItem.profit_split_percent || 80,
+            cryptoNetwork: payoutItem.crypto_network || 'TRC20',
+            walletAddress: payoutItem.destination_address || 'Billetera Registrada',
+            txHash: txHash || 'Emitido vía liquidación institucional'
+          }).catch(e => console.warn('[PayoutEngine] Error despachando email de aprobación:', e.message));
+        }
+      } catch (_) {}
+
       return { success: true };
     } catch (err: any) {
       console.error('[PayoutEngine] Error procesando aprobación de pago:', err);
@@ -501,6 +546,26 @@ export class PayoutEngine {
           const list: PayoutRequestEntity[] = JSON.parse(local);
           const updated = list.map(p => p.id === payoutId ? { ...p, ...updatePayload } : p);
           localStorage.setItem('eklipse_payout_requests', JSON.stringify(updated));
+        }
+      } catch (_) {}
+
+      // Despacho asíncrono de correo de auditoría / rechazo
+      try {
+        const { data: payoutItem } = await supabase
+          .from('payout_requests')
+          .select('*')
+          .eq('id', payoutId)
+          .single();
+
+        const destEmail = payoutItem?.trader_email;
+        if (destEmail) {
+          sendPayoutRejectedEmail({
+            toEmail: destEmail,
+            traderName: destEmail.split('@')[0],
+            accountNumber: payoutItem.account_id ? payoutItem.account_id.slice(0, 8) : 'EKL',
+            requestedAmount: (payoutItem.amount || 0).toFixed(2),
+            rejectionReason: rejectionReason
+          }).catch(e => console.warn('[PayoutEngine] Error despachando email de rechazo:', e.message));
         }
       } catch (_) {}
 

@@ -12,6 +12,7 @@ import { handleReseted } from './handlers/resetedHandler';
 import { handlePasswordReset } from './handlers/passwordResetHandler';
 import { handleNeedSupport } from './handlers/needSupportHandler';
 import { handlePassed } from './handlers/passedHandler';
+import { handlePayoutRequested, handlePayoutApproved, handlePayoutRejected } from './handlers/payoutHandler';
 
 const PORT = process.env.PORT || 3005;
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
@@ -44,6 +45,16 @@ async function routeEmailEvent(type: string, data: any) {
     case 'CHALLENGE_PASSED':
     case 'PASSED':
       return await handlePassed(data);
+    case 'PAYOUT_REQUESTED':
+    case 'PAYOUT_SUBMITTED':
+      return await handlePayoutRequested(data);
+    case 'PAYOUT_APPROVED':
+    case 'PAYOUT_PAID':
+    case 'PAYOUT_SETTLED':
+      return await handlePayoutApproved(data);
+    case 'PAYOUT_REJECTED':
+    case 'PAYOUT_DENIED':
+      return await handlePayoutRejected(data);
     case 'NEED_SUPPORT':
     case 'SUPPORT_REPLY':
       return await handleNeedSupport(data);

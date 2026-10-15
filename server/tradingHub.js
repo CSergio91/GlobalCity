@@ -773,115 +773,45 @@ const server = http.createServer((req, res) => {
                            linkData?.user?.user_metadata?.full_name || 
                            cleanEmail.split('@')[0];
 
-        // 2. Renderizar plantilla de Resend con banner oficial de Cloudflare
-        const bannerUrl = 'https://assets.eklipsefunded.com/emails/change-password.webp';
-        const emailSubject = isEn 
-          ? 'Reset Your Password · Eklipse Funded Security 🔒' 
-          : 'Restablecer Tu Contraseña · Seguridad Eklipse 🔒';
+        // 2. Despachar a través del microservicio de correos (Redis Pub/Sub con fallback HTTP)
+        const emailPayload = {
+          toEmail: cleanEmail,
+          traderName,
+          resetUrl: actionLink,
+          lang: isEn ? 'en' : 'es'
+        };
 
-        const emailHtml = `<!DOCTYPE html>
-<html lang="${isEn ? 'en' : 'es'}">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${emailSubject}</title>
-</head>
-<body style="margin: 0; padding: 24px 12px; background-color: #06070B; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0F172A;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #06070B;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #FFFFFF; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);">
-          <tr>
-            <td style="padding: 0; background-color: #090A10; text-align: center;">
-              <img src="${bannerUrl}" alt="Eklipse Funded Password Recovery" width="600" style="width: 100%; max-width: 600px; height: auto; display: block; border: 0;" />
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 32px 32px 14px 32px;">
-              <div style="display: inline-block; padding: 4px 12px; background-color: #FEF3C7; border: 1px solid #FDE68A; border-radius: 8px; margin-bottom: 14px;">
-                <span style="color: #B45309; font-size: 11px; font-weight: 800; font-family: monospace; letter-spacing: 0.5px; text-transform: uppercase;">
-                  🔒 ${isEn ? 'ACCOUNT SECURITY' : 'SEGURIDAD DE LA CUENTA'}
-                </span>
-              </div>
-              <h1 style="margin: 0 0 14px 0; font-size: 22px; font-weight: 800; color: #0F172A; line-height: 1.3;">
-                ${isEn ? 'Forgot your password? We got you.' : '¿Olvidaste tu contraseña? Te ayudamos.'}
-              </h1>
-              <p style="margin: 0 0 16px 0; color: #475569; font-size: 14px; line-height: 23px;">
-                ${isEn 
-                  ? `Hello, <strong>${traderName}</strong>. We received a request to reset the password for your institutional account.` 
-                  : `Hola, <strong>${traderName}</strong>. No te preocupes, a todos nos pasa. Hemos recibido una solicitud para restablecer la contraseña vinculada a tu cuenta institucional.`}
-              </p>
-              <p style="margin: 0 0 24px 0; color: #475569; font-size: 14px; line-height: 23px;">
-                ${isEn 
-                  ? 'To choose a new password and recover access to your portal, click the secure link below:' 
-                  : 'Para elegir una nueva contraseña y recuperar el acceso a tu portal, pulsa en el siguiente botón seguro:'}
-              </p>
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 8px 0 24px 0;">
-                <tr>
-                  <td align="center">
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                      <tr>
-                        <td align="center" style="border-radius: 14px; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); box-shadow: 0 6px 20px rgba(217, 119, 6, 0.35);">
-                          <a href="${actionLink}" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 14px; font-weight: 800; color: #0F172A; text-decoration: none; font-family: monospace; letter-spacing: 0.5px; text-transform: uppercase;">
-                            ${isEn ? 'RESET PASSWORD &rarr;' : 'RESTABLECER CONTRASEÑA &rarr;'}
-                          </a>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-              <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; margin: 24px 0;">
-                <p style="margin: 0; color: #64748B; font-size: 12px; line-height: 18px;">
-                  ⚠️ ${isEn 
-                    ? 'This link expires in 60 minutes. If you did not request this, please ignore this email.' 
-                    : 'Este enlace expira en 60 minutos. Si no realizaste esta solicitud, puedes ignorar este mensaje con seguridad.'}
-                </p>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 24px 32px; background-color: #090A10; border-top: 1px solid #1E293B; text-align: center;">
-              <p style="margin: 0 0 8px 0; color: #94A3B8; font-size: 12px; font-family: monospace;">
-                EKLIPSE FUNDED &bull; INSTITUTIONAL TRADING PLATFORM
-              </p>
-              <p style="margin: 0; color: #64748B; font-size: 11px;">
-                &copy; ${new Date().getFullYear()} Eklipse Funded. All rights reserved.
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+        let emailDispatched = false;
+        if (isRedisActive && redisPub) {
+          try {
+            await redisPub.publish('eklipse:email:events', JSON.stringify({
+              type: 'PASSWORD_RESET',
+              data: emailPayload
+            }));
+            emailDispatched = true;
+          } catch (rErr) {
+            console.warn('[TradingHub] Error publicando PASSWORD_RESET en Redis:', rErr.message);
+          }
+        }
 
-        // 3. Despachar a Resend API usando la clave activa de entorno
-        const resendKey = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY || '';
-        const senderFrom = process.env.RESEND_FROM_EMAIL || 'Eklipse Funded <soporte@eklipsefunded.com>';
-
-        const resendResponse = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${resendKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            from: senderFrom,
-            to: [cleanEmail],
-            subject: emailSubject,
-            html: emailHtml
-          })
-        });
-
-        const resendData = await resendResponse.json();
-        console.log(`[TradingHub] Correo de recuperación enviado vía Resend a ${cleanEmail}:`, resendData?.id || resendData);
+        if (!emailDispatched) {
+          const emailServiceUrl = process.env.EMAIL_SERVICE_URL || 'http://127.0.0.1:3005/send';
+          try {
+            const esRes = await fetch(emailServiceUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ type: 'PASSWORD_RESET', data: emailPayload })
+            });
+            emailDispatched = esRes.ok;
+          } catch (httpErr) {
+            console.warn('[TradingHub] email-service fallback no disponible en ' + emailServiceUrl + ':', httpErr.message);
+          }
+        }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ 
           success: true, 
-          messageId: resendData?.id, 
+          queued: emailDispatched, 
           email: cleanEmail 
         }));
 
@@ -967,6 +897,7 @@ const server = http.createServer((req, res) => {
   }
 
   // Endpoint de despacho de correos institucionales vía Redis Pub/Sub y Email Microservice
+  // Endpoint de despacho de correos institucionales: Gateway limpio hacia Redis Pub/Sub y Email Microservice
   if (url.pathname === '/api/email/dispatch' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
@@ -979,152 +910,35 @@ const server = http.createServer((req, res) => {
           return res.end(JSON.stringify({ success: false, error: 'type and data are required' }));
         }
 
-        // 1. Publicar en Redis para telemetría y desacoplamiento
+        let queued = false;
+
+        // 1. Desacoplamiento total: Publicar en Redis Pub/Sub para que el microservicio email-service procese
         if (isRedisActive && redisPub) {
           try {
             await redisPub.publish('eklipse:email:events', JSON.stringify({ type, data }));
+            queued = true;
           } catch (rErr) {
             console.warn('[TradingHub] Error publicando evento de correo en Redis:', rErr.message);
           }
         }
 
-        // 2. Despacho directo vía Resend API con plantilla oficial
-        try {
-          const resendKey = process.env.RESEND_API_KEY;
-          if (!resendKey) {
-            console.warn('[TradingHub] RESEND_API_KEY no configurada');
-            return;
-          }
-          const lang = (data.lang || 'es').toLowerCase();
-          const upperType = type.toUpperCase();
-
-          let templateName = 'new-account';
-          let subject = '';
-
-          switch (upperType) {
-            case 'WELCOME':
-              templateName = 'welcome';
-              subject = lang === 'en' ? 'Welcome to Eklipse Funded! ✨' : '¡Bienvenido a Eklipse Funded! ✨';
-              break;
-
-            case 'NEW_ACCOUNT':
-            case 'NEW_ACCOUNT_PURCHASED':
-            case 'WELCOME_CHALLENGE':
-              templateName = 'new-account';
-              subject = lang === 'en'
-                ? `New Account Activated! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`
-                : `¡Nueva Cuenta Activada! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`;
-              break;
-
-            case 'ACCOUNT_RESETED':
-            case 'RESET':
-              templateName = 'account-reseted';
-              subject = lang === 'en'
-                ? `Account #${data.accountNumber || 'EKL'} Successfully Reset! 🔄`
-                : `¡Tu Cuenta #${data.accountNumber || 'EKL'} Ha Sido Reseteada! 🔄`;
-              break;
-
-            case 'ACCOUNT_BREACHED':
-            case 'BREACH':
-              templateName = 'account-breached';
-              subject = lang === 'en'
-                ? `Risk Desk Notice: Account #${data.accountNumber || 'EKL'} Limit Reached 🛑`
-                : `Aviso de Gestión de Riesgo: Cuenta #${data.accountNumber || 'EKL'} Límite Alcanzado 🛑`;
-              break;
-
-            case 'ACCOUNT_PAUSED':
-            case 'PAUSE':
-              templateName = 'account-paused';
-              subject = lang === 'en'
-                ? `Operational Notice: Account #${data.accountNumber || 'EKL'} Temporarily Paused ⏸️`
-                : `Aviso Operativo: Cuenta #${data.accountNumber || 'EKL'} Temporalmente Pausada ⏸️`;
-              break;
-
-            case 'ACCOUNT_PASSED':
-            case 'CHALLENGE_PASSED':
-            case 'PASSED':
-              templateName = 'account-passed';
-              subject = lang === 'en'
-                ? `Target Reached! Challenge Passed #${data.accountNumber || 'EKL'} 🏆`
-                : `¡Meta Alcanzada! Reto Superado #${data.accountNumber || 'EKL'} 🏆`;
-              break;
-
-            case 'PASSWORD_RESET':
-              templateName = 'password-reset';
-              subject = lang === 'en'
-                ? 'Security Alert: Password Reset Request 🔐'
-                : 'Alerta de Seguridad: Solicitud de Restablecimiento de Contraseña 🔐';
-              break;
-
-            case 'NEED_SUPPORT':
-            case 'SUPPORT_REPLY':
-              templateName = 'need-support';
-              subject = lang === 'en'
-                ? `Institutional Support: Ticket #${data.ticketId || 'EKL'} Received 💬`
-                : `Soporte Institucional: Caso #${data.ticketId || 'EKL'} Recibido 💬`;
-              break;
-
-            default:
-              templateName = 'new-account';
-              subject = lang === 'en'
-                ? `Eklipse Funded Notification #${data.accountNumber || 'EKL'}`
-                : `Notificación Eklipse Funded #${data.accountNumber || 'EKL'}`;
-              break;
-          }
-
-          let templateHtml = '';
-          const candidatePaths = [
-            path.join(process.cwd(), 'email-service', 'src', 'templates', lang, `${templateName}.html`),
-            path.join(process.cwd(), 'email-service', 'dist', 'templates', lang, `${templateName}.html`),
-            path.join(process.cwd(), 'src', 'templates', lang, `${templateName}.html`)
-          ];
-          for (const p of candidatePaths) {
-            if (fs.existsSync(p)) {
-              templateHtml = fs.readFileSync(p, 'utf8');
-              break;
-            }
-          }
-
-          if (templateHtml && data.toEmail) {
-            const mergedData = {
-              telegramBotUrl: 'https://t.me/EklipseFunded_bot',
-              dashboardUrl: data.dashboardUrl || 'https://dashapp.eklipsefunded.com',
-              traderName: data.traderName || 'Trader',
-              nextStage: data.nextStage || (lang === 'en' ? 'Phase 2 / Funded Account' : 'Fase 2 / Cuenta Fondeada'),
-              ...data
-            };
-
-            let rendered = templateHtml;
-            for (const [key, val] of Object.entries(mergedData)) {
-              const safeVal = val !== undefined && val !== null ? String(val) : '';
-              const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
-              rendered = rendered.replace(regex, safeVal);
-            }
-
-            fetch('https://api.resend.com/emails', {
+        // 2. Si Redis no está activo o falló, reenviar vía HTTP al microservicio email-service
+        if (!queued) {
+          const emailServiceUrl = process.env.EMAIL_SERVICE_URL || 'http://127.0.0.1:3005/send';
+          try {
+            const esRes = await fetch(emailServiceUrl, {
               method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${resendKey}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                from: process.env.RESEND_FROM_EMAIL || 'Eklipse Funded <soporte@eklipsefunded.com>',
-                to: data.toEmail,
-                subject,
-                html: rendered
-              })
-            }).then(r => r.json()).then(resData => {
-              console.log(`[TradingHub] Correo ${templateName} enviado exitosamente a ${data.toEmail} vía Resend [ID: ${resData?.id}]`);
-            }).catch(rErr => {
-              console.warn('[TradingHub] Advertencia enviando correo por Resend:', rErr.message);
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ type, data })
             });
+            queued = esRes.ok;
+          } catch (httpErr) {
+            console.warn('[TradingHub] email-service HTTP fallback no disponible en ' + emailServiceUrl + ':', httpErr.message);
           }
-        } catch (resendErr) {
-          console.warn('[TradingHub] Error preparando despacho Resend:', resendErr.message);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ success: true, queued: true, timestamp: Date.now() }));
+        return res.end(JSON.stringify({ success: true, queued, timestamp: Date.now() }));
       } catch (err) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ success: false, error: err.message }));

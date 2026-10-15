@@ -75,6 +75,43 @@ export interface SupportReplyPayload {
   lang?: 'es' | 'en';
 }
 
+export interface PayoutRequestedPayload {
+  toEmail: string;
+  traderName?: string;
+  accountNumber: string;
+  requestedAmount: string | number;
+  profitSplitPct: string | number;
+  netAmount: string | number;
+  cryptoNetwork: string;
+  walletAddress: string;
+  dashboardUrl?: string;
+  lang?: 'es' | 'en';
+}
+
+export interface PayoutApprovedPayload {
+  toEmail: string;
+  traderName?: string;
+  accountNumber: string;
+  netAmount: string | number;
+  payoutTier: string | number;
+  profitSplitPct: string | number;
+  cryptoNetwork: string;
+  walletAddress: string;
+  txHash?: string;
+  dashboardUrl?: string;
+  lang?: 'es' | 'en';
+}
+
+export interface PayoutRejectedPayload {
+  toEmail: string;
+  traderName?: string;
+  accountNumber: string;
+  requestedAmount: string | number;
+  rejectionReason: string;
+  dashboardUrl?: string;
+  lang?: 'es' | 'en';
+}
+
 import { renderEmailHtml } from './emailTemplates';
 
 /**
@@ -114,7 +151,34 @@ async function dispatchEmailEvent(type: string, data: Record<string, any>): Prom
       console.warn('[EmailService] VITE_RESEND_API_KEY no encontrada en entorno');
       return { success: false, error: 'No Resend API Key configured' };
     }
-    const templateName = type.toUpperCase() === 'WELCOME' ? 'welcome' : 'new-account';
+    const upperType = type.toUpperCase();
+    let templateName: any = 'new-account';
+    let subject = '';
+
+    if (upperType === 'WELCOME') {
+      templateName = 'welcome';
+      subject = lang === 'en' ? 'Welcome to Eklipse Funded! ✨' : '¡Bienvenido a Eklipse Funded! ✨';
+    } else if (upperType.includes('PAYOUT_REQ') || upperType === 'PAYOUT_REQUESTED') {
+      templateName = 'payout-requested';
+      subject = lang === 'en'
+        ? `Payout Request Received: Account #${data.accountNumber || 'EKL'} ⏳`
+        : `Solicitud de Retiro Recibida: Cuenta #${data.accountNumber || 'EKL'} ⏳`;
+    } else if (upperType.includes('PAYOUT_APP') || upperType.includes('PAYOUT_PAID') || upperType === 'PAYOUT_APPROVED') {
+      templateName = 'payout-approved';
+      subject = lang === 'en'
+        ? `Payout Settled! Funds Sent #${data.accountNumber || 'EKL'} (${data.netAmount || ''} USDT) 💰`
+        : `¡Retiro Liquidado! Fondos Enviados #${data.accountNumber || 'EKL'} (${data.netAmount || ''} USDT) 💰`;
+    } else if (upperType.includes('PAYOUT_REJ') || upperType === 'PAYOUT_REJECTED') {
+      templateName = 'payout-rejected';
+      subject = lang === 'en'
+        ? `Payout Audit Notice: Account #${data.accountNumber || 'EKL'} ⚠️`
+        : `Aviso de Auditoría de Retiro: Cuenta #${data.accountNumber || 'EKL'} ⚠️`;
+    } else {
+      templateName = 'new-account';
+      subject = lang === 'en'
+        ? `New Account Activated! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`
+        : `¡Nueva Cuenta Activada! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`;
+    }
     
     const html = renderEmailHtml({
       templateName,
@@ -125,14 +189,6 @@ async function dispatchEmailEvent(type: string, data: Record<string, any>): Prom
         dashboardUrl: data.dashboardUrl || 'https://dashapp.eklipsefunded.com',
       }
     });
-
-    const subject = lang === 'en'
-      ? (templateName === 'welcome' 
-          ? 'Welcome to Eklipse Funded! ✨' 
-          : `New Account Activated! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`)
-      : (templateName === 'welcome' 
-          ? '¡Bienvenido a Eklipse Funded! ✨' 
-          : `¡Nueva Cuenta Activada! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`);
 
     const resendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -210,4 +266,16 @@ export async function sendPasswordResetEmail(payload: PasswordResetPayload) {
 
 export async function sendSupportReplyEmail(payload: SupportReplyPayload) {
   return dispatchEmailEvent('NEED_SUPPORT', payload);
+}
+
+export async function sendPayoutRequestedEmail(payload: PayoutRequestedPayload) {
+  return dispatchEmailEvent('PAYOUT_REQUESTED', payload);
+}
+
+export async function sendPayoutApprovedEmail(payload: PayoutApprovedPayload) {
+  return dispatchEmailEvent('PAYOUT_APPROVED', payload);
+}
+
+export async function sendPayoutRejectedEmail(payload: PayoutRejectedPayload) {
+  return dispatchEmailEvent('PAYOUT_REJECTED', payload);
 }
