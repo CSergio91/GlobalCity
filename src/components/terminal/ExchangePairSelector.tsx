@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check, Activity, Layers } from 'lucide-react';
+import { ChevronDown, Check, Activity, Layers, Search, X } from 'lucide-react';
 import { ExchangeIcon, ExchangeId } from './ExchangeIcon';
 import { MarketType, AdapterConnectionStatus, MarketStats } from '../../core/market-feed/types';
 
@@ -43,7 +43,9 @@ export const ExchangePairSelector: React.FC<ExchangePairSelectorProps> = ({
   onSelectPair
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [pairSearchQuery, setPairSearchQuery] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Cerrar al hacer clic fuera
   useEffect(() => {
@@ -237,39 +239,81 @@ export const ExchangePairSelector: React.FC<ExchangePairSelectorProps> = ({
             </div>
           </div>
 
-          {/* SECCIÓN 3: LISTA DE PARES */}
+          {/* SECCIÓN 3: LISTA DE PARES CON BÚSQUEDA DINÁMICA */}
           <div className="pt-2 border-t border-slate-100">
             <div className="flex items-center justify-between mb-1.5 px-1">
               <span className="text-[10px] font-mono uppercase font-bold text-slate-400 tracking-wider">
                 {isEs ? 'Pares Disponibles' : 'Trading Pairs'}
               </span>
+              <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200/70 px-1.5 py-0.5 rounded-full">
+                {supportedPairs.length < 50
+                  ? (isEs ? `${supportedPairs.length} autorizados` : `${supportedPairs.length} allowed`)
+                  : `${supportedPairs.length} ${isEs ? 'pares' : 'pairs'}`}
+              </span>
             </div>
 
-            <div className="space-y-1 max-h-48 overflow-y-auto pr-0.5">
-              {supportedPairs.map((p) => {
-                const isSelected = selectedPair === p;
-                return (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => {
-                      onSelectPair(p);
-                      setIsOpen(false);
-                    }}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs transition-colors cursor-pointer ${
-                      isSelected
-                        ? 'bg-amber-500 text-white font-bold shadow-xs'
-                        : 'hover:bg-amber-50/80 text-slate-800'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      <span className="font-mono">{p}</span>
+            {/* Input de búsqueda rápida de pares */}
+            <div className="relative mb-2">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={pairSearchQuery}
+                onChange={(e) => setPairSearchQuery(e.target.value)}
+                placeholder={isEs ? 'Buscar par (ej: BTC, PEPE, SOL)...' : 'Search pair (e.g. BTC, PEPE)...'}
+                className="w-full pl-8 pr-7 py-1 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 font-mono font-bold placeholder:text-slate-400 focus:outline-hidden focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 transition-all"
+              />
+              {pairSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setPairSearchQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-1 max-h-52 overflow-y-auto pr-0.5 custom-scrollbar">
+              {(() => {
+                const q = pairSearchQuery.trim().toUpperCase();
+                const filtered = q
+                  ? supportedPairs.filter(p => p.toUpperCase().includes(q) || p.replace('/', '').toUpperCase().includes(q))
+                  : supportedPairs;
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="text-center py-4 text-slate-400 text-xs">
+                      {isEs ? 'No se encontraron pares' : 'No pairs found'}
                     </div>
-                    {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
-                  </button>
-                );
-              })}
+                  );
+                }
+
+                return filtered.map((p) => {
+                  const isSelected = selectedPair === p;
+                  return (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => {
+                        onSelectPair(p);
+                        setIsOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs transition-colors cursor-pointer ${
+                        isSelected
+                          ? 'bg-amber-500 text-white font-bold shadow-xs'
+                          : 'hover:bg-amber-50/80 text-slate-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-emerald-400'}`} />
+                        <span className="font-mono font-bold">{p}</span>
+                      </div>
+                      {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                    </button>
+                  );
+                });
+              })()}
             </div>
           </div>
         </div>

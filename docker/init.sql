@@ -505,5 +505,37 @@ GRANT ALL PRIVILEGES ON TABLE public.challenge_categories TO anon, authenticated
 
 ALTER TABLE public.risk_rule_configs ADD COLUMN IF NOT EXISTS payout_scale JSONB;
 ALTER TABLE public.risk_rule_configs ADD COLUMN IF NOT EXISTS min_trade_duration_enabled BOOLEAN DEFAULT true;
+ALTER TABLE public.risk_rule_configs ADD COLUMN IF NOT EXISTS payout_split_mode VARCHAR(20) DEFAULT 'FIXED';
+ALTER TABLE public.risk_rule_configs ADD COLUMN IF NOT EXISTS allowed_symbols JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.risk_rule_configs ADD COLUMN IF NOT EXISTS funded_profit_split_percent NUMERIC(5, 2) DEFAULT 80.00;
+ALTER TABLE public.risk_rule_configs ADD COLUMN IF NOT EXISTS funded_max_daily_loss_percent NUMERIC(5, 2) DEFAULT 5.00;
+ALTER TABLE public.risk_rule_configs ADD COLUMN IF NOT EXISTS funded_max_total_loss_percent NUMERIC(5, 2) DEFAULT 10.00;
+ALTER TABLE public.risk_rule_configs ADD COLUMN IF NOT EXISTS first_payout_days INT DEFAULT 14;
+ALTER TABLE public.risk_rule_configs ADD COLUMN IF NOT EXISTS payout_frequency_days INT DEFAULT 14;
 ALTER TABLE public.payout_requests ADD COLUMN IF NOT EXISTS payout_number INT DEFAULT 1;
+
+-- ============================================================================
+-- CATÁLOGO DE ACTIVOS Y PARES CRIPTO (BINANCE FUTURES) — ZERO HARDCODE
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.market_symbols (
+  symbol VARCHAR(30) PRIMARY KEY,
+  display_name VARCHAR(30) NOT NULL,
+  base_asset VARCHAR(20) NOT NULL,
+  quote_asset VARCHAR(10) NOT NULL DEFAULT 'USDT',
+  category VARCHAR(30) NOT NULL DEFAULT 'OTHERS',
+  status VARCHAR(20) NOT NULL DEFAULT 'TRADING',
+  is_enabled BOOLEAN NOT NULL DEFAULT true,
+  min_qty NUMERIC(20, 8),
+  tick_size NUMERIC(20, 8),
+  source VARCHAR(30) NOT NULL DEFAULT 'BINANCE_FUTURES',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_market_symbols_category ON public.market_symbols(category);
+CREATE INDEX IF NOT EXISTS idx_market_symbols_status ON public.market_symbols(status);
+CREATE INDEX IF NOT EXISTS idx_market_symbols_enabled ON public.market_symbols(is_enabled);
+
+GRANT ALL PRIVILEGES ON TABLE public.market_symbols TO anon, authenticated, service_role;
+
 

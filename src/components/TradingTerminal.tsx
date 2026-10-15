@@ -46,6 +46,7 @@ import { ChartContextMenu } from './terminal/ChartContextMenu';
 import { MobileRadialDrawingDial } from './terminal/MobileRadialDrawingDial';
 import { registerCustomChartOverlays } from './terminal/drawingTools';
 import { ChartTimezoneSelector } from './terminal/ChartTimezoneSelector';
+import { marketSymbolsService, CryptoSymbolInfo } from '../services/marketSymbolsService';
 
 interface TradingTerminalProps {
   currentLang: Language;
@@ -58,7 +59,7 @@ interface TradingTerminalProps {
   onPairChange?: (pair: string) => void;
 }
 
-const SUPPORTED_PAIRS = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'BNB/USDT', 'XRP/USDT'];
+const DEFAULT_FALLBACK_PAIRS = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'BNB/USDT', 'XRP/USDT', 'DOGE/USDT'];
 
 // Generador de ID robusto compatible con HTTP en móviles y túneles locales
 const generateId = (): string => {
@@ -122,19 +123,36 @@ export const TradingTerminal: React.FC<TradingTerminalProps> = ({
   onPairChange
 }) => {
   const isEs = currentLang === 'es';
-  const normalizePair = (sym?: string): string => {
-    if (!sym) return 'BTC/USDT';
+
+  // 0. Catálogo Dinámico de Activos y Pares de Binance Futures
+  const [catalogSymbols, setCatalogSymbols] = useState<CryptoSymbolInfo[]>([]);
+  const [supportedPairs, setSupportedPairs] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('eklipse_binance_symbols_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((s: any) => s.displayName || `${s.baseAsset}/${s.quoteAsset}`);
+        }
+      }
+    } catch {}
+    return DEFAULT_FALLBACK_PAIRS;
+  });
+
+  const normalizePair = useCallback((sym?: string): string => {
+    if (!sym) return supportedPairs[0] || 'BTC/USDT';
     const clean = sym.replace('/', '').toUpperCase();
-    const found = SUPPORTED_PAIRS.find(p => p.replace('/', '').toUpperCase() === clean);
-    return found || 'BTC/USDT';
-  };
+    const found = supportedPairs.find(p => p.replace('/', '').toUpperCase() === clean);
+    if (found) return found;
+    return marketSymbolsService.toDisplayName(sym);
+  }, [supportedPairs]);
 
   const [selectedPair, setSelectedPair] = useState(() => {
     try {
       const saved = localStorage.getItem('zyti_selected_pair');
-      if (saved) return normalizePair(saved);
+      if (saved) return marketSymbolsService.toDisplayName(saved);
     } catch {}
-    return normalizePair(initialSymbol);
+    return initialSymbol ? marketSymbolsService.toDisplayName(initialSymbol) : 'BTC/USDT';
   });
   const selectedPairRef = useRef<string>(selectedPair);
   selectedPairRef.current = selectedPair;
@@ -2321,6 +2339,39 @@ const parseTradeTimestamp = (d?: string | number | null): number | null => {
     }
   }, [user?.id]);
 
+  // Cargar catálogo de Binance Futures desde marketSymbolsService (0ms desde caché local o Supabase)
+  useEffect(() => {
+    marketSymbolsService.getAvailableSymbols().then((syms) => {
+      if (syms && syms.length > 0) {
+        setCatalogSymbols(syms);
+      }
+    }).catch(() => {});
+  }, []);
+
+  // Sincronizar pares soportados según las reglas del desafío de la cuenta activa
+  useEffect(() => {
+    const activeAcc = traderAccounts.find((a) => a.id === activeAccountId) || user?.accounts?.find((a) => a.id === activeAccountId);
+    const rc = activeAcc?.rulesConfig as any;
+    const allowed = rc?.allowed_symbols || rc?.allowedSymbols;
+
+    let computedPairs: string[] = [];
+
+    if (Array.isArray(allowed) && allowed.length > 0 && !allowed.includes('ALL')) {
+      computedPairs = allowed.map((sym: string) => marketSymbolsService.toDisplayName(sym));
+    } else if (catalogSymbols.length > 0) {
+      computedPairs = catalogSymbols.map((s) => s.displayName);
+    } else {
+      computedPairs = DEFAULT_FALLBACK_PAIRS;
+    }
+
+    setSupportedPairs(computedPairs);
+
+    // Si el par actualmente activo no pertenece a los pares permitidos del reto, cambiar automáticamente al primero
+    if (computedPairs.length > 0 && !computedPairs.includes(selectedPairRef.current)) {
+      handleSelectPair(computedPairs[0]);
+    }
+  }, [activeAccountId, traderAccounts, catalogSymbols, user?.accounts]);
+
   // ── Pestaña del navegador: precio en vivo en tiempo real vía WebSocket (sin conexiones adicionales, reusando el feed del chart)
   useEffect(() => {
     if (typeof document !== 'undefined' && stats.lastPrice > 0) {
@@ -2803,7 +2854,8 @@ const parseTradeTimestamp = (d?: string | number | null): number | null => {
           minDailyProfitType: rc.minDailyProfitType || rc.min_daily_profit_type || 'PERCENT',
           minDailyProfitValue: Number(rc.minDailyProfitValue ?? rc.min_daily_profit_value ?? 0.5),
           profitSplitPercent: Number(rc.profitSplitPercent ?? rc.profit_split_percent ?? 80),
-          inactivityDaysLimit: Number(rc.inactivityDaysLimit ?? rc.inactivity_days_limit ?? 30)
+          inactivityDaysLimit: Number(rc.inactivityDaysLimit ?? rc.inactivity_days_limit ?? 30),
+          allowedSymbols: Array.isArray(rc.allowed_symbols) ? rc.allowed_symbols : (Array.isArray(rc.allowedSymbols) ? rc.allowedSymbols : undefined)
         };
       }
 
@@ -3362,7 +3414,7 @@ const parseTradeTimestamp = (d?: string | number | null): number | null => {
         isEs={isEs}
         user={user}
         selectedPair={selectedPair}
-        supportedPairs={SUPPORTED_PAIRS}
+        supportedPairs={supportedPairs}
         stats={stats}
         demoBalance={demoBalance}
         availableBalance={accountMetrics.availableBalance}

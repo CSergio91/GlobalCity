@@ -96,39 +96,32 @@ export interface SubmitPayoutParams {
 
 export class PayoutEngine {
   /**
-   * Escala por defecto de 4 niveles para retos escalonados
-   */
-  public static readonly DEFAULT_PAYOUT_SCALE: PayoutTierStep[] = [
-    { tier: 1, split: 35 },
-    { tier: 2, split: 50 },
-    { tier: 3, split: 80 },
-    { tier: 4, split: 90 }
-  ];
-
-  /**
-   * 1. CALCULA EL SPLIT ACTUAL SEGÚN LA ESCALA Y LOS RETIROS ANTERIORES
+   * 1. CALCULA EL SPLIT ACTUAL SEGÚN LA CONFIGURACIÓN DE CRM NEXUS
+   * Si el reto define una escala escalonada (payout_scale), aplica los tiers correspondientes.
+   * Si no tiene escala (reto estándar), aplica directamente el split fijo configurado en el reto.
    */
   public static calculateSplitTier(
     pastSettledCount: number,
     scale?: PayoutTierStep[],
-    defaultSplitPercent = 80
+    configuredSplitPercent = 80
   ): { tierNumber: number; splitPercent: number } {
     const tierNumber = pastSettledCount + 1;
-    const activeScale = (scale && scale.length > 0) ? scale : this.DEFAULT_PAYOUT_SCALE;
-    
-    // Si la escala tiene tiers, encontrar el correspondiente al número de retiro
-    const match = activeScale.find(s => s.tier === tierNumber);
-    if (match) {
-      return { tierNumber, splitPercent: Number(match.split) };
-    }
+    const safeSplit = Number(configuredSplitPercent || 80);
 
-    // Si supera el último nivel de la escala, toma el máximo split alcanzado
-    if (activeScale.length > 0) {
-      const maxTier = activeScale[activeScale.length - 1];
+    // Solo si el reto tiene configurada explícitamente una escala de tiers progresivos
+    if (scale && Array.isArray(scale) && scale.length > 0) {
+      const match = scale.find(s => s.tier === tierNumber);
+      if (match) {
+        return { tierNumber, splitPercent: Number(match.split) };
+      }
+
+      // Si supera el último nivel de la escala, toma el último split alcanzado
+      const maxTier = scale[scale.length - 1];
       return { tierNumber, splitPercent: Number(maxTier.split) };
     }
 
-    return { tierNumber, splitPercent: defaultSplitPercent };
+    // Reto con Split Fijo directo (la norma en empresas de fondeo)
+    return { tierNumber, splitPercent: safeSplit };
   }
 
   /**

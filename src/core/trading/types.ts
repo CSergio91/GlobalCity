@@ -125,6 +125,7 @@ export interface PropFirmRuleConfig {
   minTradeDurationSeconds?: number;
   profitSplitPercent?: number;
   inactivityDaysLimit?: number;
+  allowedSymbols?: string[];
 }
 
 export interface RiskCheckResult {

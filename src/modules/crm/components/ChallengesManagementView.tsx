@@ -46,10 +46,18 @@ import {
   Crosshair,
   Lock,
   Unlock,
-  ShieldX
+  ShieldX,
+  Coins,
+  Globe,
+  CheckSquare,
+  Square,
+  Filter,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { zytiTradingClient } from '../../../core/trading/gateway/TradingWebSocketClient';
 import { apiFetch } from '../../../config/apiGateway';
+import { marketSymbolsService, CryptoSymbolInfo } from '../../../services/marketSymbolsService';
 
 interface ChallengesManagementViewProps {
   rules: RiskRuleConfigEntity[];
@@ -268,16 +276,26 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
   };
 
   const handleDeleteCategory = async (catId: string) => {
-    if (catId === 'solar' || catId === 'lunar') {
-      alert(isEs ? 'Las categorías Solar y Lunar son base del sistema y no pueden borrarse.' : 'Base Solar and Lunar categories cannot be deleted.');
-      return;
-    }
-    const confirmMsg = isEs ? '¿Eliminar esta categoría?' : 'Delete this category?';
+    const target = customCategories.find(c => c.id === catId);
+    const catName = target ? target.name : catId;
+    const confirmMsg = isEs 
+      ? `¿Estás seguro de que deseas eliminar la categoría "${catName}"?` 
+      : `Are you sure you want to delete category "${catName}"?`;
     if (!window.confirm(confirmMsg)) return;
 
-    await crmService.deleteChallengeCategory(catId);
-    setCustomCategories(prev => prev.filter(c => c.id !== catId));
-    if (category === catId) setCategory('solar');
+    try {
+      await crmService.deleteChallengeCategory(catId);
+    } catch (e) {
+      console.warn('Error deleting category from DB:', e);
+    }
+
+    setCustomCategories(prev => {
+      const remaining = prev.filter(c => c.id !== catId);
+      if (category === catId) {
+        setCategory(remaining.length > 0 ? remaining[0].id : 'general');
+      }
+      return remaining;
+    });
     setEditingCategory(null);
   };
 
@@ -296,13 +314,105 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
   // Estado del Checkbox de Duración Mínima (Anti-Scalp)
   const [minTradeDurationEnabled, setMinTradeDurationEnabled] = useState(true);
 
+  // Modo de Reparto: 'FIXED' (Split Fijo para todos los retiros) o 'TIERED' (Escalera Progresiva)
+  const [payoutSplitMode, setPayoutSplitMode] = useState<'FIXED' | 'TIERED'>('FIXED');
+
   // Escala Escalonada de Payouts (Independiente por Modelo)
   const [payoutScale, setPayoutScale] = useState<PayoutTierStep[]>([
-    { tier: 1, split: 35 },
-    { tier: 2, split: 50 },
-    { tier: 3, split: 80 },
-    { tier: 4, split: 90 }
+    { tier: 1, split: 50 },
+    { tier: 2, split: 70 },
+    { tier: 3, split: 85 }
   ]);
+
+  // Reglas de la Cuenta Financiada (Fase Live / Retiros)
+  const [fundedProfitSplitPercent, setFundedProfitSplitPercent] = useState<number>(80);
+  const [fundedMaxDailyLossPercent, setFundedMaxDailyLossPercent] = useState<number>(5.0);
+  const [fundedMaxTotalLossPercent, setFundedMaxTotalLossPercent] = useState<number>(10.0);
+  const [firstPayoutDays, setFirstPayoutDays] = useState<number>(14);
+  const [payoutFrequencyDays, setPayoutFrequencyDays] = useState<number>(14);
+
+  // Catálogo y Selección de Activos Cripto de Binance (Futures USDT)
+  const [allowedSymbols, setAllowedSymbols] = useState<string[]>([]);
+  const [availableSymbols, setAvailableSymbols] = useState<CryptoSymbolInfo[]>([]);
+  const [isSyncingSymbols, setIsSyncingSymbols] = useState<boolean>(false);
+  const [symbolSearchQuery, setSymbolSearchQuery] = useState<string>('');
+  const [symbolCategoryFilter, setSymbolCategoryFilter] = useState<'ALL' | 'MEME' | 'MAJOR' | 'DEFI' | 'AI' | 'LAYER1'>('ALL');
+  const [isAssetSelectorExpanded, setIsAssetSelectorExpanded] = useState<boolean>(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => marketSymbolsService.getRecentSearches());
+
+  // Carga inicial del catálogo de Binance (0ms desde caché local)
+  useEffect(() => {
+    marketSymbolsService.getAvailableSymbols().then(syms => {
+      setAvailableSymbols(syms);
+    });
+  }, []);
+
+  const handleSyncBinanceSymbols = async () => {
+    setIsSyncingSymbols(true);
+    try {
+      const updated = await marketSymbolsService.syncFromBinance();
+      setAvailableSymbols(updated);
+      setRecentSearches(marketSymbolsService.getRecentSearches());
+    } catch (e) {
+      console.error('Error syncing Binance symbols:', e);
+    } finally {
+      setIsSyncingSymbols(false);
+    }
+  };
+
+  // Filtrado reactivo de activos cripto acelerado por índice y caché en memoria (0ms)
+  const filteredCryptoSymbols = useMemo(() => {
+    return marketSymbolsService.searchSymbols(symbolSearchQuery, symbolCategoryFilter);
+  }, [availableSymbols, symbolCategoryFilter, symbolSearchQuery]);
+
+  useEffect(() => {
+    if (symbolSearchQuery.trim().length >= 2) {
+      setRecentSearches(marketSymbolsService.getRecentSearches());
+    }
+  }, [symbolSearchQuery]);
+
+  const toggleSymbolSelection = (sym: string) => {
+    setAllowedSymbols(prev => {
+      if (prev.includes(sym)) {
+        return prev.filter(s => s !== sym);
+      } else {
+        return [...prev, sym];
+      }
+    });
+  };
+
+  const selectAllFilteredSymbols = () => {
+    const symsToAdd = filteredCryptoSymbols.map(s => s.symbol);
+    setAllowedSymbols(prev => {
+      const set = new Set([...prev, ...symsToAdd]);
+      return Array.from(set);
+    });
+  };
+
+  const deselectAllFilteredSymbols = () => {
+    const symsToRemove = new Set(filteredCryptoSymbols.map(s => s.symbol));
+    setAllowedSymbols(prev => prev.filter(s => !symsToRemove.has(s)));
+  };
+
+  const clearSymbolSelection = () => {
+    setAllowedSymbols([]);
+  };
+
+  const deselectAllSymbols = clearSymbolSelection;
+
+  const selectedFilteredCount = useMemo(() => {
+    const allowedSet = new Set(allowedSymbols);
+    return filteredCryptoSymbols.filter(s => allowedSet.has(s.symbol)).length;
+  }, [filteredCryptoSymbols, allowedSymbols]);
+
+  const applyPresetSymbols = (preset: 'ALL' | 'MAJORS' | 'MEMES' | 'DEFI' | 'AI') => {
+    if (preset === 'ALL') {
+      setAllowedSymbols([]);
+      return;
+    }
+    const syms = marketSymbolsService.getPresetSymbols(preset);
+    setAllowedSymbols(syms);
+  };
 
   // 2. Regla y Modelo Seleccionado para Edición Unificada
   const [selectedRule, setSelectedRule] = useState<RiskRuleConfigEntity | null>(null);
@@ -479,18 +589,29 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
     setWeekendHoldingAllowed(r.weekend_holding_allowed !== false);
     setNewsTradingAllowed(r.news_trading_allowed !== false);
     setMinTradeDurationSeconds(Number(r.min_trade_duration_seconds || 10));
-    setMinTradeDurationEnabled(r.min_trade_duration_enabled !== false);
+    const mode = r.payout_split_mode || (r.payout_scale && r.payout_scale.length > 0 ? 'TIERED' : 'FIXED');
+    setPayoutSplitMode(mode);
     if (r.payout_scale && Array.isArray(r.payout_scale) && r.payout_scale.length > 0) {
       setPayoutScale(r.payout_scale);
     } else {
       setPayoutScale([
-        { tier: 1, split: 35 },
-        { tier: 2, split: 50 },
-        { tier: 3, split: 80 },
-        { tier: 4, split: 90 }
+        { tier: 1, split: 50 },
+        { tier: 2, split: 70 },
+        { tier: 3, split: 85 }
       ]);
     }
     setProfitSplitPercent(Number(r.profit_split_percent || 80));
+
+    // Reglas de la Cuenta Financiada (Live Stage)
+    setFundedProfitSplitPercent(Number(r.funded_profit_split_percent ?? r.profit_split_percent ?? 80));
+    setFundedMaxDailyLossPercent(r.funded_max_daily_loss_percent !== undefined && r.funded_max_daily_loss_percent !== null ? Number(r.funded_max_daily_loss_percent) : Number(r.max_daily_loss_percent || 5.0));
+    setFundedMaxTotalLossPercent(r.funded_max_total_loss_percent !== undefined && r.funded_max_total_loss_percent !== null ? Number(r.funded_max_total_loss_percent) : Number(r.max_total_drawdown_percent || 10.0));
+    setFirstPayoutDays(Number(r.first_payout_days || 14));
+    setPayoutFrequencyDays(Number(r.payout_frequency_days || 14));
+
+    // Activos Cripto de Binance Permitidos
+    setAllowedSymbols(Array.isArray(r.allowed_symbols) ? r.allowed_symbols : []);
+
     setInactivityDaysLimit(Number(r.inactivity_days_limit || 30));
     setDeletedTierIds([]);
   }, [onSelectRule]);
@@ -1455,7 +1576,14 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
           min_trade_duration_enabled: minTradeDurationEnabled,
           min_trade_duration_seconds: minTradeDurationSeconds,
           profit_split_percent: profitSplitPercent,
-          payout_scale: payoutScale,
+          payout_split_mode: payoutSplitMode,
+          payout_scale: payoutSplitMode === 'TIERED' ? payoutScale : [],
+          funded_profit_split_percent: fundedProfitSplitPercent,
+          funded_max_daily_loss_percent: fundedMaxDailyLossPercent,
+          funded_max_total_loss_percent: fundedMaxTotalLossPercent,
+          first_payout_days: firstPayoutDays,
+          payout_frequency_days: payoutFrequencyDays,
+          allowed_symbols: allowedSymbols,
           inactivity_days_limit: inactivityDaysLimit,
           is_active: true
         };
@@ -1514,6 +1642,18 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
     setMonthlyPriceUsdt(129);
     setIsPopular(true);
     setEnableMonthlySubscription(false);
+    setPayoutSplitMode('FIXED');
+    setPayoutScale([
+      { tier: 1, split: 50 },
+      { tier: 2, split: 70 },
+      { tier: 3, split: 85 }
+    ]);
+    setFundedProfitSplitPercent(80);
+    setFundedMaxDailyLossPercent(5.0);
+    setFundedMaxTotalLossPercent(10.0);
+    setFirstPayoutDays(14);
+    setPayoutFrequencyDays(14);
+    setAllowedSymbols([]);
     setName(getDynamicChallengeName(initialBase, 50000));
     setSelectedRule(null);
     setDeletedTierIds([]);
@@ -2165,13 +2305,27 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                       </button>
                     </div>
 
-                    {/* Lista de Categorías con Botón de Edición Individual */}
+                    {/* Lista de Categorías con Botón de Edición Individual y Borrado */}
                     <div className="flex flex-wrap items-center gap-1.5">
+                      {/* Opción General / Sin Categoría */}
+                      <button
+                        type="button"
+                        onClick={() => setCategory('general')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                          category === 'general'
+                            ? 'bg-slate-900 border-slate-950 text-white shadow-2xs ring-2 ring-slate-900/20'
+                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="w-2 h-2 rounded-full bg-slate-400" />
+                        <span>{isEs ? '🌐 General / Sin Categoría' : '🌐 General / No Category'}</span>
+                      </button>
+
                       {customCategories.map(cat => {
                         const isSelected = category === cat.id;
                         const style = getCategoryBadgeStyles(cat.colorKey);
                         return (
-                          <div key={cat.id} className="relative inline-flex items-center">
+                          <div key={cat.id} className="relative inline-flex items-center group">
                             <button
                               type="button"
                               onClick={() => setCategory(cat.id)}
@@ -2194,6 +2348,17 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                               title={isEs ? `Editar categoría "${cat.name}"` : `Edit category "${cat.name}"`}
                             >
                               <Edit2 className="w-2.5 h-2.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteCategory(cat.id);
+                              }}
+                              className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
+                              title={isEs ? `Eliminar categoría "${cat.name}"` : `Delete category "${cat.name}"`}
+                            >
+                              <Trash2 className="w-2.5 h-2.5" />
                             </button>
                           </div>
                         );
@@ -2252,15 +2417,14 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                         </div>
 
                         <div className="flex items-center justify-between pt-1">
-                          {editingCategory.id !== 'solar' && editingCategory.id !== 'lunar' ? (
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteCategory(editingCategory.id)}
-                              className="text-[10px] font-bold text-rose-600 hover:text-rose-800 underline cursor-pointer"
-                            >
-                              {isEs ? 'Eliminar Categoría' : 'Delete Category'}
-                            </button>
-                          ) : <div />}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCategory(editingCategory.id)}
+                            className="text-[10px] font-bold text-rose-600 hover:text-rose-800 flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>{isEs ? 'Eliminar Categoría' : 'Delete Category'}</span>
+                          </button>
 
                           <div className="flex items-center gap-1.5">
                             <button
@@ -2803,7 +2967,7 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                 </div>
               </div>
 
-              {/* 5. POLÍTICA DE REPARTO DE BENEFICIOS (PROFIT SPLIT AJUSTABLE & EXTENDIDO) */}
+              {/* 5. POLÍTICA DE REPARTO DE BENEFICIOS (PROFIT SPLIT & POLÍTICA DE RETIROS) */}
               <div className="p-5 rounded-2xl bg-gradient-to-br from-[#fcfbf9] to-[#f6f2e8] border border-[#ded7c8] shadow-xs space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#e5dfd3]">
                   <div className="flex items-center gap-2.5">
@@ -2813,272 +2977,720 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="text-sm font-black text-slate-900">
-                          {isEs ? '5. Reparto de Beneficios (Profit Split)' : '5. Profit Split Distribution'}
+                          {isEs ? '5. Reparto de Ganancias (Profit Split)' : '5. Profit Split Distribution'}
                         </h4>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300">
-                          {profitSplitPercent}% Trader / {100 - profitSplitPercent}% Firma
+                          {payoutSplitMode === 'FIXED' 
+                            ? `${profitSplitPercent}% Trader / ${100 - profitSplitPercent}% Firma` 
+                            : (isEs ? 'Escala Escalonada por Retiro' : 'Sequential Tiered Split')}
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-500 font-medium">
                         {isEs 
-                          ? 'Ajusta libremente el porcentaje de ganancias asignado al trader y retenido por la firma de fondeo.' 
-                          : 'Freely customize the payout split between the trader and prop firm treasury.'}
+                          ? 'Selecciona si el modelo utiliza un porcentaje fijo para todos los retiros o una escala progresiva según el número de retiro.' 
+                          : 'Select whether payouts use a fixed split across all withdrawals or a progressive tier schedule.'}
                       </p>
                     </div>
                   </div>
 
-                  {/* Control Numérico Fino con Steppers */}
-                  <div className="flex items-center gap-1 self-start sm:self-auto bg-white p-1 rounded-xl border border-slate-300 shadow-2xs">
+                  {/* Selector de Modo de Reparto: Split Fijo vs Escala Progresiva */}
+                  <div className="flex items-center bg-slate-200/80 p-1 rounded-xl self-start sm:self-auto gap-1 border border-slate-300">
                     <button
                       type="button"
-                      onClick={() => handleStepProfitSplit(-5)}
-                      title="Restar 5%"
-                      className="px-2 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                      onClick={() => setPayoutSplitMode('FIXED')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        payoutSplitMode === 'FIXED'
+                          ? 'bg-white text-slate-900 shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
                     >
-                      -5%
+                      {isEs ? 'Split Fijo (Estándar)' : 'Fixed Split (Standard)'}
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleStepProfitSplit(-1)}
-                      title="Restar 1%"
-                      className="px-1.5 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                      onClick={() => setPayoutSplitMode('TIERED')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        payoutSplitMode === 'TIERED'
+                          ? 'bg-amber-600 text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
                     >
-                      -1%
+                      {isEs ? 'Escala Progresiva por Retiro' : 'Progressive Tiers'}
                     </button>
-                    <div className="flex items-center px-2 py-0.5 bg-slate-50 rounded-lg border border-slate-200">
+                  </div>
+                </div>
+
+                {/* CONTENIDO DEL MODO SPLIT FIJO */}
+                {payoutSplitMode === 'FIXED' ? (
+                  <div className="space-y-4 animate-in fade-in">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 block">
+                          {isEs ? 'Porcentaje Fijo para Todos los Retiros' : 'Fixed Percentage for All Payouts'}
+                        </span>
+                        <span className="text-[10px] text-slate-500">
+                          {isEs ? 'El trader recibirá este split en el 1º, 2º y todos los payouts posteriores.' : 'Trader receives this exact split on 1st, 2nd, and all subsequent payouts.'}
+                        </span>
+                      </div>
+
+                      {/* Control Numérico Fino con Steppers */}
+                      <div className="flex items-center gap-1 self-start sm:self-auto bg-white p-1 rounded-xl border border-slate-300 shadow-2xs">
+                        <button
+                          type="button"
+                          onClick={() => handleStepProfitSplit(-5)}
+                          title="Restar 5%"
+                          className="px-2 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                        >
+                          -5%
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleStepProfitSplit(-1)}
+                          title="Restar 1%"
+                          className="px-1.5 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                        >
+                          -1%
+                        </button>
+                        <div className="flex items-center px-2 py-0.5 bg-slate-50 rounded-lg border border-slate-200">
+                          <input
+                            type="number"
+                            min={1}
+                            max={100}
+                            value={profitSplitPercent}
+                            onChange={(e) => handleUpdateProfitSplit(Number(e.target.value))}
+                            className="w-12 text-center text-xs font-mono font-black text-slate-900 bg-transparent focus:outline-hidden"
+                          />
+                          <span className="text-xs font-bold text-slate-500">%</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleStepProfitSplit(1)}
+                          title="Sumar 1%"
+                          className="px-1.5 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                        >
+                          +1%
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleStepProfitSplit(5)}
+                          title="Sumar 5%"
+                          className="px-2 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                        >
+                          +5%
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Barra Visual de Distribución Bicolor Interactiva */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs font-bold">
+                        <span className="text-emerald-700 flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+                          Trader: <span className="font-mono text-sm font-black">{profitSplitPercent}%</span>
+                        </span>
+                        <span className="text-slate-700 flex items-center gap-1.5">
+                          Firma de Fondeo: <span className="font-mono text-sm font-black">{100 - profitSplitPercent}%</span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-slate-800 inline-block" />
+                        </span>
+                      </div>
+
+                      {/* Barra de Progreso Bicolor */}
+                      <div className="h-4 w-full rounded-xl bg-slate-800 overflow-hidden flex p-0.5 shadow-inner">
+                        <div 
+                          className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-l-lg transition-all duration-200 flex items-center justify-center text-[10px] font-black font-mono text-emerald-950"
+                          style={{ width: `${profitSplitPercent}%` }}
+                        >
+                          {profitSplitPercent >= 15 && `${profitSplitPercent}%`}
+                        </div>
+                        <div 
+                          className="h-full bg-gradient-to-r from-slate-700 to-slate-900 rounded-r-lg transition-all duration-200 flex items-center justify-center text-[10px] font-bold font-mono text-slate-300"
+                          style={{ width: `${100 - profitSplitPercent}%` }}
+                        >
+                          {(100 - profitSplitPercent) >= 15 && `${100 - profitSplitPercent}%`}
+                        </div>
+                      </div>
+
+                      {/* Slider Continuo Suave */}
+                      <div className="pt-1">
+                        <input
+                          type="range"
+                          min={1}
+                          max={100}
+                          step={1}
+                          value={profitSplitPercent}
+                          onChange={(e) => handleUpdateProfitSplit(Number(e.target.value))}
+                          className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                        />
+                        <div className="flex justify-between text-[10px] font-mono text-slate-400 px-0.5 mt-0.5">
+                          <span>0%</span>
+                          <span>25%</span>
+                          <span>50%</span>
+                          <span>75%</span>
+                          <span>80% (Estándar)</span>
+                          <span>90%</span>
+                          <span>100%</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Presets Rápidos Extensivos de la Industria */}
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                          {isEs ? 'Tiers Populares de Prop Firms (Clic para aplicar)' : 'Prop Firm Presets (Click to apply)'}
+                        </span>
+                        {PROFIT_SPLIT_PRESETS.some(p => p.trader === profitSplitPercent) ? (
+                          <span className="text-[10px] font-bold text-emerald-700">
+                            Preset Activo: {PROFIT_SPLIT_PRESETS.find(p => p.trader === profitSplitPercent)?.tier}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-amber-700">
+                            ⚙️ Split Personalizado ({profitSplitPercent}%)
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-1.5">
+                        {PROFIT_SPLIT_PRESETS.map((preset) => {
+                          const isSelected = profitSplitPercent === preset.trader;
+                          return (
+                            <button
+                              key={preset.trader}
+                              type="button"
+                              onClick={() => handleUpdateProfitSplit(preset.trader)}
+                              className={`p-2 rounded-xl text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-0.5 border ${
+                                isSelected
+                                  ? 'bg-emerald-600 border-emerald-700 text-white shadow-xs font-black scale-102 ring-2 ring-emerald-300'
+                                  : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800 hover:border-slate-300'
+                              }`}
+                            >
+                              <span className={`text-xs font-mono font-black ${isSelected ? 'text-white' : 'text-slate-900'}`}>
+                                {preset.label}
+                              </span>
+                              <span className={`text-[9px] font-medium leading-tight truncate w-full ${isSelected ? 'text-emerald-100' : 'text-slate-400'}`}>
+                                {preset.tier}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Calculadora de Proyección de Payout sobre Retiro Típico */}
+                    <div className="p-3 rounded-xl bg-white/80 border border-[#e5dfd3] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                        <span className="text-slate-600 font-medium">
+                          {isEs ? 'Simulación sobre ganancia neta de' : 'Projection on net profit of'} <strong className="text-slate-900 font-mono">$10,000 USD</strong>:
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4 font-mono font-bold">
+                        <div className="text-emerald-700">
+                          <span className="text-[10px] uppercase text-slate-400 block font-sans">Payout Trader</span>
+                          ${((10000 * profitSplitPercent) / 100).toLocaleString()} USD ({profitSplitPercent}%)
+                        </div>
+                        <div className="text-slate-700">
+                          <span className="text-[10px] uppercase text-slate-400 block font-sans">Retención Firma</span>
+                          ${((10000 * (100 - profitSplitPercent)) / 100).toLocaleString()} USD ({100 - profitSplitPercent}%)
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* CONTENIDO DEL MODO ESCALERA PROGRESIVA */
+                  <div className="p-4 rounded-xl bg-white border border-[#ded7c8] shadow-xs space-y-3 animate-in fade-in">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 font-bold text-xs">
+                          <TrendingUp className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <h5 className="text-xs font-black text-slate-900">
+                            {isEs ? 'Escalera Progresiva de Payouts por Retiro' : 'Tiered Payout Schedule per Withdrawal'}
+                          </h5>
+                          <p className="text-[10px] text-slate-500">
+                            {isEs 
+                              ? 'Configura el reparto exacto según el número de retiro consecutivo del trader (1º, 2º, 3º, etc.). Aplica exclusivamente a este modelo de challenge en base de datos.'
+                              : 'Configure exact profit split based on sequential withdrawal order (1st, 2nd, 3rd, etc.). Stored in database exclusively for this model.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPayoutScale(prev => {
+                            const nextTierNum = prev.length > 0 ? Math.max(...prev.map(p => p.tier)) + 1 : 1;
+                            const lastSplit = prev.length > 0 ? prev[prev.length - 1].split : 80;
+                            return [...prev, { tier: nextTierNum, split: Math.min(100, lastSplit) }];
+                          });
+                        }}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors cursor-pointer self-start sm:self-auto"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>{isEs ? 'Añadir Retiro' : 'Add Withdrawal Tier'}</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+                      {payoutScale.map((item, idx) => {
+                        const isLast = idx === payoutScale.length - 1;
+                        return (
+                          <div 
+                            key={item.tier}
+                            className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200 transition-all flex flex-col justify-between gap-2"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-black text-slate-700">
+                                {isEs 
+                                  ? (isLast && idx >= 2 ? `${item.tier}º Retiro en adelante` : `${item.tier}º Payout`) 
+                                  : (isLast && idx >= 2 ? `${item.tier}th Payout onward` : `Payout #${item.tier}`)}
+                              </span>
+                              {payoutScale.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setPayoutScale(prev => prev.filter((_, i) => i !== idx))}
+                                  className="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer p-0.5"
+                                  title={isEs ? 'Eliminar escalón' : 'Remove tier'}
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center px-2 py-1 bg-white rounded-lg border border-slate-300 flex-1">
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={100}
+                                  value={item.split}
+                                  onChange={(e) => {
+                                    const val = Math.min(100, Math.max(1, Number(e.target.value)));
+                                    setPayoutScale(prev => prev.map((p, i) => i === idx ? { ...p, split: val } : p));
+                                  }}
+                                  className="w-full text-center text-xs font-mono font-black text-slate-900 bg-transparent focus:outline-hidden"
+                                />
+                                <span className="text-xs font-bold text-slate-500">%</span>
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-500 font-mono">
+                                / {100 - item.split}%
+                              </span>
+                            </div>
+
+                            <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden flex">
+                              <div className="h-full bg-emerald-500 transition-all" style={{ width: `${item.split}%` }} />
+                              <div className="h-full bg-slate-800 transition-all" style={{ width: `${100 - item.split}%` }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* SECCIÓN 6: REGLAS DE LA CUENTA FINANCIADA (FASE DE RETIROS / LIVE) */}
+              <div className="p-5 rounded-2xl bg-[#090A10] border border-amber-500/30 text-white shadow-md space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400/20 to-amber-600/30 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black shadow-inner">
+                      👑
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-black text-white">
+                          {isEs ? '6. Reglas de la Cuenta Financiada (Fase de Retiros / Live)' : '6. Funded Account Rules (Live / Payout Stage)'}
+                        </h4>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                          {isEs ? 'Sin Profit Target' : 'No Profit Target'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 font-medium">
+                        {isEs 
+                          ? 'Parámetros institucionales que rigen al trader una vez aprobadas las fases del challenge y otorgado el capital fondeado.' 
+                          : 'Institutional parameters applied once the trader passes evaluation and receives funded capital.'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] uppercase font-bold text-amber-400/80 block">Estado de la Cuenta</span>
+                    <span className="text-xs font-mono font-black text-emerald-400">FONDEADA (LIVE)</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                  {/* Pérdida Máxima Diaria Financiada */}
+                  <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-300">
+                        {isEs ? 'Pérdida Máx. Diaria (Live)' : 'Max Daily Loss (Live)'}
+                      </span>
+                      <span className="text-[10px] text-rose-400 font-mono font-bold">Intraday</span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={fundedMaxDailyLossPercent}
+                        onChange={(e) => setFundedMaxDailyLossPercent(Number(e.target.value))}
+                        className="w-full px-3 py-2 text-xs font-mono font-black bg-black/40 border border-white/20 rounded-xl text-rose-400 focus:outline-hidden focus:border-rose-500"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-mono block">
+                      = -${((defaultAccountBalance * fundedMaxDailyLossPercent) / 100).toLocaleString()} USD
+                    </span>
+                  </div>
+
+                  {/* Pérdida Total Máxima Financiada */}
+                  <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-300">
+                        {isEs ? 'Pérdida Máx. Total (Live)' : 'Max Total Loss (Live)'}
+                      </span>
+                      <span className="text-[10px] text-rose-400 font-mono font-bold">EOD / Trailing</span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={fundedMaxTotalLossPercent}
+                        onChange={(e) => setFundedMaxTotalLossPercent(Number(e.target.value))}
+                        className="w-full px-3 py-2 text-xs font-mono font-black bg-black/40 border border-white/20 rounded-xl text-rose-400 focus:outline-hidden focus:border-rose-500"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-mono block">
+                      = -${((defaultAccountBalance * fundedMaxTotalLossPercent) / 100).toLocaleString()} USD
+                    </span>
+                  </div>
+
+                  {/* Días para el 1er Retiro */}
+                  <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-300">
+                        {isEs ? 'Espera 1º Retiro' : '1st Payout Buffer'}
+                      </span>
+                      <span className="text-[10px] text-amber-400 font-mono font-bold">Días</span>
+                    </div>
+                    <div className="relative">
                       <input
                         type="number"
                         min={1}
-                        max={100}
-                        value={profitSplitPercent}
-                        onChange={(e) => handleUpdateProfitSplit(Number(e.target.value))}
-                        className="w-12 text-center text-xs font-mono font-black text-slate-900 bg-transparent focus:outline-hidden"
+                        value={firstPayoutDays}
+                        onChange={(e) => setFirstPayoutDays(Math.max(1, Number(e.target.value)))}
+                        className="w-full px-3 py-2 text-xs font-mono font-black bg-black/40 border border-white/20 rounded-xl text-amber-400 focus:outline-hidden focus:border-amber-500"
                       />
-                      <span className="text-xs font-bold text-slate-500">%</span>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-400">{isEs ? 'días' : 'days'}</span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleStepProfitSplit(1)}
-                      title="Sumar 1%"
-                      className="px-1.5 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                    >
-                      +1%
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleStepProfitSplit(5)}
-                      title="Sumar 5%"
-                      className="px-2 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                    >
-                      +5%
-                    </button>
+                    <span className="text-[10px] text-slate-400 block">
+                      {isEs ? 'Tiempo mínimo para solicitar el 1er payout.' : 'Min days before submitting 1st payout.'}
+                    </span>
+                  </div>
+
+                  {/* Frecuencia de Retiros Posteriores */}
+                  <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-300">
+                        {isEs ? 'Frecuencia entre Retiros' : 'Payout Frequency'}
+                      </span>
+                      <span className="text-[10px] text-emerald-400 font-mono font-bold">{isEs ? 'Ciclo' : 'Cycle'}</span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min={1}
+                        value={payoutFrequencyDays}
+                        onChange={(e) => setPayoutFrequencyDays(Math.max(1, Number(e.target.value)))}
+                        className="w-full px-3 py-2 text-xs font-mono font-black bg-black/40 border border-white/20 rounded-xl text-emerald-400 focus:outline-hidden focus:border-emerald-500"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-400">{isEs ? 'días' : 'days'}</span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 block">
+                      {isEs ? 'Intervalo entre cada solicitud consecutiva.' : 'Interval between consecutive payouts.'}
+                    </span>
                   </div>
                 </div>
+              </div>
 
-                {/* Barra Visual de Distribución Bicolor Interactiva */}
+              {/* SECCIÓN 7: ACTIVOS Y PARES CRIPTO PERMITIDOS (BINANCE FUTURES) */}
+              <div className="p-5 rounded-2xl bg-white border border-slate-300 shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600 font-black">
+                      <Coins className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-black text-slate-900">
+                          {isEs ? '7. Activos y Pares Cripto Permitidos (Binance Futures)' : '7. Allowed Crypto Assets (Binance Futures)'}
+                        </h4>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          allowedSymbols.length === 0 
+                            ? 'bg-blue-100 text-blue-900 border border-blue-300' 
+                            : 'bg-amber-100 text-amber-900 border border-amber-300'
+                        }`}>
+                          {allowedSymbols.length === 0 
+                            ? (isEs ? '🌐 Todos los Pares de Binance (749+)' : '🌐 All Binance Pairs (749+)') 
+                            : `${allowedSymbols.length} ${isEs ? 'pares seleccionados' : 'pairs selected'}`}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-medium">
+                        {isEs 
+                          ? 'Selecciona los pares autorizados para este challenge. Si deseas crear un reto exclusivo de Memes (ej. PEPE, DOGE, SHIB) o solo Majors (BTC, ETH), márcalos aquí.' 
+                          : 'Specify approved trading pairs for this challenge. Ideal for creating Meme-only (PEPE, DOGE) or Major-only challenges.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Botón de Sincronización en Vivo con API de Binance */}
+                  <button
+                    type="button"
+                    onClick={handleSyncBinanceSymbols}
+                    disabled={isSyncingSymbols}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-xl transition-all cursor-pointer shadow-2xs self-start sm:self-auto disabled:opacity-50"
+                    title={isEs ? 'Consultar endpoint público fapi.binance.com para sincronizar los últimos pares listados' : 'Sync latest listed pairs directly from Binance API'}
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 text-amber-600 ${isSyncingSymbols ? 'animate-spin' : ''}`} />
+                    <span>{isSyncingSymbols ? (isEs ? 'Sincronizando Binance...' : 'Syncing Binance...') : (isEs ? 'Sincronizar Binance (API)' : 'Sync Binance (API)')}</span>
+                  </button>
+                </div>
+
+                {/* Presets Rápidos de 1 Clic para Activos Cripto */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-emerald-700 flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
-                      Trader: <span className="font-mono text-sm font-black">{profitSplitPercent}%</span>
-                    </span>
-                    <span className="text-slate-700 flex items-center gap-1.5">
-                      Firma de Fondeo: <span className="font-mono text-sm font-black">{100 - profitSplitPercent}%</span>
-                      <span className="w-2.5 h-2.5 rounded-full bg-slate-800 inline-block" />
-                    </span>
-                  </div>
-
-                  {/* Barra de Progreso Bicolor */}
-                  <div className="h-4 w-full rounded-xl bg-slate-800 overflow-hidden flex p-0.5 shadow-inner">
-                    <div 
-                      className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-l-lg transition-all duration-200 flex items-center justify-center text-[10px] font-black font-mono text-emerald-950"
-                      style={{ width: `${profitSplitPercent}%` }}
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
+                    {isEs ? 'Presets Rápidos de Activos (Clic para aplicar)' : 'Quick Asset Presets (Click to apply)'}
+                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => applyPresetSymbols('ALL')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                        allowedSymbols.length === 0
+                          ? 'bg-[#0F172A] text-white border-slate-900 shadow-2xs font-black'
+                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                      }`}
                     >
-                      {profitSplitPercent >= 15 && `${profitSplitPercent}%`}
-                    </div>
-                    <div 
-                      className="h-full bg-gradient-to-r from-slate-700 to-slate-900 rounded-r-lg transition-all duration-200 flex items-center justify-center text-[10px] font-bold font-mono text-slate-300"
-                      style={{ width: `${100 - profitSplitPercent}%` }}
+                      <span>🌐</span>
+                      <span>{isEs ? 'Todos los Pares (749+)' : 'All Pairs (749+)'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => applyPresetSymbols('MAJORS')}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border bg-white border-amber-200 text-amber-900 hover:bg-amber-50"
                     >
-                      {(100 - profitSplitPercent) >= 15 && `${100 - profitSplitPercent}%`}
-                    </div>
-                  </div>
+                      <span>💎</span>
+                      <span>{isEs ? 'Solo Top Majors (BTC, ETH, SOL...)' : 'Top Majors (BTC, ETH, SOL...)'}</span>
+                    </button>
 
-                  {/* Slider Continuo Suave */}
-                  <div className="pt-1">
-                    <input
-                      type="range"
-                      min={1}
-                      max={100}
-                      step={1}
-                      value={profitSplitPercent}
-                      onChange={(e) => handleUpdateProfitSplit(Number(e.target.value))}
-                      className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-                    />
-                    <div className="flex justify-between text-[10px] font-mono text-slate-400 px-0.5 mt-0.5">
-                      <span>0%</span>
-                      <span>25%</span>
-                      <span>50%</span>
-                      <span>75%</span>
-                      <span>80% (Estándar)</span>
-                      <span>90%</span>
-                      <span>100%</span>
-                    </div>
-                  </div>
-                </div>
+                    <button
+                      type="button"
+                      onClick={() => applyPresetSymbols('MEMES')}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border bg-purple-50 border-purple-200 text-purple-900 hover:bg-purple-100"
+                    >
+                      <span>🐕</span>
+                      <span>{isEs ? 'Meme Titans (PEPE, DOGE, SHIB, FLOKI...)' : 'Meme Titans (PEPE, DOGE, SHIB...)'}</span>
+                    </button>
 
-                {/* Presets Rápidos Extensivos de la Industria */}
-                <div className="space-y-1.5 pt-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
-                      {isEs ? 'Tiers Populares de Prop Firms (Clic para aplicar)' : 'Prop Firm Presets (Click to apply)'}
-                    </span>
-                    {PROFIT_SPLIT_PRESETS.some(p => p.trader === profitSplitPercent) ? (
-                      <span className="text-[10px] font-bold text-emerald-700">
-                        Preset Activo: {PROFIT_SPLIT_PRESETS.find(p => p.trader === profitSplitPercent)?.tier}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-bold text-amber-700">
-                        ⚙️ Split Personalizado ({profitSplitPercent}%)
-                      </span>
+                    <button
+                      type="button"
+                      onClick={() => applyPresetSymbols('DEFI')}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border bg-cyan-50 border-cyan-200 text-cyan-900 hover:bg-cyan-100"
+                    >
+                      <span>⚡</span>
+                      <span>{isEs ? 'DeFi Tokens (UNI, AAVE, LINK...)' : 'DeFi Tokens (UNI, AAVE...)'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => applyPresetSymbols('AI')}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border bg-emerald-50 border-emerald-200 text-emerald-900 hover:bg-emerald-100"
+                    >
+                      <span>🤖</span>
+                      <span>{isEs ? 'AI Tokens (TAO, RENDER, FET...)' : 'AI Tokens (TAO, RENDER...)'}</span>
+                    </button>
+
+                    {allowedSymbols.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={clearSymbolSelection}
+                        className="px-2.5 py-1.5 text-xs font-bold text-rose-600 hover:text-rose-800 underline cursor-pointer ml-auto"
+                      >
+                        {isEs ? 'Restablecer a Todos' : 'Reset to All'}
+                      </button>
                     )}
                   </div>
+                </div>
 
-                  <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-1.5">
-                    {PROFIT_SPLIT_PRESETS.map((preset) => {
-                      const isSelected = profitSplitPercent === preset.trader;
-                      return (
+                {/* Buscador de Pares y Filtro de Categoría */}
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+                    {/* Buscador */}
+                    <div className="relative flex-1">
+                      <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={symbolSearchQuery}
+                        onChange={(e) => setSymbolSearchQuery(e.target.value)}
+                        placeholder={isEs ? 'Buscar por símbolo o ticker (ej: PEPE, DOGE, BTC, SOL)...' : 'Search by symbol or ticker (e.g. PEPE, DOGE, BTC)...'}
+                        className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 font-bold focus:outline-hidden focus:border-amber-500"
+                      />
+                    </div>
+
+                    {/* Filtro por Categoría */}
+                    <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+                      {(['ALL', 'MEME', 'MAJOR', 'DEFI', 'AI', 'LAYER1'] as const).map(catKey => {
+                        const isCatSelected = symbolCategoryFilter === catKey;
+                        const labelMap = {
+                          ALL: isEs ? 'Todos' : 'All',
+                          MEME: '🐕 Memes',
+                          MAJOR: '💎 Majors',
+                          DEFI: '⚡ DeFi',
+                          AI: '🤖 AI',
+                          LAYER1: '🌐 L1/L2'
+                        };
+                        return (
+                          <button
+                            key={catKey}
+                            type="button"
+                            onClick={() => setSymbolCategoryFilter(catKey)}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap ${
+                              isCatSelected
+                                ? 'bg-amber-600 text-white shadow-2xs'
+                                : 'bg-white text-slate-600 hover:bg-slate-200 border border-slate-200'
+                            }`}
+                          >
+                            {labelMap[catKey]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Búsquedas Recientes (Memoización y acceso en 1 tap) */}
+                  {recentSearches.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap px-1">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-amber-500" />
+                        {isEs ? 'Recientes:' : 'Recent:'}
+                      </span>
+                      {recentSearches.map((term) => (
                         <button
-                          key={preset.trader}
+                          key={term}
                           type="button"
-                          onClick={() => handleUpdateProfitSplit(preset.trader)}
-                          className={`p-2 rounded-xl text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-0.5 border ${
+                          onClick={() => setSymbolSearchQuery(term)}
+                          className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-white hover:bg-amber-100 hover:text-amber-900 text-slate-700 border border-slate-200 transition-colors cursor-pointer shadow-2xs"
+                        >
+                          {term}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          marketSymbolsService.clearRecentSearches();
+                          setRecentSearches([]);
+                        }}
+                        className="text-[9px] text-slate-400 hover:text-rose-500 ml-1 cursor-pointer font-bold"
+                        title={isEs ? 'Borrar historial' : 'Clear history'}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center justify-between text-xs pt-1 border-t border-slate-200 gap-2">
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      {isEs 
+                        ? `Mostrando ${filteredCryptoSymbols.length} pares de Binance` 
+                        : `Showing ${filteredCryptoSymbols.length} Binance pairs`}
+                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={selectAllFilteredSymbols}
+                        className="text-[10px] font-bold text-amber-700 hover:text-amber-800 underline cursor-pointer"
+                      >
+                        {isEs ? 'Seleccionar Filtrados' : 'Select Filtered'}
+                      </button>
+
+                      {selectedFilteredCount > 0 && (
+                        <>
+                          <span className="text-slate-300">•</span>
+                          <button
+                            type="button"
+                            onClick={deselectAllFilteredSymbols}
+                            className="text-[10px] font-bold text-slate-600 hover:text-slate-900 underline cursor-pointer"
+                          >
+                            {isEs ? `Desmarcar Filtrados (${selectedFilteredCount})` : `Deselect Filtered (${selectedFilteredCount})`}
+                          </button>
+                        </>
+                      )}
+
+                      {allowedSymbols.length > 0 && (
+                        <>
+                          <span className="text-slate-300">•</span>
+                          <button
+                            type="button"
+                            onClick={deselectAllSymbols}
+                            className="text-[10px] font-bold text-rose-600 hover:text-rose-800 underline cursor-pointer"
+                          >
+                            {isEs ? `Desmarcar Todos (${allowedSymbols.length})` : `Deselect All (${allowedSymbols.length})`}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Tabla / Grid de Activos Cripto Seleccionables */}
+                  <div className="max-h-56 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1.5 p-1 bg-white rounded-lg border border-slate-200">
+                    {filteredCryptoSymbols.slice(0, 120).map(s => {
+                      const isSelected = allowedSymbols.includes(s.symbol);
+                      const catBadge = {
+                        MEME: 'bg-purple-100 text-purple-900 border-purple-200',
+                        MAJOR: 'bg-amber-100 text-amber-900 border-amber-200',
+                        AI: 'bg-emerald-100 text-emerald-900 border-emerald-200',
+                        DEFI: 'bg-cyan-100 text-cyan-900 border-cyan-200',
+                        LAYER1: 'bg-blue-100 text-blue-900 border-blue-200',
+                        OTHERS: 'bg-slate-100 text-slate-700 border-slate-200'
+                      }[s.category];
+
+                      return (
+                        <div
+                          key={s.symbol}
+                          onClick={() => toggleSymbolSelection(s.symbol)}
+                          className={`p-2 rounded-lg border transition-all cursor-pointer flex items-center justify-between gap-1.5 select-none ${
                             isSelected
-                              ? 'bg-emerald-600 border-emerald-700 text-white shadow-xs font-black scale-102 ring-2 ring-emerald-300'
-                              : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800 hover:border-slate-300'
+                              ? 'bg-amber-500/10 border-amber-500/60 ring-1 ring-amber-500/30'
+                              : 'bg-slate-50/50 hover:bg-slate-100/80 border-slate-200'
                           }`}
                         >
-                          <span className={`text-xs font-mono font-black ${isSelected ? 'text-white' : 'text-slate-900'}`}>
-                            {preset.label}
-                          </span>
-                          <span className={`text-[9px] font-medium leading-tight truncate w-full ${isSelected ? 'text-emerald-100' : 'text-slate-400'}`}>
-                            {preset.tier}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Calculadora de Proyección de Payout sobre Retiro Típico */}
-                <div className="p-3 rounded-xl bg-white/80 border border-[#e5dfd3] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="text-slate-600 font-medium">
-                      {isEs ? 'Simulación sobre ganancia neta de' : 'Projection on net profit of'} <strong className="text-slate-900 font-mono">$10,000 USD</strong>:
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4 font-mono font-bold">
-                    <div className="text-emerald-700">
-                      <span className="text-[10px] uppercase text-slate-400 block font-sans">Payout Trader</span>
-                      ${((10000 * profitSplitPercent) / 100).toLocaleString()} USD ({profitSplitPercent}%)
-                    </div>
-                    <div className="text-slate-700">
-                      <span className="text-[10px] uppercase text-slate-400 block font-sans">Retención Firma</span>
-                      ${((10000 * (100 - profitSplitPercent)) / 100).toLocaleString()} USD ({100 - profitSplitPercent}%)
-                    </div>
-                  </div>
-                </div>
-
-                {/* Escalera Progresiva de Payouts por Retiro (Tiered Schedule) */}
-                <div className="p-4 rounded-xl bg-white border border-[#ded7c8] shadow-xs space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 font-bold text-xs">
-                        <TrendingUp className="w-3.5 h-3.5" />
-                      </div>
-                      <div>
-                        <h5 className="text-xs font-black text-slate-900">
-                          {isEs ? 'Escalera Progresiva de Payouts por Retiro' : 'Tiered Payout Schedule per Withdrawal'}
-                        </h5>
-                        <p className="text-[10px] text-slate-500">
-                          {isEs 
-                            ? 'Configura el reparto exacto según el número de retiro consecutivo del trader (1º, 2º, 3º, etc.). Aplica exclusivamente a este modelo de challenge en base de datos.'
-                            : 'Configure exact profit split based on sequential withdrawal order (1st, 2nd, 3rd, etc.). Stored in database exclusively for this model.'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPayoutScale(prev => {
-                          const nextTierNum = prev.length > 0 ? Math.max(...prev.map(p => p.tier)) + 1 : 1;
-                          const lastSplit = prev.length > 0 ? prev[prev.length - 1].split : 80;
-                          return [...prev, { tier: nextTierNum, split: Math.min(100, lastSplit) }];
-                        });
-                      }}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors cursor-pointer self-start sm:self-auto"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>{isEs ? 'Añadir Retiro' : 'Add Withdrawal Tier'}</span>
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
-                    {payoutScale.map((item, idx) => {
-                      const isLast = idx === payoutScale.length - 1;
-                      return (
-                        <div 
-                          key={item.tier}
-                          className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200 transition-all flex flex-col justify-between gap-2"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-black text-slate-700">
-                              {isEs 
-                                ? (isLast && idx >= 3 ? `${item.tier}º Retiro en adelante` : `${item.tier}º Payout`) 
-                                : (isLast && idx >= 3 ? `${item.tier}th Payout onward` : `Payout #${item.tier}`)}
-                            </span>
-                            {payoutScale.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => setPayoutScale(prev => prev.filter((_, i) => i !== idx))}
-                                className="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer p-0.5"
-                                title={isEs ? 'Eliminar escalón' : 'Remove tier'}
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center px-2 py-1 bg-white rounded-lg border border-slate-300 flex-1">
-                              <input
-                                type="number"
-                                min={1}
-                                max={100}
-                                value={item.split}
-                                onChange={(e) => {
-                                  const val = Math.min(100, Math.max(1, Number(e.target.value)));
-                                  setPayoutScale(prev => prev.map((p, i) => i === idx ? { ...p, split: val } : p));
-                                }}
-                                className="w-full text-center text-xs font-mono font-black text-slate-900 bg-transparent focus:outline-hidden"
-                              />
-                              <span className="text-xs font-bold text-slate-500">%</span>
+                          <div className="flex items-center gap-1.5 truncate">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => {}} // Manifiesto por el contenedor
+                              className="w-3.5 h-3.5 rounded-xs text-amber-600 accent-amber-600 pointer-events-none"
+                            />
+                            <div className="truncate">
+                              <span className="text-xs font-mono font-black text-slate-900 block truncate leading-tight">
+                                {s.displayName}
+                              </span>
+                              <span className={`text-[8px] font-bold px-1 py-0.2 rounded border inline-block leading-none mt-0.5 ${catBadge}`}>
+                                {s.category}
+                              </span>
                             </div>
-                            <span className="text-[10px] font-bold text-slate-500 font-mono">
-                              / {100 - item.split}%
-                            </span>
-                          </div>
-
-                          <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden flex">
-                            <div className="h-full bg-emerald-500 transition-all" style={{ width: `${item.split}%` }} />
-                            <div className="h-full bg-slate-800 transition-all" style={{ width: `${100 - item.split}%` }} />
                           </div>
                         </div>
                       );
                     })}
                   </div>
+                  {filteredCryptoSymbols.length > 120 && (
+                    <p className="text-[10px] text-slate-400 text-center italic">
+                      {isEs ? `Usa el buscador para filtrar entre los ${filteredCryptoSymbols.length} pares disponibles.` : `Use search to filter across all ${filteredCryptoSymbols.length} available pairs.`}
+                    </p>
+                  )}
                 </div>
               </div>
 

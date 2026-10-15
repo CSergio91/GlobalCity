@@ -98,6 +98,17 @@ export interface RiskRuleConfigEntity {
   inactivity_days_limit?: number;
   profit_split_percent?: number;
   payout_scale?: PayoutTierStep[];
+  payout_split_mode?: 'FIXED' | 'TIERED';
+
+  // Criptoactivos Permitidos (Binance Pairs)
+  allowed_symbols?: string[];
+
+  // Gobernanza de la Cuenta Financiada (Fase de Retiros)
+  funded_profit_split_percent?: number;
+  funded_max_daily_loss_percent?: number | null;
+  funded_max_total_loss_percent?: number | null;
+  first_payout_days?: number;
+  payout_frequency_days?: number;
 
   created_at?: string;
   updated_at?: string;

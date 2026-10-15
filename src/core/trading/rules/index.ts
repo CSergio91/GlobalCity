@@ -14,5 +14,6 @@ export * from './WeekendHoldingRule';
 export * from './NewsTradingRule';
 export * from './InactivityPeriodRule';
 export * from './ProfitTargetRule';
+export * from './AllowedSymbolsRule';
 export * from './RiskPipeline';
 

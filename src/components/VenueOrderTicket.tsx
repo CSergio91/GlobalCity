@@ -12,6 +12,7 @@ import {
 import { StoredExchangeAccount, VenueMetadata } from '../types/exchange';
 import { positionStorage } from '../services/positionStorage';
 import { exchangeStorage } from '../services/exchangeStorage';
+import { marketSymbolsService } from '../services/marketSymbolsService';
 
 interface VenueOrderTicketProps {
   account: StoredExchangeAccount;
@@ -38,7 +39,17 @@ export const VenueOrderTicket: React.FC<VenueOrderTicketProps> = ({
 }) => {
   const [side, setSide] = useState<'BUY' | 'SELL'>(initialSide);
   const [symbol, setSymbol] = useState(selectedSymbol || 'BTC/USDT');
+  const [availablePairs, setAvailablePairs] = useState<string[]>(COMMON_SYMBOLS);
   const [orderType, setOrderType] = useState<'MARKET' | 'LIMIT'>('MARKET');
+
+  React.useEffect(() => {
+    marketSymbolsService.getAvailableSymbols().then((syms) => {
+      if (syms && syms.length > 0) {
+        setAvailablePairs(syms.map((s) => s.displayName));
+      }
+    }).catch(() => {});
+  }, []);
+
   const [limitPrice, setLimitPrice] = useState(livePrice.toString());
   const [amountUsdt, setAmountUsdt] = useState<string>('500');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -176,7 +187,7 @@ export const VenueOrderTicket: React.FC<VenueOrderTicketProps> = ({
               onChange={(e) => handlePairChange(e.target.value)}
               className="flex-1 bg-black/60 border border-white/15 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#38BDF8] cursor-pointer"
             >
-              {COMMON_SYMBOLS.map(s => (
+              {availablePairs.map(s => (
                 <option key={s} value={s} className="bg-[#0A0B0F] text-white">
                   {s}
                 </option>

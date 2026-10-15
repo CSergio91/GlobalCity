@@ -22,6 +22,7 @@ import {
   NewsTradingRule,
   InactivityPeriodRule,
   ProfitTargetRule,
+  AllowedSymbolsRule,
   PreTradeContext,
   InFlightContext
 } from './rules';
@@ -83,6 +84,9 @@ export class RiskEngine {
     }
     if (rules.profitTargetPercent) {
       pipeline.addRule(new ProfitTargetRule());
+    }
+    if (rules.allowedSymbols && Array.isArray(rules.allowedSymbols) && rules.allowedSymbols.length > 0 && !rules.allowedSymbols.includes('ALL')) {
+      pipeline.addRule(new AllowedSymbolsRule());
     }
 
     return pipeline;
