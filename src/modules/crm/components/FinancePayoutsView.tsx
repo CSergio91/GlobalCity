@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { PayoutRequestEntity } from '../types/crm.types';
 import { crmService } from '../api/crmService';
+import { PayoutEngine } from '../../../core/trading/PayoutEngine';
 import { CrmLang } from '../types/i18n';
 
 interface FinancePayoutsViewProps {
@@ -70,9 +71,10 @@ export const FinancePayoutsView: React.FC<FinancePayoutsViewProps> = ({ lang = '
 
   const handleConfirmPaid = async () => {
     if (!payingPayout) return;
-    await crmService.updatePayoutRequestStatus({
-      id: payingPayout.id,
-      status: 'PAID',
+    await PayoutEngine.processPayoutApproval({
+      payoutId: payingPayout.id,
+      accountId: payingPayout.account_id,
+      amount: payingPayout.amount,
       txHash: txHashInput.trim() || undefined,
       notes: payNotesInput.trim() || undefined
     });
@@ -84,9 +86,8 @@ export const FinancePayoutsView: React.FC<FinancePayoutsViewProps> = ({ lang = '
 
   const handleConfirmReject = async () => {
     if (!rejectingPayout) return;
-    await crmService.updatePayoutRequestStatus({
-      id: rejectingPayout.id,
-      status: 'REJECTED',
+    await PayoutEngine.rejectPayout({
+      payoutId: rejectingPayout.id,
       rejectionReason: rejectionReasonInput.trim() || 'No cumple con las reglas institucionales'
     });
     setRejectingPayout(null);

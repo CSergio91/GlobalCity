@@ -194,7 +194,7 @@ export function useCrmDashboard() {
   };
 
   // Acciones de Reglas de Riesgo
-  const handleSaveRule = async (ruleData: Partial<RiskRuleConfigEntity>) => {
+  const handleSaveRule = async (ruleData: Partial<RiskRuleConfigEntity>): Promise<RiskRuleConfigEntity> => {
     const saved = await crmService.saveRiskRule(ruleData);
     setRiskRules(prev => {
       const idx = prev.findIndex(r => r.id === saved.id);
@@ -214,6 +214,27 @@ export function useCrmDashboard() {
       action: 'UPDATE_RISK_RULE',
       rule: saved
     });
+    return saved;
+  };
+
+  const handleSaveRules = async (rulesData: Partial<RiskRuleConfigEntity>[]): Promise<RiskRuleConfigEntity[]> => {
+    const savedList = await crmService.saveRiskRules(rulesData);
+    const savedMap = new Map(savedList.map(s => [s.id, s]));
+    setRiskRules(prev => {
+      const remaining = prev.filter(r => !savedMap.has(r.id));
+      return [...savedList, ...remaining];
+    });
+    if (savedList.length > 0) {
+      setSelectedRuleId(savedList[0].id);
+    }
+    // Sincronizar reglas en caliente con el Risk Daemon del Servidor
+    for (const rule of savedList) {
+      zytiTradingClient.sendAction({
+        action: 'UPDATE_RISK_RULE',
+        rule
+      });
+    }
+    return savedList;
   };
 
   const handleDeleteRule = async (ruleId: string) => {
@@ -221,6 +242,19 @@ export function useCrmDashboard() {
     setRiskRules(prev => prev.filter(r => r.id !== ruleId));
     if (selectedRuleId === ruleId) {
       setSelectedRuleId(riskRules.find(r => r.id !== ruleId)?.id || '');
+    }
+  };
+
+  const handleDeleteRules = async (ruleIds: string[]) => {
+    if (!ruleIds || ruleIds.length === 0) return;
+    await crmService.deleteRiskRules(ruleIds);
+    const idSet = new Set(ruleIds);
+    setRiskRules(prev => prev.filter(r => !idSet.has(r.id)));
+    if (idSet.has(selectedRuleId)) {
+      setSelectedRuleId(prev => {
+        const next = riskRules.find(r => !idSet.has(r.id));
+        return next ? next.id : '';
+      });
     }
   };
 
@@ -286,7 +320,9 @@ export function useCrmDashboard() {
     handleUpdateTraderStatus,
     handleResetTraderBalance,
     handleSaveRule,
+    handleSaveRules,
     handleDeleteRule,
+    handleDeleteRules,
     handleCreateApiKey,
     handleToggleApiKey,
     handleDeleteApiKey,

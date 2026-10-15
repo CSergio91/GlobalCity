@@ -55,8 +55,10 @@ interface ChallengesManagementViewProps {
   rules: RiskRuleConfigEntity[];
   activeRuleId?: string | null;
   lang?: CrmLang;
-  onSaveRule: (rule: Partial<RiskRuleConfigEntity>) => Promise<void>;
+  onSaveRule: (rule: Partial<RiskRuleConfigEntity>) => Promise<any>;
+  onSaveRules?: (rules: Partial<RiskRuleConfigEntity>[]) => Promise<RiskRuleConfigEntity[]>;
   onDeleteRule?: (ruleId: string) => Promise<void>;
+  onDeleteRules?: (ruleIds: string[]) => Promise<void>;
   onSelectRule?: (ruleId: string) => void;
 }
 
@@ -196,7 +198,9 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
   activeRuleId,
   lang = 'es',
   onSaveRule,
+  onSaveRules,
   onDeleteRule,
+  onDeleteRules,
   onSelectRule
 }) => {
   const isEs = lang === 'es';
@@ -205,6 +209,7 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilterModel, setSelectedFilterModel] = useState<'ALL' | ChallengeModelType>('ALL');
   const [activeTab, setActiveTab] = useState<'rules' | 'simulator'>('rules');
+  const [deletedModelKeys, setDeletedModelKeys] = useState<string[]>([]);
 
   // Categorías personalizadas guardadas en Base de Datos PostgreSQL / Supabase
   const [customCategories, setCustomCategories] = useState<CustomCategoryDef[]>([
@@ -349,117 +354,7 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
   // Agrupar todas las reglas por Modelo de Challenge (Unificación de tamaños por modelo)
   const groupedChallengeModels = useMemo<ChallengeModelGroup[]>(() => {
     if (!rules || rules.length === 0) {
-      const solarTiers: ChallengeSizeTier[] = [
-        { balance: 5000, oneTimePriceUsdt: 49, monthlyPriceUsdt: 29, isPopular: false },
-        { balance: 10000, oneTimePriceUsdt: 89, monthlyPriceUsdt: 49, isPopular: false },
-        { balance: 25000, oneTimePriceUsdt: 149, monthlyPriceUsdt: 79, isPopular: false },
-        { balance: 50000, oneTimePriceUsdt: 249, monthlyPriceUsdt: 129, isPopular: true },
-        { balance: 100000, oneTimePriceUsdt: 449, monthlyPriceUsdt: 219, isPopular: false }
-      ];
-      const lunarTiers: ChallengeSizeTier[] = [
-        { balance: 5000, oneTimePriceUsdt: 59, monthlyPriceUsdt: 35, isPopular: false },
-        { balance: 10000, oneTimePriceUsdt: 99, monthlyPriceUsdt: 59, isPopular: false },
-        { balance: 25000, oneTimePriceUsdt: 169, monthlyPriceUsdt: 89, isPopular: true },
-        { balance: 50000, oneTimePriceUsdt: 279, monthlyPriceUsdt: 149, isPopular: false },
-        { balance: 100000, oneTimePriceUsdt: 489, monthlyPriceUsdt: 249, isPopular: false }
-      ];
-
-      const solarDemoRule: RiskRuleConfigEntity = {
-        id: 'demo-solar-group',
-        name: 'Solar Eclipse',
-        category: 'solar',
-        model_type: 'INSTANT_FUNDING',
-        default_account_balance: 50000,
-        is_default_demo: true,
-        drawdown_type: 'EOD',
-        max_daily_loss_percent: 5.0,
-        max_total_drawdown_percent: 10.0,
-        profit_target_percent: 0,
-        profit_target_phase2_percent: 0,
-        min_trading_days: 0,
-        max_leverage: 50,
-        mandatory_stop_loss: false,
-        consistency_rule_percent: 40.0,
-        weekend_holding_allowed: true,
-        news_trading_allowed: true,
-        min_trade_duration_seconds: 10,
-        min_trade_duration_enabled: true,
-        profit_split_percent: 80,
-        inactivity_days_limit: 30,
-        one_time_price_usdt: 249,
-        monthly_price_usdt: 129,
-        is_popular: true,
-        is_active: true,
-        payout_scale: [
-          { tier: 1, split: 35 },
-          { tier: 2, split: 50 },
-          { tier: 3, split: 80 },
-          { tier: 4, split: 90 }
-        ]
-      };
-
-      const lunarDemoRule: RiskRuleConfigEntity = {
-        id: 'demo-lunar-group',
-        name: 'Lunar Eclipse',
-        category: 'lunar',
-        model_type: 'ONE_PHASE',
-        default_account_balance: 25000,
-        is_default_demo: false,
-        drawdown_type: 'EOD',
-        max_daily_loss_percent: 4.0,
-        max_total_drawdown_percent: 8.0,
-        profit_target_percent: 10.0,
-        profit_target_phase2_percent: 0,
-        min_trading_days: 5,
-        max_leverage: 100,
-        mandatory_stop_loss: true,
-        consistency_rule_percent: 40.0,
-        weekend_holding_allowed: false,
-        news_trading_allowed: true,
-        min_trade_duration_seconds: 15,
-        min_trade_duration_enabled: true,
-        profit_split_percent: 80,
-        inactivity_days_limit: 30,
-        one_time_price_usdt: 169,
-        monthly_price_usdt: 89,
-        is_popular: true,
-        is_active: true,
-        payout_scale: [
-          { tier: 1, split: 35 },
-          { tier: 2, split: 50 },
-          { tier: 3, split: 80 },
-          { tier: 4, split: 90 }
-        ]
-      };
-
-      return [
-        {
-          modelKey: 'solar eclipse__solar__instant_funding',
-          baseName: 'Solar Eclipse',
-          category: 'solar',
-          modelType: 'INSTANT_FUNDING',
-          primaryRule: solarDemoRule,
-          rules: [solarDemoRule],
-          tiers: solarTiers,
-          minPrice: 49,
-          maxPrice: 449,
-          isDefaultDemo: true,
-          totalSizes: solarTiers.length
-        },
-        {
-          modelKey: 'lunar eclipse__lunar__one_phase',
-          baseName: 'Lunar Eclipse',
-          category: 'lunar',
-          modelType: 'ONE_PHASE',
-          primaryRule: lunarDemoRule,
-          rules: [lunarDemoRule],
-          tiers: lunarTiers,
-          minPrice: 59,
-          maxPrice: 489,
-          isDefaultDemo: false,
-          totalSizes: lunarTiers.length
-        }
-      ];
+      return [];
     }
 
     const groupsMap = new Map<string, ChallengeModelGroup>();
@@ -518,8 +413,8 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
       group.totalSizes = group.tiers.length;
     }
 
-    return Array.from(groupsMap.values());
-  }, [rules]);
+    return Array.from(groupsMap.values()).filter(g => !deletedModelKeys.includes(g.modelKey));
+  }, [rules, deletedModelKeys]);
 
   // Filtrado de Modelos con el Buscador
   const filteredModelGroups = useMemo(() => {
@@ -1506,28 +1401,30 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
     setTestingRuleType(null);
   };
 
-  // 8. GUARDAR MODELO DE CHALLENGE UNIFICADO (TODOS SUS TAMAÑOS EN UNA SOLA ACCIÓN)
+  // 8. GUARDAR MODELO DE CHALLENGE UNIFICADO (TODOS SUS TAMAÑOS EN UNA SOLA ACCIÓN ATÓMICA EN BASE DE DATOS)
   const handleSaveAllTiers = async () => {
     setIsSaving(true);
     try {
       // 1. Eliminar de la base de datos los tiers que el usuario haya borrado explícitamente con [x]
-      if (onDeleteRule && deletedTierIds.length > 0) {
-        for (const delId of deletedTierIds) {
-          try {
-            await onDeleteRule(delId);
-          } catch (e) {
-            console.warn('[CRM] Error deleting removed tier:', delId, e);
+      if (deletedTierIds.length > 0) {
+        if (onDeleteRules) {
+          await onDeleteRules(deletedTierIds);
+        } else if (onDeleteRule) {
+          for (const delId of deletedTierIds) {
+            try {
+              await onDeleteRule(delId);
+            } catch (e) {
+              console.warn('[CRM] Error deleting removed tier:', delId, e);
+            }
           }
         }
         setDeletedTierIds([]);
       }
 
-      // 2. Guardar todos los tiers con las reglas unificadas del modelo
-      const savedTiersList: ChallengeSizeTier[] = [];
-      for (let i = 0; i < sizeTiers.length; i++) {
-        const tier = sizeTiers[i];
+      // 2. Construir los payloads para cada tamaño de cuenta
+      const payloads: Partial<RiskRuleConfigEntity>[] = sizeTiers.map((tier, i) => {
         const dynamicName = getDynamicChallengeName(baseName, tier.balance);
-        const payload: Partial<RiskRuleConfigEntity> = {
+        return {
           id: tier.id || undefined,
           name: dynamicName,
           category,
@@ -1562,12 +1459,24 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
           inactivity_days_limit: inactivityDaysLimit,
           is_active: true
         };
-        await onSaveRule(payload);
-        savedTiersList.push({
-          ...tier,
-          id: tier.id || payload.id
-        });
+      });
+
+      // 3. Guardar de forma atómica en Supabase
+      let savedEntities: RiskRuleConfigEntity[] = [];
+      if (onSaveRules) {
+        savedEntities = await onSaveRules(payloads);
+      } else {
+        for (const p of payloads) {
+          const res = await onSaveRule(p);
+          if (res) savedEntities.push(res);
+        }
       }
+
+      // 4. Asignar los IDs reales de Supabase a cada tier en memoria
+      const savedTiersList: ChallengeSizeTier[] = sizeTiers.map((tier, idx) => ({
+        ...tier,
+        id: savedEntities[idx]?.id || tier.id
+      }));
 
       const targetKey = getModelKey({ name: baseName, category, model_type: modelType });
       setSelectedModelKey(targetKey);
@@ -1577,7 +1486,7 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
       setTimeout(() => setSaveSuccessNotice(false), 3000);
     } catch (err) {
       console.error('Error saving challenge model:', err);
-      alert(isEs ? 'Error al guardar el modelo de challenge.' : 'Error saving challenge model.');
+      alert(isEs ? 'Error al guardar el modelo de challenge en base de datos.' : 'Error saving challenge model to database.');
     } finally {
       setIsSaving(false);
     }
@@ -1634,28 +1543,57 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
     if (e) {
       e.stopPropagation();
     }
-    if (!onDeleteRule) return;
+    if (!onDeleteRule && !onDeleteRules) return;
 
-    if (group.isDefaultDemo) {
-      alert(isEs ? 'No puedes eliminar la plantilla Demo por defecto de la plataforma.' : 'You cannot delete the platform default demo template.');
-      return;
-    }
-
-    const confirmMsg = isEs 
-      ? `¿Estás seguro de eliminar el modelo "${group.baseName}" y sus ${group.totalSizes} tamaños de cuenta? Se borrará permanentemente de la base de datos.`
-      : `Are you sure you want to delete model "${group.baseName}" and all its ${group.totalSizes} account sizes? This action is permanent.`;
+    // Confirmación única, clara e institucional (sin doble alerta)
+    const confirmMsg = group.isDefaultDemo
+      ? (isEs
+          ? `"${group.baseName}" está configurada como plantilla Demo. ¿Deseas eliminar este modelo y sus ${group.totalSizes} tamaños de cuenta permanentemente de la base de datos?`
+          : `"${group.baseName}" is marked as default demo template. Do you want to permanently delete this model and all its ${group.totalSizes} sizes from the database?`)
+      : (isEs 
+          ? `¿Estás seguro de eliminar el modelo "${group.baseName}" y sus ${group.totalSizes} tamaños de cuenta? Se borrará permanentemente de la base de datos.`
+          : `Are you sure you want to delete model "${group.baseName}" and all its ${group.totalSizes} account sizes? This action is permanent.`);
 
     if (!window.confirm(confirmMsg)) {
       return;
     }
 
+    // 1. Ocultar inmediatamente de la UI de forma reactiva instantánea
+    setDeletedModelKeys(prev => [...prev, group.modelKey]);
     setIsDeleting(true);
+
     try {
-      for (const r of group.rules) {
-        if (r.id) await onDeleteRule(r.id);
+      // Recolectar todos los IDs reales asociados a este modelo y sus tamaños
+      const idsToDelete = Array.from(new Set([
+        ...group.rules.map(r => r.id).filter(Boolean),
+        ...group.tiers.map(t => t.id).filter(Boolean)
+      ])) as string[];
+
+      if (idsToDelete.length > 0) {
+        if (onDeleteRules) {
+          await onDeleteRules(idsToDelete);
+        } else if (onDeleteRule) {
+          for (const id of idsToDelete) {
+            await onDeleteRule(id);
+          }
+        }
       }
 
-      const remainingGroups = groupedChallengeModels.filter(g => g.modelKey !== group.modelKey);
+      // Limpiar también en localStorage para evitar resurrección en caso de desconexión
+      try {
+        const local = localStorage.getItem('zyti_crm_risk_rules');
+        if (local) {
+          const parsed = JSON.parse(local);
+          const filtered = parsed.filter((r: any) => 
+            !idsToDelete.includes(r.id) && 
+            extractBaseName(r.name || '').toLowerCase() !== group.baseName.toLowerCase()
+          );
+          localStorage.setItem('zyti_crm_risk_rules', JSON.stringify(filtered));
+        }
+      } catch (_) {}
+
+      // Seleccionar el siguiente modelo disponible
+      const remainingGroups = groupedChallengeModels.filter(g => g.modelKey !== group.modelKey && !deletedModelKeys.includes(g.modelKey));
       if (remainingGroups.length > 0) {
         handleSelectModelGroup(remainingGroups[0]);
       } else {
@@ -1663,6 +1601,8 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
       }
     } catch (err) {
       console.error('Error deleting challenge model:', err);
+      // Revertir estado visual en caso de error
+      setDeletedModelKeys(prev => prev.filter(k => k !== group.modelKey));
       alert(isEs ? 'Error al eliminar el modelo de challenge.' : 'Error deleting challenge model.');
     } finally {
       setIsDeleting(false);
@@ -1818,7 +1758,7 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                         }`}>
                           {mType === 'INSTANT_FUNDING' ? (isEs ? 'Fondeo Directo' : 'Instant') : mType === 'TWO_PHASE' ? (isEs ? '2 Fases' : '2 Phases') : (isEs ? '1 Fase' : '1 Phase')}
                         </span>
-                        {!group.isDefaultDemo && onDeleteRule && (
+                        {(onDeleteRule || onDeleteRules) && (
                           <button
                             type="button"
                             onClick={(e) => handleDeleteModelGroup(group, e)}
@@ -1953,7 +1893,7 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  {activeGroup && !activeGroup.isDefaultDemo && onDeleteRule && (
+                  {activeGroup && (onDeleteRule || onDeleteRules) && (
                     <button
                       onClick={(e) => handleDeleteModelGroup(activeGroup, e)}
                       disabled={isDeleting}
@@ -3151,6 +3091,19 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                 </div>
 
                 <div className="flex items-center gap-3">
+                  {(onDeleteRule || onDeleteRules) && activeGroup && (
+                    <button
+                      onClick={(e) => handleDeleteModelGroup(activeGroup, e)}
+                      disabled={isDeleting}
+                      type="button"
+                      className="inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-black transition-all hover:scale-[1.02] active:scale-95 shadow-2xs cursor-pointer disabled:opacity-50"
+                      title={isEs ? 'Eliminar este modelo de challenge de la base de datos' : 'Delete this challenge model from the database'}
+                    >
+                      <Trash2 className="w-4 h-4 text-rose-600" />
+                      <span>{isDeleting ? (isEs ? 'Eliminando...' : 'Deleting...') : (isEs ? 'Eliminar Modelo' : 'Delete Model')}</span>
+                    </button>
+                  )}
+
                   <button
                     onClick={handleSaveAllTiers}
                     disabled={isSaving}

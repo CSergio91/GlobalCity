@@ -24,7 +24,7 @@ interface DynamicRulesModalProps {
   ruleToEdit: RiskRuleConfigEntity | null;
   availableRules?: RiskRuleConfigEntity[];
   onNavigateToChallenges?: () => void;
-  onSaveRule: (rule: Partial<RiskRuleConfigEntity>) => Promise<void>;
+  onSaveRule: (rule: Partial<RiskRuleConfigEntity>) => Promise<any>;
 }
 
 export const DynamicRulesModal: React.FC<DynamicRulesModalProps> = ({

@@ -879,16 +879,10 @@ export const crmService = {
       }
 
       const dbPayload: any = { ...ruleToSave };
-      if (isNew) {
-        const { error: insErr } = await supabase.from('risk_rule_configs').insert(dbPayload);
-        if (insErr) {
-          console.warn('[CRM Service] Error inserting risk_rule_configs:', insErr);
-        }
-      } else {
-        const { error: updErr } = await supabase.from('risk_rule_configs').update(dbPayload).eq('id', ruleToSave.id);
-        if (updErr) {
-          console.warn('[CRM Service] Error updating risk_rule_configs:', updErr);
-        }
+      const { error: upsertErr } = await supabase.from('risk_rule_configs').upsert(dbPayload);
+      if (upsertErr) {
+        console.error('[CRM Service] Error upserting risk_rule_configs:', upsertErr);
+        throw upsertErr;
       }
 
       // Invalidar caché Redis del backend para que la Landing y Login reciban los cambios en caliente
@@ -909,11 +903,104 @@ export const crmService = {
   },
 
   /**
+   * Guarda o actualiza un conjunto de tamaños de un modelo de challenge en Supabase de forma atómica (Zero-Mock)
+   */
+  async saveRiskRules(rules: Partial<RiskRuleConfigEntity>[]): Promise<RiskRuleConfigEntity[]> {
+    if (!rules || rules.length === 0) return [];
+
+    const preparedRules: RiskRuleConfigEntity[] = rules.map((r, i) => {
+      const stableId = r.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(r.id)
+        ? r.id
+        : crypto.randomUUID();
+
+      return {
+        id: stableId,
+        name: r.name || 'Regla Personalizada',
+        category: r.category || 'solar',
+        one_time_price_usdt: r.one_time_price_usdt !== undefined ? Number(r.one_time_price_usdt) : 0,
+        monthly_price_usdt: r.monthly_price_usdt !== undefined ? Number(r.monthly_price_usdt) : 0,
+        astronomical_name_en: r.astronomical_name_en || r.name || 'Custom Plan',
+        astronomical_name_es: r.astronomical_name_es || r.name || 'Plan Personalizado',
+        is_popular: !!r.is_popular,
+        display_order: r.display_order ?? i,
+        model_type: r.model_type || 'ONE_PHASE',
+        profit_target_percent: r.profit_target_percent ?? 10.0,
+        profit_target_phase2_percent: r.profit_target_phase2_percent ?? null,
+        max_daily_loss_percent: r.max_daily_loss_percent ?? 5.0,
+        max_total_drawdown_percent: r.max_total_drawdown_percent ?? 10.0,
+        max_trailing_drawdown_percent: r.max_trailing_drawdown_percent ?? null,
+        drawdown_type: r.drawdown_type || 'EOD',
+        max_leverage: r.max_leverage ?? 100,
+        mandatory_stop_loss: !!r.mandatory_stop_loss,
+        max_positions_per_symbol_enabled: !!r.max_positions_per_symbol_enabled,
+        max_positions_per_symbol: r.max_positions_per_symbol ?? 2,
+        max_total_open_positions_enabled: !!r.max_total_open_positions_enabled,
+        max_total_open_positions: r.max_total_open_positions ?? 5,
+        anti_hedging_enabled: !!r.anti_hedging_enabled,
+        max_risk_per_trade_percent: r.max_risk_per_trade_percent ?? null,
+        weekend_holding_allowed: r.weekend_holding_allowed ?? true,
+        min_trade_duration_enabled: r.min_trade_duration_enabled ?? true,
+        min_trade_duration_seconds: r.min_trade_duration_seconds ?? 10,
+        news_trading_allowed: r.news_trading_allowed ?? true,
+        consistency_rule_percent: r.consistency_rule_percent ?? 40.0,
+        min_trading_days: r.min_trading_days ?? 5,
+        min_daily_profit_type: r.min_daily_profit_type || 'PERCENT',
+        min_daily_profit_value: r.min_daily_profit_value ?? 0.5,
+        profit_split_percent: r.profit_split_percent ?? 80.0,
+        payout_scale: r.payout_scale || [
+          { tier: 1, split: 35 },
+          { tier: 2, split: 50 },
+          { tier: 3, split: 80 },
+          { tier: 4, split: 90 }
+        ],
+        inactivity_days_limit: r.inactivity_days_limit ?? 30,
+        default_account_balance: r.default_account_balance !== undefined ? Number(r.default_account_balance) : 100000.00,
+        is_default_demo: !!r.is_default_demo,
+        is_active: r.is_active ?? true,
+        updated_at: new Date().toISOString()
+      };
+    });
+
+    try {
+      const demoRule = preparedRules.find(r => r.is_default_demo);
+      if (demoRule) {
+        await supabase.from('risk_rule_configs').update({ is_default_demo: false }).neq('id', demoRule.id);
+      }
+
+      // Upsert atómico por lotes en Supabase
+      const { error: upsertErr } = await supabase.from('risk_rule_configs').upsert(preparedRules);
+      if (upsertErr) {
+        console.error('[CRM Service] Error upserting risk_rule_configs batch:', upsertErr);
+        throw upsertErr;
+      }
+
+      // Invalidar caché Redis del backend
+      try {
+        apiFetch('/api/challenges/invalidate', { method: 'POST' }).catch(() => {});
+      } catch (_) {}
+    } catch (e) {
+      console.warn('[CRM Service] Error guardando lote en Supabase:', e);
+      throw e;
+    }
+
+    // Actualizar caché de localStorage y sincronizar con memoria
+    const current = await this.getRiskRules();
+    const savedIds = new Set(preparedRules.map(r => r.id));
+    const merged = [...preparedRules, ...current.filter(r => !savedIds.has(r.id))];
+    localStorage.setItem('zyti_crm_risk_rules', JSON.stringify(merged));
+
+    return preparedRules;
+  },
+
+  /**
    * Elimina un preset de reglas de riesgo de la base de datos
    */
   async deleteRiskRule(id: string): Promise<void> {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
     try {
-      await supabase.from('risk_rule_configs').delete().eq('id', id);
+      if (isUuid) {
+        await supabase.from('risk_rule_configs').delete().eq('id', id);
+      }
       try {
         apiFetch('/api/challenges/invalidate', { method: 'POST' }).catch(() => {});
       } catch (_) {}
@@ -922,6 +1009,28 @@ export const crmService = {
     }
     const current = await this.getRiskRules();
     const updated = current.filter(r => r.id !== id);
+    localStorage.setItem('zyti_crm_risk_rules', JSON.stringify(updated));
+  },
+
+  /**
+   * Elimina un lote de presets de reglas de riesgo en una sola operación atómica
+   */
+  async deleteRiskRules(ids: string[]): Promise<void> {
+    if (!ids || ids.length === 0) return;
+    const validUuids = ids.filter(id => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+    try {
+      if (validUuids.length > 0) {
+        await supabase.from('risk_rule_configs').delete().in('id', validUuids);
+      }
+      try {
+        apiFetch('/api/challenges/invalidate', { method: 'POST' }).catch(() => {});
+      } catch (_) {}
+    } catch (e) {
+      console.warn('[CRM Service] Error batch deleting risk_rule_configs:', e);
+    }
+    const current = await this.getRiskRules();
+    const idSet = new Set(ids);
+    const updated = current.filter(r => !idSet.has(r.id));
     localStorage.setItem('zyti_crm_risk_rules', JSON.stringify(updated));
   },
 

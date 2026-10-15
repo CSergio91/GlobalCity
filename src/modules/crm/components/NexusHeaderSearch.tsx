@@ -27,6 +27,7 @@ export interface NexusHeaderSearchProps {
   onSelectTraderForAudit?: (trader: TraderClientEntity) => void;
   onSelectRule?: (ruleId: string) => void;
   className?: string;
+  autoOpen?: boolean;
 }
 
 interface SearchItem {
@@ -49,15 +50,23 @@ export const NexusHeaderSearch: React.FC<NexusHeaderSearchProps> = ({
   onSelectModule,
   onSelectTraderForAudit,
   onSelectRule,
-  className = ''
+  className = '',
+  autoOpen = false
 }) => {
   const isEs = lang === 'es';
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(autoOpen);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (autoOpen) {
+      setIsOpen(true);
+      setTimeout(() => inputRef.current?.focus(), 60);
+    }
+  }, [autoOpen]);
 
   // Módulos ERP Principales
   const moduleDefs = useMemo(() => [
@@ -247,9 +256,11 @@ export const NexusHeaderSearch: React.FC<NexusHeaderSearchProps> = ({
 
   // Atajo global Ctrl+K / Cmd+K: Desliza y enfoca el buscador en la barra superior SIN modal
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    const handleKeyDownCapture = (e: KeyboardEvent) => {
+      const isK = e.key === 'k' || e.key === 'K' || e.code === 'KeyK';
+      if ((e.ctrlKey || e.metaKey) && isK) {
         e.preventDefault();
+        e.stopPropagation();
         setIsOpen(true);
         setTimeout(() => {
           inputRef.current?.focus();
@@ -257,8 +268,8 @@ export const NexusHeaderSearch: React.FC<NexusHeaderSearchProps> = ({
         }, 30);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDownCapture, true);
+    return () => window.removeEventListener('keydown', handleKeyDownCapture, true);
   }, []);
 
   // Navegación con teclado
@@ -350,7 +361,7 @@ export const NexusHeaderSearch: React.FC<NexusHeaderSearchProps> = ({
 
       {/* Desplegable Flotante Anclado Directamente Debajo del Buscador (Sin Modal de Fondo) */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white/98 backdrop-blur-2xl rounded-2xl border border-[#ded5c5] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 text-[#0F172A]">
+        <div className="absolute top-full left-0 right-0 mt-2 z-[100] bg-white/98 backdrop-blur-2xl rounded-2xl border border-[#ded5c5] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 text-[#0F172A]">
           {/* Header del desplegable */}
           <div className="px-3.5 py-2.5 border-b border-[#e5dfd3] bg-[#faf8f5] flex items-center justify-between">
             <div className="flex items-center gap-2">

@@ -103,7 +103,9 @@ export const InstitutionalCrmApp: React.FC<InstitutionalCrmAppProps> = ({
     handleUpdateTraderStatus,
     handleResetTraderBalance,
     handleSaveRule,
+    handleSaveRules,
     handleDeleteRule,
+    handleDeleteRules,
     handleCreateApiKey,
     handleToggleApiKey,
     handleDeleteApiKey,
@@ -263,7 +265,7 @@ export const InstitutionalCrmApp: React.FC<InstitutionalCrmAppProps> = ({
         </div>
 
         {/* Buscador General Global Deslizable en Header (Sin Modal) */}
-        <div className="hidden md:flex items-center justify-center flex-1 mx-4">
+        <div className="flex items-center justify-center flex-1 mx-2 sm:mx-6 min-w-[200px] max-w-xl">
           <NexusHeaderSearch
             lang={lang}
             traders={traders}
@@ -286,7 +288,7 @@ export const InstitutionalCrmApp: React.FC<InstitutionalCrmAppProps> = ({
           <button
             type="button"
             onClick={() => setIsMobileSearchOpen(prev => !prev)}
-            className="md:hidden flex items-center justify-center w-8 h-8 rounded-xl border border-[#ded5c5] bg-white text-slate-700 shadow-2xs cursor-pointer"
+            className="sm:hidden flex items-center justify-center w-8 h-8 rounded-xl border border-[#ded5c5] bg-white text-slate-700 shadow-2xs cursor-pointer"
             title={isEs ? 'Buscar módulos y traders' : 'Search modules and traders'}
           >
             {isMobileSearchOpen ? <X className="w-4 h-4 text-rose-600" /> : <Search className="w-4 h-4" />}
@@ -384,8 +386,9 @@ export const InstitutionalCrmApp: React.FC<InstitutionalCrmAppProps> = ({
 
       {/* Buscador Deslizable para Móvil (Sin Modal) */}
       {isMobileSearchOpen && (
-        <div className="md:hidden sticky top-[53px] z-39 px-4 py-2 bg-white/98 backdrop-blur-xl border-b border-[#e5dfd3] shadow-md animate-in fade-in slide-in-from-top-1 duration-150">
+        <div className="sm:hidden sticky top-[53px] z-39 px-4 py-2 bg-white/98 backdrop-blur-xl border-b border-[#e5dfd3] shadow-md animate-in fade-in slide-in-from-top-1 duration-150">
           <NexusHeaderSearch
+            autoOpen={true}
             lang={lang}
             traders={traders}
             riskRules={riskRules}
@@ -498,7 +501,9 @@ export const InstitutionalCrmApp: React.FC<InstitutionalCrmAppProps> = ({
             activeRuleId={selectedRuleId}
             lang={lang}
             onSaveRule={handleSaveRule}
+            onSaveRules={handleSaveRules}
             onDeleteRule={handleDeleteRule}
+            onDeleteRules={handleDeleteRules}
             onSelectRule={(id) => setSelectedRuleId(id)}
           />
         )}

@@ -19,6 +19,7 @@ import { UserTradingAccount } from '../TraderDashboardApp';
 import { PayoutRequestEntity, PayoutTierStep } from '../../crm/types/crm.types';
 import { crmService } from '../../crm/api/crmService';
 import { supabase } from '../../../lib/supabase';
+import { PayoutEngine } from '../../../core/trading/PayoutEngine';
 
 interface TraderPayoutsViewProps {
   accounts: UserTradingAccount[];
@@ -162,26 +163,41 @@ export const TraderPayoutsView: React.FC<TraderPayoutsViewProps> = ({
 
     setIsSubmitting(true);
     try {
-      const newPayout = await crmService.createPayoutRequest({
-        account_id: activeAccount.id,
-        user_id: userId || null,
-        trader_email: userEmail || (activeAccount as any).traderEmail || 'trader@eklipsefunded.com',
+      const settledCount = payoutsHistory.filter(p => 
+        p.account_id === activeAccount.id && (p.status === 'PAID' || p.status === 'APPROVED' || p.status === 'PENDING')
+      ).length;
+
+      const res = await PayoutEngine.submitPayoutRequest({
+        account: {
+          id: activeAccount.id,
+          accountNumber: activeAccount.accountNumber,
+          traderEmail: userEmail || (activeAccount as any).traderEmail || 'trader@eklipsefunded.com',
+          userId: userId || null,
+          initialBalance: initBal,
+          currentBalance: currBal,
+          equity: activeAccount.equity || currBal,
+          status: activeAccount.status || 'ACTIVE',
+          tradingDaysCount: (activeAccount as any).tradingDaysCount || 0,
+          rulesConfig: (activeAccount as any).rulesConfig || {}
+        },
         amount: amountInput,
-        profit_split_percent: currentSplitPct,
-        net_payout_amount: estimatedTraderPayout,
-        firm_retained_amount: estimatedFirmRetained,
-        payout_method: 'CRYPTO_USDT',
-        crypto_network: cryptoNetwork,
-        destination_address: walletAddress.trim(),
-        payout_number: currentTierNumber,
-        notes: traderNotes.trim() || undefined
+        cryptoNetwork,
+        destinationAddress: walletAddress.trim(),
+        payoutMethod: 'CRYPTO_USDT',
+        notes: traderNotes.trim() || undefined,
+        pastSettledPayoutsCount: settledCount
       });
 
-      setPayoutsHistory(prev => [newPayout, ...prev]);
+      if (!res.success || !res.payout) {
+        setFormErrorMessage(res.error || (isEn ? 'Eligibility criteria not met.' : 'No cumples con las reglas de elegibilidad de retiro.'));
+        return;
+      }
+
+      setPayoutsHistory(prev => [res.payout!, ...prev]);
       setFormSuccessMessage(
         isEn 
-          ? `✓ Payout request #${currentTierNumber} submitted successfully! Our treasury desk will review and dispatch your transfer.` 
-          : `✓ ¡Solicitud de Retiro #${currentTierNumber} enviada con éxito! La mesa de tesorería procesará y transferirá tus fondos.`
+          ? `✓ Payout request #${res.payout.payout_number || currentTierNumber} submitted successfully! Treasury desk will review and dispatch.` 
+          : `✓ ¡Solicitud de Retiro #${res.payout.payout_number || currentTierNumber} enviada con éxito! La mesa de tesorería procesará y transferirá tus fondos.`
       );
       setWalletAddress('');
       setTraderNotes('');
