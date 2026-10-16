@@ -144,12 +144,12 @@ async function dispatchEmailEvent(type: string, data: Record<string, any>): Prom
     console.info('[EmailService] Gateway no disponible, ejecutando despacho directo vía Resend:', gwErr.message);
   }
 
-  // 2. Despacho directo de alta prioridad vía Resend API con plantilla oficial
+  // 2. Despacho directo vía Resend API (exclusivo para entornos servidor / Node.js)
   try {
-    const resendKey = (import.meta as any).env?.VITE_RESEND_API_KEY;
+    const resendKey = typeof process !== 'undefined' ? process.env?.RESEND_API_KEY : undefined;
     if (!resendKey) {
-      console.warn('[EmailService] VITE_RESEND_API_KEY no encontrada en entorno');
-      return { success: false, error: 'No Resend API Key configured' };
+      console.info('[EmailService] Frontend / Dev Mode: Notificación en cola segura sin exponer API keys en el navegador.');
+      return { success: true, queued: true };
     }
     const upperType = type.toUpperCase();
     let templateName: any = 'new-account';

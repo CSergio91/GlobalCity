@@ -1,14 +1,8 @@
 import React, { useState } from 'react';
 import { Navbar } from './components/Navbar';
 import { HeroExperienceStage } from './components/HeroExperienceStage';
-import { HorizontalShowcase } from './components/HorizontalShowcase';
 import { MarketsSection } from './components/MarketsSection';
-import { PayoutRoadmapSection } from './components/PayoutRoadmapSection';
-import { WhyEklipseSection } from './components/WhyEklipseSection';
-import { CommunitySection } from './components/CommunitySection';
-import { FAQSection } from './components/FAQSection';
 import { ParallaxFaqFooterStage } from './components/ParallaxFaqFooterStage';
-import { TradingTerminal } from './components/TradingTerminal';
 import { UserSession } from './lib/supabase';
 import { CelestialCursor } from './components/CelestialCursor';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
@@ -17,11 +11,35 @@ import { RouterProvider, useAppRouter } from './context/RouterContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { LoginPage } from './components/auth/LoginPage';
 import { ResetPasswordPage } from './components/auth/ResetPasswordPage';
-import { TraderDashboardApp } from './modules/dashboard/TraderDashboardApp';
-import { InstitutionalCrmApp } from './modules/crm/InstitutionalCrmApp';
 import { CrmAccessDeniedScreen } from './modules/crm/components/CrmAccessDeniedScreen';
 import { NotFoundPage } from './components/NotFoundPage';
 import { GlobalErrorBoundary } from './components/GlobalErrorBoundary';
+
+// Code-Splitting Institucional: Carga diferida de subsistemas de trading y CRM
+const TradingTerminal = React.lazy(() => import('./components/TradingTerminal'));
+const TraderDashboardApp = React.lazy(() => 
+  import('./modules/dashboard/TraderDashboardApp').then(m => ({ default: m.TraderDashboardApp }))
+);
+const InstitutionalCrmApp = React.lazy(() => 
+  import('./modules/crm/InstitutionalCrmApp').then(m => ({ default: m.InstitutionalCrmApp }))
+);
+
+const ObsidianSuspenseFallback: React.FC = () => (
+  <div className="min-h-screen bg-[#06070B] flex flex-col items-center justify-center relative overflow-hidden select-none">
+    <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(245,158,11,0.08),rgba(255,255,255,0))] pointer-events-none" />
+    <div className="relative flex flex-col items-center gap-4 z-10">
+      <div className="w-10 h-10 rounded-full border-2 border-amber-500/20 border-t-amber-400 animate-spin shadow-lg shadow-amber-500/10" />
+      <div className="flex flex-col items-center gap-1">
+        <span className="text-[11px] font-mono uppercase tracking-[0.28em] text-amber-400/90 font-medium">
+          Eklipse Engine
+        </span>
+        <span className="text-[10px] text-neutral-500 font-mono tracking-wider">
+          Iniciando subsistema institucional...
+        </span>
+      </div>
+    </div>
+  </div>
+);
 
 function MainAppContent() {
   const { currentPath, subdomain, navigate } = useAppRouter();
@@ -121,19 +139,21 @@ function MainAppContent() {
     } : null;
 
     return (
-      <TradingTerminal 
-        currentLang={language}
-        user={terminalUser}
-        onExit={() => {
-          if (isAuthenticated) {
-            navigate('/dashboard');
-          } else {
-            navigate('/');
-          }
-        }}
-        onOpenAuth={() => navigate('/login')}
-        onLanguageChange={(newLang) => setLanguage(newLang)}
-      />
+      <React.Suspense fallback={<ObsidianSuspenseFallback />}>
+        <TradingTerminal 
+          currentLang={language}
+          user={terminalUser}
+          onExit={() => {
+            if (isAuthenticated) {
+              navigate('/dashboard');
+            } else {
+              navigate('/');
+            }
+          }}
+          onOpenAuth={() => navigate('/login')}
+          onLanguageChange={(newLang) => setLanguage(newLang)}
+        />
+      </React.Suspense>
     );
   }
 
@@ -162,20 +182,22 @@ function MainAppContent() {
     }
 
     return (
-      <InstitutionalCrmApp 
-        user={user as any}
-        onBackToTerminal={() => {
-          if (subdomain === 'nexus') {
-            window.location.href = 'https://dashapp.eklipsefunded.com';
-          } else {
-            navigate('/dashboard');
-          }
-        }} 
-        onLogout={() => {
-          logout();
-          navigate('/login');
-        }} 
-      />
+      <React.Suspense fallback={<ObsidianSuspenseFallback />}>
+        <InstitutionalCrmApp 
+          user={user as any}
+          onBackToTerminal={() => {
+            if (subdomain === 'nexus') {
+              window.location.href = 'https://dashapp.eklipsefunded.com';
+            } else {
+              navigate('/dashboard');
+            }
+          }} 
+          onLogout={() => {
+            logout();
+            navigate('/login');
+          }} 
+        />
+      </React.Suspense>
     );
   }
 
@@ -185,20 +207,22 @@ function MainAppContent() {
       return <LoginPage />;
     }
     return (
-      <TraderDashboardApp 
-        onBackToLanding={() => {
-          if (subdomain === 'dashapp' || subdomain === 'dashboard') {
-            window.location.href = 'https://eklipsefunded.com';
-          } else {
-            navigate('/');
-          }
-        }} 
-        onLogout={() => {
-          logout();
-          navigate('/dashboard');
-        }}
-        onGoToTerminal={() => navigate('/operations')}
-      />
+      <React.Suspense fallback={<ObsidianSuspenseFallback />}>
+        <TraderDashboardApp 
+          onBackToLanding={() => {
+            if (subdomain === 'dashapp' || subdomain === 'dashboard') {
+              window.location.href = 'https://eklipsefunded.com';
+            } else {
+              navigate('/');
+            }
+          }} 
+          onLogout={() => {
+            logout();
+            navigate('/dashboard');
+          }}
+          onGoToTerminal={() => navigate('/operations')}
+        />
+      </React.Suspense>
     );
   }
 
@@ -243,7 +267,7 @@ function MainAppContent() {
         />
 
         {/* Real-time Crypto DMA Markets Marquee Wall */}
-        <MarketsSection />
+        <MarketsSection onNavigateSection={handleNavigateSection} />
 
       </main>
 

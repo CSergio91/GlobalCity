@@ -187,12 +187,12 @@ export const TerminalShowcaseSlide: React.FC<TerminalShowcaseSlideProps> = ({
               <span>{isEn ? 'EKLIPSE TERMINAL' : 'EKLIPSE TERMINAL'}</span>
             </div>
             
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight leading-none text-white">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight leading-none text-white">
               <span>{isEn ? 'Institutional Trading. ' : 'Institutional Trading. '}</span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-500 drop-shadow-[0_0_20px_rgba(245,158,11,0.4)]">
                 {isEn ? 'In your hands.' : 'In your hands.'}
               </span>
-            </h1>
+            </h2>
 
             <p className="text-[11px] sm:text-xs text-slate-400 font-normal">
               {isEn 

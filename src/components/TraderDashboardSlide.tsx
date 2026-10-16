@@ -90,15 +90,15 @@ export const TraderDashboardSlide: React.FC<TraderDashboardSlideProps> = ({
             {isEn ? '02 · REAL-TIME TRADER TELEMETRY · IN-MEMORY SENTINEL' : '02 · TELEMETRÍA EN TIEMPO REAL · CENTINELA EN RAM'}
           </div>
 
-          {/* Master Visual Headline H1 */}
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-[-0.03em] leading-[1.1] text-white">
+          {/* Master Visual Headline H2 */}
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-[-0.03em] leading-[1.1] text-white">
             <span className="inline-block drop-shadow-[0_4px_30px_rgba(0,0,0,0.85)]">
               {isEn ? 'Trader Dashboard Nexus.' : 'Trader Dashboard Nexus.'}{' '}
             </span>
             <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-fuchsia-300 to-indigo-400 drop-shadow-[0_0_35px_rgba(168,85,247,0.45)]">
               {isEn ? 'In-Memory State Sync.' : 'Sincronización en RAM a <1ms.'}
             </span>
-          </h1>
+          </h2>
 
           {/* Subtitle */}
           <p className="text-xs sm:text-sm text-slate-300/85 font-normal max-w-xl mx-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] hidden sm:block">

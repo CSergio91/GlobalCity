@@ -242,8 +242,8 @@ export const ProgramsSection: React.FC = () => {
             {isEn ? 'INSTITUTIONAL CAPITAL · NO EVALUATION TRAPS' : 'CAPITAL INSTITUCIONAL · SIN TRAMPAS DE EVALUACIÓN'}
           </div>
 
-          {/* Master Visual Headline H1 */}
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-[-0.03em] leading-[1.1] text-white">
+          {/* Master Visual Headline H2 */}
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-[-0.03em] leading-[1.1] text-white">
             <span className="inline-block drop-shadow-[0_4px_30px_rgba(0,0,0,0.85)]">
               {isEn ? 'Funding Programs.' : 'Cuentas de Fondeo.'}{' '}
             </span>
@@ -254,7 +254,7 @@ export const ProgramsSection: React.FC = () => {
             }`}>
               {isEn ? 'Choose Your Account.' : 'Elige Tu Capital.'}
             </span>
-          </h1>
+          </h2>
 
           {/* Subtitle */}
           <p className="text-xs sm:text-sm text-slate-300/85 font-normal max-w-xl mx-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] hidden sm:block">

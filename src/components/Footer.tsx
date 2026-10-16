@@ -103,14 +103,6 @@ export const Footer: React.FC = () => {
                 {isEn ? 'Markets' : 'Mercados'}
               </a>
               <a 
-                href="#payout" 
-                title={isEn ? "Fast Crypto Payouts in USDT" : "Retiros Rápidos en Cripto USDT"}
-                onClick={(e) => { e.preventDefault(); scrollTo('payout'); }} 
-                className="hover:text-amber-300 transition-colors cursor-pointer"
-              >
-                {isEn ? 'Payouts' : 'Retiros'}
-              </a>
-              <a 
                 href="#faq" 
                 title={isEn ? "Trading Rules, Drawdown & FAQ" : "Reglas de Trading, Drawdown y Preguntas Frecuentes"}
                 onClick={(e) => { e.preventDefault(); scrollTo('faq'); }} 

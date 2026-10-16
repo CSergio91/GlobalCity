@@ -42,8 +42,15 @@ export const BlackHoleDisintegrationCanvas = forwardRef<BlackHoleDisintegrationH
       }
     }));
 
+    const MAX_PARTICLES = 120;
+
     const startLoop = () => {
       if (rafIdRef.current !== null) return;
+
+      // Respetar preferencias de accesibilidad y ahorro de batería
+      if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+      }
 
       const loop = () => {
         const canvas = canvasRef.current;
@@ -59,10 +66,10 @@ export const BlackHoleDisintegrationCanvas = forwardRef<BlackHoleDisintegrationH
         ctx.clearRect(0, 0, width, height);
 
         // 1. Spawn disintegrating particles along the expanding event horizon perimeter
-        if (isActive && radius > 12) {
-          // Spawn 5 to 9 particles per frame
-          const spawnCount = Math.min(10, Math.floor(radius / 70) + 4);
-          for (let i = 0; i < spawnCount; i++) {
+        if (isActive && radius > 12 && particlesRef.current.length < MAX_PARTICLES) {
+          // Spawn 4 to 8 particles per frame acotadas por el presupuesto de partículas
+          const spawnCount = Math.min(8, Math.floor(radius / 70) + 3);
+          for (let i = 0; i < spawnCount && particlesRef.current.length < MAX_PARTICLES; i++) {
             const angle = Math.random() * Math.PI * 2;
             const jitterR = radius + (Math.random() - 0.5) * 6;
             const px = cx + Math.cos(angle) * jitterR;

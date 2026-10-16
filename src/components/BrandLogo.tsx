@@ -46,6 +46,10 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
         <img 
           src={eklipseEmblemImg} 
           alt="Eklipse Funded Logo" 
+          fetchPriority="high"
+          decoding="async"
+          width="48"
+          height="48"
           className="w-full h-full object-contain filter contrast-115 brightness-105 group-hover:scale-105 transition-transform duration-300 drop-shadow-[0_2px_18px_rgba(234,179,8,0.35)]"
           referrerPolicy="no-referrer"
         />

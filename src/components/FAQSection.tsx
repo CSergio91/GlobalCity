@@ -101,15 +101,15 @@ export const FAQSection: React.FC = () => {
               {isEn ? 'KNOWLEDGE BASE & GOVERNANCE' : 'BASE DE CONOCIMIENTO Y REGLAS INSTITUCIONALES'}
             </div>
 
-            {/* Master Visual Headline H1 */}
-            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-[-0.03em] leading-[1.1] text-white">
+            {/* Master Visual Headline H2 */}
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-[-0.03em] leading-[1.1] text-white">
               <span className="inline-block drop-shadow-[0_4px_30px_rgba(0,0,0,0.85)]">
                 {isEn ? 'Frequently Asked ' : 'Preguntas '}{' '}
               </span>
               <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-500 drop-shadow-[0_0_35px_rgba(245,158,11,0.45)]">
                 {isEn ? 'Questions.' : 'Frecuentes.'}
               </span>
-            </h1>
+            </h2>
 
             {/* Subtitle */}
             <p className="text-xs sm:text-sm text-slate-300/85 font-normal max-w-xl mx-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
@@ -120,13 +120,14 @@ export const FAQSection: React.FC = () => {
           </div>
         </ScrollReveal>
 
-        {/* Accordion List: 2-Column Grid on Desktop (6 + 5 items) for Perfect Viewport Fit */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-2.5 max-h-[75vh] lg:max-h-none overflow-y-auto no-scrollbar pr-0.5">
+        {/* Accordion List: 2-Column Grid on Desktop (6 + 5 items) sin trampas de scroll anidadas */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-2.5 pr-0.5">
           {faqs.map((faq, idx) => {
             const isOpen = openIdx === idx;
+            const faqId = (faq as any).id || `faq-item-${idx}`;
             return (
               <ScrollReveal 
-                key={idx} 
+                key={faqId} 
                 animation="fade-up" 
                 delay={Math.min(idx * 20, 200)} 
                 duration={400}
@@ -139,9 +140,11 @@ export const FAQSection: React.FC = () => {
                   }`}
                 >
                   <button
+                    id={`faq-btn-${idx}`}
                     onClick={() => toggleAccordion(idx)}
-                    className="w-full p-2.5 sm:p-4 text-left flex items-center justify-between gap-2 sm:gap-3 cursor-pointer group"
+                    className="w-full p-2.5 sm:p-4 text-left flex items-center justify-between gap-2 sm:gap-3 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
                     aria-expanded={isOpen}
+                    aria-controls={`faq-region-${idx}`}
                   >
                     <span className={`font-mono text-xs sm:text-[13px] font-bold transition-colors leading-snug break-words flex-1 pr-1 ${
                       isOpen ? 'text-amber-300' : 'text-white group-hover:text-amber-200'
@@ -163,6 +166,9 @@ export const FAQSection: React.FC = () => {
 
                   {/* Expandable Answer Content */}
                   <div 
+                    id={`faq-region-${idx}`}
+                    role="region"
+                    aria-labelledby={`faq-btn-${idx}`}
                     className={`transition-all duration-300 ease-in-out overflow-hidden ${
                       isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
                     }`}

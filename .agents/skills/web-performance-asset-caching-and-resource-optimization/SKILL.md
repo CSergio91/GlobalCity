@@ -89,10 +89,40 @@ En pantallas móviles (< 640px):
 
 ---
 
-## 6. Checklist de Auditoría para Nuevos Componentes
-- [ ] ¿Los assets estáticos tienen hash inmutable?
-- [ ] ¿Los divisores y curvas están en SVG inline?
-- [ ] ¿Las animaciones corren exclusivamente sobre `transform` y `opacity`?
-- [ ] ¿Las imágenes pesadas tienen `decoding="async"` y dimensiones explícitas?
-- [ ] ¿En móvil todos los controles principales son visibles sin scroll?
+## 6. Code-Splitting Dinámico y Aislamiento de Bundles
+Para garantizar que la Landing Page cargue en sub-segundo (< 400ms):
+- **Cero importaciones estáticas de aplicaciones secundarias:** Componentes gigantes como la Terminal de Trading (`TradingTerminal`), el Dashboard del Trader (`TraderDashboardApp`) y el CRM Nexus (`InstitutionalCrmApp`) **NUNCA deben importarse estáticamente en la raíz**.
+- **React.lazy + Suspense:** Deben cargarse de forma diferida (`React.lazy(() => import(...))`) con un fallback de carga editorial (*Obsidian Skeleton*).
+- El bundle inicial de la Landing Page debe contener únicamente los componentes del embudo de conversión (Hero, Programas, Sliders de Showcase, FAQ, Footer).
+
+---
+
+## 7. Gobernanza de Canvas, GPU y Memoria VRAM
+1. **Detección Obligatoria de `prefers-reduced-motion`:**
+   Todo canvas visual o cursor personalizado debe consultar `window.matchMedia('(prefers-reduced-motion: reduce)')`. Si está activo, detener el bucle `requestAnimationFrame` para proteger a usuarios sensibles y ahorrar batería.
+2. **Presupuesto Finito de Partículas (Anti-Memory Leak):**
+   Los canvas basados en partículas (como vórtices, agujeros negros o polvo estelar) deben tener un techo estricto (ej. `MAX_PARTICLES = 120`). Prohibido generar partículas infinitas sin recolector de basura.
+3. **Restricción de `will-change`:**
+   Prohibido aplicar `will-change: transform` sobre contenedores fijos de pantalla completa (`fixed inset-0`). Solo debe aplicarse a elementos móviles individuales con dimensiones acotadas.
+
+---
+
+## 8. Seguridad de Secretos y Zero-Egress en Cliente
+1. **Prohibición de Secretos en `VITE_*`:**
+   Ningún token de bot de Telegram, clave privada de exchange, ni API Key de envío de correos (Resend/SendGrid) puede inyectarse bajo el prefijo `VITE_`. Todas las operaciones privilegiadas deben ejecutarse en el backend (`/api/v1/...`).
+2. **Caché Inmutable WebP en Nginx:**
+   La directiva de caché de 1 año (`max-age=31536000, immutable`) debe incluir obligatoriamente el formato moderno `.webp`.
+
+---
+
+## 9. Checklist de Auditoría de Producción (Obligatorio)
+- [ ] ¿Los assets estáticos (.js, .css, .webp, .svg) tienen hash inmutable y caché de 1 año en Nginx?
+- [ ] ¿La Terminal, el Dashboard y el CRM se cargan con `React.lazy`?
 - [ ] ¿El bundle JS principal se mantiene < 150kB comprimido (gzip)?
+- [ ] ¿Las imágenes LCP tienen `fetchpriority="high"`, `decoding="async"` y dimensiones explícitas?
+- [ ] ¿Los divisores y curvas están en SVG inline (0 peticiones HTTP)?
+- [ ] ¿Las animaciones corren exclusivamente sobre `transform` y `opacity`?
+- [ ] ¿Los canvas respetan `prefers-reduced-motion` y tienen límite máximo de partículas?
+- [ ] ¿En móvil no existen trampas de scroll anidadas (`overflow-y-auto` dentro de contenedores con altura fija)?
+- [ ] ¿Existe un único `<h1>` semántico por página (en el Hero)?
+- [ ] ¿Cero secretos o API keys privadas en el bundle JS del cliente?

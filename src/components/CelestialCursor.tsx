@@ -6,8 +6,12 @@ export const CelestialCursor: React.FC = () => {
   const ringRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Only activate on fine pointer devices (desktop with mouse)
-    if (typeof window === 'undefined' || !window.matchMedia('(pointer: fine)').matches) {
+    // Only activate on fine pointer devices (desktop with mouse) and without reduced motion
+    if (
+      typeof window === 'undefined' || 
+      !window.matchMedia('(pointer: fine)').matches ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
       return;
     }
 
@@ -124,7 +128,7 @@ export const CelestialCursor: React.FC = () => {
   return (
     <div 
       ref={containerRef}
-      className="pointer-events-none fixed inset-0 z-[99999] overflow-hidden select-none opacity-0 transition-opacity duration-300 will-change-transform"
+      className="pointer-events-none fixed inset-0 z-[99999] overflow-hidden select-none opacity-0 transition-opacity duration-300"
     >
       {/* 1. Outer Orbital Ring */}
       <div

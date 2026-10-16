@@ -19,7 +19,11 @@ interface AssetConfig {
   volume24h: string;
 }
 
-export const MarketsSection: React.FC = () => {
+interface MarketsSectionProps {
+  onNavigateSection?: (sectionId: string) => void;
+}
+
+export const MarketsSection: React.FC<MarketsSectionProps> = ({ onNavigateSection }) => {
   const { language } = useLanguage();
   const isEn = language === 'en';
   const { ticks } = useLiveMarketTicks();
@@ -76,9 +80,20 @@ export const MarketsSection: React.FC = () => {
   };
 
   const handleScrollToPrograms = () => {
-    const el = document.getElementById('programs');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+    if (onNavigateSection) {
+      onNavigateSection('programs');
+      return;
+    }
+    const container = document.getElementById('hero-experience');
+    if (container) {
+      const scrollable = container.offsetHeight - window.innerHeight;
+      const targetScroll = container.offsetTop + scrollable * 0.35;
+      window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+    } else {
+      const el = document.getElementById('programs');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
 
@@ -219,12 +234,6 @@ export const MarketsSection: React.FC = () => {
         <ScrollReveal animation="fade-up">
           <div className="space-y-4 sm:space-y-6 flex flex-col items-center">
             
-            {/* Minimalist Floating Pill */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-950/90 border border-white/10 backdrop-blur-md font-mono text-[11px] font-bold text-amber-300 uppercase tracking-widest shadow-xl">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>{isEn ? 'CRYPTO DERIVATIVES · 24/7 LIVE FEED' : 'FUTUROS CRIPTO · DATOS EN VIVO 24/7'}</span>
-            </div>
-
             {/* Giant Hero Headline with Gradient */}
             <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-white leading-tight drop-shadow-[0_6px_35px_rgba(0,0,0,0.95)]">
               <span className="block">
