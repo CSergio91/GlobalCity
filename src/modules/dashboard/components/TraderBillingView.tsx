@@ -19,11 +19,15 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useLanguage } from '../../../context/LanguageContext';
+import { getLoadedChallengePlans } from '../../../data/challengePlans';
 
 export interface OrderRecord {
   id: string;
   orderNumber: string;
   planId: string;
+  planName?: string;
+  modelType?: string;
+  isInstantFunding?: boolean;
   category: 'solar' | 'lunar';
   accountSize: number;
   basePrice: number;
@@ -40,12 +44,14 @@ interface TraderBillingViewProps {
   userEmail?: string;
   userId?: string;
   userDisplayName?: string;
+  initialOrders?: OrderRecord[];
 }
 
 export const TraderBillingView: React.FC<TraderBillingViewProps> = ({
   userEmail,
   userId,
-  userDisplayName = 'Trader'
+  userDisplayName = 'Trader',
+  initialOrders
 }) => {
   const { language } = useLanguage();
   const isEn = language === 'en';
@@ -53,6 +59,7 @@ export const TraderBillingView: React.FC<TraderBillingViewProps> = ({
   const cacheKey = `eklipse_billing_cache_${userEmail || 'anon'}`;
 
   const [orders, setOrders] = useState<OrderRecord[]>(() => {
+    if (initialOrders && initialOrders.length > 0) return initialOrders;
     try {
       const cached = sessionStorage.getItem(`eklipse_billing_cache_${userEmail || 'anon'}`);
       if (cached) {
@@ -64,6 +71,7 @@ export const TraderBillingView: React.FC<TraderBillingViewProps> = ({
   });
 
   const [isLoading, setIsLoading] = useState(() => {
+    if (initialOrders && initialOrders.length > 0) return false;
     try {
       const cached = sessionStorage.getItem(`eklipse_billing_cache_${userEmail || 'anon'}`);
       if (cached) {
@@ -77,17 +85,43 @@ export const TraderBillingView: React.FC<TraderBillingViewProps> = ({
   const [selectedInvoice, setSelectedInvoice] = useState<OrderRecord | null>(null);
 
   useEffect(() => {
+    if (initialOrders && initialOrders.length > 0) {
+      setOrders(initialOrders);
+      setIsLoading(false);
+      return;
+    }
     loadBillingOrders(false);
-  }, [userEmail, userId]);
+  }, [userEmail, userId, initialOrders]);
 
   const loadBillingOrders = async (forceRefresh = false) => {
+    // Si ya tenemos órdenes en memoria o provistas por el Bootstrap y no es recarga forzada, CERO peticiones HTTP redundantes (0ms)
+    if (!forceRefresh && orders.length > 0) {
+      setIsLoading(false);
+      return;
+    }
+    // Revisar si existe caché en sessionStorage
+    if (!forceRefresh) {
+      try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed?.data) && parsed.data.length > 0) {
+            setOrders(parsed.data);
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch (_) {}
+    }
+
     if (forceRefresh || orders.length === 0) {
       setIsLoading(true);
     }
     try {
       const loaded: OrderRecord[] = [];
+      const challengePlans = getLoadedChallengePlans();
 
-      // 1. Cargar desde PostgreSQL public.orders
+      // Cargar exclusivamente desde PostgreSQL public.orders (Single Source of Truth)
       if (userEmail || userId) {
         let query = supabase.from('orders').select('*');
         if (userEmail) {
@@ -97,10 +131,19 @@ export const TraderBillingView: React.FC<TraderBillingViewProps> = ({
 
         if (!error && data && data.length > 0) {
           data.forEach((row: any) => {
+            const billingAddress = row.billing_address || {};
+            const matchedPlan = challengePlans.find(p => p.id === row.plan_id || p.capital === Number(row.account_size));
+            const planName = billingAddress.planName || (matchedPlan?.astronomicalName ? (isEn ? matchedPlan.astronomicalName.en : matchedPlan.astronomicalName.es) : undefined) || (matchedPlan ? matchedPlan.name : undefined) || `Eklipse $${Number(row.account_size || 25000).toLocaleString()}`;
+            const modelType = billingAddress.modelType || matchedPlan?.modelType || (row.plan_id?.toLowerCase().includes('instant') ? 'INSTANT_FUNDING' : 'INSTANT_FUNDING');
+            const isInstantFunding = modelType === 'INSTANT_FUNDING' || (matchedPlan?.profitTargetPct === 0 && Number(matchedPlan?.profitTargetPct) === 0);
+
             loaded.push({
               id: row.id,
               orderNumber: row.order_number || `ORD-${row.id.slice(0, 8)}`,
               planId: row.plan_id || 'solar-25k',
+              planName,
+              modelType,
+              isInstantFunding,
               category: row.category || (row.plan_id?.includes('lunar') ? 'lunar' : 'solar'),
               accountSize: Number(row.account_size || 25000),
               basePrice: Number(row.base_price || 199),
@@ -109,42 +152,12 @@ export const TraderBillingView: React.FC<TraderBillingViewProps> = ({
               addons: Array.isArray(row.addons) ? row.addons : [],
               paymentGateway: row.payment_gateway || 'crypto',
               paymentStatus: row.payment_status || 'COMPLETED',
-              billingAddress: row.billing_address || {},
+              billingAddress: billingAddress,
               createdAt: row.created_at || new Date().toISOString()
             });
           });
         }
       }
-
-      // 2. Sincronizar también con almacenamiento local (redundancia)
-      try {
-        const localAssigned = JSON.parse(localStorage.getItem('eklipse_assigned_accounts') || '[]');
-        if (Array.isArray(localAssigned)) {
-          localAssigned.forEach((item: any, idx: number) => {
-            const fakeId = `local_ord_${idx}_${item.purchasedAt || Date.now()}`;
-            const exists = loaded.some(
-              (o) => o.createdAt === item.purchasedAt || (o.totalPrice === item.price && o.accountSize === item.accountSize)
-            );
-            if (!exists) {
-              loaded.push({
-                id: fakeId,
-                orderNumber: `ORD-${Date.now().toString().slice(-6)}-${idx + 100}`,
-                planId: item.planId || 'solar-25k',
-                category: item.category || 'solar',
-                accountSize: Number(item.accountSize || 25000),
-                basePrice: Number(item.basePrice || item.price || 199),
-                addonsCost: Number(item.addonsCost || 0),
-                totalPrice: Number(item.price || 199),
-                addons: Array.isArray(item.addons) ? item.addons : [],
-                paymentGateway: 'crypto',
-                paymentStatus: 'COMPLETED',
-                billingAddress: { email: userEmail, name: userDisplayName },
-                createdAt: item.purchasedAt || new Date().toISOString()
-              });
-            }
-          });
-        }
-      } catch (_) {}
 
       // Ordenar por fecha descendente
       loaded.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -347,11 +360,13 @@ export const TraderBillingView: React.FC<TraderBillingViewProps> = ({
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${isLunar ? 'bg-purple-400' : 'bg-amber-400'}`} />
                           <span className="font-semibold text-slate-200">
-                            ${order.accountSize.toLocaleString()} {isLunar ? 'Lunar' : 'Solar'}
+                            ${order.accountSize.toLocaleString()} {order.planName || (isLunar ? 'Lunar' : 'Solar')}
                           </span>
                         </div>
-                        <span className="text-[10px] text-slate-500 uppercase">
-                          {isLunar ? '2-Phase Evaluation' : '1-Phase Fast Track'}
+                        <span className="text-[10px] text-slate-400 uppercase font-mono font-bold">
+                          {order.isInstantFunding || order.modelType === 'INSTANT_FUNDING' || order.planId?.toLowerCase().includes('instant')
+                            ? (isEn ? 'Direct Instant Funding' : 'Fondeo Inmediato Directo')
+                            : (isLunar ? (isEn ? '2-Phase Evaluation' : 'Evaluación 2-Pasos') : (isEn ? '1-Phase Fast Track' : 'Evaluación 1-Paso'))}
                         </span>
                       </td>
 
@@ -520,12 +535,18 @@ export const TraderBillingView: React.FC<TraderBillingViewProps> = ({
                     <tr>
                       <td className="py-3">
                         <div className="font-bold text-slate-800">
-                          {selectedInvoice.category === 'lunar' ? 'Lunar Orbit' : 'Solar Flare'} — ${selectedInvoice.accountSize.toLocaleString()} USD Challenge
+                          {selectedInvoice.isInstantFunding || selectedInvoice.modelType === 'INSTANT_FUNDING' || selectedInvoice.planId?.toLowerCase().includes('instant')
+                            ? `${selectedInvoice.planName || (selectedInvoice.category === 'lunar' ? 'Lunar Orbit' : 'Solar Flare')} — $${selectedInvoice.accountSize.toLocaleString()} USD (${isEn ? 'Direct Instant Funding' : 'Fondeo Inmediato Directo'})`
+                            : `${selectedInvoice.category === 'lunar' ? 'Lunar Orbit' : 'Solar Flare'} — $${selectedInvoice.accountSize.toLocaleString()} USD (${isEn ? 'Evaluation Challenge' : 'Reto de Evaluación'})`}
                         </div>
                         <div className="text-[11px] text-slate-500">
-                          {isEn 
-                            ? 'Institutional trading evaluation program with simulated liquidity.'
-                            : 'Programa de evaluación institucional con liquidez simulada.'}
+                          {selectedInvoice.isInstantFunding || selectedInvoice.modelType === 'INSTANT_FUNDING' || selectedInvoice.planId?.toLowerCase().includes('instant')
+                            ? (isEn 
+                                ? 'Direct institutional funded trading account with immediate capital deployment.' 
+                                : 'Cuenta institucional de fondeo directo con despliegue inmediato de capital.')
+                            : (isEn 
+                                ? 'Institutional trading evaluation program with simulated liquidity.'
+                                : 'Programa de evaluación institucional con liquidez simulada.')}
                         </div>
                       </td>
                       <td className="py-3 text-right font-bold text-slate-800">

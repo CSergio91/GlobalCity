@@ -175,10 +175,38 @@ async function dispatchEmailEvent(type: string, data: Record<string, any>): Prom
         : `Aviso de Auditoría de Retiro: Cuenta #${data.accountNumber || 'EKL'} ⚠️`;
     } else {
       templateName = 'new-account';
+      const isInstant = data.isInstantFunding || data.modelType === 'INSTANT_FUNDING' || (data.profitTargetPct === 0);
       subject = lang === 'en'
-        ? `New Account Activated! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`
-        : `¡Nueva Cuenta Activada! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`;
+        ? (isInstant 
+            ? `Instant Funding Account Activated! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) ⚡`
+            : `New Account Activated! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`)
+        : (isInstant
+            ? `¡Cuenta de Fondeo Inmediato Activada! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) ⚡`
+            : `¡Nueva Cuenta Activada! #${data.accountNumber || 'EKL'} (${data.capitalFormatted || ''} USD) 🚀`);
     }
+
+    const isInstantFunding = data.isInstantFunding || data.modelType === 'INSTANT_FUNDING' || (data.profitTargetPct === 0);
+    const badgeText = data.badgeText || (isInstantFunding
+      ? (lang === 'en' ? '⚡ INSTANT FUNDING ACTIVATED' : '⚡ FONDEO INMEDIATO ACTIVADO')
+      : (lang === 'en' ? '🚀 CHALLENGE ACTIVATED' : '🚀 RETO ACTIVADO CON ÉXITO'));
+
+    const modelTypeLabel = data.modelTypeLabel || (isInstantFunding
+      ? (lang === 'en' ? 'Direct Instant Funding' : 'Fondeo Inmediato Directo')
+      : (lang === 'en' ? `Evaluation Challenge (${data.modelType || '1-Step'})` : `Reto de Evaluación (${data.modelType || '1-Paso'})`));
+
+    const profitTarget = data.profitTarget !== undefined ? data.profitTarget : (
+      isInstantFunding 
+        ? (lang === 'en' ? 'No Profit Target (Direct Funding)' : 'Sin Objetivo de Beneficio (Fondeo Directo)')
+        : (data.profitTargetPct ? `${data.profitTargetPct}%` : '8%')
+    );
+
+    const addonsListFormatted = data.addonsListFormatted || (
+      Array.isArray(data.addons) && data.addons.length > 0
+        ? data.addons.join(', ')
+        : (lang === 'en' ? 'None (Standard)' : 'Ninguno (Estándar)')
+    );
+
+    const leverage = data.leverage || '1:50';
     
     const html = renderEmailHtml({
       templateName,
@@ -186,6 +214,11 @@ async function dispatchEmailEvent(type: string, data: Record<string, any>): Prom
       data: {
         ...data,
         traderName,
+        badgeText,
+        modelTypeLabel,
+        profitTarget,
+        addonsListFormatted,
+        leverage,
         dashboardUrl: data.dashboardUrl || 'https://dashapp.eklipsefunded.com',
       }
     });
@@ -224,18 +257,30 @@ async function dispatchEmailEvent(type: string, data: Record<string, any>): Prom
 // ============================================================================
 
 export async function sendWelcomeEmail(payload: WelcomeEmailPayload | any) {
-  // Soporta tanto el formato simplificado como el de nueva cuenta con reto
+  // Soporta tanto el formato simplificado como el de nueva cuenta con reto o fondeo inmediato
   if (payload.accountNumber && payload.capitalFormatted) {
     return dispatchEmailEvent('NEW_ACCOUNT', {
       toEmail: payload.toEmail,
       traderName: payload.traderName || 'Trader',
       accountNumber: payload.accountNumber,
       planName: payload.planName || 'Reto de Evaluación',
+      modelType: payload.modelType,
+      isInstantFunding: payload.isInstantFunding,
+      modelTypeLabel: payload.modelTypeLabel,
+      badgeText: payload.badgeText,
       capitalFormatted: payload.capitalFormatted,
-      profitSplit: payload.profitSplitPct ? `${payload.profitSplitPct}% Trader` : undefined,
-      maxDailyLoss: payload.maxDailyDrawdownPct ? `${payload.maxDailyDrawdownPct}%` : undefined,
-      maxTotalLoss: payload.maxTotalDrawdownPct ? `${payload.maxTotalDrawdownPct}%` : undefined,
-      profitTarget: payload.profitTargetPct ? `${payload.profitTargetPct}%` : undefined,
+      capitalAmount: payload.capitalAmount,
+      profitSplit: payload.profitSplit || (payload.profitSplitPct ? `${payload.profitSplitPct}% Trader` : undefined),
+      maxDailyLoss: payload.maxDailyLoss || (payload.maxDailyDrawdownPct ? `${payload.maxDailyDrawdownPct}%` : undefined),
+      maxTotalLoss: payload.maxTotalLoss || (payload.maxTotalDrawdownPct ? `${payload.maxTotalDrawdownPct}%` : undefined),
+      profitTarget: payload.profitTarget,
+      profitTargetPct: payload.profitTargetPct,
+      leverage: payload.leverage,
+      addons: payload.addons,
+      addonsListFormatted: payload.addonsListFormatted,
+      orderNumber: payload.orderNumber,
+      totalPriceFormatted: payload.totalPriceFormatted,
+      paymentGateway: payload.paymentGateway,
       dashboardUrl: payload.dashboardUrl,
       lang: payload.lang || 'es',
     });

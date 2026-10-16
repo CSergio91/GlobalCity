@@ -47,6 +47,11 @@ function MainAppContent() {
     subdomain === 'dashboard' || 
     subdomain === 'dashapp';
   const isLoginRoute = currentPath === '/login' || currentPath.startsWith('/login?') || currentPath.startsWith('/login/');
+  const isCheckoutRoute = 
+    normalizedPath === '/checkout' || 
+    normalizedPath.startsWith('/checkout') || 
+    currentPath === '/checkout' || 
+    currentPath.startsWith('/checkout');
   const isResetPasswordRoute = 
     currentPath === '/reset-password' || 
     currentPath.startsWith('/reset-password?') || 
@@ -197,8 +202,8 @@ function MainAppContent() {
     );
   }
 
-  // 4. If on /login route, render the full-screen LoginPage
-  if (isLoginRoute) {
+  // 4. If on /login or /checkout route, render the full-screen LoginPage (with Checkout)
+  if (isLoginRoute || isCheckoutRoute) {
     return <LoginPage />;
   }
 
@@ -228,7 +233,7 @@ function MainAppContent() {
         onNavigateSection={handleNavigateSection} 
       />
 
-      {/* Main Content Layer: Only Hero Experience is active for initial divine presentation */}
+      {/* Main Content Layer: Hero Experience + Markets Marquee */}
       <main className="flex-1">
         
         {/* Single Page Pinned Viewport Stage (Hero + ProgramsSection over continuous 240-frame eclipse) */}
@@ -236,6 +241,9 @@ function MainAppContent() {
           onOpenTerminal={handleOpenTerminal} 
           onNavigateSection={handleNavigateSection} 
         />
+
+        {/* Real-time Crypto DMA Markets Marquee Wall */}
+        <MarketsSection />
 
       </main>
 

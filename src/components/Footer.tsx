@@ -68,44 +68,56 @@ export const Footer: React.FC = () => {
               </p>
             </div>
 
-            {/* Clean Navigation Links (Unboxed, Pure Typography) */}
+            {/* Clean Navigation Links (Unboxed, Pure Typography - Crawlable <a> Tags) */}
             <nav className="flex flex-wrap items-center gap-x-4 sm:gap-x-8 gap-y-2 font-mono text-xs sm:text-sm text-slate-300 font-medium">
-              <button 
-                onClick={() => scrollTo('hero')} 
+              <a 
+                href="#hero" 
+                title={isEn ? "Eklipse Funded Home" : "Inicio Eklipse Funded"}
+                onClick={(e) => { e.preventDefault(); scrollTo('hero'); }} 
                 className="hover:text-amber-300 transition-colors cursor-pointer"
               >
                 {isEn ? 'Home' : 'Inicio'}
-              </button>
-              <button 
-                onClick={() => scrollTo('programs')} 
+              </a>
+              <a 
+                href="#programs" 
+                title={isEn ? "Instant Funding & Challenge Programs" : "Programas de Fondeo Inmediato y Retos"}
+                onClick={(e) => { e.preventDefault(); scrollTo('programs'); }} 
                 className="hover:text-amber-300 transition-colors cursor-pointer"
               >
                 {isEn ? 'Programs' : 'Planes'}
-              </button>
-              <button 
-                onClick={() => scrollTo('terminal')} 
+              </a>
+              <a 
+                href="/operations" 
+                title={isEn ? "Institutional 60 FPS GPU Trading Terminal" : "Terminal Institucional de Trading a 60 FPS"}
+                onClick={(e) => { e.preventDefault(); scrollTo('terminal'); }} 
                 className="hover:text-amber-300 transition-colors cursor-pointer"
               >
                 {isEn ? 'Terminal' : 'Terminal'}
-              </button>
-              <button 
-                onClick={() => scrollTo('markets')} 
+              </a>
+              <a 
+                href="#markets" 
+                title={isEn ? "Crypto DMA Order Books & Liquidity" : "Mercados Cripto DMA y Libros de Órdenes"}
+                onClick={(e) => { e.preventDefault(); scrollTo('markets'); }} 
                 className="hover:text-amber-300 transition-colors cursor-pointer"
               >
                 {isEn ? 'Markets' : 'Mercados'}
-              </button>
-              <button 
-                onClick={() => scrollTo('payout')} 
+              </a>
+              <a 
+                href="#payout" 
+                title={isEn ? "Fast Crypto Payouts in USDT" : "Retiros Rápidos en Cripto USDT"}
+                onClick={(e) => { e.preventDefault(); scrollTo('payout'); }} 
                 className="hover:text-amber-300 transition-colors cursor-pointer"
               >
                 {isEn ? 'Payouts' : 'Retiros'}
-              </button>
-              <button 
-                onClick={() => scrollTo('faq')} 
+              </a>
+              <a 
+                href="#faq" 
+                title={isEn ? "Trading Rules, Drawdown & FAQ" : "Reglas de Trading, Drawdown y Preguntas Frecuentes"}
+                onClick={(e) => { e.preventDefault(); scrollTo('faq'); }} 
                 className="hover:text-amber-300 transition-colors cursor-pointer"
               >
                 {isEn ? 'FAQ' : 'FAQ'}
-              </button>
+              </a>
             </nav>
 
             {/* Social Icons (Telegram, Instagram, Email) */}
@@ -144,6 +156,175 @@ export const Footer: React.FC = () => {
 
           </div>
         </ScrollReveal>
+
+        {/* ========================================================================= */}
+        {/* DIRECTORY & SEO INTERNAL LINKING CLUSTER                                  */}
+        {/* ========================================================================= */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-4 pb-4 border-b border-white/5 text-left text-xs font-mono">
+          <div className="space-y-2">
+            <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider block">
+              {isEn ? 'Funding Programs' : 'Programas de Fondeo'}
+            </span>
+            <ul className="space-y-1.5 text-slate-400 text-[11px]">
+              <li>
+                <a 
+                  href="#programs" 
+                  onClick={(e) => { e.preventDefault(); scrollTo('programs'); }}
+                  className="hover:text-white transition-colors"
+                  title="Fondeo Inmediato Cripto $1K a $100K"
+                >
+                  {isEn ? 'Instant Funding ($1K - $100K)' : 'Fondeo Inmediato ($1K - $100K)'}
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#programs" 
+                  onClick={(e) => { e.preventDefault(); scrollTo('programs'); }}
+                  className="hover:text-white transition-colors"
+                  title="Chispa Solar $1,000"
+                >
+                  Chispa Solar $1,000
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#programs" 
+                  onClick={(e) => { e.preventDefault(); scrollTo('programs'); }}
+                  className="hover:text-white transition-colors"
+                  title="Corona Solar $10,000"
+                >
+                  Corona Solar $10,000
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#programs" 
+                  onClick={(e) => { e.preventDefault(); scrollTo('programs'); }}
+                  className="hover:text-white transition-colors"
+                  title="Eclipse Solar $100,000"
+                >
+                  Eclipse Solar $100,000
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#programs" 
+                  onClick={(e) => { e.preventDefault(); scrollTo('programs'); }}
+                  className="hover:text-white transition-colors"
+                  title="Reto 2 Fases Luna Creciente"
+                >
+                  {isEn ? '2-Step Evaluation (Luna Creciente)' : 'Reto 2 Fases (Luna Creciente)'}
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-[11px] font-bold text-purple-400 uppercase tracking-wider block">
+              {isEn ? 'Trading & Tech' : 'Tecnología & Trading'}
+            </span>
+            <ul className="space-y-1.5 text-slate-400 text-[11px]">
+              <li>
+                <a 
+                  href="/operations" 
+                  onClick={(e) => { e.preventDefault(); scrollTo('terminal'); }}
+                  className="hover:text-white transition-colors"
+                  title="Terminal Web GPU a 60 FPS"
+                >
+                  {isEn ? '60 FPS GPU Web Terminal' : 'Terminal Web GPU 60 FPS'}
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#markets" 
+                  onClick={(e) => { e.preventDefault(); scrollTo('markets'); }}
+                  className="hover:text-white transition-colors"
+                  title="Mercados Cripto DMA Futuros"
+                >
+                  {isEn ? 'Crypto DMA Futures Liquidity' : 'Futuros Cripto DMA en Vivo'}
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="/login" 
+                  className="hover:text-white transition-colors"
+                  title="Portal del Trader Eklipse"
+                >
+                  {isEn ? 'Trader Dashboard Portal' : 'Portal del Trader'}
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#payout" 
+                  onClick={(e) => { e.preventDefault(); scrollTo('payout'); }}
+                  className="hover:text-white transition-colors"
+                  title="Retiros de Ganancias en USDT"
+                >
+                  {isEn ? 'USDT On-Chain Payouts (<8h)' : 'Retiros On-Chain USDT (<8h)'}
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block">
+              {isEn ? 'Rules & Governance' : 'Reglas & Gobernanza'}
+            </span>
+            <ul className="space-y-1.5 text-slate-400 text-[11px]">
+              <li>
+                <a 
+                  href="#faq" 
+                  onClick={(e) => { e.preventDefault(); scrollTo('faq'); }}
+                  className="hover:text-white transition-colors"
+                  title="Regla de Pérdida Diaria 2% a 4%"
+                >
+                  {isEn ? 'Daily Loss Limit (2% - 4%)' : 'Límite de Pérdida Diaria (2%-4%)'}
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#faq" 
+                  onClick={(e) => { e.preventDefault(); scrollTo('faq'); }}
+                  className="hover:text-white transition-colors"
+                  title="Regla de Drawdown Total 8% a 10%"
+                >
+                  {isEn ? 'Max Total Drawdown (8% - 10%)' : 'Drawdown Total Máximo (8%-10%)'}
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#faq" 
+                  onClick={(e) => { e.preventDefault(); scrollTo('faq'); }}
+                  className="hover:text-white transition-colors"
+                  title="Regla de Consistencia y Scalping"
+                >
+                  {isEn ? 'Consistency & Holding Rules' : 'Regla de Consistencia y Operativa'}
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#faq" 
+                  onClick={(e) => { e.preventDefault(); scrollTo('faq'); }}
+                  className="hover:text-white transition-colors"
+                  title="Reparto de Beneficios 80% a 90%"
+                >
+                  {isEn ? '80% to 90% Profit Split' : 'Reparto de Ganancias 80% a 90%'}
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              {isEn ? 'Market Context' : 'Contexto de Mercado'}
+            </span>
+            <p className="text-[10px] text-slate-500 leading-relaxed font-sans">
+              {isEn 
+                ? 'Eklipse Funded is an institutional crypto prop firm offering direct exchange DMA execution, instant funding, and on-chain USDT rewards. A modern alternative to traditional forex/CFD prop firms such as FTMO, FundedNext, The 5%ers, Funding Pips, and Moneta Markets.'
+                : 'Eklipse Funded es la empresa institucional de fondeo cripto con ejecución DMA en libros reales, fondeo inmediato y pagos on-chain en USDT. Una alternativa de última generación frente a prop firms tradicionales de forex y CFDs como FTMO, FundedNext, The 5%ers, Funding Pips y Moneta Markets.'}
+            </p>
+          </div>
+        </div>
 
         {/* ========================================================================= */}
         {/* MIDDLE ROW: Institutional Risk Disclaimer + Copyright & Legal Links       */}

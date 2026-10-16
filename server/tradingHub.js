@@ -416,6 +416,91 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Endpoint de Sitemap Dinámico para Motores de Búsqueda y Googlebot
+  if (url.pathname === '/sitemap.xml') {
+    const today = new Date().toISOString().split('T')[0];
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://eklipsefunded.com/</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://eklipsefunded.com/?lang=es" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://eklipsefunded.com/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eklipsefunded.com/" />
+    <image:image>
+      <image:loc>https://eklipsefunded.com/og-image.jpg</image:loc>
+      <image:title>Eklipse Funded · Empresa de Fondeo Cripto &amp; Multiactivo</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://eklipsefunded.com/#programs</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://eklipsefunded.com/?lang=es#programs" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://eklipsefunded.com/?lang=en#programs" />
+  </url>
+  <url>
+    <loc>https://eklipsefunded.com/operations</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://eklipsefunded.com/operaciones" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://eklipsefunded.com/operations" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://eklipsefunded.com/operations" />
+  </url>
+  <url>
+    <loc>https://eklipsefunded.com/operaciones</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://eklipsefunded.com/#markets</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://eklipsefunded.com/#payout</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://eklipsefunded.com/#faq</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://eklipsefunded.com/login</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://eklipsefunded.com/llms.txt</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://eklipsefunded.com/llms-es.txt</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+</urlset>`;
+    res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8' });
+    res.end(xml);
+    return;
+  }
+
   // Endpoint de posiciones en vivo reales para el CRM (Erradica Math.random)
   if (url.pathname === '/api/crm/positions') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -481,8 +566,9 @@ const server = http.createServer((req, res) => {
         const formattedPlans = data.map((rule) => {
           const capital = Number(rule.default_account_balance || 100000);
           const name = rule.name || `Challenge $${capital.toLocaleString()}`;
-          const isLunar = rule.category === 'lunar' || name.toLowerCase().includes('lunar') || rule.model_type === 'INSTANT_FUNDING';
-          const planCategory = (rule.category || (isLunar ? 'lunar' : 'solar')).trim().toLowerCase();
+          const rawCat = (rule.category || '').trim().toLowerCase();
+          const planCategory = rawCat === 'solar' || rawCat === 'lunar' ? rawCat : (rawCat || 'solar');
+          const isLunar = planCategory === 'lunar';
           const oneTime = Number(rule.one_time_price_usdt) > 0 ? Number(rule.one_time_price_usdt) : 149;
           const monthly = Number(rule.monthly_price_usdt) > 0 ? Number(rule.monthly_price_usdt) : Math.round(oneTime * 0.35);
 

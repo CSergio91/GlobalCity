@@ -25,6 +25,7 @@ DECLARE
     v_accounts JSONB;
     v_trades JSONB;
     v_rules JSONB;
+    v_orders JSONB;
 BEGIN
     -- 1. Si no viene p_user_id, resolver de auth.uid() si aplica
     IF v_user_id IS NULL THEN
@@ -85,11 +86,21 @@ BEGIN
         ORDER BY default_account_balance ASC
     ) r;
 
+    -- 7. Órdenes de compra del usuario
+    SELECT coalesce(jsonb_agg(to_jsonb(o)), '[]'::jsonb) INTO v_orders
+    FROM (
+        SELECT *
+        FROM public.orders
+        WHERE (v_email IS NOT NULL AND lower(trader_email) = v_email)
+        ORDER BY created_at DESC
+    ) o;
+
     RETURN jsonb_build_object(
         'profile', v_profile,
         'accounts', v_accounts,
         'trades', v_trades,
         'rules', v_rules,
+        'orders', v_orders,
         'server_time', now()
     );
 END;

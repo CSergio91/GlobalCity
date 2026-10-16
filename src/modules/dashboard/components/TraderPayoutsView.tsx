@@ -87,7 +87,7 @@ export const TraderPayoutsView: React.FC<TraderPayoutsViewProps> = ({
 
   // Configuración del modelo y escala de payouts de esta cuenta específica
   const { currentTierNumber, currentSplitPct, payoutScale } = useMemo(() => {
-    const rulesConfig: any = (activeAccount as any)?.rulesConfig || {};
+    const rulesConfig: any = activeAccount?.rules_config || (activeAccount as any)?.rulesConfig || {};
     
     // Escala configurada en el modelo de challenge (o por defecto si es nueva)
     const scale: PayoutTierStep[] = rulesConfig.payout_scale || rulesConfig.payoutScale || [

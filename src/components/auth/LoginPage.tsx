@@ -38,7 +38,9 @@ import {
   LUNAR_CHALLENGE_PLANS,
   AVAILABLE_ADDONS,
   calculateDynamicPlanPricing,
+  getAllLiveChallengePlans,
   getLiveChallengePlans,
+  getLoadedChallengePlans,
   ChallengePlan
 } from '../../data/challengePlans';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'motion/react';
@@ -333,54 +335,80 @@ export const LoginPage: React.FC = () => {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaVerified, setCaptchaVerified] = useState(false);
 
-  // Register & Challenge Checkout State
-  const [selectedCategory, setSelectedCategory] = useState<PlanCategory>(() => {
+  // Helper to resolve initial category and plan synchronously from in-memory / cache / URL
+  const initialSelection = useMemo(() => {
+    const loaded = getLoadedChallengePlans();
+    const categories = Array.from(new Set(loaded.map(p => p.category.toLowerCase()))).filter(Boolean);
+    let targetCategory: PlanCategory = categories[0] || 'solar';
+    let targetPlanId = '';
+
     if (typeof window !== 'undefined') {
       const search = window.location.search || '';
       const params = new URLSearchParams(search);
       const urlPlan = params.get('plan');
-      const target = urlPlan || sessionStorage.getItem('eklipse_target_plan');
-      if (target && target.includes('lunar')) return 'lunar';
-    }
-    return 'solar';
-  });
+      const urlCategory = params.get('category');
+      const sessionPlan = sessionStorage.getItem('eklipse_target_plan');
+      const sessionCategory = sessionStorage.getItem('eklipse_target_category');
 
-  const [selectedPlanId, setSelectedPlanId] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const search = window.location.search || '';
-      const params = new URLSearchParams(search);
-      const urlPlan = params.get('plan');
-      const target = urlPlan || sessionStorage.getItem('eklipse_target_plan');
-      if (target) {
-        return target;
-      }
-    }
-    return 'solar-50k';
-  });
+      const potentialPlanId = urlPlan || sessionPlan || '';
+      const potentialCategory = (urlCategory || sessionCategory || '').trim().toLowerCase();
 
-  // Dynamic challenge plans state with Local-First SWR Caching
-  const [plansList, setPlansList] = useState<ChallengePlan[]>(() => {
-    try {
-      const cached = localStorage.getItem('eklipse_cached_challenge_plans');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (_) {}
-    return [...SOLAR_CHALLENGE_PLANS, ...LUNAR_CHALLENGE_PLANS];
-  });
-
-  useEffect(() => {
-    getLiveChallengePlans(selectedCategory).then((live) => {
-      if (live && live.length > 0) {
-        setPlansList(live);
-        if (!selectedPlanId || !live.some(p => p.id === selectedPlanId)) {
-          const match = live.find(p => p.category === selectedCategory) || live[0];
-          if (match) setSelectedPlanId(match.id);
+      if (potentialPlanId) {
+        const matched = loaded.find(p => p.id === potentialPlanId);
+        if (matched) {
+          targetPlanId = matched.id;
+          targetCategory = matched.category;
+        } else {
+          targetPlanId = potentialPlanId;
         }
       }
+
+      if (potentialCategory && categories.includes(potentialCategory)) {
+        targetCategory = potentialCategory;
+      }
+    }
+
+    const catPlans = loaded.filter(p => p.category.toLowerCase() === targetCategory.toLowerCase());
+    const effective = catPlans.length > 0 ? catPlans : loaded;
+    if (!targetPlanId || !loaded.some(p => p.id === targetPlanId)) {
+      const pop = effective.find(p => p.popular) || effective[Math.min(effective.length - 1, 5)] || effective[0];
+      targetPlanId = pop?.id || '';
+    }
+
+    return { targetCategory, targetPlanId };
+  }, []);
+
+  // Register & Challenge Checkout State
+  const [selectedCategory, setSelectedCategory] = useState<PlanCategory>(initialSelection.targetCategory);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>(initialSelection.targetPlanId);
+
+  // Dynamic challenge plans state initialized synchronously with full in-memory plans
+  const [plansList, setPlansList] = useState<ChallengePlan[]>(() => getLoadedChallengePlans());
+
+  // Available categories derived dynamically from live plans in DB
+  const availableCategories = useMemo(() => {
+    return Array.from(new Set(plansList.map(p => p.category.toLowerCase()))).filter(Boolean);
+  }, [plansList]);
+
+  // Background revalidation: does NOT overwrite the active category or user selection
+  useEffect(() => {
+    getAllLiveChallengePlans().then((live) => {
+      if (live && live.length > 0) {
+        setPlansList(live);
+        const liveCats = Array.from(new Set(live.map(p => p.category.toLowerCase()))).filter(Boolean);
+        setSelectedCategory((currCat) => {
+          return liveCats.includes(currCat.toLowerCase()) ? currCat : (liveCats[0] || 'solar');
+        });
+        setSelectedPlanId((currentPlanId) => {
+          if (currentPlanId && live.some(p => p.id === currentPlanId)) {
+            return currentPlanId; // Mantener la selección del usuario intacta
+          }
+          const match = live.find(p => p.category === selectedCategory) || live[0];
+          return match ? match.id : currentPlanId;
+        });
+      }
     });
-  }, [selectedCategory]);
+  }, []);
 
   // Custom Addons State: Preloaded from URL or sessionStorage (if clicked from Landing page)
   const [selectedAddons, setSelectedAddons] = useState<string[]>(() => {
@@ -402,23 +430,34 @@ export const LoginPage: React.FC = () => {
     return [];
   });
 
-  // Synchronize plan & addons from URL / session storage on mount
+  // Synchronize plan & addons from URL / session storage on mount or navigation
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
       const params = new URLSearchParams(window.location.search);
       const urlPlan = params.get('plan');
-      if (urlPlan) {
-        if (urlPlan.includes('lunar')) setSelectedCategory('lunar');
-        else if (urlPlan.includes('solar')) setSelectedCategory('solar');
-        setSelectedPlanId(urlPlan);
+      const urlCategory = params.get('category');
+      const sessionCategory = sessionStorage.getItem('eklipse_target_category');
+      const targetCategory = urlCategory || sessionCategory;
+
+      if (targetCategory) {
+        setSelectedCategory(targetCategory);
       }
+
+      if (urlPlan) {
+        setSelectedPlanId(urlPlan);
+        const matched = plansList.find(p => p.id === urlPlan);
+        if (matched) {
+          setSelectedCategory(matched.category);
+        }
+      }
+
       const urlAddons = params.get('addons');
       if (urlAddons !== null) {
         setSelectedAddons(urlAddons ? urlAddons.split(',').filter(Boolean) : []);
       }
     } catch {}
-  }, []);
+  }, [plansList]);
 
   const handleToggleAddon = (addonId: string) => {
     setSelectedAddons((prev) => {
@@ -464,28 +503,48 @@ export const LoginPage: React.FC = () => {
 
   // Challenge plans available for current category: Dynamically derived from DB & Redis
   const currentPlansList = useMemo(() => {
-    const filtered = plansList.filter((p) => p.category === selectedCategory);
-    const result = filtered.length > 0 
-      ? filtered 
-      : (selectedCategory === 'solar' ? SOLAR_CHALLENGE_PLANS : LUNAR_CHALLENGE_PLANS);
+    const filtered = plansList.filter((p) => p.category.toLowerCase() === selectedCategory.toLowerCase());
+    const result = filtered.length > 0 ? filtered : plansList;
     return [...result].sort((a, b) => a.capital - b.capital);
   }, [plansList, selectedCategory]);
 
+  const minCapitalLabel = useMemo(() => currentPlansList[0]?.sizeLabel || '1K', [currentPlansList]);
+  const maxCapitalLabel = useMemo(() => currentPlansList[currentPlansList.length - 1]?.sizeLabel || '100K', [currentPlansList]);
+
   const activePlan = useMemo(() => {
-    return currentPlansList.find((p) => p.id === selectedPlanId) || currentPlansList[0] || SOLAR_CHALLENGE_PLANS[0];
-  }, [currentPlansList, selectedPlanId]);
+    return currentPlansList.find((p) => p.id === selectedPlanId) || 
+      plansList.find((p) => p.id === selectedPlanId) || 
+      currentPlansList[0] || 
+      SOLAR_CHALLENGE_PLANS[0];
+  }, [currentPlansList, plansList, selectedPlanId]);
 
   // Dynamic pricing & rules modifiers with add-ons
   const dynamicPricing = useMemo(() => {
     return calculateDynamicPlanPricing(activePlan, 'one-time', selectedAddons);
   }, [activePlan, selectedAddons]);
 
+  const activePlanAddons = useMemo(() => {
+    return Array.isArray(activePlan?.customAddons)
+      ? activePlan.customAddons.filter(a => a.isActive !== false)
+      : AVAILABLE_ADDONS;
+  }, [activePlan]);
+
   // Handle switching category while preserving selected size tier
   const handleCategorySwitch = (cat: PlanCategory) => {
     setSelectedCategory(cat);
+    try {
+      sessionStorage.setItem('eklipse_target_category', cat);
+    } catch {}
     const categoryPlans = plansList.filter((p) => p.category === cat);
     if (categoryPlans.length > 0) {
-      setSelectedPlanId(categoryPlans[0].id);
+      // Intelligently preserve the selected capital tier in the new category
+      const currentCapital = activePlan?.capital;
+      const matchingCapitalPlan = categoryPlans.find(p => p.capital === currentCapital);
+      const newPlanId = matchingCapitalPlan ? matchingCapitalPlan.id : categoryPlans[0].id;
+      setSelectedPlanId(newPlanId);
+      try {
+        sessionStorage.setItem('eklipse_target_plan', newPlanId);
+      } catch {}
     }
   };
 
@@ -840,19 +899,44 @@ export const LoginPage: React.FC = () => {
         sessionStorage.setItem('eklipse_recent_purchase_email', cleanEmail);
         setAccountCacheValid(cleanEmail);
 
-        const assignedAccounts = JSON.parse(localStorage.getItem('eklipse_assigned_accounts') || '[]');
-        assignedAccounts.push({
-          planId: selectedPlanId,
-          category: selectedCategory,
-          price: dynamicPricing.totalPrice,
-          basePrice: dynamicPricing.basePrice,
-          addonsCost: dynamicPricing.addonsCost,
-          addons: selectedAddons,
-          accountSize: activePlan.capital,
-          purchasedAt: new Date().toISOString(),
-          email: cleanEmail
-        });
-        localStorage.setItem('eklipse_assigned_accounts', JSON.stringify(assignedAccounts));
+        // Derivar dinámicamente el tipo de modelo y reglas reales desde el plan de la base de datos
+        const isInstantFunding = activePlan.modelType === 'INSTANT_FUNDING' || (activePlan.profitTargetPct === 0 && Number(activePlan.profitTargetPct) === 0);
+        const dynamicProfitTargetPct = isInstantFunding ? 0 : Number(activePlan.profitTargetPct ?? 8);
+        const dynamicMaxDailyLossPct = dynamicPricing.effectiveDailyLossPct;
+        const dynamicMaxTotalDrawdownPct = dynamicPricing.effectiveDrawdownPct;
+        const dynamicEffectiveLeverage = dynamicPricing.effectiveLeverage;
+        const dynamicProfitSplitPct = dynamicPricing.effectiveProfitSplit;
+        const isTiered = activePlan.payoutSplitMode === 'TIERED' && Array.isArray(activePlan.payoutScale) && activePlan.payoutScale.length > 0;
+        const minTierSplit = isTiered ? Math.min(...activePlan.payoutScale!.map((t: any) => Number(t.split) || 0)) : dynamicProfitSplitPct;
+        const maxTierSplit = isTiered ? Math.max(...activePlan.payoutScale!.map((t: any) => Number(t.split) || 0)) : dynamicProfitSplitPct;
+        
+        const dynamicProfitSplitLabel = isTiered
+          ? (isEn ? `Tiered: ${minTierSplit}% up to ${maxTierSplit}%` : `Escalonado: ${minTierSplit}% hasta ${maxTierSplit}%`)
+          : `${dynamicProfitSplitPct}% Trader`;
+
+        const dynamicModelTypeLabel = isInstantFunding
+          ? (isEn ? 'Direct Instant Funding' : 'Fondeo Inmediato Directo')
+          : (isEn ? `Evaluation Challenge (${activePlan.modelType || '1-Step'})` : `Reto de Evaluación (${activePlan.modelType || '1-Paso'})`);
+
+        const dynamicBadgeText = isInstantFunding
+          ? (isEn ? '⚡ INSTANT FUNDING ACTIVATED' : '⚡ FONDEO INMEDIATO ACTIVADO')
+          : (isEn ? '🚀 CHALLENGE ACTIVATED' : '🚀 RETO ACTIVADO CON ÉXITO');
+
+        const dynamicProfitTargetLabel = isInstantFunding
+          ? (isEn ? 'No Profit Target (Direct Funding)' : 'Sin Objetivo (Fondeo Directo)')
+          : `${dynamicProfitTargetPct}%`;
+
+        const activeAddonsConfigs = activePlanAddons.filter((a: any) => selectedAddons.includes(a.id));
+        const addonsFormatted = activeAddonsConfigs.length > 0
+          ? activeAddonsConfigs.map((a: any) => isEn ? a.nameEn : a.nameEs).join(', ')
+          : (isEn ? 'None (Standard)' : 'Ninguno (Estándar)');
+
+        const generatedAccountNumber = `EKL-${selectedCategory.toUpperCase()}-${Math.floor(10000 + Math.random() * 90000)}`;
+        const generatedAccessToken = `tok_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+
+        try {
+          localStorage.removeItem('eklipse_assigned_accounts');
+        } catch (_) {}
 
         // 1. Registrar usuario en GoTrue / Supabase con metadatos completos del cliente
         await signUpWithEmail(cleanEmail, regPassword, {
@@ -890,9 +974,6 @@ export const LoginPage: React.FC = () => {
         } catch (_) {}
 
         // 2. Aprovisionar Cuenta Institucional en public.trading_accounts en PostgreSQL
-        const generatedAccountNumber = `EKL-${selectedCategory.toUpperCase()}-${Math.floor(10000 + Math.random() * 90000)}`;
-        const generatedAccessToken = `tok_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-
         const defaultFirmId = 'a0000000-0000-0000-0000-000000000001';
         let profileUserId: string | null = null;
         try {
@@ -918,12 +999,22 @@ export const LoginPage: React.FC = () => {
             rules_config: {
               tierName: activePlan.astronomicalName?.es || activePlan.sizeLabel || `$${activePlan.capital.toLocaleString()}`,
               category: selectedCategory,
-              profitSplitPct: selectedAddons.includes('profit_split_90') ? 90 : 80,
-              maxDailyDrawdownPct: selectedCategory === 'lunar' ? 6 : 5,
-              maxTotalDrawdownPct: selectedAddons.includes('extra_drawdown') ? 12 : 10,
-              profitTargetPct: 8,
-              effectiveLeverage: selectedAddons.includes('boost_leverage') ? '1:100' : '1:50',
+              modelType: activePlan.modelType || (isInstantFunding ? 'INSTANT_FUNDING' : 'ONE_PHASE'),
+              isInstantFunding,
+              profitSplitPct: dynamicProfitSplitPct,
+              payoutSplitMode: activePlan.payoutSplitMode || (isTiered ? 'TIERED' : 'FIXED'),
+              payoutScale: activePlan.payoutScale || [],
+              payoutSpeed: dynamicPricing.effectivePayoutSpeed || activePlan.payoutSpeed || 'Semanal',
+              maxDailyDrawdownPct: dynamicMaxDailyLossPct,
+              maxTotalDrawdownPct: dynamicMaxTotalDrawdownPct,
+              profitTargetPct: dynamicProfitTargetPct,
+              effectiveLeverage: dynamicEffectiveLeverage,
               addons: selectedAddons,
+              drawdownType: activePlan.drawdownType || 'EOD',
+              mandatoryStopLoss: !!activePlan.mandatoryStopLoss,
+              weekendHoldingAllowed: activePlan.weekendHoldingAllowed !== false,
+              newsTradingAllowed: activePlan.newsTradingAllowed !== false,
+              consistencyRulePercent: activePlan.consistencyRulePercent || 40,
               contractSigned: false
             },
             access_token: generatedAccessToken
@@ -963,14 +1054,62 @@ export const LoginPage: React.FC = () => {
               city: regCity,
               state: regState,
               country: regCountry,
-              zip: regZip
+              zip: regZip,
+              modelType: activePlan.modelType || (isInstantFunding ? 'INSTANT_FUNDING' : 'ONE_PHASE'),
+              planName: activePlan.astronomicalName?.es || activePlan.sizeLabel
             }
           });
         } catch (orderErr) {
           console.warn('[Checkout] Fallback guardando orden en PostgreSQL:', orderErr);
         }
 
-        // 4. Validar caché caliente para acceso instantáneo al Dashboard en 0ms
+        // 4. Validar y cebar caché caliente en memoria para acceso instantáneo al Dashboard en 0ms
+        const finalAccountId = createdAccountId || `acc_${Date.now()}`;
+        const newCachedAccountItem = {
+          id: finalAccountId,
+          accountNumber: generatedAccountNumber,
+          category: selectedCategory === 'lunar' ? 'lunar' : 'solar',
+          tierName: activePlan.astronomicalName?.es || activePlan.sizeLabel || `$${activePlan.capital.toLocaleString()}`,
+          initialBalance: activePlan.capital,
+          currentBalance: activePlan.capital,
+          equity: activePlan.capital,
+          peakEquity: activePlan.capital,
+          dailyStartEquity: activePlan.capital,
+          status: 'ACTIVE',
+          profitSplit: dynamicProfitSplitPct,
+          maxDailyDrawdownPct: dynamicMaxDailyLossPct,
+          maxTotalDrawdownPct: dynamicMaxTotalDrawdownPct,
+          profitTargetPct: dynamicProfitTargetPct,
+          leverage: dynamicEffectiveLeverage,
+          tradingDays: 0,
+          createdAt: new Date().toISOString(),
+          contractSigned: false,
+          modelType: activePlan.modelType || (isInstantFunding ? 'INSTANT_FUNDING' : 'ONE_PHASE'),
+          isInstantFunding,
+          payoutSplitMode: activePlan.payoutSplitMode || (isTiered ? 'TIERED' : 'FIXED'),
+          payoutScale: activePlan.payoutScale || [],
+          addons: selectedAddons
+        };
+
+        try {
+          let prevList: any[] = [];
+          const rawCached = localStorage.getItem(`eklipse_accounts_cache_${cleanEmail}`) || sessionStorage.getItem(`eklipse_accounts_cache_${cleanEmail}`);
+          if (rawCached) {
+            const parsed = JSON.parse(rawCached);
+            if (Array.isArray(parsed?.data)) {
+              prevList = parsed.data.filter((a: any) => a.accountNumber !== generatedAccountNumber);
+            }
+          }
+          const fullAccountsList = [newCachedAccountItem, ...prevList];
+          const cachePayload = JSON.stringify({ data: fullAccountsList, timestamp: Date.now() });
+          localStorage.setItem(`eklipse_accounts_cache_${cleanEmail}`, cachePayload);
+          sessionStorage.setItem(`eklipse_accounts_cache_${cleanEmail}`, cachePayload);
+          if (profileUserId) {
+            localStorage.setItem(`eklipse_accounts_cache_${profileUserId}`, cachePayload);
+            sessionStorage.setItem(`eklipse_accounts_cache_${profileUserId}`, cachePayload);
+          }
+        } catch (_) {}
+
         setAccountCacheValid(cleanEmail);
 
         // 5. Establecer el usuario autenticado explícitamente en el almacenamiento
@@ -988,11 +1127,9 @@ export const LoginPage: React.FC = () => {
         };
         localStorage.setItem('eklipse_user_profile', JSON.stringify(mappedUser));
         localStorage.setItem('globalcity_auth_user', JSON.stringify(mappedUser));
-        if (createdAccountId) {
-          localStorage.setItem('eklipse_active_account_id', createdAccountId);
-        }
+        localStorage.setItem('eklipse_active_account_id', finalAccountId);
 
-        // 6. Despachar Correo Institucional de Bienvenida con Detalles y Reglas
+        // 6. Despachar Correo Institucional de Bienvenida con Detalles y Reglas Dinámicas Reales
         try {
           const dashboardUrl = typeof window !== 'undefined' && window.location.hostname.includes('eklipsefunded.com')
             ? 'https://dashapp.eklipsefunded.com'
@@ -1003,14 +1140,24 @@ export const LoginPage: React.FC = () => {
             traderName: `${sanitizeCleanString(regFirstName)} ${sanitizeCleanString(regLastName)}`.trim() || 'Trader',
             accountNumber: generatedAccountNumber,
             planName: activePlan.astronomicalName?.es || activePlan.sizeLabel || `$${activePlan.capital.toLocaleString()}`,
+            modelType: activePlan.modelType || (isInstantFunding ? 'INSTANT_FUNDING' : 'ONE_PHASE'),
+            isInstantFunding,
+            modelTypeLabel: dynamicModelTypeLabel,
+            badgeText: dynamicBadgeText,
             category: selectedCategory,
             capitalFormatted: `$${activePlan.capital.toLocaleString()}`,
             capitalAmount: activePlan.capital,
-            maxDailyDrawdownPct: selectedCategory === 'lunar' ? 6 : 5,
-            maxTotalDrawdownPct: selectedAddons.includes('extra_drawdown') ? 12 : 10,
-            profitTargetPct: 8,
-            profitSplitPct: selectedAddons.includes('profit_split_90') ? 90 : 80,
-            leverage: selectedAddons.includes('boost_leverage') ? '1:100' : '1:50',
+            maxDailyDrawdownPct: dynamicMaxDailyLossPct,
+            maxDailyLoss: `${dynamicMaxDailyLossPct}%`,
+            maxTotalDrawdownPct: dynamicMaxTotalDrawdownPct,
+            maxTotalLoss: `${dynamicMaxTotalDrawdownPct}%`,
+            profitTarget: dynamicProfitTargetLabel,
+            profitTargetPct: dynamicProfitTargetPct,
+            profitSplit: dynamicProfitSplitLabel,
+            profitSplitPct: dynamicProfitSplitPct,
+            leverage: dynamicEffectiveLeverage,
+            addons: selectedAddons,
+            addonsListFormatted: addonsFormatted,
             orderNumber: orderNumber,
             totalPriceFormatted: `$${dynamicPricing.totalPrice.toFixed(2)}`,
             paymentGateway: paymentGateway,
@@ -1885,36 +2032,52 @@ export const LoginPage: React.FC = () => {
                         <div className="flex items-center justify-between mb-2.5">
                           <span className="text-xs font-mono font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                            <span>{isEn ? '1. Select Challenge Tier (1K — 100K)' : '1. Tamaño de Cuenta (1K a 100K)'}</span>
+                            <span>{isEn ? `1. Select Challenge Tier (${minCapitalLabel} — ${maxCapitalLabel})` : `1. Tamaño de Cuenta (${minCapitalLabel} a ${maxCapitalLabel})`}</span>
                           </span>
 
-                          {/* Solar vs Lunar Category Toggle */}
-                          <div className="flex items-center p-0.5 rounded-xl bg-black/30 border border-white/15 shadow-inner">
-                            <button
-                              type="button"
-                              onClick={() => handleCategorySwitch('solar')}
-                              className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer ${
-                                selectedCategory === 'solar'
-                                  ? 'bg-amber-400 text-slate-950 shadow-sm'
-                                  : 'text-slate-400 hover:text-white'
-                              }`}
-                            >
-                              <Sun className="w-3 h-3" />
-                              <span>Solar (DMA)</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleCategorySwitch('lunar')}
-                              className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer ${
-                                selectedCategory === 'lunar'
-                                  ? 'bg-purple-600 text-white shadow-sm'
-                                  : 'text-slate-400 hover:text-white'
-                              }`}
-                            >
-                              <Moon className="w-3 h-3" />
-                              <span>Lunar (Meme)</span>
-                            </button>
-                          </div>
+                          {/* Dynamic Category Switcher from DB (matches Landing Page behavior) */}
+                          {availableCategories.length > 1 ? (
+                            <div className="flex items-center p-0.5 rounded-xl bg-black/30 border border-white/15 shadow-inner">
+                              {availableCategories.map((catKey) => {
+                                const isSelected = selectedCategory.toLowerCase() === catKey.toLowerCase();
+                                const isSolarCat = catKey === 'solar';
+                                const isLunarCat = catKey === 'lunar';
+
+                                return (
+                                  <button
+                                    key={catKey}
+                                    type="button"
+                                    onClick={() => handleCategorySwitch(catKey)}
+                                    className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                                      isSelected
+                                        ? isSolarCat
+                                          ? 'bg-amber-400 text-slate-950 shadow-sm'
+                                          : isLunarCat
+                                            ? 'bg-purple-600 text-white shadow-sm'
+                                            : 'bg-emerald-500 text-slate-950 shadow-sm'
+                                        : 'text-slate-400 hover:text-white'
+                                    }`}
+                                  >
+                                    {isSolarCat ? (
+                                      <Sun className="w-3 h-3" />
+                                    ) : isLunarCat ? (
+                                      <Moon className="w-3 h-3" />
+                                    ) : (
+                                      <Sparkles className="w-3 h-3" />
+                                    )}
+                                    <span className="capitalize">
+                                      {isSolarCat ? 'Solar (DMA)' : isLunarCat ? 'Lunar (Meme)' : catKey}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 bg-amber-400/15 border border-amber-400/30 text-amber-300">
+                              <Sun className="w-3 h-3 text-amber-400" />
+                              <span className="capitalize">{selectedCategory} (DMA)</span>
+                            </div>
+                          )}
                         </div>
 
                         {/* All 7 Account Size Buttons */}
@@ -1924,8 +2087,13 @@ export const LoginPage: React.FC = () => {
                             return (
                               <button
                                 key={plan.id}
-                                type="button"
-                                onClick={() => setSelectedPlanId(plan.id)}
+                                onClick={() => {
+                                  setSelectedPlanId(plan.id);
+                                  try {
+                                    sessionStorage.setItem('eklipse_target_plan', plan.id);
+                                    sessionStorage.setItem('eklipse_target_category', plan.category);
+                                  } catch {}
+                                }}
                                 className={`p-2 sm:p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center relative overflow-hidden group backdrop-blur-sm ${
                                   isSelected
                                     ? selectedCategory === 'solar'
@@ -1949,67 +2117,69 @@ export const LoginPage: React.FC = () => {
                         </div>
 
                         {/* Custom Add-Ons Selector (Nexus Modifiers) */}
-                        <div className="mt-3 pt-2.5 border-t border-white/10">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-[11px] font-mono font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                              <Zap className="w-3.5 h-3.5 text-amber-400" />
-                              <span>{isEn ? 'Custom Add-Ons (Nexus Modifiers)' : 'Add-Ons Personalizados'}</span>
-                            </span>
-                            <span className="text-[10px] font-mono">
-                              {selectedAddons.length > 0 ? (
-                                <span className="text-emerald-400 font-bold">+{dynamicPricing.addonsCost} USDT addons</span>
-                              ) : (
-                                <span className="text-slate-400">{isEn ? 'Optional' : 'Opcional'}</span>
-                              )}
-                            </span>
-                          </div>
+                        {activePlanAddons.length > 0 && (
+                          <div className="mt-3 pt-2.5 border-t border-white/10">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[11px] font-mono font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                                <Zap className="w-3.5 h-3.5 text-amber-400" />
+                                <span>{isEn ? 'Custom Add-Ons (Nexus Modifiers)' : 'Add-Ons Personalizados'}</span>
+                              </span>
+                              <span className="text-[10px] font-mono">
+                                {selectedAddons.length > 0 ? (
+                                  <span className="text-emerald-400 font-bold">+{dynamicPricing.addonsCost} USDT addons</span>
+                                ) : (
+                                  <span className="text-slate-400">{isEn ? 'Optional' : 'Opcional'}</span>
+                                )}
+                              </span>
+                            </div>
 
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                            {AVAILABLE_ADDONS.map((addon) => {
-                              const isChecked = selectedAddons.includes(addon.id);
-                              const cost = Math.max(addon.minPriceUSDT, Math.round(activePlan.oneTimePriceUSDT * addon.priceDeltaPct));
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                              {activePlanAddons.map((addon) => {
+                                const isChecked = selectedAddons.includes(addon.id);
+                                const cost = Math.max(addon.minPriceUSDT || 0, Math.round(activePlan.oneTimePriceUSDT * (addon.priceDeltaPct || 0)));
 
-                              return (
-                                <button
-                                  key={addon.id}
-                                  type="button"
-                                  onClick={() => handleToggleAddon(addon.id)}
-                                  className={`p-2 sm:p-2.5 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between backdrop-blur-sm relative group ${
-                                    isChecked
-                                      ? selectedCategory === 'solar'
-                                        ? 'bg-amber-400/20 border-amber-400 text-white shadow-[0_0_12px_rgba(245,158,11,0.25)]'
-                                        : 'bg-purple-600/25 border-purple-400 text-white shadow-[0_0_12px_rgba(168,85,247,0.25)]'
-                                      : 'bg-black/25 border-white/10 hover:border-white/20 text-slate-300 hover:bg-black/40'
-                                  }`}
-                                >
-                                  <div className="flex items-start justify-between gap-1 w-full">
-                                    <span className="text-[10.5px] font-mono font-bold text-white leading-tight line-clamp-2">
-                                      {isEn ? addon.nameEn : addon.nameEs}
-                                    </span>
-                                    <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
+                                return (
+                                  <button
+                                    key={addon.id}
+                                    type="button"
+                                    onClick={() => handleToggleAddon(addon.id)}
+                                    className={`p-2 sm:p-2.5 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between backdrop-blur-sm relative group ${
                                       isChecked
                                         ? selectedCategory === 'solar'
-                                          ? 'bg-amber-400 border-amber-400 text-slate-950 font-black'
-                                          : 'bg-purple-500 border-purple-400 text-white font-black'
-                                        : 'border-white/25 bg-black/20'
-                                    }`}>
-                                      {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                                          ? 'bg-amber-400/20 border-amber-400 text-white shadow-[0_0_12px_rgba(245,158,11,0.25)]'
+                                          : 'bg-purple-600/25 border-purple-400 text-white shadow-[0_0_12px_rgba(168,85,247,0.25)]'
+                                        : 'bg-black/25 border-white/10 hover:border-white/20 text-slate-300 hover:bg-black/40'
+                                    }`}
+                                  >
+                                    <div className="flex items-start justify-between gap-1 w-full">
+                                      <span className="text-[10.5px] font-mono font-bold text-white leading-tight line-clamp-2">
+                                        {isEn ? addon.nameEn : addon.nameEs}
+                                      </span>
+                                      <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
+                                        isChecked
+                                          ? selectedCategory === 'solar'
+                                            ? 'bg-amber-400 border-amber-400 text-slate-950 font-black'
+                                            : 'bg-purple-500 border-purple-400 text-white font-black'
+                                          : 'border-white/25 bg-black/20'
+                                      }`}>
+                                        {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                                      </div>
                                     </div>
-                                  </div>
-                                  <div className="flex items-center justify-between mt-1.5 pt-1 border-t border-white/10 w-full">
-                                    <span className={`text-[9.5px] font-mono font-bold ${
-                                      isChecked
-                                        ? selectedCategory === 'solar' ? 'text-amber-300' : 'text-purple-300'
-                                        : 'text-slate-400'
-                                    }`}>
-                                      +{cost} USDT
-                                    </span>
-                                  </div>
-                                </button>
-                              );
-                            })}
+                                    <div className="flex items-center justify-between mt-1.5 pt-1 border-t border-white/10 w-full">
+                                      <span className={`text-[9.5px] font-mono font-bold ${
+                                        isChecked
+                                          ? selectedCategory === 'solar' ? 'text-amber-300' : 'text-purple-300'
+                                          : 'text-slate-400'
+                                      }`}>
+                                        +{cost} USDT
+                                      </span>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
+                        )}
 
                         {/* Active Plan Specifications Banner */}
                         <div className="mt-3 pt-2.5 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono text-slate-300">

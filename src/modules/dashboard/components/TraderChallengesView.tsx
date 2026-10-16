@@ -71,6 +71,12 @@ export const TraderChallengesView: React.FC<TraderChallengesViewProps> = ({
     return plans.find(p => p.id === selectedPlanId) || plans[0] || SOLAR_CHALLENGE_PLANS[0];
   }, [plans, selectedPlanId]);
 
+  const activePlanAddons = useMemo(() => {
+    return Array.isArray(activePlan?.customAddons)
+      ? activePlan.customAddons.filter(a => a.isActive !== false)
+      : AVAILABLE_ADDONS;
+  }, [activePlan]);
+
   const pricing = useMemo(() => {
     return calculateDynamicPlanPricing(activePlan, paymentMode, selectedAddons);
   }, [activePlan, paymentMode, selectedAddons]);
@@ -306,41 +312,43 @@ export const TraderChallengesView: React.FC<TraderChallengesViewProps> = ({
             </div>
 
             {/* Lista de Add-ons */}
-            <div className="space-y-2.5">
-              {AVAILABLE_ADDONS.map((addon) => {
-                const isChecked = selectedAddons.includes(addon.id);
-                return (
-                  <div
-                    key={addon.id}
-                    onClick={() => handleToggleAddon(addon.id)}
-                    className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
-                      isChecked
-                        ? 'bg-amber-400/10 border-amber-400/40 text-white'
-                        : 'bg-white/[0.02] border-white/5 text-slate-400 hover:border-white/20'
-                    }`}
-                  >
-                    <div className={`w-4 h-4 rounded-md border mt-0.5 flex items-center justify-center shrink-0 transition-all ${
-                      isChecked 
-                        ? 'bg-amber-400 border-amber-400 text-slate-950 font-bold' 
-                        : 'border-white/20 bg-black/40'
-                    }`}>
-                      {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold text-white flex items-center justify-between">
-                        <span className="truncate">{addon[isEn ? 'nameEn' : 'nameEs']}</span>
-                        <span className="text-[11px] font-mono text-amber-400 shrink-0 ml-2">
-                          +{Math.round(addon.priceDeltaPct * 100)}%
-                        </span>
+            {activePlanAddons.length > 0 && (
+              <div className="space-y-2.5">
+                {activePlanAddons.map((addon) => {
+                  const isChecked = selectedAddons.includes(addon.id);
+                  return (
+                    <div
+                      key={addon.id}
+                      onClick={() => handleToggleAddon(addon.id)}
+                      className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
+                        isChecked
+                          ? 'bg-amber-400/10 border-amber-400/40 text-white'
+                          : 'bg-white/[0.02] border-white/5 text-slate-400 hover:border-white/20'
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded-md border mt-0.5 flex items-center justify-center shrink-0 transition-all ${
+                        isChecked 
+                          ? 'bg-amber-400 border-amber-400 text-slate-950 font-bold' 
+                          : 'border-white/20 bg-black/40'
+                      }`}>
+                        {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
                       </div>
-                      <p className="text-[10px] text-slate-400 font-mono mt-0.5 leading-snug line-clamp-2">
-                        {addon[isEn ? 'descriptionEn' : 'descriptionEs']}
-                      </p>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold text-white flex items-center justify-between">
+                          <span className="truncate">{addon[isEn ? 'nameEn' : 'nameEs']}</span>
+                          <span className="text-[11px] font-mono text-amber-400 shrink-0 ml-2">
+                            +{Math.round((addon.priceDeltaPct || 0) * 100)}%
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-mono mt-0.5 leading-snug line-clamp-2">
+                          {addon[isEn ? 'descriptionEn' : 'descriptionEs']}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Resumen Final de Precio y Botón CTA */}

@@ -42,7 +42,7 @@ const TEMPLATES_ES: Record<string, string> = {
             <td style="padding: 32px 32px 14px 32px;">
               <div style="display: inline-block; padding: 4px 12px; background-color: #D1FAE5; border: 1px solid #A7F3D0; border-radius: 8px; margin-bottom: 14px;">
                 <span style="color: #065F46; font-size: 11px; font-weight: 800; font-family: monospace; letter-spacing: 0.5px; text-transform: uppercase;">
-                  🚀 RETO ACTIVADO CON ÉXITO
+                  {{badgeText}}
                 </span>
               </div>
 
@@ -51,7 +51,7 @@ const TEMPLATES_ES: Record<string, string> = {
               </h1>
               
               <p style="margin: 0 0 16px 0; color: #475569; font-size: 14px; line-height: 23px;">
-                Tu orden ha sido confirmada y tu cuenta de trading ya está aprovisionada en nuestros servidores institucionales.
+                Tu orden ha sido confirmada y tu cuenta institucional de trading ya está aprovisionada y lista para operar en nuestros servidores.
               </p>
             </td>
           </tr>
@@ -65,7 +65,11 @@ const TEMPLATES_ES: Record<string, string> = {
                   <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #0F172A; font-size: 14px; font-weight: 700; font-family: monospace;">{{accountNumber}}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #64748B; font-size: 13px;">Plan / Reto</td>
+                  <td style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #64748B; font-size: 13px;">Modelo de Cuenta</td>
+                  <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #0F172A; font-size: 13px; font-weight: 700;">{{modelTypeLabel}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #64748B; font-size: 13px;">Plan / Nivel</td>
                   <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #0F172A; font-size: 13px; font-weight: 600;">{{planName}}</td>
                 </tr>
                 <tr>
@@ -73,8 +77,16 @@ const TEMPLATES_ES: Record<string, string> = {
                   <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #059669; font-size: 15px; font-weight: 800; font-family: monospace;">{{capitalFormatted}} USD</td>
                 </tr>
                 <tr>
-                  <td style="padding: 13px 18px; color: #64748B; font-size: 13px;">Reparto de Ganancias</td>
-                  <td align="right" style="padding: 13px 18px; color: #D97706; font-size: 13px; font-weight: 800; font-family: monospace;">{{profitSplit}}</td>
+                  <td style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #64748B; font-size: 13px;">Reparto de Ganancias</td>
+                  <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #D97706; font-size: 13px; font-weight: 800; font-family: monospace;">{{profitSplit}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #64748B; font-size: 13px;">Apalancamiento</td>
+                  <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #0F172A; font-size: 13px; font-weight: 700; font-family: monospace;">{{leverage}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 13px 18px; color: #64748B; font-size: 13px;">⚡ Add-ons Activados</td>
+                  <td align="right" style="padding: 13px 18px; color: #7C3AED; font-size: 13px; font-weight: 700;">{{addonsListFormatted}}</td>
                 </tr>
               </table>
             </td>
@@ -285,7 +297,7 @@ const TEMPLATES_EN: Record<string, string> = {
             <td style="padding: 32px 32px 14px 32px;">
               <div style="display: inline-block; padding: 4px 12px; background-color: #D1FAE5; border: 1px solid #A7F3D0; border-radius: 8px; margin-bottom: 14px;">
                 <span style="color: #065F46; font-size: 11px; font-weight: 800; font-family: monospace; letter-spacing: 0.5px; text-transform: uppercase;">
-                  🚀 CHALLENGE ACTIVATED
+                  {{badgeText}}
                 </span>
               </div>
 
@@ -294,7 +306,7 @@ const TEMPLATES_EN: Record<string, string> = {
               </h1>
               
               <p style="margin: 0 0 16px 0; color: #475569; font-size: 14px; line-height: 23px;">
-                Your order has been confirmed and your new trading account is now live and provisioned on our institutional execution servers.
+                Your order has been confirmed and your institutional trading account is now live, provisioned, and ready for execution.
               </p>
             </td>
           </tr>
@@ -308,7 +320,11 @@ const TEMPLATES_EN: Record<string, string> = {
                   <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #0F172A; font-size: 14px; font-weight: 700; font-family: monospace;">{{accountNumber}}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #64748B; font-size: 13px;">Challenge Plan</td>
+                  <td style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #64748B; font-size: 13px;">Account Model</td>
+                  <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #0F172A; font-size: 14px; font-weight: 700;">{{modelTypeLabel}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #64748B; font-size: 13px;">Plan / Tier</td>
                   <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #0F172A; font-size: 13px; font-weight: 600;">{{planName}}</td>
                 </tr>
                 <tr>
@@ -316,8 +332,16 @@ const TEMPLATES_EN: Record<string, string> = {
                   <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #059669; font-size: 15px; font-weight: 800; font-family: monospace;">{{capitalFormatted}} USD</td>
                 </tr>
                 <tr>
-                  <td style="padding: 13px 18px; color: #64748B; font-size: 13px;">Profit Split</td>
-                  <td align="right" style="padding: 13px 18px; color: #D97706; font-size: 13px; font-weight: 800; font-family: monospace;">{{profitSplit}}</td>
+                  <td style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #64748B; font-size: 13px;">Profit Split</td>
+                  <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #D97706; font-size: 13px; font-weight: 800; font-family: monospace;">{{profitSplit}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #64748B; font-size: 13px;">Leverage</td>
+                  <td align="right" style="padding: 13px 18px; border-bottom: 1px solid #F1F5F9; color: #0F172A; font-size: 13px; font-weight: 700; font-family: monospace;">{{leverage}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 13px 18px; color: #64748B; font-size: 13px;">⚡ Active Add-ons</td>
+                  <td align="right" style="padding: 13px 18px; color: #7C3AED; font-size: 13px; font-weight: 700;">{{addonsListFormatted}}</td>
                 </tr>
               </table>
             </td>

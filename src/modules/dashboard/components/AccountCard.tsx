@@ -41,12 +41,14 @@ export const AccountCard: React.FC<AccountCardProps> = ({
   const pnlPct = initial > 0 ? (pnl / initial) * 100 : 0;
   const isPositive = pnl >= 0;
 
-  // Calculate target progress (target is typically 8% or 10%)
-  const targetPct = account.profitTargetPct || 8;
+  const isInstant = account.isInstantFunding || account.modelType === 'INSTANT_FUNDING' || account.profitTargetPct === 0;
+
+  // Calculate target progress (for evaluation challenges) or capital health for instant funding
+  const targetPct = isInstant ? 0 : (account.profitTargetPct || 8);
   const targetAmount = initial * (targetPct / 100);
   const progressPct = targetAmount > 0 
     ? Math.min(100, Math.max(0, (Math.max(0, pnl) / targetAmount) * 100))
-    : 0;
+    : (isInstant ? (pnl >= 0 ? 100 : Math.max(10, 100 + (pnl / initial) * 100)) : 0);
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -113,11 +115,18 @@ export const AccountCard: React.FC<AccountCardProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Category Badge */}
             <span className="px-2 py-0.5 rounded-md bg-white/[0.05] border border-white/10 text-slate-300 font-mono text-[10px] font-bold uppercase tracking-wider">
               {account.category.toUpperCase()}
             </span>
+
+            {/* Direct Funding / Challenge Badge */}
+            {isInstant && (
+              <span className="px-2 py-0.5 rounded-md bg-amber-400/15 border border-amber-400/35 text-amber-300 font-mono text-[10px] font-black uppercase tracking-wider">
+                {isEn ? 'INSTANT FUNDED' : 'FONDEO DIRECTO'}
+              </span>
+            )}
 
             {/* Contract Sign Badge */}
             {account.contractSigned ? (
@@ -185,7 +194,9 @@ export const AccountCard: React.FC<AccountCardProps> = ({
       <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/[0.07] font-mono text-center">
         <div className="p-1.5 rounded-xl bg-white/[0.02] border border-white/5">
           <div className="text-[9.5px] text-slate-400">Split</div>
-          <div className="text-xs font-black text-white mt-0.5">{account.profitSplit}%</div>
+          <div className="text-xs font-black text-white mt-0.5">
+            {account.payoutSplitMode === 'TIERED' ? '35%–90%' : `${account.profitSplit}%`}
+          </div>
         </div>
         <div className="p-1.5 rounded-xl bg-white/[0.02] border border-white/5">
           <div className="text-[9.5px] text-slate-400">Max DD</div>

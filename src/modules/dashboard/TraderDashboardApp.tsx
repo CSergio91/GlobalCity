@@ -47,7 +47,7 @@ import { getWsGatewayUrl } from '../../config/apiGateway';
 import { useLanguage } from '../../context/LanguageContext';
 import { BrandLogo } from '../../components/BrandLogo';
 import { supabase } from '../../lib/supabase';
-import { TraderBillingView } from './components/TraderBillingView';
+import { TraderBillingView, OrderRecord } from './components/TraderBillingView';
 import { TraderContractSigningModal } from './components/TraderContractSigningModal';
 import { TraderChallengesView } from './components/TraderChallengesView';
 import { TraderAddonsStoreView } from './components/TraderAddonsStoreView';
@@ -57,6 +57,7 @@ import { TraderCertificatesView } from './components/TraderCertificatesView';
 import { TraderJournalView } from './components/TraderJournalView';
 import { TraderPayoutsView } from './components/TraderPayoutsView';
 import { AppSidebar, DashboardNavTab } from './components/AppSidebar';
+import { normalizePlan, setInMemoryPlansCache, getLoadedChallengePlans } from '../../data/challengePlans';
 import { TopBar } from './components/TopBar';
 import { AccountCard } from './components/AccountCard';
 import { AccountArtworkTheme } from './components/AccountArtwork';
@@ -86,6 +87,12 @@ export interface UserTradingAccount {
   contractSigned?: boolean;
   contractSignedAt?: string;
   contractSignature?: string;
+  modelType?: string;
+  isInstantFunding?: boolean;
+  payoutSplitMode?: 'FIXED' | 'TIERED';
+  payoutScale?: Array<{ tier: number; split: number }>;
+  addons?: string[];
+  rules_config?: any;
 }
 
 interface TraderDashboardAppProps {
@@ -150,8 +157,24 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
   // Zero-Egress Governance: Cargar instantáneamente de localStorage / sessionStorage o inicializar vacío
   const [accounts, setAccounts] = useState<UserTradingAccount[]>(() => {
     try {
+      // Purgar de inmediato asignaciones locales simuladas obsoletas
+      localStorage.removeItem('eklipse_assigned_accounts');
       const cached = localStorage.getItem(`eklipse_accounts_cache_${user?.email || user?.id || 'anon'}`)
         || sessionStorage.getItem(`eklipse_accounts_cache_${user?.email || user?.id || 'anon'}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed?.data)) {
+          // Filtrar cualquier cuenta simulada local antigua
+          return parsed.data.filter((a: any) => !String(a.id || '').startsWith('local_'));
+        }
+      }
+    } catch (_) {}
+    return [];
+  });
+
+  const [billingOrders, setBillingOrders] = useState<OrderRecord[]>(() => {
+    try {
+      const cached = sessionStorage.getItem(`eklipse_billing_cache_${user?.email || 'anon'}`);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed?.data)) return parsed.data;
@@ -254,7 +277,7 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
     setTimeout(() => setContractToastMessage(null), 4500);
   };
 
-  // Cargar cuentas reales del usuario desde PostgreSQL y localStorage (Zero-Egress Governance)
+  // Cargar cuentas reales del usuario desde PostgreSQL y sincronizar Single-Fetch Bootstrap
   const isFetchingAccountsRef = useRef(false);
 
   const loadUserAccounts = async (forceRefresh = false) => {
@@ -265,13 +288,18 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
     if (isFetchingAccountsRef.current) return;
     isFetchingAccountsRef.current = true;
 
-    if (forceRefresh || accounts.length === 0) {
+    if (accounts.length === 0) {
       setIsLoadingAccounts(true);
     }
     try {
+      // Purgar de inmediato asignaciones locales simuladas obsoletas
+      try {
+        localStorage.removeItem('eklipse_assigned_accounts');
+      } catch (_) {}
+
       const loaded: UserTradingAccount[] = [];
 
-      // 1. Single-Fetch Bootstrap RPC (Zero-Egress: 1 sola llamada para perfil, cuentas y trades)
+      // 1. Single-Fetch Bootstrap RPC (Zero-Egress: 1 sola llamada para perfil, cuentas, órdenes, reglas y trades)
       if (user?.email || user?.id) {
         let rpcSuccess = false;
         try {
@@ -284,10 +312,11 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
             rpcSuccess = true;
             bData.accounts.forEach((row: any) => {
               const rules = row.rules_config || {};
+              const isInstant = rules.modelType === 'INSTANT_FUNDING' || rules.isInstantFunding === true || (rules.profitTargetPct === 0 && Number(rules.profitTargetPct) === 0);
               loaded.push({
                 id: row.id,
                 accountNumber: row.account_number || `EKL-${row.id.slice(0, 6).toUpperCase()}`,
-                category: row.account_number?.toLowerCase().includes('lunar') ? 'lunar' : 'solar',
+                category: row.account_number?.toLowerCase().includes('lunar') ? 'lunar' : (rules.category || 'solar'),
                 tierName: rules.tierName || `$${Number(row.initial_balance || 25000).toLocaleString()}`,
                 initialBalance: Number(row.initial_balance || 25000),
                 currentBalance: Number(row.current_balance || row.initial_balance || 25000),
@@ -295,19 +324,67 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
                 peakEquity: Number(row.peak_equity || row.initial_balance || 25000),
                 dailyStartEquity: Number(row.daily_start_equity || row.initial_balance || 25000),
                 status: row.status || 'ACTIVE',
-                profitSplit: Number(rules.profitSplitPct || rules.effectiveProfitSplit || 80),
-                maxDailyDrawdownPct: Number(rules.maxDailyDrawdownPct || 5),
-                maxTotalDrawdownPct: Number(rules.maxTotalDrawdownPct || 10),
-                profitTargetPct: Number(rules.profitTargetPct || 8),
-                leverage: rules.effectiveLeverage || '1:100',
+                profitSplit: Number(rules.profitSplitPct ?? rules.effectiveProfitSplit ?? 80),
+                maxDailyDrawdownPct: Number(rules.maxDailyDrawdownPct ?? 4),
+                maxTotalDrawdownPct: Number(rules.maxTotalDrawdownPct ?? 15),
+                profitTargetPct: rules.profitTargetPct !== undefined ? Number(rules.profitTargetPct) : (isInstant ? 0 : 8),
+                leverage: rules.effectiveLeverage || '1:50',
                 tradingDays: Number(row.trading_days_count || 0),
                 createdAt: row.created_at || new Date().toISOString(),
                 contractSigned: !!(row.contract_signed_at || rules.contractSigned),
                 contractSignedAt: row.contract_signed_at || rules.contractSignedAt,
-                contractSignature: row.contract_signature || rules.contractSignature
+                contractSignature: row.contract_signature || rules.contractSignature,
+                modelType: rules.modelType || (isInstant ? 'INSTANT_FUNDING' : 'ONE_PHASE'),
+                isInstantFunding: isInstant,
+                payoutSplitMode: rules.payoutSplitMode || (rules.payoutScale?.length ? 'TIERED' : 'FIXED'),
+                payoutScale: rules.payoutScale || [],
+                addons: Array.isArray(rules.addons) ? rules.addons : [],
+                rules_config: rules
               });
             });
 
+            // 1b. Sincronizar órdenes reales para Facturación (0 peticiones HTTP en Billing)
+            if (Array.isArray(bData.orders)) {
+              const challengePlans = getLoadedChallengePlans();
+              const mappedOrders: OrderRecord[] = bData.orders.map((row: any) => {
+                const billingAddress = row.billing_address || {};
+                const matchedPlan = challengePlans.find(p => p.id === row.plan_id || p.capital === Number(row.account_size));
+                const planName = billingAddress.planName || (matchedPlan?.astronomicalName ? (isEn ? matchedPlan.astronomicalName.en : matchedPlan.astronomicalName.es) : undefined) || (matchedPlan ? matchedPlan.name : undefined) || `Eklipse $${Number(row.account_size || 25000).toLocaleString()}`;
+                const modelType = billingAddress.modelType || matchedPlan?.modelType || (row.plan_id?.toLowerCase().includes('instant') ? 'INSTANT_FUNDING' : 'INSTANT_FUNDING');
+                const isInstantFunding = modelType === 'INSTANT_FUNDING' || (matchedPlan?.profitTargetPct === 0 && Number(matchedPlan?.profitTargetPct) === 0);
+
+                return {
+                  id: row.id,
+                  orderNumber: row.order_number || `ORD-${row.id.slice(0, 8)}`,
+                  planId: row.plan_id || 'solar-25k',
+                  planName,
+                  modelType,
+                  isInstantFunding,
+                  category: row.category || (row.plan_id?.includes('lunar') ? 'lunar' : 'solar'),
+                  accountSize: Number(row.account_size || 25000),
+                  basePrice: Number(row.base_price || 199),
+                  addonsCost: Number(row.addons_cost || 0),
+                  totalPrice: Number(row.total_price || 199),
+                  addons: Array.isArray(row.addons) ? row.addons : [],
+                  paymentGateway: row.payment_gateway || 'crypto',
+                  paymentStatus: row.payment_status || 'COMPLETED',
+                  billingAddress: billingAddress,
+                  createdAt: row.created_at || new Date().toISOString()
+                };
+              });
+              setBillingOrders(mappedOrders);
+              try {
+                sessionStorage.setItem(`eklipse_billing_cache_${user.email || 'anon'}`, JSON.stringify({ data: mappedOrders, timestamp: Date.now() }));
+              } catch (_) {}
+            }
+
+            // 1c. Sincronizar reglas y planes reales para Challenges en caliente (0 peticiones HTTP en Challenges)
+            if (Array.isArray(bData.rules) && bData.rules.length > 0) {
+              const normalizedRules = bData.rules.map(normalizePlan);
+              setInMemoryPlansCache(normalizedRules);
+            }
+
+            // 1d. Sincronizar trades forenses para Journal y telemetría (0 peticiones HTTP en Journal)
             if (Array.isArray(bData.trades)) {
               setRecentTrades(bData.trades);
             }
@@ -334,10 +411,11 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
           if (!error && data && data.length > 0) {
             data.forEach((row: any) => {
               const rules = row.rules_config || {};
+              const isInstant = rules.modelType === 'INSTANT_FUNDING' || rules.isInstantFunding === true || (rules.profitTargetPct === 0 && Number(rules.profitTargetPct) === 0);
               loaded.push({
                 id: row.id,
                 accountNumber: row.account_number || `EKL-${row.id.slice(0, 6).toUpperCase()}`,
-                category: row.account_number?.toLowerCase().includes('lunar') ? 'lunar' : 'solar',
+                category: row.account_number?.toLowerCase().includes('lunar') ? 'lunar' : (rules.category || 'solar'),
                 tierName: rules.tierName || `$${Number(row.initial_balance || 25000).toLocaleString()}`,
                 initialBalance: Number(row.initial_balance || 25000),
                 currentBalance: Number(row.current_balance || row.initial_balance || 25000),
@@ -345,53 +423,30 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
                 peakEquity: Number(row.peak_equity || row.initial_balance || 25000),
                 dailyStartEquity: Number(row.daily_start_equity || row.initial_balance || 25000),
                 status: row.status || 'ACTIVE',
-                profitSplit: Number(rules.profitSplitPct || rules.effectiveProfitSplit || 80),
-                maxDailyDrawdownPct: Number(rules.maxDailyDrawdownPct || 5),
-                maxTotalDrawdownPct: Number(rules.maxTotalDrawdownPct || 10),
-                profitTargetPct: Number(rules.profitTargetPct || 8),
-                leverage: rules.effectiveLeverage || '1:100',
+                profitSplit: Number(rules.profitSplitPct ?? rules.effectiveProfitSplit ?? 80),
+                maxDailyDrawdownPct: Number(rules.maxDailyDrawdownPct ?? 4),
+                maxTotalDrawdownPct: Number(rules.maxTotalDrawdownPct ?? 15),
+                profitTargetPct: rules.profitTargetPct !== undefined ? Number(rules.profitTargetPct) : (isInstant ? 0 : 8),
+                leverage: rules.effectiveLeverage || '1:50',
                 tradingDays: Number(row.trading_days_count || 0),
                 createdAt: row.created_at || new Date().toISOString(),
                 contractSigned: !!(row.contract_signed_at || rules.contractSigned),
                 contractSignedAt: row.contract_signed_at || rules.contractSignedAt,
-                contractSignature: row.contract_signature || rules.contractSignature
+                contractSignature: row.contract_signature || rules.contractSignature,
+                modelType: rules.modelType || (isInstant ? 'INSTANT_FUNDING' : 'ONE_PHASE'),
+                isInstantFunding: isInstant,
+                payoutSplitMode: rules.payoutSplitMode || (rules.payoutScale?.length ? 'TIERED' : 'FIXED'),
+                payoutScale: rules.payoutScale || [],
+                addons: Array.isArray(rules.addons) ? rules.addons : [],
+                rules_config: rules
               });
             });
           }
         }
       }
 
-      // 2. Si el usuario realizó una compra en el checkout local, sincronizar
-      try {
-        const localAssigned = JSON.parse(localStorage.getItem('eklipse_assigned_accounts') || '[]');
-        if (Array.isArray(localAssigned)) {
-          localAssigned.forEach((item: any, idx: number) => {
-            const size = Number(item.accountSize || 25000);
-            const id = `local_${idx}_${item.purchasedAt || Date.now()}`;
-            if (!loaded.some(a => a.id === id)) {
-              loaded.push({
-                id,
-                accountNumber: `EKL-${(item.category || 'solar').toUpperCase()}-${Math.floor(10000 + Math.random() * 90000)}`,
-                category: item.category === 'lunar' ? 'lunar' : 'solar',
-                tierName: `$${size.toLocaleString()} ${item.category === 'lunar' ? 'Lunar' : 'Solar'}`,
-                initialBalance: size,
-                currentBalance: size,
-                equity: size,
-                peakEquity: size,
-                dailyStartEquity: size,
-                status: 'ACTIVE',
-                profitSplit: item.addons?.includes('profit_split_90') ? 90 : 80,
-                maxDailyDrawdownPct: item.category === 'lunar' ? 6 : 5,
-                maxTotalDrawdownPct: item.addons?.includes('extra_drawdown') ? 12 : 10,
-                profitTargetPct: 8,
-                leverage: item.addons?.includes('boost_leverage') ? '1:100' : '1:50',
-                tradingDays: 0,
-                createdAt: item.purchasedAt || new Date().toISOString()
-              });
-            }
-          });
-        }
-      } catch (_) {}
+      // CERO DATOS DEMOS: No se mezclan compras locales simuladas cuando el usuario está logueado.
+      // La base de datos PostgreSQL es la única fuente de verdad autoritativa.
 
       if (loaded.length > 0) {
         setAccounts(prev => {
@@ -427,7 +482,8 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
 
   useEffect(() => {
     if (user?.id || user?.email) {
-      loadUserAccounts(false);
+      // Revalidación siempre en segundo plano en el montaje: Cero duplicados, cero cuentas demos
+      loadUserAccounts(true);
     }
   }, [user?.id, user?.email]);
 
@@ -828,16 +884,8 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
         } catch (_) {}
       }
 
-      // Guardar en almacenamiento local
       try {
-        const stored = JSON.parse(localStorage.getItem('eklipse_assigned_accounts') || '[]');
-        stored.push({
-          category: 'solar',
-          accountSize: capital,
-          purchasedAt: new Date().toISOString(),
-          email: user?.email
-        });
-        localStorage.setItem('eklipse_assigned_accounts', JSON.stringify(stored));
+        localStorage.removeItem('eklipse_assigned_accounts');
       } catch (_) {}
 
       setAccounts(prev => [newAcc, ...prev]);
@@ -2112,6 +2160,7 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
                 accounts={accounts}
                 selectedAccountId={selectedAccountId}
                 userDisplayName={userDisplayName}
+                initialTrades={recentTrades}
               />
             </motion.div>
           )}
@@ -2224,6 +2273,7 @@ export const TraderDashboardApp: React.FC<TraderDashboardAppProps> = ({
                 userEmail={user?.email} 
                 userId={user?.id} 
                 userDisplayName={userDisplayName} 
+                initialOrders={billingOrders}
               />
             </motion.div>
           )}

@@ -52,12 +52,14 @@ interface TraderJournalViewProps {
   accounts: UserTradingAccount[];
   selectedAccountId?: string | null;
   userDisplayName?: string;
+  initialTrades?: any[];
 }
 
 export const TraderJournalView: React.FC<TraderJournalViewProps> = ({
   accounts,
   selectedAccountId,
-  userDisplayName = 'Trader'
+  userDisplayName = 'Trader',
+  initialTrades
 }) => {
   const [filterAccount, setFilterAccount] = useState<string>(selectedAccountId || 'all');
   const [filterResult, setFilterResult] = useState<'all' | 'win' | 'loss'>('all');
@@ -70,118 +72,55 @@ export const TraderJournalView: React.FC<TraderJournalViewProps> = ({
   const [editNotesText, setEditNotesText] = useState('');
   const [editPsychology, setEditPsychology] = useState<TradeLogEntry['psychology']>('Disciplinado');
 
-  // Registros de trades iniciales realistas para la cuenta del trader
+  // Mapear operaciones reales desde PostgreSQL / Single-Fetch Bootstrap
+  const mapRawTrades = (rawList: any[]): TradeLogEntry[] => {
+    return rawList.map((t: any) => ({
+      id: t.id || `tr_${Date.now()}`,
+      ticket: t.ticket || `#${(t.id || '').slice(0, 6)}`,
+      accountNumber: t.account_number || accounts[0]?.accountNumber || 'EKL-TRADER',
+      symbol: t.symbol || 'BTCUSDT',
+      side: (t.side || 'LONG').toUpperCase() as 'LONG' | 'SHORT',
+      entryPrice: Number(t.entry_price || t.entryPrice || 0),
+      exitPrice: Number(t.exit_price || t.exitPrice || 0),
+      lotSize: Number(t.lot_size || t.lotSize || 1),
+      pnl: Number(t.pnl || 0),
+      pnlPct: Number(t.pnl_percent || t.pnlPct || 0),
+      rMultiple: Number(t.r_multiple || t.rMultiple || 0),
+      openTime: t.open_time || (t.created_at ? new Date(t.created_at).toLocaleDateString() : 'N/A'),
+      closeTime: t.close_time || (t.updated_at ? new Date(t.updated_at).toLocaleDateString() : 'N/A'),
+      duration: t.duration_seconds ? `${Math.round(t.duration_seconds / 60)}m` : 'Directo',
+      strategyTag: t.strategy_tag || 'DMA Ejecución',
+      psychology: (t.psychology || 'Disciplinado') as TradeLogEntry['psychology'],
+      notes: t.notes || '',
+      ruleCompliant: t.rule_compliant !== false
+    }));
+  };
+
+  // CERO DATOS DEMOS: Si no hay operaciones en la base de datos, el estado inicial es []
   const [trades, setTrades] = useState<TradeLogEntry[]>(() => {
+    if (Array.isArray(initialTrades) && initialTrades.length > 0) {
+      return mapRawTrades(initialTrades);
+    }
     try {
       const saved = localStorage.getItem('eklipse_trader_journal_entries');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch (_) {}
 
-    const accNum = accounts[0]?.accountNumber || 'EKL-SOLAR-84920';
-
-    return [
-      {
-        id: 'tr_101',
-        ticket: '#94821',
-        accountNumber: accNum,
-        symbol: 'BTCUSDT',
-        side: 'LONG',
-        entryPrice: 66420.50,
-        exitPrice: 67840.00,
-        lotSize: 0.85,
-        pnl: 1206.57,
-        pnlPct: 2.14,
-        rMultiple: 2.6,
-        openTime: '12 Abr 14:20',
-        closeTime: '12 Abr 18:45',
-        duration: '4h 25m',
-        strategyTag: 'Quiebre de Rango L2',
-        psychology: 'Excelente Ejecución',
-        notes: 'Entrada limpia tras confirmación de absorción en libro de órdenes institucional.',
-        ruleCompliant: true
-      },
-      {
-        id: 'tr_102',
-        ticket: '#94822',
-        accountNumber: accNum,
-        symbol: 'ETHUSDT',
-        side: 'SHORT',
-        entryPrice: 3480.00,
-        exitPrice: 3410.50,
-        lotSize: 5.2,
-        pnl: 361.40,
-        pnlPct: 0.65,
-        rMultiple: 1.8,
-        openTime: '13 Abr 09:10',
-        closeTime: '13 Abr 12:30',
-        duration: '3h 20m',
-        strategyTag: 'Rechazo en VWAP Semanal',
-        psychology: 'Disciplinado',
-        notes: 'Stop Loss dinámico respetado. Salida manual al alcanzar 1.8R planificado.',
-        ruleCompliant: true
-      },
-      {
-        id: 'tr_103',
-        ticket: '#94823',
-        accountNumber: accNum,
-        symbol: 'SOLUSDT',
-        side: 'LONG',
-        entryPrice: 154.20,
-        exitPrice: 151.80,
-        lotSize: 22.0,
-        pnl: -52.80,
-        pnlPct: -0.10,
-        rMultiple: -0.9,
-        openTime: '14 Abr 16:05',
-        closeTime: '14 Abr 16:40',
-        duration: '35m',
-        strategyTag: 'Pullback EMA 50',
-        psychology: 'Disciplinado',
-        notes: 'El volumen no acompañó la ruptura. Corté la pérdida de inmediato dentro de la regla de microscalping.',
-        ruleCompliant: true
-      },
-      {
-        id: 'tr_104',
-        ticket: '#94824',
-        accountNumber: accNum,
-        symbol: 'BTCUSDT',
-        side: 'LONG',
-        entryPrice: 67100.00,
-        exitPrice: 68350.00,
-        lotSize: 0.75,
-        pnl: 937.50,
-        pnlPct: 1.86,
-        rMultiple: 2.2,
-        openTime: '15 Abr 11:15',
-        closeTime: '15 Abr 17:00',
-        duration: '5h 45m',
-        strategyTag: 'Order Block Diario',
-        psychology: 'Excelente Ejecución',
-        notes: 'Paciencia para esperar el retest del nivel clave. TP tomado en 2.2R sin dudar.',
-        ruleCompliant: true
-      },
-      {
-        id: 'tr_105',
-        ticket: '#94825',
-        accountNumber: accNum,
-        symbol: 'AVAXUSDT',
-        side: 'SHORT',
-        entryPrice: 28.50,
-        exitPrice: 27.20,
-        lotSize: 120.0,
-        pnl: 156.00,
-        pnlPct: 0.28,
-        rMultiple: 1.5,
-        openTime: '16 Abr 08:30',
-        closeTime: '16 Abr 14:10',
-        duration: '5h 40m',
-        strategyTag: 'Divergencia RSI L2',
-        psychology: 'Disciplinado',
-        notes: 'Trade ejecutado con SL obligatorio pre-trade validado por el Risk Engine.',
-        ruleCompliant: true
-      }
-    ];
+    return [];
   });
+
+  React.useEffect(() => {
+    if (Array.isArray(initialTrades)) {
+      if (initialTrades.length > 0) {
+        setTrades(mapRawTrades(initialTrades));
+      } else {
+        setTrades([]);
+      }
+    }
+  }, [initialTrades, accounts]);
 
   // Guardar en localStorage ante cambios
   const saveTrades = (updated: TradeLogEntry[]) => {

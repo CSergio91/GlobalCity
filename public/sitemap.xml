@@ -6,7 +6,7 @@
   <!-- 1. Homepage / Plataforma Principal (ES / EN) -->
   <url>
     <loc>https://eklipsefunded.com/</loc>
-    <lastmod>2026-10-14</lastmod>
+    <lastmod>2026-10-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="es" href="https://eklipsefunded.com/?lang=es" />
@@ -19,49 +19,83 @@
     </image:image>
   </url>
 
-  <!-- 2. Terminal Institucional / Operaciones en Vivo -->
+  <!-- 2. Programas de Fondeo Inmediato y Retos (Sitelink Priority) -->
+  <url>
+    <loc>https://eklipsefunded.com/#programs</loc>
+    <lastmod>2026-10-16</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://eklipsefunded.com/?lang=es#programs" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://eklipsefunded.com/?lang=en#programs" />
+  </url>
+
+  <!-- 3. Terminal Institucional / Operaciones en Vivo (Global & EN) -->
   <url>
     <loc>https://eklipsefunded.com/operations</loc>
-    <lastmod>2026-10-14</lastmod>
+    <lastmod>2026-10-16</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.9</priority>
+    <priority>0.95</priority>
     <xhtml:link rel="alternate" hreflang="es" href="https://eklipsefunded.com/operaciones" />
     <xhtml:link rel="alternate" hreflang="en" href="https://eklipsefunded.com/operations" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://eklipsefunded.com/operations" />
   </url>
 
-  <!-- 3. Versión en Español de la Terminal -->
+  <!-- 4. Versión en Español de la Terminal de Trading -->
   <url>
     <loc>https://eklipsefunded.com/operaciones</loc>
-    <lastmod>2026-10-14</lastmod>
+    <lastmod>2026-10-16</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.9</priority>
+    <priority>0.95</priority>
     <xhtml:link rel="alternate" hreflang="es" href="https://eklipsefunded.com/operaciones" />
     <xhtml:link rel="alternate" hreflang="en" href="https://eklipsefunded.com/operations" />
   </url>
 
-  <!-- 4. Portal de Acceso / Checkout de Retos -->
+  <!-- 5. Mercados Cripto y Profundidad L2 -->
+  <url>
+    <loc>https://eklipsefunded.com/#markets</loc>
+    <lastmod>2026-10-16</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 6. Retiros On-Chain en USDT (<8h) -->
+  <url>
+    <loc>https://eklipsefunded.com/#payout</loc>
+    <lastmod>2026-10-16</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 7. Reglas de Trading, Drawdown y Preguntas Frecuentes -->
+  <url>
+    <loc>https://eklipsefunded.com/#faq</loc>
+    <lastmod>2026-10-16</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 8. Portal de Acceso / Checkout de Retos -->
   <url>
     <loc>https://eklipsefunded.com/login</loc>
-    <lastmod>2026-10-14</lastmod>
+    <lastmod>2026-10-16</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
     <xhtml:link rel="alternate" hreflang="es" href="https://eklipsefunded.com/login?lang=es" />
     <xhtml:link rel="alternate" hreflang="en" href="https://eklipsefunded.com/login?lang=en" />
   </url>
 
-  <!-- 5. Knowledge Base para Sistemas de IA (English) -->
+  <!-- 9. Knowledge Base para Sistemas de IA (English LLM Spec) -->
   <url>
     <loc>https://eklipsefunded.com/llms.txt</loc>
-    <lastmod>2026-10-14</lastmod>
+    <lastmod>2026-10-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
 
-  <!-- 6. Knowledge Base para Sistemas de IA (Español) -->
+  <!-- 10. Knowledge Base para Sistemas de IA (Español LLM Spec) -->
   <url>
     <loc>https://eklipsefunded.com/llms-es.txt</loc>
-    <lastmod>2026-10-14</lastmod>
+    <lastmod>2026-10-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>

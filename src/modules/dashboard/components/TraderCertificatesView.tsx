@@ -41,21 +41,10 @@ export const TraderCertificatesView: React.FC<TraderCertificatesViewProps> = ({
   const [selectedCert, setSelectedCert] = useState<CertificateItem | null>(null);
   const [downloading, setDownloading] = useState(false);
 
-  // Generar certificados vinculados a las cuentas reales del usuario
+  // Generar certificados vinculados a las cuentas reales del usuario (Zero Mocks)
   const certificates: CertificateItem[] = React.useMemo(() => {
     if (accounts.length === 0) {
-      return [
-        {
-          id: 'cert-demo-01',
-          type: 'FUNDED_TRADER',
-          titleEn: 'Official Funded Trader Certificate',
-          titleEs: 'Certificado Oficial de Trader Fondeado',
-          accountNumber: 'EKL-SOLAR-DEMO',
-          capital: 50000,
-          date: '2026-04-10',
-          certHash: '0x88f2...e491'
-        }
-      ];
+      return [];
     }
 
     return accounts.map((acc, idx) => ({
@@ -100,53 +89,67 @@ export const TraderCertificatesView: React.FC<TraderCertificatesViewProps> = ({
         </p>
       </div>
 
-      {/* 2. Grid de Certificados */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {certificates.map(cert => (
-          <div
-            key={cert.id}
-            className="rounded-3xl p-6 sm:p-7 bg-gradient-to-b from-[#0F1424] via-[#0B0E1A] to-[#07090E] border border-amber-400/20 flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden group hover:border-amber-400/40 transition-all"
-          >
-            <div className="space-y-4">
-              
-              {/* Badge & Sello */}
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300">
-                  VERIFIED CREDENTIAL
-                </span>
-                <Award className="w-6 h-6 text-amber-400/80 group-hover:scale-110 transition-transform" />
-              </div>
-
-              {/* Título y Datos */}
-              <div>
-                <h3 className="text-lg font-black text-white">
-                  {cert[isEn ? 'titleEn' : 'titleEs']}
-                </h3>
-                <div className="mt-2 space-y-1 text-xs font-mono text-slate-400">
-                  <div>Trader: <strong className="text-white">{userDisplayName}</strong></div>
-                  <div>Account: <strong className="text-amber-400">{cert.accountNumber}</strong></div>
-                  <div>Capital: <strong className="text-emerald-400">${cert.capital.toLocaleString()} USD</strong></div>
-                  <div>Date: <span className="text-slate-500">{cert.date}</span></div>
+      {/* 2. Grid de Certificados o Estado Vacío */}
+      {certificates.length === 0 ? (
+        <div className="py-16 text-center rounded-3xl bg-[#0A0D15] border border-white/5 space-y-3">
+          <Award className="w-10 h-10 text-slate-600 mx-auto" />
+          <h3 className="text-base font-bold text-white">
+            {isEn ? 'No Certificates Issued Yet' : 'No se han emitido certificados aún'}
+          </h3>
+          <p className="text-xs text-slate-400 font-mono max-w-md mx-auto">
+            {isEn 
+              ? 'Complete evaluation phases or maintain active funded accounts to generate cryptographically signed certificates.' 
+              : 'Mantén tu cuenta de fondeo activa o completa evaluaciones para generar certificados oficiales criptográficos.'}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {certificates.map(cert => (
+            <div
+              key={cert.id}
+              className="rounded-3xl p-6 sm:p-7 bg-gradient-to-b from-[#0F1424] via-[#0B0E1A] to-[#07090E] border border-amber-400/20 flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden group hover:border-amber-400/40 transition-all"
+            >
+              <div className="space-y-4">
+                
+                {/* Badge & Sello */}
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300">
+                    VERIFIED CREDENTIAL
+                  </span>
+                  <Award className="w-6 h-6 text-amber-400/80 group-hover:scale-110 transition-transform" />
                 </div>
+
+                {/* Título y Datos */}
+                <div>
+                  <h3 className="text-lg font-black text-white">
+                    {cert[isEn ? 'titleEn' : 'titleEs']}
+                  </h3>
+                  <div className="mt-2 space-y-1 text-xs font-mono text-slate-400">
+                    <div>Trader: <strong className="text-white">{userDisplayName}</strong></div>
+                    <div>Account: <strong className="text-amber-400">{cert.accountNumber}</strong></div>
+                    <div>Capital: <strong className="text-emerald-400">${cert.capital.toLocaleString()} USD</strong></div>
+                    <div>Date: <span className="text-slate-500">{cert.date}</span></div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Footer con Botón Ver / Descargar */}
+              <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                <span className="text-[10px] font-mono text-slate-500">{cert.certHash}</span>
+                <button
+                  onClick={() => setSelectedCert(cert)}
+                  className="px-4 py-2 rounded-xl bg-amber-400/15 hover:bg-amber-400 hover:text-slate-950 text-amber-300 font-mono font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>{isEn ? 'View & Download' : 'Ver y Descargar'}</span>
+                </button>
               </div>
 
             </div>
-
-            {/* Footer con Botón Ver / Descargar */}
-            <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-              <span className="text-[10px] font-mono text-slate-500">{cert.certHash}</span>
-              <button
-                onClick={() => setSelectedCert(cert)}
-                className="px-4 py-2 rounded-xl bg-amber-400/15 hover:bg-amber-400 hover:text-slate-950 text-amber-300 font-mono font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>{isEn ? 'View & Download' : 'Ver y Descargar'}</span>
-              </button>
-            </div>
-
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* 3. Modal de Certificado Editorial */}
       {selectedCert && (

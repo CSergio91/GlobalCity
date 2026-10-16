@@ -29,7 +29,8 @@ import {
   AVAILABLE_ADDONS,
   calculateDynamicPlanPricing,
   getAllLiveChallengePlans,
-  getLiveChallengePlans 
+  getLiveChallengePlans,
+  getLoadedChallengePlans
 } from '../data/challengePlans';
 
 export const ProgramsSection: React.FC = () => {
@@ -37,12 +38,29 @@ export const ProgramsSection: React.FC = () => {
   const { navigate } = useAppRouter();
   const isEn = language === 'en';
 
-  // 1. Dynamic plans & categories state
-  const [allLivePlans, setAllLivePlans] = useState<ChallengePlan[]>([]);
-  const [plans, setPlans] = useState<ChallengePlan[]>([]);
-  const [category, setCategory] = useState<PlanCategory>('lunar');
-  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
-  const [selectedPlanId, setSelectedPlanId] = useState<string>('');
+  // 1. Dynamic plans & categories state initialized synchronously from in-memory cache
+  const [allLivePlans, setAllLivePlans] = useState<ChallengePlan[]>(() => getLoadedChallengePlans());
+  const [availableCategories, setAvailableCategories] = useState<string[]>(() => {
+    const loaded = getLoadedChallengePlans();
+    return Array.from(new Set(loaded.map(p => p.category.toLowerCase()))).filter(Boolean);
+  });
+  const [category, setCategory] = useState<PlanCategory>(() => {
+    const loaded = getLoadedChallengePlans();
+    const categories = Array.from(new Set(loaded.map(p => p.category.toLowerCase()))).filter(Boolean);
+    return categories.includes('solar') ? 'solar' : (categories[0] || 'solar');
+  });
+  const [plans, setPlans] = useState<ChallengePlan[]>(() => {
+    const loaded = getLoadedChallengePlans();
+    const solarPlans = loaded.filter(p => p.category.toLowerCase() === 'solar');
+    return solarPlans.length > 0 ? solarPlans : loaded;
+  });
+  const [selectedPlanId, setSelectedPlanId] = useState<string>(() => {
+    const loaded = getLoadedChallengePlans();
+    const solarPlans = loaded.filter(p => p.category.toLowerCase() === 'solar');
+    const effective = solarPlans.length > 0 ? solarPlans : loaded;
+    const popular = effective.find(p => p.popular) || effective[Math.min(effective.length - 1, 5)] || effective[0];
+    return popular?.id || '';
+  });
 
   // 2. Payment Mode: One-time fee vs Monthly subscription
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('one-time');
@@ -86,7 +104,7 @@ export const ProgramsSection: React.FC = () => {
         // Si la categoría activa no existe en DB, seleccionar la primera disponible
         const targetCategory = categories.includes(category.toLowerCase()) 
           ? category 
-          : (categories[0] || 'lunar');
+          : (categories[0] || 'solar');
 
         setCategory(targetCategory);
 
@@ -94,9 +112,11 @@ export const ProgramsSection: React.FC = () => {
         const effectivePlans = categoryPlans.length > 0 ? categoryPlans : live;
         setPlans(effectivePlans);
 
-        const popular = effectivePlans.find(p => p.popular) || effectivePlans[Math.min(effectivePlans.length - 1, 5)] || effectivePlans[0];
-        if (popular) {
-          setSelectedPlanId(popular.id);
+        if (!selectedPlanId || !effectivePlans.some(p => p.id === selectedPlanId)) {
+          const popular = effectivePlans.find(p => p.popular) || effectivePlans[Math.min(effectivePlans.length - 1, 5)] || effectivePlans[0];
+          if (popular) {
+            setSelectedPlanId(popular.id);
+          }
         }
       } catch (err) {
         console.warn('[ProgramsSection] Error loading live plans:', err);
@@ -158,7 +178,7 @@ export const ProgramsSection: React.FC = () => {
   // Dynamic pricing & rules calculation
   const dynamicPricing = calculateDynamicPlanPricing(currentPlan, paymentMode, selectedAddons);
 
-  const planAddons = (currentPlan?.customAddons && currentPlan.customAddons.length > 0)
+  const planAddons = Array.isArray(currentPlan?.customAddons)
     ? currentPlan.customAddons.filter(a => a.isActive !== false)
     : AVAILABLE_ADDONS;
 
@@ -166,10 +186,12 @@ export const ProgramsSection: React.FC = () => {
     try {
       sessionStorage.setItem('eklipse_auth_mode', 'register');
       sessionStorage.setItem('eklipse_target_plan', currentPlan.id);
+      sessionStorage.setItem('eklipse_target_category', currentPlan.category);
+      sessionStorage.setItem('eklipse_target_payment_mode', paymentMode);
       sessionStorage.setItem('eklipse_target_addons', JSON.stringify(selectedAddons));
     } catch {}
     const addonsParam = selectedAddons.length > 0 ? `&addons=${selectedAddons.join(',')}` : '';
-    navigate(`/login?mode=register&plan=${currentPlan.id}${addonsParam}`);
+    navigate(`/login?mode=register&plan=${encodeURIComponent(currentPlan.id)}&category=${encodeURIComponent(currentPlan.category)}&paymentMode=${paymentMode}${addonsParam}`);
   };
 
   // Directional slide animation variants (GPU-accelerated, zero lag)
@@ -303,9 +325,13 @@ export const ProgramsSection: React.FC = () => {
               )}
               <span className="text-xs font-mono font-bold text-slate-200 uppercase tracking-wider">
                 {category.toLowerCase() === 'solar' 
-                  ? (isEn ? 'Solar Tier: Crypto Futures DMA' : 'Categoría Solar: Cripto Futuros DMA')
+                  ? (isEn 
+                      ? `Solar Tier: ${currentPlan?.modelType === 'INSTANT_FUNDING' ? 'Instant Funding & Crypto DMA' : 'Crypto Futures DMA'}` 
+                      : `Categoría Solar: ${currentPlan?.modelType === 'INSTANT_FUNDING' ? 'Fondeo Inmediato & Cripto DMA' : 'Cripto Futuros DMA'}`)
                   : category.toLowerCase() === 'lunar' 
-                    ? (isEn ? 'Lunar Tier: Instant Funding & Meme Titans' : 'Categoría Lunar: Fondeo Directo & Memecoins')
+                    ? (isEn 
+                        ? `Lunar Tier: ${currentPlan?.modelType === 'INSTANT_FUNDING' ? 'Instant Funding & Meme Titans' : 'Meme Titans & Volatility DMA'}` 
+                        : `Categoría Lunar: ${currentPlan?.modelType === 'INSTANT_FUNDING' ? 'Fondeo Directo & Memecoins' : 'Volatilidad Extrema DMA'}`)
                     : (isEn ? `Program: ${category.toUpperCase()}` : `Programa: ${category.toUpperCase()}`)}
               </span>
             </div>
@@ -485,56 +511,58 @@ export const ProgramsSection: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Nexus Add-ons Selector (4 Upgrades) */}
-                    <div className="space-y-2 pt-0.5">
-                      <div className="text-[11px] font-mono uppercase text-slate-300 font-bold flex items-center justify-between">
-                        <span className="flex items-center gap-1.5">
-                          <Sliders className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{isEn ? 'Custom Add-Ons (Nexus Modifiers)' : 'Add-Ons Personalizables'}</span>
-                        </span>
-                        <span className="text-[9.5px] font-normal text-slate-400">
-                          {isEn ? 'Configurable in Nexus' : 'Sincronizado vía Nexus'}
-                        </span>
-                      </div>
+                    {/* Nexus Add-ons Selector (Configured Modifiers) */}
+                    {planAddons.length > 0 && (
+                      <div className="space-y-2 pt-0.5">
+                        <div className="text-[11px] font-mono uppercase text-slate-300 font-bold flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <Sliders className="w-3.5 h-3.5 text-slate-400" />
+                            <span>{isEn ? 'Custom Add-Ons (Nexus Modifiers)' : 'Add-Ons Personalizables'}</span>
+                          </span>
+                          <span className="text-[9.5px] font-normal text-slate-400">
+                            {isEn ? 'Configurable in Nexus' : 'Sincronizado vía Nexus'}
+                          </span>
+                        </div>
 
-                      <div className="grid grid-cols-2 gap-2">
-                        {planAddons.map((addon) => {
-                          const isChecked = selectedAddons.includes(addon.id);
-                          const cost = Math.max(addon.minPriceUSDT || 0, Math.round(dynamicPricing.basePrice * (addon.priceDeltaPct || 0)));
+                        <div className="grid grid-cols-2 gap-2">
+                          {planAddons.map((addon) => {
+                            const isChecked = selectedAddons.includes(addon.id);
+                            const cost = Math.max(addon.minPriceUSDT || 0, Math.round(dynamicPricing.basePrice * (addon.priceDeltaPct || 0)));
 
-                          return (
-                            <button
-                              key={addon.id}
-                              type="button"
-                              onClick={() => handleToggleAddon(addon.id)}
-                              className={`p-2 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
-                                isChecked 
-                                  ? isSolar
-                                    ? 'bg-amber-500/15 border-amber-400/50 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
-                                    : 'bg-purple-600/20 border-purple-400/50 shadow-[0_0_10px_rgba(147,51,234,0.2)]'
-                                  : 'bg-white/[0.02] border-white/10 hover:border-white/20'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between w-full">
-                                <span className="text-[10px] font-mono font-bold text-slate-200 truncate">
-                                  {isEn ? addon.nameEn : addon.nameEs}
-                                </span>
-                                <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
+                            return (
+                              <button
+                                key={addon.id}
+                                type="button"
+                                onClick={() => handleToggleAddon(addon.id)}
+                                className={`p-2 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
                                   isChecked 
-                                    ? isSolar ? 'bg-amber-400 border-amber-400 text-black' : 'bg-purple-500 border-purple-400 text-white' 
-                                    : 'border-white/20'
-                                }`}>
-                                  {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                                    ? isSolar
+                                      ? 'bg-amber-500/15 border-amber-400/50 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
+                                      : 'bg-purple-600/20 border-purple-400/50 shadow-[0_0_10px_rgba(147,51,234,0.2)]'
+                                    : 'bg-white/[0.02] border-white/10 hover:border-white/20'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between w-full">
+                                  <span className="text-[10px] font-mono font-bold text-slate-200 truncate">
+                                    {isEn ? addon.nameEn : addon.nameEs}
+                                  </span>
+                                  <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 ${
+                                    isChecked 
+                                      ? isSolar ? 'bg-amber-400 border-amber-400 text-black' : 'bg-purple-500 border-purple-400 text-white' 
+                                      : 'border-white/20'
+                                  }`}>
+                                    {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="text-[9px] font-mono text-slate-400 mt-1">
-                                +{cost} USDT
-                              </div>
-                            </button>
-                          );
-                        })}
+                                <div className="text-[9px] font-mono text-slate-400 mt-1">
+                                  +{cost} USDT
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Primary Checkout Button */}
                     <div className="pt-1">

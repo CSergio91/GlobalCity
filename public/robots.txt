@@ -12,6 +12,10 @@ Disallow: /api/private
 # ------------------------------------------------------------------------------
 # Generative AI Engines & Autonomous Agents (Explicit Full Access for Link Previews)
 # ------------------------------------------------------------------------------
+# OpenAI Search Engine (ChatGPT Search / Real-time search citations)
+User-agent: OAI-SearchBot
+Allow: /
+
 User-agent: GPTBot
 Allow: /
 

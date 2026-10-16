@@ -162,10 +162,49 @@ Para que los LLMs como ChatGPT, Perplexity y Claude citen a Eklipse Funded con r
 
 ---
 
-## 8. Protocolo de Auditoría y Verificación Externa
+## 8. Estrategia de Conquista Competitiva y Búsquedas Alternativas (FTMO, FundedNext, The 5%ers, Funding Pips, Moneta)
+
+Para capturar tráfico orgánico de traders que buscan alternativas a las firmas tradicionales de prop trading:
+1. **Posicionamiento como Alternativa Superior:** En lugar de crear páginas comparativas aisladas y estériles que diluyen la autoridad, se integra el contexto comparativo de forma natural en:
+   - **Footer Directory & Institutional Context:** Enlace interno semántico y párrafo editorial visible que posiciona a Eklipse como alternativa cripto DMA frente a los brokers de CFDs y plataformas MT4/MT5 tradicionales (FTMO, FundedNext, The 5%ers, Funding Pips, Moneta Markets).
+   - **Semantic In-Root Fallback:** Descripción estructurada en HTML inicial para rastreadores donde se detallan las ventajas de Eklipse (fondeo inmediato sin fases, terminal web GPU 60 FPS, retiros en USDT en <8h).
+   - **Esquema JSON-LD `FAQPage`:** Preguntas y respuestas explícitas indexables sobre por qué Eklipse es una alternativa a firmas como FTMO o FundedNext para operar cripto.
+   - **Archivos `llms.txt` y `llms-es.txt`:** Sección dedicada a "Market Positioning vs. Competitors" con bullet points directos para que los motores de IA (ChatGPT Search, Perplexity) citen a Eklipse al recibir consultas comparativas.
+
+---
+
+## 9. Gobernanza de Enlaces Internos Rastreadibles en SPAs (Crawlable Anchor Links)
+
+En aplicaciones React/Vite de una sola página:
+1. **Prohibición de `<button onClick>` para Navegación Principal:** Los rastreadores de Google y motores de búsqueda ignoran los eventos JavaScript en botones. Toda navegación principal y secundaria DEBE implementarse mediante etiquetas `<a href="...">` con atributos `title` y `aria-label` descriptivos.
+2. **Interceptación Limpia con `preventDefault()`:** Para preservar la fluidez sin recargas completas de navegador, el manejador de eventos intercepta el clic:
+   ```tsx
+   <a 
+     href="#programs" 
+     title="Programas de Fondeo Inmediato y Retos" 
+     onClick={(e) => { e.preventDefault(); scrollTo('programs'); }}
+   >
+     Programas
+   </a>
+   ```
+3. **Estructura de Enlaces Internos en Footer:** El pie de página debe contener un clúster de enlaces organizados por categorías (Programas, Tecnología, Reglas y Contexto) que refuerzan la arquitectura de URLs y anclas de la página.
+
+---
+
+## 10. Arquitectura Dual de Sitemaps: Estático y Dinámico
+
+1. **Sitemap Estático (`public/sitemap.xml`):**
+   - Servido directamente en la raíz por CDN / Cloudflare Pages / Vite.
+   - Contiene URLs canónicas, fechas `lastmod` sincronizadas, prioridades (`1.0` homepage, `0.95` programas y terminal, `0.85` login y LLM knowledge), alternate hreflangs (`es` y `en`) y metadatos de imagen OpenGraph.
+2. **Endpoint Dinámico (`/sitemap.xml` en `server/tradingHub.js`):**
+   - El servidor Node HTTP intercepta `GET /sitemap.xml` y genera el XML con la fecha en tiempo real (`new Date().toISOString().split('T')[0]`), garantizando que cualquier actualización o modelo de cuenta futuro se refleje dinámicamente sin necesidad de re-compilar el frontend.
+
+---
+
+## 11. Protocolo de Auditoría y Verificación Externa
 
 Toda validación de SEO y AEO DEBE realizarse con peticiones HTTP reales contra el dominio de producción:
 - Comprobación de cabeceras HTTP (`200 OK`, `Content-Type: text/html; charset=utf-8`, `Canonical`).
 - Verificación con User-Agents reales (`Googlebot`, `Bingbot`, `GPTBot`, `OAI-SearchBot`, `ClaudeBot`, `PerplexityBot`, `Applebot`).
 - Verificación de que Cloudflare WAF no presenta desafíos Turnstile ni bloqueos 403 a rastreadores legítimos.
-- Conteo de caracteres de texto legible sin ejecución de Javascript (>5,000 caracteres en la homepage).
+- Conteo de caracteres de texto legible sin ejecución de Javascript (>5,000 caracteres en la homepage dentro de `#root`).

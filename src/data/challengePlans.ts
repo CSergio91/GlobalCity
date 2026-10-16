@@ -543,7 +543,7 @@ export function calculateDynamicPlanPricing(
   let effectiveProfitSplit = plan.baseProfitSplit;
   let effectivePayoutSpeed = plan.payoutSpeed;
 
-  const addonsPool = (plan.customAddons && plan.customAddons.length > 0)
+  const addonsPool = Array.isArray(plan.customAddons)
     ? plan.customAddons
     : AVAILABLE_ADDONS;
 
@@ -583,8 +583,9 @@ export function calculateDynamicPlanPricing(
 export function normalizePlan(rule: any): ChallengePlan {
   const capital = Number(rule.capital || rule.default_account_balance || 100000);
   const name = rule.name || `Challenge $${capital.toLocaleString()}`;
-  const isLunar = rule.category === 'lunar' || (name && name.toLowerCase().includes('lunar')) || (rule.model_type === 'INSTANT_FUNDING');
-  const planCategory: PlanCategory = (rule.category || (isLunar ? 'lunar' : 'solar')).trim().toLowerCase();
+  const rawCat = (rule.category || '').trim().toLowerCase();
+  const planCategory: PlanCategory = rawCat === 'solar' || rawCat === 'lunar' ? rawCat : (rawCat || 'solar');
+  const isLunar = planCategory === 'lunar';
 
   const oneTime = Number(rule.oneTimePriceUSDT || rule.one_time_price_usdt) > 0 
     ? Number(rule.oneTimePriceUSDT || rule.one_time_price_usdt) 
@@ -622,9 +623,18 @@ export function normalizePlan(rule: any): ChallengePlan {
 
   const payoutSplitMode: 'FIXED' | 'TIERED' = rule.payoutSplitMode || rule.payout_split_mode || (payoutScale.length > 0 ? 'TIERED' : 'FIXED');
 
-  const customAddons: PlanAddonConfig[] = Array.isArray(rule.customAddons) && rule.customAddons.length > 0
-    ? rule.customAddons
-    : (Array.isArray(rule.custom_addons) && rule.custom_addons.length > 0 ? rule.custom_addons : DEFAULT_CHALLENGE_ADDONS);
+  const rawAddons = Array.isArray(rule.customAddons) 
+    ? rule.customAddons 
+    : (Array.isArray(rule.custom_addons) ? rule.custom_addons : null);
+
+  const customAddons: PlanAddonConfig[] = rawAddons !== null
+    ? rawAddons.map((a: any) => ({
+        ...a,
+        priceDeltaPct: typeof a.priceDeltaPct === 'number' ? a.priceDeltaPct : (Number(a.pricePercent || 0) / 100),
+        minPriceUSDT: typeof a.minPriceUSDT === 'number' ? a.minPriceUSDT : Number(a.minPriceUsdt || 0),
+        isActive: a.isActive !== false
+      }))
+    : DEFAULT_CHALLENGE_ADDONS;
 
   const isInstant = rule.model_type === 'INSTANT_FUNDING' || rule.modelType === 'INSTANT_FUNDING';
   const isTiered = payoutSplitMode === 'TIERED' && payoutScale.length > 0;
@@ -707,33 +717,91 @@ export function normalizePlan(rule: any): ChallengePlan {
 }
 
 let inFlightPlansPromise: Promise<ChallengePlan[]> | null = null;
+let inMemoryPlansCache: ChallengePlan[] | null = null;
 const PLANS_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutos
 
 /**
+ * Synchronous in-memory / local-first getter for challenge plans.
+ * Eradicates flashes of demo data and eliminates redundant HTTP requests on checkout.
+ */
+export function getLoadedChallengePlans(): ChallengePlan[] {
+  if (inMemoryPlansCache && inMemoryPlansCache.length > 0) {
+    return inMemoryPlansCache;
+  }
+  try {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('eklipse_cached_challenge_plans');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const normalized = parsed.map(normalizePlan);
+          inMemoryPlansCache = normalized;
+          return normalized;
+        }
+      }
+    }
+  } catch (_) {}
+  const fallback = [...SOLAR_CHALLENGE_PLANS, ...LUNAR_CHALLENGE_PLANS];
+  inMemoryPlansCache = fallback;
+  return fallback;
+}
+
+/**
+ * Explicitly set in-memory and local storage cache (e.g. from Nexus CRM updates)
+ */
+export function setInMemoryPlansCache(plans: ChallengePlan[]): void {
+  if (Array.isArray(plans) && plans.length > 0) {
+    inMemoryPlansCache = plans;
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('eklipse_cached_challenge_plans', JSON.stringify(plans));
+        localStorage.setItem('eklipse_cached_challenge_plans_ts', Date.now().toString());
+      }
+    } catch (_) {}
+  }
+}
+
+/**
  * Fetch dynamic plans from Nexus CRM / Redis Hot-Cache / Supabase risk_rule_configs.
- * Utilizes in-flight promise deduplication and a 2-minute cache TTL.
+ * Utilizes in-memory cache, in-flight promise deduplication, and a 2-minute cache TTL.
  */
 export async function getAllLiveChallengePlans(): Promise<ChallengePlan[]> {
-  // 1. Local-First Cache con TTL
-  try {
-    const cached = localStorage.getItem('eklipse_cached_challenge_plans');
-    const cachedTs = Number(localStorage.getItem('eklipse_cached_challenge_plans_ts') || 0);
+  // 1. In-memory check (0ms immediate return)
+  if (inMemoryPlansCache && inMemoryPlansCache.length > 0) {
+    const cachedTs = Number(typeof window !== 'undefined' ? localStorage.getItem('eklipse_cached_challenge_plans_ts') : 0);
     const isFresh = (Date.now() - cachedTs) < PLANS_CACHE_TTL_MS;
+    if (isFresh) {
+      return inMemoryPlansCache;
+    }
+    // Revalidar en segundo plano si expiró el TTL
+    revalidatePlansInBackground();
+    return inMemoryPlansCache;
+  }
 
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        if (isFresh) {
-          return parsed.map(normalizePlan);
+  // 2. Local-First Cache con TTL
+  try {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('eklipse_cached_challenge_plans');
+      const cachedTs = Number(localStorage.getItem('eklipse_cached_challenge_plans_ts') || 0);
+      const isFresh = (Date.now() - cachedTs) < PLANS_CACHE_TTL_MS;
+
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const normalized = parsed.map(normalizePlan);
+          inMemoryPlansCache = normalized;
+          if (isFresh) {
+            return normalized;
+          }
+          // Si expiró el TTL, retornar inmediatamente y revalidar en segundo plano sin duplicar
+          revalidatePlansInBackground();
+          return normalized;
         }
-        // Si expiró el TTL, retornar inmediatamente y revalidar en segundo plano sin duplicar
-        revalidatePlansInBackground();
-        return parsed.map(normalizePlan);
       }
     }
   } catch (_) {}
 
-  // 2. Fetch deduplicado en vuelo
+  // 3. Fetch deduplicado en vuelo
   if (inFlightPlansPromise) {
     return inFlightPlansPromise;
   }
@@ -741,12 +809,15 @@ export async function getAllLiveChallengePlans(): Promise<ChallengePlan[]> {
   inFlightPlansPromise = fetchFreshChallengePlans()
     .then(plans => {
       inFlightPlansPromise = null;
-      return plans.map(normalizePlan);
+      inMemoryPlansCache = plans;
+      return plans;
     })
     .catch(err => {
       inFlightPlansPromise = null;
       console.warn('[ChallengePlans] Failed fetching plans:', err);
-      return [];
+      const fallback = [...SOLAR_CHALLENGE_PLANS, ...LUNAR_CHALLENGE_PLANS];
+      inMemoryPlansCache = fallback;
+      return fallback;
     });
 
   return inFlightPlansPromise;
@@ -771,8 +842,13 @@ async function fetchFreshChallengePlans(): Promise<ChallengePlan[]> {
         const json = await res.json();
         if (json.plans && Array.isArray(json.plans) && json.plans.length > 0) {
           const normalized = json.plans.map(normalizePlan);
-          localStorage.setItem('eklipse_cached_challenge_plans', JSON.stringify(normalized));
-          localStorage.setItem('eklipse_cached_challenge_plans_ts', Date.now().toString());
+          inMemoryPlansCache = normalized;
+          try {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('eklipse_cached_challenge_plans', JSON.stringify(normalized));
+              localStorage.setItem('eklipse_cached_challenge_plans_ts', Date.now().toString());
+            }
+          } catch (_) {}
           return normalized;
         }
       }
@@ -787,8 +863,13 @@ async function fetchFreshChallengePlans(): Promise<ChallengePlan[]> {
 
     if (!error && data && data.length > 0) {
       const dynamicPlans: ChallengePlan[] = data.map(normalizePlan);
-      localStorage.setItem('eklipse_cached_challenge_plans', JSON.stringify(dynamicPlans));
-      localStorage.setItem('eklipse_cached_challenge_plans_ts', Date.now().toString());
+      inMemoryPlansCache = dynamicPlans;
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('eklipse_cached_challenge_plans', JSON.stringify(dynamicPlans));
+          localStorage.setItem('eklipse_cached_challenge_plans_ts', Date.now().toString());
+        }
+      } catch (_) {}
       return dynamicPlans;
     }
   } catch (err) {
@@ -797,6 +878,7 @@ async function fetchFreshChallengePlans(): Promise<ChallengePlan[]> {
 
   // Fallback to static presets only if nothing is in DB
   const defaultList = [...SOLAR_CHALLENGE_PLANS, ...LUNAR_CHALLENGE_PLANS];
+  inMemoryPlansCache = defaultList;
   return defaultList;
 }
 
@@ -805,7 +887,8 @@ function revalidatePlansInBackground() {
   inFlightPlansPromise = fetchFreshChallengePlans()
     .then(plans => {
       inFlightPlansPromise = null;
-      return plans.map(normalizePlan);
+      inMemoryPlansCache = plans;
+      return plans;
     })
     .catch(() => {
       inFlightPlansPromise = null;

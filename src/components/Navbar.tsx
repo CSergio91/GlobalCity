@@ -77,11 +77,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
   };
 
   const navItems = [
-    { id: "hero", label: language === 'en' ? "Home" : "Inicio", icon: Zap },
-    { id: "programs", label: language === 'en' ? "Programs" : "Programas", icon: Layers },
-    { id: "terminal", label: language === 'en' ? "Terminal" : "Terminal", icon: Cpu },
-    { id: "markets", label: language === 'en' ? "Markets" : "Mercados", icon: ArrowRight },
-    { id: "faq", label: language === 'en' ? "FAQ" : "FAQ", icon: HelpCircle }
+    { id: "hero", href: "#hero", label: language === 'en' ? "Home" : "Inicio", title: language === 'en' ? "Eklipse Funded Homepage" : "Inicio Eklipse Funded", icon: Zap },
+    { id: "programs", href: "#programs", label: language === 'en' ? "Programs" : "Programas", title: language === 'en' ? "Instant Funding & 2-Step Challenge Programs" : "Programas de Fondeo Inmediato y Retos de Evaluación", icon: Layers },
+    { id: "terminal", href: "#terminal", label: language === 'en' ? "Terminal" : "Terminal", title: language === 'en' ? "Institutional 60 FPS GPU Trading Terminal" : "Terminal Institucional de Trading a 60 FPS", icon: Cpu },
+    { id: "markets", href: "#markets", label: language === 'en' ? "Markets" : "Mercados", title: language === 'en' ? "Crypto DMA Markets & Liquidity" : "Mercados Cripto DMA y Liquidez", icon: ArrowRight },
+    { id: "faq", href: "#faq", label: language === 'en' ? "FAQ" : "FAQ", title: language === 'en' ? "Trading Rules, Drawdown & FAQ" : "Reglas de Trading, Drawdown y Preguntas Frecuentes", icon: HelpCircle }
   ];
 
   const handleNavClick = (item: typeof navItems[0]) => {
@@ -102,24 +102,31 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
         
         {/* 1. Left: Brand Logo (Animated Entrance) */}
         <div className="flex items-center shrink-0 z-10 animate-reveal">
-          <div 
-            onClick={() => navigate('/')}
+          <a 
+            href="/"
+            onClick={(e) => { e.preventDefault(); navigate('/'); }}
+            title="Eklipse Funded"
             className="flex items-center cursor-pointer group shrink-0 transition-transform hover:scale-105"
           >
             <BrandLogo size="lg" lightMode={false} showText={true} />
-          </div>
+          </a>
         </div>
 
         {/* 2. Center: Clean Navigation Links matching reference design (Animated Entrance) */}
         <nav className="global-desktop-nav items-center justify-center gap-6 lg:gap-8 text-sm font-medium text-slate-300 z-10 mx-auto bg-transparent border-none animate-reveal" style={{ animationDelay: '120ms' }}>
           {navItems.map((item) => (
-            <button
+            <a
               key={item.id}
-              onClick={() => handleNavClick(item)}
+              href={item.href}
+              title={item.title}
+              onClick={(e) => {
+                e.preventDefault();
+                handleNavClick(item);
+              }}
               className="hover:text-white transition-colors cursor-pointer whitespace-nowrap text-slate-300/90 text-sm"
             >
               {item.label}
-            </button>
+            </a>
           ))}
         </nav>
 
@@ -153,28 +160,33 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
             </>
           ) : (
             <>
-              {/* Minimal Login Text Button */}
-              <button
-                onClick={() => navigate('/login')}
+              {/* Minimal Login Text Link */}
+              <a
+                href="/login"
+                onClick={(e) => { e.preventDefault(); navigate('/login'); }}
                 aria-label={language === 'en' ? "Login to Trader Portal" : "Iniciar Sesión en el Portal del Trader"}
+                title={language === 'en' ? "Login to Trader Portal" : "Iniciar Sesión en el Portal del Trader"}
                 className="hidden sm:block text-sm font-medium text-slate-300 hover:text-white transition-colors px-3 py-1.5 cursor-pointer"
               >
                 Login
-              </button>
+              </a>
 
-              {/* Pill "Get Funded" Button */}
-              <button
-                onClick={() => {
+              {/* Pill "Get Funded" Link */}
+              <a
+                href="/login?mode=register"
+                onClick={(e) => {
+                  e.preventDefault();
                   try {
                     sessionStorage.setItem('eklipse_auth_mode', 'register');
                   } catch {}
                   navigate('/login?mode=register');
                 }}
                 aria-label={language === 'en' ? "Get Funded Account - Instant Funding" : "Obtener Cuenta de Fondeo Inmediato"}
+                title={language === 'en' ? "Get Funded Account - Instant Funding" : "Obtener Cuenta de Fondeo Inmediato"}
                 className="px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-full text-[11px] sm:text-sm font-semibold text-white bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] hover:brightness-110 shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all active:scale-95 cursor-pointer hover:scale-105 whitespace-nowrap"
               >
                 {language === 'en' ? 'Get Funded' : 'Obtener Fondeo'}
-              </button>
+              </a>
             </>
           )}
 
@@ -218,9 +230,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
-                <button
+                <a
                   key={item.id}
-                  onClick={() => handleNavClick(item)}
+                  href={item.href}
+                  title={item.title}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavClick(item);
+                  }}
                   className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all cursor-pointer text-slate-300 hover:text-white hover:bg-white/5"
                 >
                   <div className="flex items-center gap-3">
@@ -229,7 +246,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTerminal, onNavigateSectio
                     </div>
                     <span>{item.label}</span>
                   </div>
-                </button>
+                </a>
               );
             })}
           </div>
