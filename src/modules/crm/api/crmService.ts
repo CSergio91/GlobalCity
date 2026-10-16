@@ -861,6 +861,7 @@ export const crmService = {
       profit_split_percent: rule.profit_split_percent ?? 80.0,
       payout_scale: Array.isArray(rule.payout_scale) ? rule.payout_scale : [],
       payout_split_mode: rule.payout_split_mode || (rule.payout_scale && rule.payout_scale.length > 0 ? 'TIERED' : 'FIXED'),
+      custom_addons: Array.isArray(rule.custom_addons) ? rule.custom_addons : [],
       allowed_symbols: Array.isArray(rule.allowed_symbols) ? rule.allowed_symbols : [],
       funded_profit_split_percent: rule.funded_profit_split_percent ?? rule.profit_split_percent ?? 80.0,
       funded_max_daily_loss_percent: rule.funded_max_daily_loss_percent !== undefined ? rule.funded_max_daily_loss_percent : (rule.max_daily_loss_percent ?? 5.0),
@@ -951,6 +952,7 @@ export const crmService = {
         profit_split_percent: r.profit_split_percent ?? 80.0,
         payout_scale: Array.isArray(r.payout_scale) ? r.payout_scale : [],
         payout_split_mode: r.payout_split_mode || (r.payout_scale && r.payout_scale.length > 0 ? 'TIERED' : 'FIXED'),
+        custom_addons: Array.isArray(r.custom_addons) ? r.custom_addons : [],
         allowed_symbols: Array.isArray(r.allowed_symbols) ? r.allowed_symbols : [],
         funded_profit_split_percent: r.funded_profit_split_percent ?? r.profit_split_percent ?? 80.0,
         funded_max_daily_loss_percent: r.funded_max_daily_loss_percent !== undefined ? r.funded_max_daily_loss_percent : (r.max_daily_loss_percent ?? 5.0),
@@ -978,8 +980,13 @@ export const crmService = {
         throw upsertErr;
       }
 
-      // Invalidar caché Redis del backend
+      // Invalidar caché Redis del backend y de navegador
       try {
+        localStorage.removeItem('eklipse_cached_challenge_plans');
+        localStorage.removeItem('eklipse_cached_challenge_plans_ts');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('eklipse:plans_updated'));
+        }
         apiFetch('/api/challenges/invalidate', { method: 'POST' }).catch(() => {});
       } catch (_) {}
     } catch (e) {
@@ -1006,6 +1013,11 @@ export const crmService = {
         await supabase.from('risk_rule_configs').delete().eq('id', id);
       }
       try {
+        localStorage.removeItem('eklipse_cached_challenge_plans');
+        localStorage.removeItem('eklipse_cached_challenge_plans_ts');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('eklipse:plans_updated'));
+        }
         apiFetch('/api/challenges/invalidate', { method: 'POST' }).catch(() => {});
       } catch (_) {}
     } catch (e) {
@@ -1027,6 +1039,11 @@ export const crmService = {
         await supabase.from('risk_rule_configs').delete().in('id', validUuids);
       }
       try {
+        localStorage.removeItem('eklipse_cached_challenge_plans');
+        localStorage.removeItem('eklipse_cached_challenge_plans_ts');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('eklipse:plans_updated'));
+        }
         apiFetch('/api/challenges/invalidate', { method: 'POST' }).catch(() => {});
       } catch (_) {}
     } catch (e) {

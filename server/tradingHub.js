@@ -15,6 +15,7 @@
  * 6. Endpoints HTTP /health, /api/crm/positions y /api/risk/rules.
  */
 
+import 'dotenv/config';
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
@@ -481,13 +482,30 @@ const server = http.createServer((req, res) => {
           const capital = Number(rule.default_account_balance || 100000);
           const name = rule.name || `Challenge $${capital.toLocaleString()}`;
           const isLunar = rule.category === 'lunar' || name.toLowerCase().includes('lunar') || rule.model_type === 'INSTANT_FUNDING';
-          const planCategory = isLunar ? 'lunar' : 'solar';
+          const planCategory = (rule.category || (isLunar ? 'lunar' : 'solar')).trim().toLowerCase();
           const oneTime = Number(rule.one_time_price_usdt) > 0 ? Number(rule.one_time_price_usdt) : 149;
           const monthly = Number(rule.monthly_price_usdt) > 0 ? Number(rule.monthly_price_usdt) : Math.round(oneTime * 0.35);
 
           const sizeLabel = capital >= 1000000 
             ? `${(capital / 1000000).toFixed(capital % 1000000 === 0 ? 0 : 1)}M` 
             : `${(capital / 1000).toFixed(capital % 1000 === 0 ? 0 : 1)}K`;
+
+          const payoutScale = Array.isArray(rule.payout_scale) && rule.payout_scale.length > 0 ? rule.payout_scale : [];
+          const payoutSplitMode = rule.payout_split_mode || (payoutScale.length > 0 ? 'TIERED' : 'FIXED');
+          const isTiered = payoutSplitMode === 'TIERED' && payoutScale.length > 0;
+          const minTierSplit = isTiered ? Math.min(...payoutScale.map(t => Number(t.split) || 0)) : Number(rule.profit_split_percent || 80);
+          const maxTierSplit = isTiered ? Math.max(...payoutScale.map(t => Number(t.split) || 0)) : Number(rule.profit_split_percent || 80);
+
+          const isInstant = rule.model_type === 'INSTANT_FUNDING';
+          const profitTargetLabelEn = isInstant ? 'No Profit Target (Direct Funding)' : `Profit Target: ${rule.profit_target_percent || 10}%`;
+          const profitTargetLabelEs = isInstant ? 'Sin Objetivo de Beneficio (Fondeo Directo)' : `Objetivo de Beneficio: ${rule.profit_target_percent || 10}%`;
+
+          const splitLabelEn = isTiered 
+            ? `Tiered Profit Split: ${minTierSplit}% up to ${maxTierSplit}%` 
+            : `Profit Split: ${rule.profit_split_percent || 80}%`;
+          const splitLabelEs = isTiered 
+            ? `Reparto Escalonado: ${minTierSplit}% hasta ${maxTierSplit}%` 
+            : `Reparto de Ganancias: ${rule.profit_split_percent || 80}%`;
 
           return {
             id: rule.id,
@@ -503,22 +521,43 @@ const server = http.createServer((req, res) => {
             oneTimePriceUSDT: oneTime,
             monthlyPriceUSDT: monthly,
             baseProfitSplit: Number(rule.profit_split_percent || 80),
+            payoutSplitMode,
+            payoutScale,
+            customAddons: Array.isArray(rule.custom_addons) ? rule.custom_addons : [],
             baseMaxDrawdownPct: Number(rule.max_total_drawdown_percent || 10),
             baseDailyLossPct: Number(rule.max_daily_loss_percent || 5),
             baseLeverage: `1:${rule.max_leverage || 100}`,
             boostedLeverage: `1:${Math.round((rule.max_leverage || 100) * 1.5)}`,
-            payoutSpeed: '14 Días',
+            payoutSpeed: isInstant ? 'Semanal' : '14 Días',
             popular: !!rule.is_popular,
             modelType: rule.model_type || 'ONE_PHASE',
             drawdownType: rule.drawdown_type || 'EOD',
-            profitTargetPct: Number(rule.profit_target_percent || 10),
+            profitTargetPct: isInstant ? 0 : Number(rule.profit_target_percent || 10),
             profitTargetPhase2Pct: rule.profit_target_phase2_percent ? Number(rule.profit_target_phase2_percent) : null,
-            minTradingDays: Number(rule.min_trading_days || 5),
+            minTradingDays: Number(rule.min_trading_days || 0),
             mandatoryStopLoss: !!rule.mandatory_stop_loss,
             weekendHoldingAllowed: !!rule.weekend_holding_allowed,
             newsTradingAllowed: !!rule.news_trading_allowed,
             consistencyRulePercent: Number(rule.consistency_rule_percent || 40),
-            rawRule: rule
+            rawRule: rule,
+            marketSpecialty: {
+              en: isLunar ? 'Meme Titans & High Volatility DMA' : 'Crypto DMA & Institutional Liquidity',
+              es: isLunar ? 'Titanes Meme y Volatilidad Extrema DMA' : 'Crypto DMA y Liquidez Institucional'
+            },
+            features: {
+              en: [
+                profitTargetLabelEn,
+                `Max Drawdown: ${rule.max_total_drawdown_percent || 10}% (${rule.drawdown_type || 'EOD'})`,
+                splitLabelEn,
+                rule.weekend_holding_allowed ? 'Weekend Holding Allowed' : 'Close before Weekend'
+              ],
+              es: [
+                profitTargetLabelEs,
+                `Drawdown Máximo: ${rule.max_total_drawdown_percent || 10}% (${rule.drawdown_type || 'EOD'})`,
+                splitLabelEs,
+                rule.weekend_holding_allowed ? 'Operativa Fin de Semana Permitida' : 'Cierre Previo a Fin de Semana'
+              ]
+            }
           };
         });
 

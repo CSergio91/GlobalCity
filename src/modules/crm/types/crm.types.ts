@@ -50,6 +50,33 @@ export interface PayoutTierStep {
   split: number; // e.g. 35, 50, 80, 90
 }
 
+export type AddonRiskTarget = 
+  | 'max_total_drawdown_percent' 
+  | 'max_daily_loss_percent' 
+  | 'max_leverage' 
+  | 'profit_split_percent' 
+  | 'payout_frequency' 
+  | 'weekend_holding_allowed' 
+  | 'mandatory_stop_loss' 
+  | 'min_trading_days';
+
+export type AddonModifierType = 'ADD_VALUE' | 'MULTIPLY_VALUE' | 'SET_FIXED_VALUE';
+
+export interface ChallengeAddon {
+  id: string;
+  targetRule: AddonRiskTarget;
+  modifierType: AddonModifierType;
+  modifierValue: number | string;
+  nameEn: string;
+  nameEs: string;
+  descriptionEn: string;
+  descriptionEs: string;
+  priceDeltaPct: number; // e.g. 0.15 = +15%
+  minPriceUSDT: number;
+  iconName: string;
+  isActive: boolean;
+}
+
 export interface RiskRuleConfigEntity {
   id: string;
   firm_id?: string | null;
@@ -99,6 +126,9 @@ export interface RiskRuleConfigEntity {
   profit_split_percent?: number;
   payout_scale?: PayoutTierStep[];
   payout_split_mode?: 'FIXED' | 'TIERED';
+
+  // Modificadores & Add-ons de la Cuenta (Nexus Modifiers)
+  custom_addons?: ChallengeAddon[];
 
   // Criptoactivos Permitidos (Binance Pairs)
   allowed_symbols?: string[];

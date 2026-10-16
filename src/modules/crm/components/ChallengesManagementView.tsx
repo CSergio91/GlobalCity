@@ -3,10 +3,12 @@ import {
   RiskRuleConfigEntity, 
   ChallengeModelType, 
   MinDailyProfitType,
-  PayoutTierStep
+  PayoutTierStep,
+  ChallengeAddon
 } from '../types/crm.types';
 import { CrmLang } from '../types/i18n';
 import { crmService } from '../api/crmService';
+import { DEFAULT_CHALLENGE_ADDONS } from '../../../data/challengePlans';
 import { 
   Trophy, 
   Search, 
@@ -212,6 +214,7 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
   onSelectRule
 }) => {
   const isEs = lang === 'es';
+  const isEn = lang === 'en';
 
   // 1. Estados de Navegación y Búsqueda
   const [searchQuery, setSearchQuery] = useState('');
@@ -323,6 +326,9 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
     { tier: 2, split: 70 },
     { tier: 3, split: 85 }
   ]);
+
+  // Modificadores & Add-Ons del Modelo (Persistidos en PostgreSQL risk_rule_configs.custom_addons)
+  const [customAddons, setCustomAddons] = useState<ChallengeAddon[]>(() => [...(DEFAULT_CHALLENGE_ADDONS as any)]);
 
   // Reglas de la Cuenta Financiada (Fase Live / Retiros)
   const [fundedProfitSplitPercent, setFundedProfitSplitPercent] = useState<number>(80);
@@ -612,6 +618,12 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
     // Activos Cripto de Binance Permitidos
     setAllowedSymbols(Array.isArray(r.allowed_symbols) ? r.allowed_symbols : []);
 
+    // Modificadores & Add-Ons del Modelo
+    const modelAddons: ChallengeAddon[] = Array.isArray(r.custom_addons) && r.custom_addons.length > 0
+      ? r.custom_addons
+      : [...(DEFAULT_CHALLENGE_ADDONS as any)];
+    setCustomAddons(modelAddons);
+
     setInactivityDaysLimit(Number(r.inactivity_days_limit || 30));
     setDeletedTierIds([]);
   }, [onSelectRule]);
@@ -742,51 +754,6 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
     setProfitSplitPercent(prev => Math.min(100, Math.max(1, Math.round(prev + delta))));
   };
 
-  // 4. PRECIOS EN TIEMPO REAL DEL SIMULADOR (Conectado a Binance WebSocket)
-  const [livePrices, setLivePrices] = useState<Record<string, number>>({
-    BTCUSDT: 68420.50,
-    ETHUSDT: 3512.20,
-    SOLUSDT: 148.80
-  });
-
-  const activeWsRef = useRef<WebSocket | null>(null);
-
-  useEffect(() => {
-    // Conexión nativa WebSocket al feed institucional público de Binance MiniTicker
-    const streamSymbols = ['btcusdt', 'ethusdt', 'solusdt'];
-    const streamUrl = `wss://stream.binance.com:9443/ws/${streamSymbols.map(s => `${s}@miniTicker`).join('/')}`;
-    
-    let ws: WebSocket | null = null;
-    try {
-      ws = new WebSocket(streamUrl);
-      activeWsRef.current = ws;
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data && data.s && data.c) {
-            const sym = data.s.toUpperCase();
-            const price = parseFloat(data.c);
-            if (!isNaN(price) && price > 0) {
-              setLivePrices(prev => ({
-                ...prev,
-                [sym]: price
-              }));
-            }
-          }
-        } catch (_) {}
-      };
-
-      ws.onerror = () => {};
-    } catch (_) {}
-
-    return () => {
-      if (ws) {
-        ws.close();
-      }
-    };
-  }, []);
-
   // 5. ESTADO DEL SIMULADOR EN VIVO (RULE SANDBOX & STRESS ENGINE)
   const [simBalance, setSimBalance] = useState(100000);
   const [simManualStressPct, setSimManualStressPct] = useState(0); // Slider interactivo -25% a +25%
@@ -794,6 +761,43 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
   const [simPeakEquity, setSimPeakEquity] = useState(100000);
   const [simTradingDays, setSimTradingDays] = useState(1);
   const [simPositions, setSimPositions] = useState<SimulatedPosition[]>([]);
+  const simPositionsRef = useRef<SimulatedPosition[]>(simPositions);
+  simPositionsRef.current = simPositions;
+
+  // 4. PRECIOS DEL SIMULADOR (Modo manual bajo demanda — Sin WebSockets ni intervalos automáticos de fondo)
+  const livePricesRef = useRef<Record<string, number>>({
+    BTCUSDT: 68420.50,
+    ETHUSDT: 3512.20,
+    SOLUSDT: 148.80
+  });
+
+  const [livePrices, setLivePrices] = useState<Record<string, number>>(livePricesRef.current);
+  const [isSyncingPrices, setIsSyncingPrices] = useState<boolean>(false);
+
+  const handleManualRefreshPrices = useCallback(async () => {
+    setIsSyncingPrices(true);
+    try {
+      const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbols=%5B%22BTCUSDT%22,%22ETHUSDT%22,%22SOLUSDT%22%5D');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const newPrices: Record<string, number> = { ...livePricesRef.current };
+          data.forEach((item: any) => {
+            if (item.symbol && item.price) {
+              newPrices[item.symbol] = parseFloat(item.price);
+            }
+          });
+          livePricesRef.current = newPrices;
+          setLivePrices(newPrices);
+        }
+      }
+    } catch (err) {
+      console.warn('[CRM Sandbox] Error fetching manual ticker prices:', err);
+    } finally {
+      setIsSyncingPrices(false);
+    }
+  }, []);
+
   const [simStatus, setSimStatus] = useState<'ACTIVE' | 'WARNING' | 'BREACHED' | 'PASSED'>('ACTIVE');
   const [simBreachReason, setSimBreachReason] = useState<string | null>(null);
 
@@ -1578,6 +1582,7 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
           profit_split_percent: profitSplitPercent,
           payout_split_mode: payoutSplitMode,
           payout_scale: payoutSplitMode === 'TIERED' ? payoutScale : [],
+          custom_addons: customAddons,
           funded_profit_split_percent: fundedProfitSplitPercent,
           funded_max_daily_loss_percent: fundedMaxDailyLossPercent,
           funded_max_total_loss_percent: fundedMaxTotalLossPercent,
@@ -1648,6 +1653,7 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
       { tier: 2, split: 70 },
       { tier: 3, split: 85 }
     ]);
+    setCustomAddons([...(DEFAULT_CHALLENGE_ADDONS as any)]);
     setFundedProfitSplitPercent(80);
     setFundedMaxDailyLossPercent(5.0);
     setFundedMaxTotalLossPercent(10.0);
@@ -1946,9 +1952,13 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                       <span className="font-bold text-rose-700">-{group.primaryRule.max_total_drawdown_percent}%</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 text-[9px] uppercase font-bold block">Split</span>
+                      <span className="text-slate-400 text-[9px] uppercase font-bold block">
+                        Split {group.primaryRule.payout_split_mode === 'TIERED' ? '(Escala)' : ''}
+                      </span>
                       <span className="font-bold text-slate-800 font-mono">
-                        {group.primaryRule.profit_split_percent || 80}%
+                        {group.primaryRule.payout_split_mode === 'TIERED' && Array.isArray(group.primaryRule.payout_scale) && group.primaryRule.payout_scale.length > 0
+                          ? `${Math.min(...group.primaryRule.payout_scale.map(t => Number(t.split) || 0))}% → ${Math.max(...group.primaryRule.payout_scale.map(t => Number(t.split) || 0))}%`
+                          : `${group.primaryRule.profit_split_percent || 80}%`}
                       </span>
                     </div>
                   </div>
@@ -3694,6 +3704,190 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                 </div>
               </div>
 
+              {/* SECCIÓN 8: MODIFICADORES & ADD-ONS DEL MODELO (CUSTOM ADD-ONS) */}
+              <div className="p-5 rounded-2xl bg-white border border-slate-300 shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-600 font-black">
+                      <Sliders className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-black text-slate-900">
+                          {isEs ? '8. Modificadores & Add-Ons del Modelo (Custom Add-Ons)' : '8. Model Modifiers & Add-Ons'}
+                        </h4>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-900 border border-purple-300">
+                          {customAddons.filter(a => a.isActive).length} {isEs ? 'activos' : 'active'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-medium">
+                        {isEs 
+                          ? 'Configura los add-ons opcionales ofrecidos al trader en la Landing. Cada add-on modifica dinámicamente las reglas del motor de riesgo y ajusta el precio de la cuenta.' 
+                          : 'Configure optional upgrades shown on the checkout page. Each add-on dynamically alters risk engine rules and prices.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newId = `addon_${Date.now()}`;
+                      const newAddon: ChallengeAddon = {
+                        id: newId,
+                        targetRule: 'max_leverage',
+                        modifierType: 'MULTIPLY_VALUE',
+                        modifierValue: 1.5,
+                        nameEn: 'Custom Boost Upgrade',
+                        nameEs: 'Nuevo Modificador Personalizado',
+                        descriptionEn: 'Custom rule modifier for this challenge',
+                        descriptionEs: 'Modificador personalizado de reglas para este reto',
+                        priceDeltaPct: 0.15,
+                        minPriceUSDT: 10,
+                        iconName: 'Zap',
+                        isActive: true
+                      };
+                      setCustomAddons(prev => [...prev, newAddon]);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-all cursor-pointer shadow-2xs self-start sm:self-auto"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>{isEs ? 'Añadir Add-On' : 'Add Add-On'}</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  {customAddons.map((addon, aIdx) => (
+                    <div 
+                      key={addon.id} 
+                      className={`p-4 rounded-xl border transition-all ${
+                        addon.isActive 
+                          ? 'bg-purple-50/40 border-purple-300/80 shadow-2xs' 
+                          : 'bg-slate-50/60 border-slate-200 opacity-60'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-200/80">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={addon.isActive}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setCustomAddons(prev => prev.map((a, i) => i === aIdx ? { ...a, isActive: checked } : a));
+                            }}
+                            className="w-4 h-4 rounded-xs text-purple-600 accent-purple-600 cursor-pointer"
+                          />
+                          <span className="font-mono text-xs font-black text-slate-900">
+                            {isEs ? addon.nameEs : addon.nameEn}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCustomAddons(prev => prev.filter((_, i) => i !== aIdx));
+                            }}
+                            className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title={isEs ? 'Eliminar este add-on' : 'Delete add-on'}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2.5 pt-2.5 text-xs">
+                        <div>
+                          <label className="text-[10px] uppercase font-bold text-slate-500 block">
+                            {isEs ? 'Nombre (Español)' : 'Name (Spanish)'}
+                          </label>
+                          <input
+                            type="text"
+                            value={addon.nameEs}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setCustomAddons(prev => prev.map((a, i) => i === aIdx ? { ...a, nameEs: val } : a));
+                            }}
+                            className="w-full px-2 py-1 text-xs font-semibold bg-white border border-slate-300 rounded-lg focus:outline-hidden focus:border-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] uppercase font-bold text-slate-500 block">
+                            {isEn ? 'Name (English)' : 'Nombre (Inglés)'}
+                          </label>
+                          <input
+                            type="text"
+                            value={addon.nameEn}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setCustomAddons(prev => prev.map((a, i) => i === aIdx ? { ...a, nameEn: val } : a));
+                            }}
+                            className="w-full px-2 py-1 text-xs font-semibold bg-white border border-slate-300 rounded-lg focus:outline-hidden focus:border-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] uppercase font-bold text-slate-500 block">
+                            {isEs ? 'Incremento de Precio (% del Plan)' : 'Price Markup (% of Plan)'}
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              step="1"
+                              min="0"
+                              max="100"
+                              value={Math.round((addon.priceDeltaPct || 0) * 100)}
+                              onChange={(e) => {
+                                const val = Number(e.target.value) / 100;
+                                setCustomAddons(prev => prev.map((a, i) => i === aIdx ? { ...a, priceDeltaPct: val } : a));
+                              }}
+                              className="w-full px-2 py-1 text-xs font-mono font-bold bg-white border border-slate-300 rounded-lg focus:outline-hidden focus:border-purple-500"
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[10px] uppercase font-bold text-slate-500 block">
+                            {isEs ? 'Precio Mínimo (USDT)' : 'Minimum Price (USDT)'}
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min="0"
+                              value={addon.minPriceUSDT || 0}
+                              onChange={(e) => {
+                                const val = Number(e.target.value);
+                                setCustomAddons(prev => prev.map((a, i) => i === aIdx ? { ...a, minPriceUSDT: val } : a));
+                              }}
+                              className="w-full px-2 py-1 text-xs font-mono font-bold bg-white border border-slate-300 rounded-lg focus:outline-hidden focus:border-purple-500"
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">USDT</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 text-xs">
+                        <label className="text-[10px] uppercase font-bold text-slate-500 block">
+                          {isEs ? 'Regla de Riesgo que Modifica' : 'Target Risk Rule'}
+                        </label>
+                        <select
+                          value={addon.targetRule}
+                          onChange={(e) => {
+                            const val = e.target.value as any;
+                            setCustomAddons(prev => prev.map((a, i) => i === aIdx ? { ...a, targetRule: val } : a));
+                          }}
+                          className="w-full px-2 py-1 text-xs font-medium bg-white border border-slate-300 rounded-lg focus:outline-hidden focus:border-purple-500"
+                        >
+                          <option value="max_leverage">Apalancamiento Máximo (Leverage Boost)</option>
+                          <option value="max_total_drawdown_percent">Drawdown Total Máximo (+% Shield)</option>
+                          <option value="profit_split_percent">Reparto de Beneficio (Profit Split Boost)</option>
+                          <option value="payout_frequency">Frecuencia de Retiro (Weekly Accelerated)</option>
+                          <option value="weekend_holding_allowed">Operativa en Fin de Semana Permitida</option>
+                          <option value="mandatory_stop_loss">Exención de Stop Loss Obligatorio</option>
+                        </select>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Botón Inferior de Guardado */}
               <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="text-xs text-slate-500 font-medium">
@@ -4004,6 +4198,16 @@ export const ChallengesManagementView: React.FC<ChallengesManagementViewProps> =
                       <span className="w-2 h-2 rounded-full bg-emerald-500" />
                       ETH: ${livePrices.ETHUSDT?.toLocaleString()}
                     </span>
+                    <button
+                      type="button"
+                      onClick={handleManualRefreshPrices}
+                      disabled={isSyncingPrices}
+                      className="px-2.5 py-1 text-[11px] font-sans font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg border border-amber-200 flex items-center gap-1.5 transition-colors cursor-pointer"
+                      title={isEs ? 'Actualizar precios manualmente de Binance' : 'Manually fetch Binance prices'}
+                    >
+                      <RefreshCw className={`w-3 h-3 text-amber-600 ${isSyncingPrices ? 'animate-spin' : ''}`} />
+                      <span>{isSyncingPrices ? (isEs ? 'Actualizando...' : 'Updating...') : (isEs ? 'Actualizar' : 'Refresh')}</span>
+                    </button>
                   </div>
                 </div>
 

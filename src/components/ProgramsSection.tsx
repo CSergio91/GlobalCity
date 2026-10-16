@@ -28,6 +28,7 @@ import {
   LUNAR_CHALLENGE_PLANS,
   AVAILABLE_ADDONS,
   calculateDynamicPlanPricing,
+  getAllLiveChallengePlans,
   getLiveChallengePlans 
 } from '../data/challengePlans';
 
@@ -36,27 +37,27 @@ export const ProgramsSection: React.FC = () => {
   const { navigate } = useAppRouter();
   const isEn = language === 'en';
 
-  // 1. Category Switch: Solar (Crypto DMA) vs Lunar (Meme Titans)
-  const [category, setCategory] = useState<PlanCategory>('solar');
+  // 1. Dynamic plans & categories state
+  const [allLivePlans, setAllLivePlans] = useState<ChallengePlan[]>([]);
+  const [plans, setPlans] = useState<ChallengePlan[]>([]);
+  const [category, setCategory] = useState<PlanCategory>('lunar');
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('');
 
   // 2. Payment Mode: One-time fee vs Monthly subscription
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('one-time');
 
-  // 3. Plans State for current category
-  const [plans, setPlans] = useState<ChallengePlan[]>(SOLAR_CHALLENGE_PLANS);
-  const [selectedPlanId, setSelectedPlanId] = useState<string>('solar-50k');
-
-  // 4. Directional animation tracking (Enter from right if capital increases, enter from left if it decreases)
+  // 3. Directional animation tracking (Enter from right if capital increases, enter from left if it decreases)
   const [direction, setDirection] = useState<number>(1);
   const prevIndexRef = useRef<number>(5);
 
-  // 5. Selected Add-ons
+  // 4. Selected Add-ons
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
 
-  // 6. Mobile tab state for iPhone SE and small screens
+  // 5. Mobile tab state for iPhone SE and small screens
   const [mobileTab, setMobileTab] = useState<'plan' | 'rules'>('plan');
 
-  // 7. Desktop screen detector for reliable layout rendering
+  // 6. Desktop screen detector for reliable layout rendering
   const [isDesktop, setIsDesktop] = useState<boolean>(() => 
     typeof window !== 'undefined' ? window.innerWidth >= 1024 : true
   );
@@ -69,22 +70,67 @@ export const ProgramsSection: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Update plans on category switch
+  // Carga reactiva de planes desde Base de Datos (0ms Local-First + Redis Cache)
   useEffect(() => {
-    const defaultList = category === 'solar' ? SOLAR_CHALLENGE_PLANS : LUNAR_CHALLENGE_PLANS;
-    getLiveChallengePlans(category).then((live) => {
-      setPlans(live || defaultList);
-    });
+    let isMounted = true;
 
-    // Default to 50k in the new category
-    const defaultId = category === 'solar' ? 'solar-50k' : 'lunar-50k';
-    setSelectedPlanId(defaultId);
-    prevIndexRef.current = 5;
-  }, [category]);
+    const loadLivePlans = async () => {
+      try {
+        const live = await getAllLiveChallengePlans();
+        if (!isMounted || !Array.isArray(live) || live.length === 0) return;
+
+        setAllLivePlans(live);
+        const categories = Array.from(new Set(live.map(p => p.category.toLowerCase()))).filter(Boolean);
+        setAvailableCategories(categories);
+
+        // Si la categoría activa no existe en DB, seleccionar la primera disponible
+        const targetCategory = categories.includes(category.toLowerCase()) 
+          ? category 
+          : (categories[0] || 'lunar');
+
+        setCategory(targetCategory);
+
+        const categoryPlans = live.filter(p => p.category.toLowerCase() === targetCategory.toLowerCase());
+        const effectivePlans = categoryPlans.length > 0 ? categoryPlans : live;
+        setPlans(effectivePlans);
+
+        const popular = effectivePlans.find(p => p.popular) || effectivePlans[Math.min(effectivePlans.length - 1, 5)] || effectivePlans[0];
+        if (popular) {
+          setSelectedPlanId(popular.id);
+        }
+      } catch (err) {
+        console.warn('[ProgramsSection] Error loading live plans:', err);
+      }
+    };
+
+    loadLivePlans();
+
+    // Sincronización en caliente cuando Nexus CRM actualiza o elimina modelos
+    const handleUpdateEvent = () => {
+      loadLivePlans();
+    };
+    window.addEventListener('eklipse:plans_updated', handleUpdateEvent);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('eklipse:plans_updated', handleUpdateEvent);
+    };
+  }, []);
+
+  const handleSelectCategory = (newCat: PlanCategory) => {
+    setCategory(newCat);
+    const categoryPlans = allLivePlans.filter(p => p.category.toLowerCase() === newCat.toLowerCase());
+    const effectivePlans = categoryPlans.length > 0 ? categoryPlans : allLivePlans;
+    setPlans(effectivePlans);
+    const popular = effectivePlans.find(p => p.popular) || effectivePlans[Math.min(effectivePlans.length - 1, 5)] || effectivePlans[0];
+    if (popular) {
+      setSelectedPlanId(popular.id);
+      prevIndexRef.current = effectivePlans.findIndex(p => p.id === popular.id);
+    }
+  };
 
   // Current active plan
   const currentIndex = plans.findIndex(p => p.id === selectedPlanId);
-  const currentPlan = plans[currentIndex >= 0 ? currentIndex : 0] || plans[0];
+  const currentPlan = plans[currentIndex >= 0 ? currentIndex : 0] || plans[0] || allLivePlans[0] || (category === 'solar' ? SOLAR_CHALLENGE_PLANS[0] : LUNAR_CHALLENGE_PLANS[0]);
 
   // Handle plan selection with directional tracking
   const handleSelectPlan = (planId: string) => {
@@ -111,6 +157,10 @@ export const ProgramsSection: React.FC = () => {
 
   // Dynamic pricing & rules calculation
   const dynamicPricing = calculateDynamicPlanPricing(currentPlan, paymentMode, selectedAddons);
+
+  const planAddons = (currentPlan?.customAddons && currentPlan.customAddons.length > 0)
+    ? currentPlan.customAddons.filter(a => a.isActive !== false)
+    : AVAILABLE_ADDONS;
 
   const handleCheckout = () => {
     try {
@@ -195,49 +245,96 @@ export const ProgramsSection: React.FC = () => {
                   : 'Cuentas especiales para memecoins de alta volatilidad sin trampas por microscalping ni comisiones ocultas.')}
           </p>
 
-          {/* Cosmic Orbit Switcher: Cuentas Solares vs Cuentas Lunares with Full Legible Names */}
-          <div className="flex items-center p-1 rounded-2xl bg-black/50 border border-white/15 backdrop-blur-xl shadow-2xl max-w-full mt-1">
-            
-            {/* Solar Button */}
-            <button
-              onClick={() => setCategory('solar')}
-              className={`relative px-3.5 sm:px-6 py-2 rounded-xl font-mono text-xs sm:text-sm font-bold flex items-center gap-2 transition-all duration-300 cursor-pointer ${
-                isSolar 
-                  ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-[0_0_25px_rgba(245,158,11,0.5)] font-black' 
-                  : 'text-slate-300 hover:text-white hover:bg-white/[0.05]'
-              }`}
-            >
-              <Sun className={`w-4 h-4 shrink-0 ${isSolar ? 'text-black' : 'text-amber-400'}`} />
-              <span>
-                {isDesktop 
-                  ? (isEn ? 'Solar Accounts (Crypto DMA)' : 'Cuentas Solares (Cripto DMA)') 
-                  : (isEn ? 'Solares Cripto' : 'Solares Cripto')}
-              </span>
-            </button>
+          {/* Cosmic Orbit Switcher: Dynamic Categories from Database */}
+          {availableCategories.length > 1 ? (
+            <div className="flex items-center p-1 rounded-2xl bg-black/50 border border-white/15 backdrop-blur-xl shadow-2xl max-w-full mt-1">
+              {availableCategories.map((catKey) => {
+                const isSelected = category.toLowerCase() === catKey.toLowerCase();
+                const isSolarCat = catKey.toLowerCase() === 'solar';
+                const isLunarCat = catKey.toLowerCase() === 'lunar';
 
-            {/* Lunar Button */}
-            <button
-              onClick={() => setCategory('lunar')}
-              className={`relative px-3.5 sm:px-6 py-2 rounded-xl font-mono text-xs sm:text-sm font-bold flex items-center gap-2 transition-all duration-300 cursor-pointer ${
-                !isSolar 
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-[0_0_25px_rgba(147,51,234,0.55)] font-black' 
-                  : 'text-slate-300 hover:text-white hover:bg-white/[0.05]'
-              }`}
-            >
-              <Moon className={`w-4 h-4 shrink-0 ${!isSolar ? 'text-purple-200' : 'text-purple-400'}`} />
-              <span>
-                {isDesktop 
-                  ? (isEn ? 'Lunar Accounts (Meme Titans)' : 'Cuentas Lunares (Memecoins)') 
-                  : (isEn ? 'Lunares Meme' : 'Lunares Meme')}
+                return (
+                  <button
+                    key={catKey}
+                    onClick={() => handleSelectCategory(catKey)}
+                    className={`relative px-3.5 sm:px-6 py-2 rounded-xl font-mono text-xs sm:text-sm font-bold flex items-center gap-2 transition-all duration-300 cursor-pointer ${
+                      isSelected
+                        ? isSolarCat
+                          ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-[0_0_25px_rgba(245,158,11,0.5)] font-black'
+                          : isLunarCat
+                            ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-[0_0_25px_rgba(147,51,234,0.55)] font-black'
+                            : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_0_25px_rgba(16,185,129,0.5)] font-black'
+                        : 'text-slate-300 hover:text-white hover:bg-white/[0.05]'
+                    }`}
+                  >
+                    {isSolarCat ? (
+                      <Sun className={`w-4 h-4 shrink-0 ${isSelected ? 'text-black' : 'text-amber-400'}`} />
+                    ) : isLunarCat ? (
+                      <Moon className={`w-4 h-4 shrink-0 ${isSelected ? 'text-purple-200' : 'text-purple-400'}`} />
+                    ) : (
+                      <Sparkles className={`w-4 h-4 shrink-0 ${isSelected ? 'text-white' : 'text-emerald-400'}`} />
+                    )}
+                    <span className="capitalize">
+                      {isSolarCat 
+                        ? (isDesktop ? (isEn ? 'Solar Accounts (Crypto DMA)' : 'Cuentas Solares (Cripto DMA)') : 'Solares Cripto')
+                        : isLunarCat 
+                          ? (isDesktop ? (isEn ? 'Lunar Accounts (Meme Titans)' : 'Cuentas Lunares (Memecoins)') : 'Lunares Meme')
+                          : (isEn ? `${catKey} Accounts` : `Cuentas ${catKey}`)}
+                    </span>
+                    {isLunarCat && (
+                      <span className={`text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded-full font-sans uppercase font-bold tracking-wider ${
+                        isSelected ? 'bg-purple-900/80 text-purple-200 border border-purple-400/40' : 'bg-white/10 text-slate-300'
+                      }`}>
+                        PEPE
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ) : availableCategories.length === 1 ? (
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.05] border border-white/15 backdrop-blur-md mt-1">
+              {category.toLowerCase() === 'solar' ? (
+                <Sun className="w-3.5 h-3.5 text-amber-400" />
+              ) : category.toLowerCase() === 'lunar' ? (
+                <Moon className="w-3.5 h-3.5 text-purple-400" />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+              )}
+              <span className="text-xs font-mono font-bold text-slate-200 uppercase tracking-wider">
+                {category.toLowerCase() === 'solar' 
+                  ? (isEn ? 'Solar Tier: Crypto Futures DMA' : 'Categoría Solar: Cripto Futuros DMA')
+                  : category.toLowerCase() === 'lunar' 
+                    ? (isEn ? 'Lunar Tier: Instant Funding & Meme Titans' : 'Categoría Lunar: Fondeo Directo & Memecoins')
+                    : (isEn ? `Program: ${category.toUpperCase()}` : `Programa: ${category.toUpperCase()}`)}
               </span>
-              <span className={`text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded-full font-sans uppercase font-bold tracking-wider ${
-                !isSolar ? 'bg-purple-900/80 text-purple-200 border border-purple-400/40' : 'bg-white/10 text-slate-300'
-              }`}>
-                PEPE
-              </span>
-            </button>
-
-          </div>
+            </div>
+          ) : (
+            <div className="flex items-center p-1 rounded-2xl bg-black/50 border border-white/15 backdrop-blur-xl shadow-2xl max-w-full mt-1">
+              <button
+                onClick={() => handleSelectCategory('solar')}
+                className={`relative px-3.5 sm:px-6 py-2 rounded-xl font-mono text-xs sm:text-sm font-bold flex items-center gap-2 transition-all duration-300 cursor-pointer ${
+                  isSolar 
+                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-[0_0_25px_rgba(245,158,11,0.5)] font-black' 
+                    : 'text-slate-300 hover:text-white hover:bg-white/[0.05]'
+                }`}
+              >
+                <Sun className={`w-4 h-4 shrink-0 ${isSolar ? 'text-black' : 'text-amber-400'}`} />
+                <span>{isEn ? 'Solar Accounts' : 'Cuentas Solares'}</span>
+              </button>
+              <button
+                onClick={() => handleSelectCategory('lunar')}
+                className={`relative px-3.5 sm:px-6 py-2 rounded-xl font-mono text-xs sm:text-sm font-bold flex items-center gap-2 transition-all duration-300 cursor-pointer ${
+                  !isSolar 
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-[0_0_25px_rgba(147,51,234,0.55)] font-black' 
+                    : 'text-slate-300 hover:text-white hover:bg-white/[0.05]'
+                }`}
+              >
+                <Moon className={`w-4 h-4 shrink-0 ${!isSolar ? 'text-purple-200' : 'text-purple-400'}`} />
+                <span>{isEn ? 'Lunar Accounts' : 'Cuentas Lunares'}</span>
+              </button>
+            </div>
+          )}
 
         </div>
 
@@ -339,7 +436,9 @@ export const ProgramsSection: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <div className={`w-2.5 h-2.5 rounded-full ${isSolar ? 'bg-amber-400 shadow-[0_0_8px_#f59e0b]' : 'bg-purple-400 shadow-[0_0_8px_#c084fc]'}`} />
                         <span className="font-mono text-xs sm:text-sm font-black tracking-wider uppercase text-slate-200">
-                          {isEn ? currentPlan.astronomicalName.en : currentPlan.astronomicalName.es}
+                          {isEn 
+                            ? (currentPlan?.astronomicalName?.en || currentPlan?.name || (isSolar ? 'Solar Eclipse' : 'Blood Moon')) 
+                            : (currentPlan?.astronomicalName?.es || currentPlan?.name || (isSolar ? 'Eclipse Solar' : 'Luna de Sangre'))}
                         </span>
                       </div>
 
@@ -354,10 +453,12 @@ export const ProgramsSection: React.FC = () => {
                     {/* Monumental Capital Display */}
                     <div className="space-y-1">
                       <div className="text-3xl sm:text-4xl md:text-5xl font-black font-mono text-white tracking-tight drop-shadow-[0_4px_25px_rgba(0,0,0,0.9)]">
-                        {currentPlan.capitalFormatted} <span className={`text-lg sm:text-xl font-bold ${isSolar ? 'text-amber-400' : 'text-purple-300'}`}>USDT</span>
+                        {currentPlan?.capitalFormatted || `$${(currentPlan?.capital || 50000).toLocaleString()}`} <span className={`text-lg sm:text-xl font-bold ${isSolar ? 'text-amber-400' : 'text-purple-300'}`}>USDT</span>
                       </div>
                       <div className="text-[11px] font-mono text-slate-400">
-                        {isEn ? currentPlan.marketSpecialty.en : currentPlan.marketSpecialty.es}
+                        {isEn 
+                          ? (currentPlan?.marketSpecialty?.en || 'Crypto DMA & Institutional Liquidity') 
+                          : (currentPlan?.marketSpecialty?.es || 'Crypto DMA y Liquidez Institucional')}
                       </div>
                     </div>
 
@@ -397,9 +498,9 @@ export const ProgramsSection: React.FC = () => {
                       </div>
 
                       <div className="grid grid-cols-2 gap-2">
-                        {AVAILABLE_ADDONS.map((addon) => {
+                        {planAddons.map((addon) => {
                           const isChecked = selectedAddons.includes(addon.id);
-                          const cost = Math.max(addon.minPriceUSDT, Math.round(dynamicPricing.basePrice * addon.priceDeltaPct));
+                          const cost = Math.max(addon.minPriceUSDT || 0, Math.round(dynamicPricing.basePrice * (addon.priceDeltaPct || 0)));
 
                           return (
                             <button
@@ -538,10 +639,14 @@ export const ProgramsSection: React.FC = () => {
                           <Award className="w-3 h-3 text-amber-400" />
                         </div>
                         <div className="text-lg font-mono font-black text-white mt-1">
-                          {dynamicPricing.effectiveProfitSplit}%
+                          {currentPlan.payoutSplitMode === 'TIERED' && currentPlan.payoutScale && currentPlan.payoutScale.length > 0
+                            ? `${Math.min(...currentPlan.payoutScale.map(t => Number(t.split) || 0))}% → ${Math.max(...currentPlan.payoutScale.map(t => Number(t.split) || 0))}%`
+                            : `${dynamicPricing.effectiveProfitSplit}%`}
                         </div>
                         <div className="text-[9px] font-mono text-purple-300 mt-1">
-                          {isEn ? 'Direct USDT wallet payout' : 'Liquidación directa en USDT'}
+                          {currentPlan.payoutSplitMode === 'TIERED'
+                            ? (isEn ? 'Tiered progressive ladder' : 'Escala Progresiva')
+                            : (isEn ? 'Direct USDT wallet payout' : 'Liquidación directa en USDT')}
                         </div>
                       </div>
 
@@ -550,6 +655,19 @@ export const ProgramsSection: React.FC = () => {
                     {/* Secondary Rules List (Airy, institutional, crystal-clear) */}
                     <div className="p-3.5 rounded-2xl bg-black/30 border border-white/10 space-y-2 text-xs">
                       
+                      {/* Escala Progresiva de Payouts (si el modelo es TIERED) */}
+                      {currentPlan.payoutSplitMode === 'TIERED' && currentPlan.payoutScale && currentPlan.payoutScale.length > 0 && (
+                        <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                          <span className="text-slate-400 flex items-center gap-1.5">
+                            <Award className="w-3.5 h-3.5 text-amber-400" />
+                            <span>{isEn ? 'Tiered Payout Scale' : 'Escala Progresiva de Retiros'}</span>
+                          </span>
+                          <span className="font-mono text-[11px] font-bold text-amber-300">
+                            {currentPlan.payoutScale.map((t, i) => `${t.tier}º: ${t.split}%`).join(' · ')}
+                          </span>
+                        </div>
+                      )}
+
                       <div className="flex items-center justify-between">
                         <span className="text-slate-400 flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5 text-slate-400" />
@@ -566,7 +684,9 @@ export const ProgramsSection: React.FC = () => {
                           <span>{isEn ? 'Minimum Trading Days' : 'Días Mínimos de Trading'}</span>
                         </span>
                         <span className="font-mono font-bold text-emerald-400">
-                          {isEn ? '0 Days (No restrictions)' : '0 Días (Sin trabas)'}
+                          {currentPlan.minTradingDays !== undefined && currentPlan.minTradingDays > 0 
+                            ? `${currentPlan.minTradingDays} ${isEn ? 'Days' : 'Días'}` 
+                            : (isEn ? '0 Days (No restrictions)' : '0 Días (Sin trabas)')}
                         </span>
                       </div>
 
@@ -576,19 +696,21 @@ export const ProgramsSection: React.FC = () => {
                           <span>{isEn ? 'Weekend & Overnight Crypto' : 'Fin de Semana Cripto'}</span>
                         </span>
                         <span className="font-mono font-bold text-slate-200">
-                          {isEn ? 'Allowed 24/7' : 'Permitido 24/7'}
+                          {currentPlan.weekendHoldingAllowed 
+                            ? (isEn ? 'Allowed 24/7' : 'Permitido 24/7') 
+                            : (isEn ? 'Close Before Weekend' : 'Cierre Obligatorio Pre-Fin de Semana')}
                         </span>
                       </div>
 
                       <div className="flex items-center justify-between">
                         <span className="text-slate-400 flex items-center gap-1.5">
                           <Coins className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{isEn ? 'Meme Scalping Protection' : 'Operativa en Volatilidad'}</span>
+                          <span>{isEn ? 'Market Specialty' : 'Especialidad de Mercado'}</span>
                         </span>
                         <span className="font-mono font-bold text-slate-200">
-                          {isSolar 
-                            ? (isEn ? 'Crypto Top 100 DMA' : 'Cripto Top 100 DMA') 
-                            : (isEn ? 'Unrestricted Meme Trading' : 'Sin filtro en Memecoins')}
+                          {isEn 
+                            ? (currentPlan?.marketSpecialty?.en || (isSolar ? 'Crypto Top 100 DMA' : 'Meme Titans DMA')) 
+                            : (currentPlan?.marketSpecialty?.es || (isSolar ? 'Cripto Top 100 DMA' : 'Titanes Memecoins DMA'))}
                         </span>
                       </div>
 
@@ -596,7 +718,11 @@ export const ProgramsSection: React.FC = () => {
 
                     {/* Bullet features */}
                     <div className="space-y-1.5 pt-1">
-                      {(isEn ? currentPlan.features.en : currentPlan.features.es).slice(0, 3).map((feat, idx) => (
+                      {((isEn ? currentPlan?.features?.en : currentPlan?.features?.es) || [
+                        isEn ? 'Institutional sub-millisecond execution' : 'Ejecución real en sub-milisegundo',
+                        isEn ? 'Overnight & weekend crypto allowed' : 'Cripto abierta 24/7 en fin de semana',
+                        isEn ? 'Direct USDT on-chain settlement' : 'Liquidación directa USDT on-chain'
+                      ]).slice(0, 3).map((feat, idx) => (
                         <div key={idx} className="flex items-center gap-2 text-[11px] text-slate-300">
                           <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${
                             isSolar ? 'bg-amber-500/20 text-amber-300' : 'bg-purple-500/20 text-purple-300'

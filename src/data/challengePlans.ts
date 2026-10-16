@@ -10,7 +10,7 @@ export type PlanCategory = 'solar' | 'lunar' | string;
 export type PaymentMode = 'one-time' | 'monthly';
 
 export interface PlanAddonConfig {
-  id: 'boost_leverage' | 'extra_drawdown' | 'profit_split_90' | 'weekly_payout';
+  id: string;
   nameEn: string;
   nameEs: string;
   descriptionEn: string;
@@ -18,53 +18,76 @@ export interface PlanAddonConfig {
   priceDeltaPct: number; // e.g. 0.15 = +15% of plan price
   minPriceUSDT: number;
   iconName: string;
+  isActive?: boolean;
+  targetRule?: string;
+  modifierType?: 'ADD_VALUE' | 'MULTIPLY_VALUE' | 'SET_FIXED_VALUE' | string;
+  modifierValue?: number | string;
 }
 
-export const AVAILABLE_ADDONS: PlanAddonConfig[] = [
+export const DEFAULT_CHALLENGE_ADDONS: PlanAddonConfig[] = [
   {
     id: 'boost_leverage',
+    targetRule: 'max_leverage',
+    modifierType: 'MULTIPLY_VALUE',
+    modifierValue: 1.5,
     nameEn: '+50% Leverage Boost',
     nameEs: '+50% Más Apalancamiento',
     descriptionEn: 'Increases base leverage to 1:150 (Solar) or 1:200 (Lunar)',
     descriptionEs: 'Aumenta el apalancamiento base a 1:150 (Solar) o 1:200 (Lunar)',
     priceDeltaPct: 0.15,
     minPriceUSDT: 10,
-    iconName: 'Zap'
+    iconName: 'Zap',
+    isActive: true
   },
   {
     id: 'extra_drawdown',
+    targetRule: 'max_total_drawdown_percent',
+    modifierType: 'ADD_VALUE',
+    modifierValue: 2,
     nameEn: '+2% Drawdown Shield',
     nameEs: '+2% Escudo Drawdown',
     descriptionEn: 'Expands maximum total drawdown from 8% to 10%',
-    descriptionEs: 'Amplía el drawdown máximo total de 8% a 10%',
+    descriptionEs: 'Amplía el colchón de drawdown máximo total en +2%',
     priceDeltaPct: 0.20,
     minPriceUSDT: 15,
-    iconName: 'ShieldCheck'
+    iconName: 'ShieldCheck',
+    isActive: true
   },
   {
     id: 'profit_split_90',
+    targetRule: 'profit_split_percent',
+    modifierType: 'SET_FIXED_VALUE',
+    modifierValue: 90,
     nameEn: '90% Lifetime Profit Split',
     nameEs: '90% Reparto Permanente',
     descriptionEn: 'Locks maximum 90% payout split from your very first withdrawal',
     descriptionEs: 'Bloquea el 90% de reparto desde el primer retiro sin escalas',
     priceDeltaPct: 0.18,
     minPriceUSDT: 12,
-    iconName: 'Award'
+    iconName: 'Award',
+    isActive: true
   },
   {
     id: 'weekly_payout',
+    targetRule: 'payout_frequency',
+    modifierType: 'SET_FIXED_VALUE',
+    modifierValue: 'WEEKLY',
     nameEn: 'Weekly Accelerated Payouts',
     nameEs: 'Retiros Semanales Exprés',
     descriptionEn: 'Bi-weekly payouts upgraded to weekly on-chain USDT settlement in <2h',
     descriptionEs: 'Retiros cada 7 días en USDT directo on-chain en < 2 horas',
     priceDeltaPct: 0.12,
     minPriceUSDT: 9,
-    iconName: 'Clock'
+    iconName: 'Clock',
+    isActive: true
   }
 ];
 
+export const AVAILABLE_ADDONS: PlanAddonConfig[] = DEFAULT_CHALLENGE_ADDONS;
+
 export interface ChallengePlan {
   id: string;
+  name?: string;
   category: PlanCategory;
   astronomicalName: {
     en: string;
@@ -76,12 +99,24 @@ export interface ChallengePlan {
   oneTimePriceUSDT: number;
   monthlyPriceUSDT: number;
   baseProfitSplit: number;
+  payoutSplitMode?: 'FIXED' | 'TIERED';
+  payoutScale?: Array<{ tier: number; split: number }>;
+  customAddons?: PlanAddonConfig[];
   baseMaxDrawdownPct: number;
   baseDailyLossPct: number;
   baseLeverage: string;
   boostedLeverage: string;
   payoutSpeed: string;
   popular?: boolean;
+  modelType?: string;
+  drawdownType?: string;
+  profitTargetPct?: number;
+  profitTargetPhase2Pct?: number | null;
+  minTradingDays?: number;
+  mandatoryStopLoss?: boolean;
+  weekendHoldingAllowed?: boolean;
+  newsTradingAllowed?: boolean;
+  consistencyRulePercent?: number;
   marketSpecialty: {
     en: string;
     es: string;
@@ -508,23 +543,27 @@ export function calculateDynamicPlanPricing(
   let effectiveProfitSplit = plan.baseProfitSplit;
   let effectivePayoutSpeed = plan.payoutSpeed;
 
+  const addonsPool = (plan.customAddons && plan.customAddons.length > 0)
+    ? plan.customAddons
+    : AVAILABLE_ADDONS;
+
   for (const addonId of selectedAddonIds) {
-    const config = AVAILABLE_ADDONS.find(a => a.id === addonId);
+    const config = addonsPool.find(a => a.id === addonId) || AVAILABLE_ADDONS.find(a => a.id === addonId);
     if (!config) continue;
 
-    const addonPrice = Math.max(config.minPriceUSDT, Math.round(basePrice * config.priceDeltaPct));
+    const addonPrice = Math.max(config.minPriceUSDT || 0, Math.round(basePrice * (config.priceDeltaPct || 0)));
     addonsCost += addonPrice;
 
-    if (addonId === 'boost_leverage') {
+    // Evaluador dinámico de modificadores
+    if (config.targetRule === 'max_leverage' || config.id === 'boost_leverage') {
       effectiveLeverage = plan.boostedLeverage;
-    }
-    if (addonId === 'extra_drawdown') {
-      effectiveDrawdownPct = plan.baseMaxDrawdownPct + 2;
-    }
-    if (addonId === 'profit_split_90') {
-      effectiveProfitSplit = 90;
-    }
-    if (addonId === 'weekly_payout') {
+    } else if (config.targetRule === 'max_total_drawdown_percent' || config.id === 'extra_drawdown') {
+      const extra = typeof config.modifierValue === 'number' ? config.modifierValue : 2;
+      effectiveDrawdownPct = plan.baseMaxDrawdownPct + extra;
+    } else if (config.targetRule === 'profit_split_percent' || config.id === 'profit_split_90') {
+      const targetSplit = typeof config.modifierValue === 'number' ? config.modifierValue : 90;
+      effectiveProfitSplit = Math.max(effectiveProfitSplit, targetSplit);
+    } else if (config.targetRule === 'payout_frequency' || config.id === 'weekly_payout') {
       effectivePayoutSpeed = '< 2h (Semanal)';
     }
   }
@@ -541,33 +580,186 @@ export function calculateDynamicPlanPricing(
   };
 }
 
+export function normalizePlan(rule: any): ChallengePlan {
+  const capital = Number(rule.capital || rule.default_account_balance || 100000);
+  const name = rule.name || `Challenge $${capital.toLocaleString()}`;
+  const isLunar = rule.category === 'lunar' || (name && name.toLowerCase().includes('lunar')) || (rule.model_type === 'INSTANT_FUNDING');
+  const planCategory: PlanCategory = (rule.category || (isLunar ? 'lunar' : 'solar')).trim().toLowerCase();
+
+  const oneTime = Number(rule.oneTimePriceUSDT || rule.one_time_price_usdt) > 0 
+    ? Number(rule.oneTimePriceUSDT || rule.one_time_price_usdt) 
+    : (
+      capital <= 1000 ? 19 :
+      capital <= 2500 ? 32 :
+      capital <= 5000 ? 49 :
+      capital <= 10000 ? 89 :
+      capital <= 25000 ? 149 :
+      capital <= 50000 ? 249 :
+      capital <= 100000 ? 449 :
+      capital <= 200000 ? 849 : 1499
+    );
+  const monthly = Number(rule.monthlyPriceUSDT || rule.monthly_price_usdt) > 0 
+    ? Number(rule.monthlyPriceUSDT || rule.monthly_price_usdt) 
+    : Math.round(oneTime * 0.35);
+
+  const sizeLabel = rule.sizeLabel || (capital >= 1000000 
+    ? `${(capital / 1000000).toFixed(capital % 1000000 === 0 ? 0 : 1)}M` 
+    : `${(capital / 1000).toFixed(capital % 1000 === 0 ? 0 : 1)}K`);
+
+  const astronomicalName = typeof rule.astronomicalName === 'object' && rule.astronomicalName !== null
+    ? {
+        en: rule.astronomicalName.en || rule.astronomical_name_en || name,
+        es: rule.astronomicalName.es || rule.astronomical_name_es || name
+      }
+    : {
+        en: rule.astronomical_name_en || (typeof rule.astronomicalName === 'string' ? rule.astronomicalName : name),
+        es: rule.astronomical_name_es || (typeof rule.astronomicalName === 'string' ? rule.astronomicalName : name)
+      };
+
+  const payoutScale: Array<{ tier: number; split: number }> = 
+    Array.isArray(rule.payoutScale) ? rule.payoutScale :
+    Array.isArray(rule.payout_scale) ? rule.payout_scale : [];
+
+  const payoutSplitMode: 'FIXED' | 'TIERED' = rule.payoutSplitMode || rule.payout_split_mode || (payoutScale.length > 0 ? 'TIERED' : 'FIXED');
+
+  const customAddons: PlanAddonConfig[] = Array.isArray(rule.customAddons) && rule.customAddons.length > 0
+    ? rule.customAddons
+    : (Array.isArray(rule.custom_addons) && rule.custom_addons.length > 0 ? rule.custom_addons : DEFAULT_CHALLENGE_ADDONS);
+
+  const isInstant = rule.model_type === 'INSTANT_FUNDING' || rule.modelType === 'INSTANT_FUNDING';
+  const isTiered = payoutSplitMode === 'TIERED' && payoutScale.length > 0;
+  const minTierSplit = isTiered ? Math.min(...payoutScale.map(t => Number(t.split) || 0)) : Number(rule.baseProfitSplit || rule.profit_split_percent || 80);
+  const maxTierSplit = isTiered ? Math.max(...payoutScale.map(t => Number(t.split) || 0)) : Number(rule.baseProfitSplit || rule.profit_split_percent || 80);
+
+  const profitTargetLabelEn = isInstant ? 'No Profit Target (Direct Funding)' : `Profit Target: ${rule.profit_target_percent || rule.profitTargetPct || 10}%`;
+  const profitTargetLabelEs = isInstant ? 'Sin Objetivo de Beneficio (Fondeo Directo)' : `Objetivo de Beneficio: ${rule.profit_target_percent || rule.profitTargetPct || 10}%`;
+
+  const splitLabelEn = isTiered 
+    ? `Tiered Profit Split: ${minTierSplit}% up to ${maxTierSplit}%` 
+    : `Profit Split: ${rule.profit_split_percent || rule.baseProfitSplit || 80}%`;
+  const splitLabelEs = isTiered 
+    ? `Reparto Escalonado: ${minTierSplit}% hasta ${maxTierSplit}%` 
+    : `Reparto de Ganancias: ${rule.profit_split_percent || rule.baseProfitSplit || 80}%`;
+
+  const features = typeof rule.features === 'object' && rule.features !== null && Array.isArray(rule.features.en)
+    ? rule.features
+    : {
+        en: [
+          profitTargetLabelEn,
+          `Max Drawdown: ${rule.max_total_drawdown_percent || rule.baseMaxDrawdownPct || 10}% (${rule.drawdown_type || rule.drawdownType || 'EOD'})`,
+          `Daily Loss Limit: ${rule.max_daily_loss_percent || rule.baseDailyLossPct || 5}%`,
+          splitLabelEn,
+          (rule.weekend_holding_allowed !== false && rule.weekendHoldingAllowed !== false) ? 'Weekend Holding Allowed' : 'Close before Weekend'
+        ],
+        es: [
+          profitTargetLabelEs,
+          `Drawdown Máximo: ${rule.max_total_drawdown_percent || rule.baseMaxDrawdownPct || 10}% (${rule.drawdown_type || rule.drawdownType || 'EOD'})`,
+          `Pérdida Diaria Máxima: ${rule.max_daily_loss_percent || rule.baseDailyLossPct || 5}%`,
+          splitLabelEs,
+          (rule.weekend_holding_allowed !== false && rule.weekendHoldingAllowed !== false) ? 'Operativa Fin de Semana Permitida' : 'Cierre Previo a Fin de Semana'
+        ]
+      };
+
+  const marketSpecialty = typeof rule.marketSpecialty === 'object' && rule.marketSpecialty !== null
+    ? rule.marketSpecialty
+    : {
+        en: isLunar ? 'Meme Titans & High Volatility DMA' : 'Crypto DMA & Institutional Liquidity',
+        es: isLunar ? 'Titanes Meme y Volatilidad Extrema DMA' : 'Crypto DMA y Liquidez Institucional'
+      };
+
+  const maxLevNum = Number(rule.max_leverage || 100);
+  const baseLeverageVal = rule.baseLeverage || `1:${maxLevNum}`;
+  const boostedLevVal = rule.boostedLeverage || `1:${Math.round(maxLevNum * 1.5)}`;
+
+  return {
+    ...rule,
+    id: rule.id || `plan-${capital}`,
+    category: planCategory,
+    name,
+    astronomicalName,
+    sizeLabel,
+    capital,
+    capitalFormatted: rule.capitalFormatted || `$${capital.toLocaleString()}`,
+    oneTimePriceUSDT: oneTime,
+    monthlyPriceUSDT: monthly,
+    baseProfitSplit: Number(rule.baseProfitSplit || rule.profit_split_percent || 80),
+    payoutSplitMode,
+    payoutScale,
+    customAddons,
+    baseMaxDrawdownPct: Number(rule.baseMaxDrawdownPct || rule.max_total_drawdown_percent || 10),
+    baseDailyLossPct: Number(rule.baseDailyLossPct || rule.max_daily_loss_percent || 5),
+    baseLeverage: baseLeverageVal,
+    boostedLeverage: boostedLevVal,
+    payoutSpeed: rule.payoutSpeed || (isInstant ? 'Semanal' : '14 Días'),
+    popular: !!(rule.popular || rule.is_popular),
+    modelType: rule.model_type || rule.modelType || 'ONE_PHASE',
+    drawdownType: rule.drawdown_type || rule.drawdownType || 'EOD',
+    profitTargetPct: isInstant ? 0 : Number(rule.profit_target_percent || rule.profitTargetPct || 10),
+    profitTargetPhase2Pct: rule.profit_target_phase2_percent ? Number(rule.profit_target_phase2_percent) : null,
+    minTradingDays: Number(rule.min_trading_days ?? rule.minTradingDays ?? 0),
+    mandatoryStopLoss: !!(rule.mandatory_stop_loss || rule.mandatoryStopLoss),
+    weekendHoldingAllowed: rule.weekend_holding_allowed !== false && rule.weekendHoldingAllowed !== false,
+    newsTradingAllowed: rule.news_trading_allowed !== false && rule.newsTradingAllowed !== false,
+    consistencyRulePercent: Number(rule.consistency_rule_percent || rule.consistencyRulePercent || 40),
+    marketSpecialty,
+    features
+  };
+}
+
+let inFlightPlansPromise: Promise<ChallengePlan[]> | null = null;
+const PLANS_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutos
+
 /**
  * Fetch dynamic plans from Nexus CRM / Redis Hot-Cache / Supabase risk_rule_configs.
- * Utilizes Local-First SWR (0ms instant render) + Redis Hot-Cache to prevent PostgreSQL saturation.
+ * Utilizes in-flight promise deduplication and a 2-minute cache TTL.
  */
 export async function getAllLiveChallengePlans(): Promise<ChallengePlan[]> {
-  // 1. Local-First Cache (0ms Instant Paint)
+  // 1. Local-First Cache con TTL
   try {
     const cached = localStorage.getItem('eklipse_cached_challenge_plans');
+    const cachedTs = Number(localStorage.getItem('eklipse_cached_challenge_plans_ts') || 0);
+    const isFresh = (Date.now() - cachedTs) < PLANS_CACHE_TTL_MS;
+
     if (cached) {
       const parsed = JSON.parse(cached);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Disparar revalidación en segundo plano sin bloquear
+        if (isFresh) {
+          return parsed.map(normalizePlan);
+        }
+        // Si expiró el TTL, retornar inmediatamente y revalidar en segundo plano sin duplicar
         revalidatePlansInBackground();
-        return parsed;
+        return parsed.map(normalizePlan);
       }
     }
   } catch (_) {}
 
-  // 2. Fetch fresco desde Redis o DB
-  return await fetchFreshChallengePlans();
+  // 2. Fetch deduplicado en vuelo
+  if (inFlightPlansPromise) {
+    return inFlightPlansPromise;
+  }
+
+  inFlightPlansPromise = fetchFreshChallengePlans()
+    .then(plans => {
+      inFlightPlansPromise = null;
+      return plans.map(normalizePlan);
+    })
+    .catch(err => {
+      inFlightPlansPromise = null;
+      console.warn('[ChallengePlans] Failed fetching plans:', err);
+      return [];
+    });
+
+  return inFlightPlansPromise;
 }
 
-export async function getLiveChallengePlans(category: PlanCategory = 'solar'): Promise<ChallengePlan[]> {
+export async function getLiveChallengePlans(category?: PlanCategory): Promise<ChallengePlan[]> {
   const allPlans = await getAllLiveChallengePlans();
-  const filtered = allPlans.filter(p => p.category === category);
-  if (filtered.length > 0) return filtered;
-  return allPlans.length > 0 ? allPlans : (category === 'solar' ? SOLAR_CHALLENGE_PLANS : LUNAR_CHALLENGE_PLANS);
+  if (allPlans.length === 0) {
+    return category === 'lunar' ? LUNAR_CHALLENGE_PLANS : SOLAR_CHALLENGE_PLANS;
+  }
+  if (!category) return allPlans;
+  const filtered = allPlans.filter(p => p.category.toLowerCase() === category.toLowerCase());
+  return filtered.length > 0 ? filtered : allPlans;
 }
 
 async function fetchFreshChallengePlans(): Promise<ChallengePlan[]> {
@@ -578,8 +770,10 @@ async function fetchFreshChallengePlans(): Promise<ChallengePlan[]> {
       if (res.ok) {
         const json = await res.json();
         if (json.plans && Array.isArray(json.plans) && json.plans.length > 0) {
-          localStorage.setItem('eklipse_cached_challenge_plans', JSON.stringify(json.plans));
-          return json.plans;
+          const normalized = json.plans.map(normalizePlan);
+          localStorage.setItem('eklipse_cached_challenge_plans', JSON.stringify(normalized));
+          localStorage.setItem('eklipse_cached_challenge_plans_ts', Date.now().toString());
+          return normalized;
         }
       }
     } catch (_) {}
@@ -592,75 +786,9 @@ async function fetchFreshChallengePlans(): Promise<ChallengePlan[]> {
       .order('default_account_balance', { ascending: true });
 
     if (!error && data && data.length > 0) {
-      const dynamicPlans: ChallengePlan[] = data.map((rule: any) => {
-        const capital = Number(rule.default_account_balance || 100000);
-        const name = rule.name || `Challenge $${capital.toLocaleString()}`;
-        const isLunar = rule.category === 'lunar' || name.toLowerCase().includes('lunar') || (rule.model_type === 'INSTANT_FUNDING');
-        const planCategory: PlanCategory = rule.category || (isLunar ? 'lunar' : 'solar');
-        
-        // Precios ingresados manualmente desde Nexus CRM
-        const oneTime = Number(rule.one_time_price_usdt) > 0 ? Number(rule.one_time_price_usdt) : (
-          capital <= 1000 ? 19 :
-          capital <= 5000 ? 49 :
-          capital <= 10000 ? 89 :
-          capital <= 25000 ? 149 :
-          capital <= 50000 ? 249 :
-          capital <= 100000 ? 449 :
-          capital <= 200000 ? 849 : 1499
-        );
-        const monthly = Number(rule.monthly_price_usdt) > 0 ? Number(rule.monthly_price_usdt) : Math.round(oneTime * 0.35);
-
-        const sizeLabel = capital >= 1000000 
-          ? `${(capital / 1000000).toFixed(capital % 1000000 === 0 ? 0 : 1)}M` 
-          : `${(capital / 1000).toFixed(capital % 1000 === 0 ? 0 : 1)}K`;
-
-        return {
-          id: rule.id,
-          category: planCategory,
-          astronomicalName: {
-            en: rule.astronomical_name_en || name,
-            es: rule.astronomical_name_es || name
-          },
-          sizeLabel,
-          capital,
-          capitalFormatted: `$${capital.toLocaleString()}`,
-          oneTimePriceUSDT: oneTime,
-          monthlyPriceUSDT: monthly,
-          baseProfitSplit: Number(rule.profit_split_percent || 80),
-          baseMaxDrawdownPct: Number(rule.max_total_drawdown_percent || 10),
-          baseDailyLossPct: Number(rule.max_daily_loss_percent || 5),
-          baseLeverage: `1:${rule.max_leverage || 100}`,
-          boostedLeverage: `1:${Math.round((rule.max_leverage || 100) * 1.5)}`,
-          payoutSpeed: '14 Días',
-          popular: !!rule.is_popular,
-          marketSpecialty: {
-            en: isLunar ? 'Meme Titans & High Volatility DMA' : 'Crypto DMA & Institutional Liquidity',
-            es: isLunar ? 'Titanes Meme y Volatilidad Extrema DMA' : 'Crypto DMA y Liquidez Institucional'
-          },
-          features: {
-            en: [
-              `Profit Target: ${rule.profit_target_percent || 8}%`,
-              `Max Total Drawdown: ${rule.max_total_drawdown_percent || 10}% (${rule.drawdown_type || 'EOD'})`,
-              `Daily Loss Limit: ${rule.max_daily_loss_percent || 5}%`,
-              `Profit Split: ${rule.profit_split_percent || 80}%`,
-              `Min. Trading Days: ${rule.min_trading_days || 5} days`,
-              rule.mandatory_stop_loss ? 'Mandatory Stop Loss' : 'Stop Loss Optional',
-              rule.weekend_holding_allowed ? 'Weekend Holding Allowed' : 'Close before Weekend'
-            ],
-            es: [
-              `Objetivo de Beneficio: ${rule.profit_target_percent || 8}%`,
-              `Drawdown Máximo: ${rule.max_total_drawdown_percent}% (${rule.drawdown_type || 'EOD'})`,
-              `Pérdida Diaria Máxima: ${rule.max_daily_loss_percent}%`,
-              `Reparto de Ganancias: ${rule.profit_split_percent}%`,
-              `Días Mínimos de Trading: ${rule.min_trading_days || 5} días`,
-              rule.mandatory_stop_loss ? 'Stop Loss Obligatorio' : 'Stop Loss Opcional',
-              rule.weekend_holding_allowed ? 'Operativa Fin de Semana Permitida' : 'Cierre Previo a Fin de Semana'
-            ]
-          }
-        };
-      });
-
+      const dynamicPlans: ChallengePlan[] = data.map(normalizePlan);
       localStorage.setItem('eklipse_cached_challenge_plans', JSON.stringify(dynamicPlans));
+      localStorage.setItem('eklipse_cached_challenge_plans_ts', Date.now().toString());
       return dynamicPlans;
     }
   } catch (err) {
@@ -673,7 +801,14 @@ async function fetchFreshChallengePlans(): Promise<ChallengePlan[]> {
 }
 
 function revalidatePlansInBackground() {
-  setTimeout(() => {
-    fetchFreshChallengePlans().catch(() => {});
-  }, 1000);
+  if (inFlightPlansPromise) return;
+  inFlightPlansPromise = fetchFreshChallengePlans()
+    .then(plans => {
+      inFlightPlansPromise = null;
+      return plans.map(normalizePlan);
+    })
+    .catch(() => {
+      inFlightPlansPromise = null;
+      return [];
+    });
 }

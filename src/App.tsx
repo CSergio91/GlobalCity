@@ -21,6 +21,7 @@ import { TraderDashboardApp } from './modules/dashboard/TraderDashboardApp';
 import { InstitutionalCrmApp } from './modules/crm/InstitutionalCrmApp';
 import { CrmAccessDeniedScreen } from './modules/crm/components/CrmAccessDeniedScreen';
 import { NotFoundPage } from './components/NotFoundPage';
+import { GlobalErrorBoundary } from './components/GlobalErrorBoundary';
 
 function MainAppContent() {
   const { currentPath, subdomain, navigate } = useAppRouter();
@@ -256,12 +257,14 @@ function MainAppContent() {
 
 export default function App() {
   return (
-    <RouterProvider>
-      <LanguageProvider>
-        <AuthProvider>
-          <MainAppContent />
-        </AuthProvider>
-      </LanguageProvider>
-    </RouterProvider>
+    <GlobalErrorBoundary>
+      <RouterProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <MainAppContent />
+          </AuthProvider>
+        </LanguageProvider>
+      </RouterProvider>
+    </GlobalErrorBoundary>
   );
 }

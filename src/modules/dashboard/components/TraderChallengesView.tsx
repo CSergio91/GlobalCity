@@ -210,7 +210,9 @@ export const TraderChallengesView: React.FC<TraderChallengesViewProps> = ({
                 {category === 'solar' ? 'SOLAR 1-PHASE EVALUATION' : 'LUNAR 2-PHASE EVALUATION'}
               </div>
               <h3 className="text-xl sm:text-2xl font-black text-white mt-1">
-                {activePlan.astronomicalName[isEn ? 'en' : 'es']}
+                {activePlan?.astronomicalName 
+                  ? (activePlan.astronomicalName[isEn ? 'en' : 'es'] || activePlan.name) 
+                  : (activePlan?.name || `$${(activePlan?.capital || 50000).toLocaleString()}`)}
               </h3>
             </div>
             <div className="text-right">
